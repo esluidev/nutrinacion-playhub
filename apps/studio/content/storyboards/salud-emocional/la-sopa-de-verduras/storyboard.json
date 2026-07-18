@@ -1,0 +1,36 @@
+{
+  "key": "0335380e-c7be-4915-a810-a7f81e938598",
+  "slug": "la-sopa-de-verduras",
+  "defaultLanguage": "es",
+  "languages": ["es", "en"],
+  "title": { "es": "La Sopa de Verduras", "en": "The Vegetable Soup" },
+  "type": "SALUD_EMOCIONAL",
+  "category": "BIENESTAR",
+  "audience": "KIDS",
+  "scenes": [
+    {
+      "folder": "bienvenida",
+      "title": { "es": "Bienvenida", "en": "Welcome" }
+    },
+    {
+      "folder": "emociones",
+      "title": { "es": "¿Qué sientes tú?", "en": "What do you feel?" }
+    },
+    {
+      "folder": "pausa-hidratacion",
+      "title": { "es": "Pausa de Agua", "en": "Water Break" }
+    },
+    {
+      "folder": "autocontrol",
+      "title": { "es": "Alto, Respira y Habla", "en": "Stop, Breathe and Talk" }
+    },
+    {
+      "folder": "reflexion",
+      "title": { "es": "Mi Plan Tranquilo", "en": "My Calm Plan" }
+    },
+    {
+      "folder": "despedida",
+      "title": { "es": "Hasta Pronto", "en": "See You Soon" }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.nuxt/
+.output/
+.nitro/
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Supabase
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# Flutter / Dart
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/pubspec.lock
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/ios/Pods/
+**/android/.gradle/
+**/android/app/build/
+**/android/build/
+**/.idea/
+**/*.iml
+
+# Obsidian symlink — apunta al vault local, no debe ir al repo
+obsidian
+tasks
+
+# Test outputs
+coverage/
+.nyc_output/
+
+# Misc
+*.tmp
+*.bak

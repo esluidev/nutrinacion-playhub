@@ -1,0 +1,212 @@
+{
+  "locales": {
+    "es": {
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "¡Energía con cuidado! Hoy vamos a conocer a la insulina: una ayudante que deja entrar la energía de la comida para jugar, aprender y crecer. Algunas personas la usan con ayuda de un adulto para sentirse bien, y eso es parte natural de cuidar el cuerpo. Toca el botón verde para comenzar."
+        },
+        {
+          "key": "descubrimiento-instruccion",
+          "text": "La insulina es como una llave. La energía de la comida espera frente a la puerta: usa la llave para abrirla y descubre para qué entra la energía a tu cuerpo."
+        },
+        {
+          "key": "descubrimiento-completado",
+          "text": "Abriste las tres puertas: la insulina dejó entrar la energía para jugar, aprender y crecer."
+        },
+        {
+          "key": "pausa-activa-instruccion",
+          "text": "Una pausa para mover el cuerpo. Toca el botón, mira el estiramiento e imítalo despacio hasta que el tiempo termine. Moverse también ayuda a la insulina."
+        },
+        {
+          "key": "pausa-activa-completado",
+          "text": "Estiraste el cuerpo y le diste un empujoncito a tu energía."
+        },
+        {
+          "key": "autocuidado-instruccion",
+          "text": "Acompaña al sol por un día completo de buenos cuidados. En cada momento haz el hábito que toca: la insulina con un adulto por la mañana, comer equilibrado, beber agua y, en la noche, guardar la insulina en el refri."
+        },
+        {
+          "key": "autocuidado-completado",
+          "text": "Cuidaste el día completo: horarios, comida, agua y la insulina segura en el refri."
+        },
+        {
+          "key": "retroalimentacion-instruccion",
+          "text": "Cada estrella guarda un cuidado que aprendiste hoy. Toca las estrellas para encenderlas y recordar juntos cada hábito."
+        },
+        {
+          "key": "retroalimentacion-completado",
+          "text": "Encendiste las cinco estrellas del cuidado: agua, horarios, refri, adulto y plato equilibrado."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "El taller terminó. Es momento de recordar cómo la insulina ayuda a tu energía y cómo los buenos hábitos cuidan tu cuerpo todos los días."
+        },
+        {
+          "key": "descubrimiento-jugar",
+          "text": "¡Muy bien! La insulina es como una llave: deja entrar la energía de la comida para correr y jugar."
+        },
+        {
+          "key": "descubrimiento-aprender",
+          "text": "¡Muy bien! Con la energía que la insulina deja entrar, tu cerebro puede pensar y aprender."
+        },
+        {
+          "key": "descubrimiento-crecer",
+          "text": "¡Muy bien! La energía bien usada ayuda a tu cuerpo a crecer fuerte y sano."
+        },
+        {
+          "key": "pausa-activa-brazos-al-cielo",
+          "text": "¡Muy bien! Moverte un poquito ayuda a que la insulina trabaje mejor en tu cuerpo."
+        },
+        {
+          "key": "pausa-activa-abrir-brazos",
+          "text": "¡Muy bien! Estirarte despacio despierta el cuerpo y te da energía para seguir aprendiendo."
+        },
+        {
+          "key": "autocuidado-manana",
+          "text": "¡Muy bien! La insulina se aplica siempre con un adulto y a la misma hora cada día."
+        },
+        {
+          "key": "autocuidado-mediodia",
+          "text": "¡Muy bien! Comer equilibrado ayuda a que la energía y la insulina trabajen en equipo."
+        },
+        {
+          "key": "autocuidado-tarde",
+          "text": "¡Muy bien! El agua natural refresca tu cuerpo y lo ayuda a estar en equilibrio."
+        },
+        {
+          "key": "autocuidado-noche",
+          "text": "¡Muy bien! La insulina vive en el refri: el frío la mantiene lista para cuidarte."
+        },
+        {
+          "key": "retroalimentacion-agua",
+          "text": "Beber agua natural todos los días ayuda a tu cuerpo a estar en equilibrio."
+        },
+        {
+          "key": "retroalimentacion-horarios",
+          "text": "La insulina se usa a la misma hora: los horarios ayudan a tu cuerpo a sentirse bien."
+        },
+        {
+          "key": "retroalimentacion-refri",
+          "text": "El frío del refri mantiene la insulina lista para cuidarte."
+        },
+        {
+          "key": "retroalimentacion-adulto",
+          "text": "La insulina se aplica siempre con un adulto que te acompaña y te cuida."
+        },
+        {
+          "key": "retroalimentacion-plato",
+          "text": "Un plato equilibrado le da a tu cuerpo la energía que la insulina ayuda a usar."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "¡Lo lograste! Descubriste cómo la insulina ayuda a tu energía y aprendiste a cuidarla: agua natural, horarios, comida equilibrada y siempre con un adulto. Sigue cuidando tu cuerpo todos los días."
+        }
+      ]
+    },
+    "en": {
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "Energy with care! Today we will meet insulin: a helper that lets the energy from food come in to play, learn and grow. Some people use it with a grown-up’s help to feel good, and that is a natural part of taking care of the body. Tap the green button to begin."
+        },
+        {
+          "key": "descubrimiento-instruccion",
+          "text": "Insulin is like a key. The energy from food waits at the door: use the key to open it and discover what the energy comes into your body for."
+        },
+        {
+          "key": "descubrimiento-completado",
+          "text": "You opened all three doors: insulin let the energy in to play, learn and grow."
+        },
+        {
+          "key": "pausa-activa-instruccion",
+          "text": "A break to move the body. Tap the button, watch the stretch and copy it slowly until the time is up. Moving also helps insulin."
+        },
+        {
+          "key": "pausa-activa-completado",
+          "text": "You stretched your body and gave your energy a little boost."
+        },
+        {
+          "key": "autocuidado-instruccion",
+          "text": "Follow the sun through a whole day of good care. At each moment do the right habit: insulin with a grown-up in the morning, balanced eating, drinking water and, at night, storing the insulin in the fridge."
+        },
+        {
+          "key": "autocuidado-completado",
+          "text": "You took care of the whole day: schedules, food, water and the insulin safe in the fridge."
+        },
+        {
+          "key": "retroalimentacion-instruccion",
+          "text": "Each star holds one care habit you learned today. Tap the stars to light them up and remember each habit together."
+        },
+        {
+          "key": "retroalimentacion-completado",
+          "text": "You lit all five care stars: water, schedules, fridge, grown-up and balanced plate."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "The workshop is over. Time to remember how insulin helps your energy and how good habits take care of your body every day."
+        },
+        {
+          "key": "descubrimiento-jugar",
+          "text": "Great! Insulin is like a key: it lets the energy in from food so you can run and play."
+        },
+        {
+          "key": "descubrimiento-aprender",
+          "text": "Great! With the energy insulin lets in, your brain can think and learn."
+        },
+        {
+          "key": "descubrimiento-crecer",
+          "text": "Great! Well-used energy helps your body grow strong and healthy."
+        },
+        {
+          "key": "pausa-activa-brazos-al-cielo",
+          "text": "Great! Moving a little helps insulin work better in your body."
+        },
+        {
+          "key": "pausa-activa-abrir-brazos",
+          "text": "Great! Stretching slowly wakes up the body and gives you energy to keep learning."
+        },
+        {
+          "key": "autocuidado-manana",
+          "text": "Great! Insulin is applied always with a grown-up and at the same time every day."
+        },
+        {
+          "key": "autocuidado-mediodia",
+          "text": "Great! Eating balanced meals helps energy and insulin work as a team."
+        },
+        {
+          "key": "autocuidado-tarde",
+          "text": "Great! Plain water refreshes your body and helps it stay in balance."
+        },
+        {
+          "key": "autocuidado-noche",
+          "text": "Great! Insulin lives in the fridge: the cold keeps it ready to take care of you."
+        },
+        {
+          "key": "retroalimentacion-agua",
+          "text": "Drinking plain water every day helps your body stay in balance."
+        },
+        {
+          "key": "retroalimentacion-horarios",
+          "text": "Insulin is used at the same time: schedules help your body feel good."
+        },
+        {
+          "key": "retroalimentacion-refri",
+          "text": "The cold of the fridge keeps insulin ready to take care of you."
+        },
+        {
+          "key": "retroalimentacion-adulto",
+          "text": "Insulin is applied always with a grown-up who is there to help you."
+        },
+        {
+          "key": "retroalimentacion-plato",
+          "text": "A balanced plate gives your body the energy insulin helps to use."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "You did it! You discovered how insulin helps your energy and learned to care for it: plain water, schedules, balanced food and always with a grown-up. Keep taking care of your body every day."
+        }
+      ]
+    }
+  }
+}

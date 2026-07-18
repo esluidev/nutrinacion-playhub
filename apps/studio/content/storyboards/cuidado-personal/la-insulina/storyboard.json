@@ -1,0 +1,36 @@
+{
+  "key": "fe638261-c023-40e8-8099-d66fa0697957",
+  "slug": "la-insulina",
+  "defaultLanguage": "es",
+  "languages": ["es", "en"],
+  "title": { "es": "La Insulina: Energía con Cuidado", "en": "Insulin: Energy with Care" },
+  "type": "CUIDADO_PERSONAL",
+  "category": "DIABETES",
+  "audience": "KIDS",
+  "scenes": [
+    {
+      "folder": "bienvenida",
+      "title": { "es": "Bienvenida", "en": "Welcome" }
+    },
+    {
+      "folder": "descubrimiento",
+      "title": { "es": "La Llave de la Energía", "en": "The Energy Key" }
+    },
+    {
+      "folder": "pausa-activa",
+      "title": { "es": "Pausa en Movimiento", "en": "Movement Break" }
+    },
+    {
+      "folder": "autocuidado",
+      "title": { "es": "Un Día con la Insulina", "en": "A Day with Insulin" }
+    },
+    {
+      "folder": "retroalimentacion",
+      "title": { "es": "Las Estrellas del Cuidado", "en": "The Care Stars" }
+    },
+    {
+      "folder": "despedida",
+      "title": { "es": "Hasta Pronto", "en": "See You Soon" }
+    }
+  ]
+}

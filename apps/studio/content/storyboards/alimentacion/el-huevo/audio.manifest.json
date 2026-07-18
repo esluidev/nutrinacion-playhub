@@ -1,0 +1,48 @@
+{
+  "storyboard": "el-huevo",
+  "engine": "qwen",
+  "personality": false,
+  "seed": 7,
+  "instruct": "Warm, friendly female storyteller and teacher narrating for children ages 4 to 8. Speak slowly and very clearly with a cheerful, gentle and encouraging tone. Articulate every word, use playful, expressive intonation, and keep it calm, kind and reassuring.",
+  "locales": {
+    "es": {
+      "language": "es",
+      "lines": [
+        { "key": "bienvenida-instruccion", "text": "¡A conocer el huevo! Hoy descubriremos un alimento pequeño que guarda mucha fuerza. Toca el botón verde para comenzar el taller." },
+
+        { "key": "descubrimiento-instruccion", "text": "Toca cada tarjeta para descubrir los huevos y verlos del más pequeño al más grande." },
+        { "key": "descubrimiento-completado", "text": "Descubriste cuatro huevos, del más pequeño al más grande." },
+        { "key": "descubrimiento-huevo-gallina", "text": "Huevo de Gallina. Es el más común: viene de la gallina y está en casi todas las cocinas." },
+        { "key": "descubrimiento-huevo-avestruz", "text": "Huevo de Avestruz. ¡Es el más grande del mundo! Pesa como veinticuatro huevos de gallina." },
+        { "key": "descubrimiento-huevo-pata", "text": "Huevo de Pata. Es más grande que el de gallina y su cáscara es más dura." },
+        { "key": "descubrimiento-huevo-codorniz", "text": "Huevo de Codorniz. Es pequeñito y con manchitas. Viene de un ave llamada codorniz." },
+
+        { "key": "propiedades-instruccion", "text": "El huevo tiene partes por dentro y por fuera. Arrastra cada parte hacia lo que hace por el cuerpo." },
+        { "key": "propiedades-completado", "text": "Ya conoces la cáscara, la clara y la yema." },
+        { "key": "propiedades-parte-cascara", "text": "¡Muy bien! La cáscara es dura y protege el huevo. La cáscara no se come." },
+        { "key": "propiedades-parte-clara", "text": "¡Muy bien! La clara tiene proteínas que ayudan a crecer con músculos fuertes." },
+        { "key": "propiedades-parte-yema", "text": "¡Muy bien! La yema tiene vitaminas que cuidan la vista y dan energía." },
+
+        { "key": "pausa-hidratacion-instruccion", "text": "Es momento de una pausa. El agua natural es la mejor opción para el cuerpo. Toca el botón para tomar un sorbo." },
+        { "key": "pausa-hidratacion-completado", "text": "Tomaste una pausa de agua que le da energía al cuerpo." },
+        { "key": "pausa-hidratacion-saber", "text": "¡Muy bien! Hidratarse ayuda a tu cuerpo a estar feliz y con energía." },
+
+        { "key": "preparacion-instruccion", "text": "El huevo nunca se come crudo. Lleva un huevo a cada estación y mira cómo la cocina lo prepara de una forma distinta." },
+        { "key": "preparacion-completado", "text": "Pusiste la cocina a funcionar: huevo hervido, frito y revuelto." },
+        { "key": "preparacion-hervido", "text": "¡Muy bien! En la olla con agua caliente el huevo se vuelve duro: firme y fácil de pelar." },
+        { "key": "preparacion-frito", "text": "¡Muy bien! Cascado en el sartén, la clara se pone blanca y la yema queda brillante en el centro." },
+        { "key": "preparacion-revuelto", "text": "¡Muy bien! Batido en el tazón y cocinado, el huevo revuelto queda suave y esponjoso." },
+
+        { "key": "retroalimentacion-instruccion", "text": "Es momento de repasar. Escucha cada pregunta y toca la respuesta correcta." },
+        { "key": "retroalimentacion-completado", "text": "Respondiste todas las preguntas del repaso." },
+        { "key": "retroalimentacion-pregunta-1", "text": "¿Qué parte del huevo ayuda a tener músculos fuertes?" },
+        { "key": "retroalimentacion-pregunta-2", "text": "¿Qué parte del huevo cuida la vista y da energía?" },
+        { "key": "retroalimentacion-pregunta-3", "text": "¿Cuál es el huevo más grande del mundo?" },
+        { "key": "retroalimentacion-pregunta-4", "text": "¿Cómo nunca se debe comer el huevo?" },
+
+        { "key": "despedida-instruccion", "text": "El taller terminó. Es momento de recordar lo aprendido sobre el huevo." },
+        { "key": "despedida-cierre", "text": "¡Lo lograste! Aprendiste mucho sobre el huevo. Sigue comiendo rico y sano." }
+      ]
+    }
+  }
+}

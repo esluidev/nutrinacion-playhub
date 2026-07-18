@@ -1,0 +1,23 @@
+{
+  "name": "nutrinacion-workshops",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build --dotenv .env.local",
+    "dev": "nuxt dev --dotenv .env.local",
+    "generate": "nuxt generate --dotenv .env.local",
+    "preview": "nuxt preview --dotenv .env.local",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "nuxt": "^4.0.0",
+    "reka-ui": "^2.10.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.13.2",
+    "typescript": "^5.7.3"
+  }
+}

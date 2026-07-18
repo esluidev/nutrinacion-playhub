@@ -1,0 +1,47 @@
+{
+  "storyboard": "los-frijoles",
+  "engine": "qwen",
+  "personality": false,
+  "seed": 7,
+  "instruct": "Warm, friendly female storyteller and teacher narrating for children ages 4 to 8. Speak slowly and very clearly with a cheerful, gentle and encouraging tone. Articulate every word, use playful, expressive intonation, and keep it calm, kind and reassuring.",
+  "locales": {
+    "es": {
+      "language": "es",
+      "lines": [
+        { "key": "bienvenida-instruccion", "text": "¡A conocer los frijoles! Hoy descubriremos un alimento que ayuda a crecer sanos y fuertes. Toca el botón verde para comenzar el taller." },
+
+        { "key": "descubrimiento-instruccion", "text": "¡Gira la ruleta para descubrir los frijoles!" },
+        { "key": "descubrimiento-completado", "text": "Descubriste los cuatro frijoles y sus colores." },
+        { "key": "descubrimiento-frijol-rojo", "text": "Frijol Rojo. Tiene mucho hierro, nos da energía para jugar y correr." },
+        { "key": "descubrimiento-frijol-negro", "text": "Frijol Negro. Está lleno de antioxidantes que cuidan nuestro corazón." },
+        { "key": "descubrimiento-frijol-blanco", "text": "Frijol Blanco. Tiene mucha fibra que ayuda a la pancita feliz." },
+        { "key": "descubrimiento-frijol-pinto", "text": "Frijol Pinto. Tiene muchas proteínas para crecer fuerte y sano." },
+
+        { "key": "propiedades-instruccion", "text": "Cada frijol aporta algo importante al cuerpo. Arrastra cada frijol hacia lo que aporta." },
+        { "key": "propiedades-completado", "text": "Ya conoces lo que aporta cada frijol." },
+        { "key": "propiedades-frijol-rojo", "text": "¡Muy bien! El frijol Rojo nos da energía para jugar y correr." },
+        { "key": "propiedades-frijol-negro", "text": "¡Muy bien! El frijol Negro nos da un corazón sano." },
+        { "key": "propiedades-frijol-blanco", "text": "¡Muy bien! El frijol Blanco nos da pancita feliz." },
+        { "key": "propiedades-frijol-pinto", "text": "¡Muy bien! El frijol Pinto nos da fuerza para crecer." },
+
+        { "key": "pausa-hidratacion-instruccion", "text": "Es momento de una pausa. El agua natural es la mejor opción para el cuerpo. Toca el botón para tomar un sorbo." },
+        { "key": "pausa-hidratacion-completado", "text": "Tomaste una pausa de agua que le da energía al cuerpo." },
+        { "key": "pausa-hidratacion-saber", "text": "¡Muy bien! Hidratarse ayuda a tu cuerpo a estar feliz y con energía." },
+
+        { "key": "preparacion-instruccion", "text": "Los frijoles no se comen crudos. Ordena los pasos para prepararlos, desde limpiarlos hasta comerlos." },
+        { "key": "preparacion-completado", "text": "Ordenaste todos los pasos para cocinar los frijoles." },
+        { "key": "preparacion-saber", "text": "¡Muy bien! Así pasan los frijoles de crudos a deliciosos." },
+
+        { "key": "retroalimentacion-instruccion", "text": "Es momento de repasar. Escucha cada pregunta y toca el frijol correcto." },
+        { "key": "retroalimentacion-completado", "text": "Respondiste todas las preguntas del repaso." },
+        { "key": "retroalimentacion-pregunta-1", "text": "¿Qué frijol tiene mucho hierro para darnos energía?" },
+        { "key": "retroalimentacion-pregunta-2", "text": "¿Cuál está lleno de antioxidantes que cuidan el corazón?" },
+        { "key": "retroalimentacion-pregunta-3", "text": "¿Cuál tiene fibra para una pancita feliz?" },
+        { "key": "retroalimentacion-pregunta-4", "text": "¿Cuál nos da proteínas para crecer fuertes?" },
+
+        { "key": "despedida-instruccion", "text": "El taller terminó. Es momento de recordar lo aprendido sobre los frijoles." },
+        { "key": "despedida-cierre", "text": "¡Lo lograste! Aprendiste mucho sobre los frijoles. Sigue comiendo rico y sano." }
+      ]
+    }
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "storyboard": "piernas-fuertes",
+  "engine": "qwen",
+  "personality": false,
+  "seed": 7,
+  "instruct": "Warm, friendly female storyteller and teacher narrating for children ages 4 to 8. Speak slowly and very clearly with a cheerful, gentle and encouraging tone. Articulate every word, use playful, expressive intonation, and keep it calm, kind and reassuring.",
+  "locales": {
+    "es": {
+      "language": "es",
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "¡Piernas fuertes! Hoy vamos a mover el cuerpo con ejercicios divertidos y seguros. Busca un lugar libre donde puedas moverte sin chocar con nada. Toca el botón verde para comenzar el taller."
+        },
+        {
+          "key": "motricidad-instruccion",
+          "text": "Vamos a despertar el cuerpo despacio. Toca una tarjeta, mira cómo se hace el movimiento e imítalo hasta que el tiempo termine."
+        },
+        {
+          "key": "motricidad-completado",
+          "text": "Despertaste el cuerpo con tres movimientos suaves y controlados."
+        },
+        {
+          "key": "motricidad-marcha-suave",
+          "text": "¡Muy bien! Marchar despacio despierta las piernas y prepara el cuerpo para moverse."
+        },
+        {
+          "key": "motricidad-rodillas-suaves",
+          "text": "¡Muy bien! Doblar las rodillas despacio cuida las articulaciones antes de ejercicios más activos."
+        },
+        {
+          "key": "motricidad-brazos-arriba",
+          "text": "¡Muy bien! Subir los brazos lento y respirar tranquilo ayuda a mantener una postura firme."
+        },
+        {
+          "key": "resistencia-instruccion",
+          "text": "Ahora vamos a movernos con más energía. Toca el botón para empezar cada ronda y sigue el ritmo del movimiento hasta que el tiempo termine."
+        },
+        {
+          "key": "resistencia-completado",
+          "text": "Completaste tres rondas de energía siguiendo el ritmo sin parar."
+        },
+        {
+          "key": "resistencia-rodillas-arriba",
+          "text": "¡Muy bien! Con las rodillas arriba el corazón late más fuerte y lleva energía a todo el cuerpo."
+        },
+        {
+          "key": "resistencia-saltitos-suaves",
+          "text": "¡Muy bien! Los saltitos suaves hacen piernas más fuertes. Caer con las rodillas dobladas las protege."
+        },
+        {
+          "key": "resistencia-pasos-laterales",
+          "text": "¡Muy bien! Moverse de lado a lado sin parar entrena la resistencia: el cuerpo aguanta más sin cansarse."
+        },
+        {
+          "key": "pausa-hidratacion-instruccion",
+          "text": "Después de moverse, el cuerpo pide agua. El agua natural de una fuente limpia es la mejor opción. Toca el botón para tomar un sorbo con calma."
+        },
+        {
+          "key": "pausa-hidratacion-completado",
+          "text": "Tomaste una pausa de agua para recuperar energía y seguir moviéndote."
+        },
+        {
+          "key": "pausa-hidratacion-saber",
+          "text": "¡Muy bien! Cuando el cuerpo se mueve, el agua lo refresca y le devuelve la energía para seguir."
+        },
+        {
+          "key": "coordinacion-instruccion",
+          "text": "Mira la coreografía completa: son tres movimientos seguidos. Puedes verla otra vez las veces que quieras. Cuando estés listo, toca mi turno y hazla con tu cuerpo."
+        },
+        {
+          "key": "coordinacion-completado",
+          "text": "Hiciste tres coreografías completas con tu cuerpo, movimiento por movimiento y en orden."
+        },
+        {
+          "key": "coordinacion-saber",
+          "text": "¡Muy bien! Recordar los pasos y hacerlos en orden entrena la coordinación: el cuerpo y la mente trabajan juntos."
+        },
+        {
+          "key": "recuperacion-instruccion",
+          "text": "Después del esfuerzo, el cuerpo descansa. Toca la tarjeta de respirar y sigue la burbuja: toma aire cuando crece y suéltalo cuando se hace pequeña. Después estira despacio con las tarjetas que siguen, en orden."
+        },
+        {
+          "key": "recuperacion-completado",
+          "text": "Calmaste el cuerpo con respiraciones profundas y estiramientos suaves."
+        },
+        {
+          "key": "recuperacion-respiracion",
+          "text": "¡Muy bien! Respirar hondo y despacio le avisa al cuerpo que es momento de descansar."
+        },
+        {
+          "key": "recuperacion-estirar-alto",
+          "text": "¡Muy bien! Estirar despacio relaja los músculos después del esfuerzo."
+        },
+        {
+          "key": "recuperacion-abrir-brazos",
+          "text": "¡Muy bien! Abrir los brazos y soltar el aire ayuda al corazón a volver a la calma."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "El taller terminó. Es momento de recordar cómo el cuerpo se movió suave, con energía y volvió a la calma."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "¡Lo lograste! Moviste tu cuerpo, ganaste fuerza en las piernas y aprendiste a descansar. Sigue moviéndote todos los días."
+        }
+      ]
+    },
+    "en": {
+      "language": "en",
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "Strong legs! Today we are going to move our body with fun and safe exercises. Find a clear spot where you can move without bumping into anything. Tap the green button to start the workshop."
+        },
+        {
+          "key": "motricidad-instruccion",
+          "text": "Let’s wake up the body slowly. Tap a card, watch how the movement is done, and copy it until the time is up."
+        },
+        {
+          "key": "motricidad-completado",
+          "text": "You woke up your body with three slow, controlled movements."
+        },
+        {
+          "key": "motricidad-marcha-suave",
+          "text": "Great! Marching slowly wakes up the legs and gets the body ready to move."
+        },
+        {
+          "key": "motricidad-rodillas-suaves",
+          "text": "Great! Bending the knees slowly takes care of the joints before more active exercises."
+        },
+        {
+          "key": "motricidad-brazos-arriba",
+          "text": "Great! Raising the arms slowly and breathing calmly helps keep a steady posture."
+        },
+        {
+          "key": "resistencia-instruccion",
+          "text": "Now let’s move with more energy. Tap the button to start each round and follow the rhythm of the movement until the time is up."
+        },
+        {
+          "key": "resistencia-completado",
+          "text": "You finished three energy rounds keeping the rhythm without stopping."
+        },
+        {
+          "key": "resistencia-rodillas-arriba",
+          "text": "Great! With knees up the heart beats stronger and sends energy to the whole body."
+        },
+        {
+          "key": "resistencia-saltitos-suaves",
+          "text": "Great! Soft hops build stronger legs. Landing with bent knees protects them."
+        },
+        {
+          "key": "resistencia-pasos-laterales",
+          "text": "Great! Moving side to side without stopping trains endurance: the body lasts longer without getting tired."
+        },
+        {
+          "key": "pausa-hidratacion-instruccion",
+          "text": "After moving, the body asks for water. Plain water from a clean source is the best choice. Tap the button to take a calm sip."
+        },
+        {
+          "key": "pausa-hidratacion-completado",
+          "text": "You took a water break to get energy back and keep moving."
+        },
+        {
+          "key": "pausa-hidratacion-saber",
+          "text": "Great! When the body moves, water refreshes it and gives back the energy to keep going."
+        },
+        {
+          "key": "coordinacion-instruccion",
+          "text": "Watch the whole choreography: three movements in a row. You can watch it again as many times as you want. When you are ready, tap my turn and do it with your body."
+        },
+        {
+          "key": "coordinacion-completado",
+          "text": "You did three full choreographies with your body, movement by movement and in order."
+        },
+        {
+          "key": "coordinacion-saber",
+          "text": "Great! Remembering the steps and doing them in order trains coordination: body and mind work together."
+        },
+        {
+          "key": "recuperacion-instruccion",
+          "text": "After the effort, the body rests. Tap the breathing card and follow the bubble: take air in when it grows and let it out when it gets small. Then stretch slowly with the next cards, in order."
+        },
+        {
+          "key": "recuperacion-completado",
+          "text": "You calmed your body with deep breaths and gentle stretches."
+        },
+        {
+          "key": "recuperacion-respiracion",
+          "text": "Great! Breathing deep and slow tells the body it is time to rest."
+        },
+        {
+          "key": "recuperacion-estirar-alto",
+          "text": "Great! Stretching slowly relaxes the muscles after the effort."
+        },
+        {
+          "key": "recuperacion-abrir-brazos",
+          "text": "Great! Opening the arms and letting the air out helps the heart return to calm."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "The workshop is over. Time to remember how the body moved gently, with energy, and came back to calm."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "You did it! You moved your body, made your legs stronger, and learned to rest. Keep moving every day."
+        }
+      ]
+    }
+  }
+}

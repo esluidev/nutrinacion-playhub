@@ -1,0 +1,180 @@
+{
+  "locales": {
+    "es": {
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "¡Creciendo con buena postura! Hoy vamos a aprender a mover el cuerpo con la espalda firme y sin tensión. Busca un lugar libre y cómodo donde puedas moverte sin chocar con nada. Toca el botón verde para comenzar el taller."
+        },
+        {
+          "key": "motricidad-instruccion",
+          "text": "Vamos a jugar a quedarnos quietos. Toca el botón, ponte igual que el personaje y sostén la postura sin moverte mientras el anillo se llena. Espalda firme y respiración tranquila."
+        },
+        {
+          "key": "motricidad-completado",
+          "text": "Sostuviste las cuatro posturas como una estatua: tu espalda y tu equilibrio se hicieron más fuertes."
+        },
+        {
+          "key": "resistencia-instruccion",
+          "text": "Juguemos al semáforo. Luz verde: marcha rápido. Luz amarilla: marcha despacio. Luz roja: ¡quédate como estatua con la espalda firme! Toca el botón para empezar cada ronda."
+        },
+        {
+          "key": "resistencia-completado",
+          "text": "Jugaste tres rondas de semáforo moviéndote y frenando con control."
+        },
+        {
+          "key": "pausa-hidratacion-instruccion",
+          "text": "Después de moverse, el cuerpo pide agua. El agua natural de una fuente limpia refresca y devuelve la energía. Toca el botón para tomar un sorbo con calma."
+        },
+        {
+          "key": "pausa-hidratacion-completado",
+          "text": "Tomaste una pausa de agua para recuperar energía y seguir moviéndote."
+        },
+        {
+          "key": "coordinacion-instruccion",
+          "text": "Sigue al líder: el personaje irá cambiando de movimiento al ritmo y tú lo copias con tu cuerpo en vivo, sin parar. Cada ronda es más rápida. Toca el botón cuando estés listo."
+        },
+        {
+          "key": "coordinacion-completado",
+          "text": "Seguiste al líder en tres rondas cada vez más veloces sin perder el ritmo."
+        },
+        {
+          "key": "recuperacion-instruccion",
+          "text": "Vamos a crecer como un árbol. Toca el botón y respira con la burbuja: con cada respiración tu cuerpo crece un poco más, desde semilla hasta árbol. Sigue los movimientos del personaje, despacio."
+        },
+        {
+          "key": "recuperacion-completado",
+          "text": "Creciste como un árbol: respiraste hondo y estiraste todo el cuerpo hasta quedar en calma."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "El taller terminó. Es momento de recordar cómo el cuerpo se movió con buena postura, ganó energía y volvió a la calma."
+        },
+        {
+          "key": "motricidad-el-avion",
+          "text": "¡Muy bien! Con los brazos abiertos y quietos como un avión, los hombros y la espalda se hacen fuertes."
+        },
+        {
+          "key": "motricidad-la-montana",
+          "text": "¡Muy bien! Estirarte alto y quieto como una montaña alarga tu espalda y mejora tu postura."
+        },
+        {
+          "key": "motricidad-la-silla",
+          "text": "¡Muy bien! Sostener la silla invisible hace piernas fuertes que ayudan a tu espalda."
+        },
+        {
+          "key": "motricidad-el-flamenco",
+          "text": "¡Muy bien! Quedarte en un pie como un flamenco entrena el equilibrio que te mantiene derecho."
+        },
+        {
+          "key": "pausa-hidratacion-saber",
+          "text": "¡Muy bien! El agua natural mantiene el cuerpo fresco, fuerte y activo durante el ejercicio."
+        },
+        {
+          "key": "resistencia-saber",
+          "text": "¡Muy bien! Frenar como estatua con la espalda firme entrena el control del cuerpo: tú decides cuándo moverte y cuándo parar."
+        },
+        {
+          "key": "coordinacion-saber",
+          "text": "¡Muy bien! Cambiar de movimiento al instante entrena la coordinación: el cuerpo escucha, responde y no pierde la postura."
+        },
+        {
+          "key": "recuperacion-saber",
+          "text": "¡Muy bien! Crecer despacio como un árbol estira la espalda y calma el cuerpo después del ejercicio."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "¡Lo lograste! Moviste tu cuerpo con buena postura, ganaste energía y aprendiste a descansar. Cuida tu postura todos los días: al sentarte, al caminar y al jugar."
+        }
+      ]
+    },
+    "en": {
+      "lines": [
+        {
+          "key": "bienvenida-instruccion",
+          "text": "Growing with good posture! Today we are going to learn to move our body with a steady back and no tension. Find a clear, comfortable spot where you can move without bumping into anything. Tap the green button to start the workshop."
+        },
+        {
+          "key": "motricidad-instruccion",
+          "text": "Let’s play staying still. Tap the button, copy the character and hold the posture without moving while the ring fills up. Steady back and calm breathing."
+        },
+        {
+          "key": "motricidad-completado",
+          "text": "You held all four postures like a statue: your back and your balance got stronger."
+        },
+        {
+          "key": "resistencia-instruccion",
+          "text": "Let’s play traffic light. Green light: march fast. Yellow light: march slowly. Red light: freeze like a statue with a steady back! Tap the button to start each round."
+        },
+        {
+          "key": "resistencia-completado",
+          "text": "You played three traffic-light rounds moving and stopping with control."
+        },
+        {
+          "key": "pausa-hidratacion-instruccion",
+          "text": "After moving, the body asks for water. Plain water from a clean source refreshes you and gives your energy back. Tap the button to take a calm sip."
+        },
+        {
+          "key": "pausa-hidratacion-completado",
+          "text": "You took a water break to get energy back and keep moving."
+        },
+        {
+          "key": "coordinacion-instruccion",
+          "text": "Follow the leader: the character will keep changing movements to the beat and you copy it live with your body, without stopping. Each round gets faster. Tap the button when you are ready."
+        },
+        {
+          "key": "coordinacion-completado",
+          "text": "You followed the leader through three faster and faster rounds without losing the beat."
+        },
+        {
+          "key": "recuperacion-instruccion",
+          "text": "Let’s grow like a tree. Tap the button and breathe with the bubble: with every breath your body grows a little more, from a seed to a tree. Follow the character’s movements, slowly."
+        },
+        {
+          "key": "recuperacion-completado",
+          "text": "You grew like a tree: you breathed deeply and stretched your whole body until you were calm."
+        },
+        {
+          "key": "despedida-instruccion",
+          "text": "The workshop is over. Time to remember how the body moved with good posture, gained energy, and came back to calm."
+        },
+        {
+          "key": "motricidad-el-avion",
+          "text": "Great! With arms open and still like an airplane, the shoulders and back get strong."
+        },
+        {
+          "key": "motricidad-la-montana",
+          "text": "Great! Stretching tall and still like a mountain lengthens your back and improves your posture."
+        },
+        {
+          "key": "motricidad-la-silla",
+          "text": "Great! Holding the invisible chair builds strong legs that help your back."
+        },
+        {
+          "key": "motricidad-el-flamenco",
+          "text": "Great! Standing on one foot like a flamingo trains the balance that keeps you upright."
+        },
+        {
+          "key": "pausa-hidratacion-saber",
+          "text": "Great! Plain water keeps the body fresh, strong and active during exercise."
+        },
+        {
+          "key": "resistencia-saber",
+          "text": "Great! Freezing like a statue with a steady back trains body control: you decide when to move and when to stop."
+        },
+        {
+          "key": "coordinacion-saber",
+          "text": "Great! Switching movements right away trains coordination: the body listens, responds and keeps its posture."
+        },
+        {
+          "key": "recuperacion-saber",
+          "text": "Great! Growing slowly like a tree stretches the back and calms the body after exercise."
+        },
+        {
+          "key": "despedida-cierre",
+          "text": "You did it! You moved your body with good posture, gained energy, and learned to rest. Take care of your posture every day: sitting, walking and playing."
+        }
+      ]
+    }
+  }
+}
