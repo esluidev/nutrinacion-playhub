@@ -8,12 +8,22 @@ Fuentes display redondeadas (tipo Fredoka) para títulos; cuerpo legible (tipo N
 
 ## admin
 
-Limpia, profesional, amigable pero no infantil.
+Limpia, profesional, amigable pero no infantil. **Fuente de verdad visual:
+`docs/Admin Rediseño.html`** (mock completo de las pantallas con los valores exactos);
+los tokens viven en `apps/admin/tailwind.config.ts` + `app/assets/css/main.css`.
 
-- Color de marca: verde (tipo `#22c55e` — confirmar el hex en el código).
-- Layout con sidebar de navegación + header con búsqueda y usuario.
-- Tarjetas redondeadas con color por categoría en storyboards.
-- Planificador kanban: columnas por día, color por estado/categoría.
+- Color de marca: verde `#43b435` (oscuro `#1a2e22`); neutrales verdosos vía la escala `gray` remapeada.
+- **Dos familias de gris**: neutrales verdosos para texto/bordes del contenido, y grises **fríos**
+  (`#f4f5f7`/`#e9ebee`, la familia del fondo de página) para el chrome del header y los controles.
+- **Regla global de campos**: todo control de formulario sobre tarjeta blanca (input, textarea,
+  select) lleva relleno `#f4f5f7`, borde `#dfe3e0`, radio 11 y foco verde con fondo blanco.
+  Vive en `.input`/`.input-sm` de `main.css` — nunca estilos por pantalla. El autofill del
+  navegador está neutralizado globalmente.
+- Layout con sidebar de navegación + header con breadcrumb, búsqueda y usuario; título grande en el
+  contenido, con `max-w-[1440px]` (el diseño es a 1440; sin tope se desparrama en monitores anchos).
+- Tarjetas redondeadas (18px) con color por categoría en storyboards.
+- Planificador: vista semanal de columnas tintadas por día + vista mensual, color por estado/categoría.
+- El switcher de contexto **solo elige contexto** — ninguna acción (crear/editar) vive dentro.
 
 ## educators (StoryPlay)
 

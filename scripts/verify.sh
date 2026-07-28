@@ -58,8 +58,8 @@ run_flutter_app() {
   cd "$ROOT"
 }
 
-# admin (Nuxt) — descomentar/ajustar cuando existan los scripts en package.json
-# run_node_app admin typecheck lint test build
+# admin (Nuxt) — typecheck + tests (vitest) + build
+run_node_app admin typecheck test build
 
 # studio (Nuxt)
 run_node_app studio typecheck build

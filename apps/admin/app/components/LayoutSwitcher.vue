@@ -1,20 +1,35 @@
 <template>
   <!-- Elegir contexto ≠ navegar dentro del contexto: por eso vive aquí arriba y no en el menú.
-       El panel es además el "hub": de un vistazo se ve a qué tienes acceso y con qué rol. -->
+       El panel es además el "hub": de un vistazo se ve a qué tienes acceso y con qué rol.
+       REGLAS: el switcher SOLO elige contexto — ninguna acción (crear/editar) vive aquí.
+       El trigger refleja el TIPO actual (lo dicta la ruta, vía useContexto). Con un solo
+       destino no hay nada que elegir: queda como etiqueta estática (sin chevron ni panel). -->
   <RekaPopoverRoot v-model:open="abierto">
     <RekaPopoverTrigger as-child>
       <button
-        class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-gray-100 transition-colors text-left"
-        :title="t('ctx.switch')"
+        :disabled="esEstatico"
+        :class="[
+          'w-full flex items-center rounded-[13px] bg-brand-bg text-left transition-colors',
+          esEstatico ? 'cursor-default' : 'hover:bg-[#e9ebee]',
+          isCollapsed ? 'lg:justify-center lg:gap-0 lg:px-0 lg:py-2 gap-[11px] px-3 py-[11px]' : 'gap-[11px] px-3 py-[11px]',
+        ]"
+        :title="esEstatico ? undefined : t('ctx.switch')"
       >
-        <div class="w-7 h-7 rounded-lg bg-brand-primary/10 text-brand-primary-600 flex items-center justify-center shrink-0 font-bold text-xs">
+        <!-- El morado de Platform vive SOLO aquí: es la pista de que estás en otro módulo -->
+        <div
+          class="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 font-extrabold text-sm"
+          :class="tipo === 'platform' ? 'bg-brand-purple-50 text-brand-purple-600' : 'bg-brand-primary-100 text-brand-primary-800'"
+        >
           {{ inicial }}
         </div>
         <div v-if="!isCollapsed" class="min-w-0 flex-1">
-          <p class="text-[13px] font-semibold text-brand-dark leading-tight truncate">{{ titulo }}</p>
-          <p class="text-[11px] text-gray-400 leading-tight truncate">{{ subtitulo }}</p>
+          <p
+            class="text-[9.5px] font-extrabold tracking-[0.1em] uppercase leading-tight truncate"
+            :class="tipo === 'platform' ? 'text-brand-purple-300' : 'text-gray-400'"
+          >{{ subtitulo }}</p>
+          <p class="text-[14px] font-bold text-brand-dark leading-[1.2] truncate mt-px">{{ titulo }}</p>
         </div>
-        <svg v-if="!isCollapsed" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg v-if="!isCollapsed && !esEstatico" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15 12 18.75 15.75 15M8.25 9 12 5.25 15.75 9" />
         </svg>
       </button>
@@ -25,57 +40,97 @@
         side="bottom"
         align="start"
         :side-offset="6"
-        class="w-72 max-h-[70vh] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-1.5 z-50 data-[state=open]:animate-in"
+        class="w-[236px] max-h-[70vh] overflow-y-auto scrollbar-thin bg-white rounded-[14px] border border-[#e0e6e2] shadow-menu p-1.5 z-50"
       >
-        <!-- Platform no es un contexto más: es otro módulo (la consola del operador) -->
+        <!-- Platform no es una org más: es otro módulo (la consola del operador) -->
         <template v-if="esSuperadmin">
           <button
-            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
-            :class="rutaActual.startsWith('/platform') ? 'text-brand-purple font-semibold' : 'text-gray-700'"
+            :class="[
+              'w-full flex items-center gap-2.5 px-3 py-[9px] rounded-[10px] text-[13px] transition-colors',
+              tipo === 'platform' ? 'bg-brand-purple-50 text-brand-purple-700 font-extrabold' : 'text-gray-700 font-bold hover:bg-brand-purple-50/60',
+            ]"
             @click="seleccionarPlatform"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand-purple-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.66-6.66-1.42 1.42M7.76 16.24l-1.42 1.42m0-11.32 1.42 1.42m8.48 8.48 1.42 1.42" />
             </svg>
             Platform
-            <span class="ml-auto text-[10px] text-gray-400">{{ t('ctx.operator') }}</span>
+            <span class="ml-auto text-[9.5px] font-extrabold tracking-[0.1em] text-brand-purple-300 uppercase">{{ t('ctx.operator') }}</span>
           </button>
-          <div v-if="orgs.length" class="my-1.5 border-t border-gray-100" />
+          <div v-if="orgs.length" class="h-px bg-[#f0f2f0] my-1.5 mx-1" />
         </template>
 
         <!-- Una sección por organización; sus comunidades dentro. Así se ve que la comunidad
-             vive DENTRO de la org, que es como está el modelo. -->
-        <div v-for="o in orgs" :key="o.id" class="px-1">
-          <div class="flex items-center gap-2 px-2 pt-1.5 pb-1">
-            <p class="text-[11px] font-bold tracking-wide text-gray-400 uppercase truncate">{{ o.nombre }}</p>
-            <span class="ml-auto text-[10px] text-gray-300 shrink-0">
+             vive DENTRO de la org, que es como está el modelo. La cabecera es SOLO etiqueta;
+             lo elegible siempre es una FILA (la org, si la administras, y sus comunidades). -->
+        <template v-for="o in orgs" :key="o.id">
+          <div class="w-full flex items-center justify-between gap-2 px-3 pt-2 pb-[5px]">
+            <span class="text-[10px] font-extrabold tracking-[0.12em] uppercase truncate text-gray-400">{{ o.nombre }}</span>
+            <span class="text-[10px] font-bold text-gray-300 shrink-0">
               {{ o.esAdmin ? t('ctx.admin') : t('ctx.collab') }}
             </span>
           </div>
 
+          <!-- La org como contexto: una opción con el mismo lenguaje que las comunidades -->
           <button
-            v-for="c in o.comunidades"
-            :key="c.id"
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
-            :class="esActiva(o.id, c.id) ? 'text-brand-primary-600 font-semibold bg-brand-primary/5' : 'text-gray-700'"
-            @click="seleccionarComunidad(o.id, c.id)"
+            v-if="o.esAdmin"
+            :class="[
+              'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] transition-colors',
+              esOrgActiva(o.id) ? 'bg-brand-primary-50' : 'hover:bg-gray-50',
+            ]"
+            :title="t('ctx.goOrg')"
+            @click="seleccionarOrg(o.id)"
           >
-            <span class="truncate">{{ c.nombre }}</span>
-            <svg v-if="esActiva(o.id, c.id)" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <div
+              :class="[
+                'w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0',
+                esOrgActiva(o.id) ? 'bg-brand-primary-100 text-brand-primary-800' : 'bg-[#eef0f2] text-[#5a6b5f]',
+              ]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
+              </svg>
+            </div>
+            <span
+              :class="[
+                'text-[13px] truncate',
+                esOrgActiva(o.id) ? 'font-extrabold text-brand-primary-800' : 'font-bold text-gray-700',
+              ]"
+            >{{ t('ctx.org') }}</span>
+            <svg v-if="esOrgActiva(o.id)" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] ml-auto shrink-0 text-brand-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
           </button>
 
-          <!-- Org que administras sin comunidades: el único destino útil es crear la primera -->
           <button
-            v-if="o.esAdmin && !o.comunidades.length"
-            class="w-full text-left px-2 py-1.5 rounded-lg text-xs text-brand-primary-600 font-semibold hover:bg-gray-50 transition-colors"
-            @click="seleccionarOrg(o.id)"
+            v-for="c in o.comunidades"
+            :key="c.id"
+            :class="[
+              'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] transition-colors',
+              esActiva(o.id, c.id) ? 'bg-brand-primary-50' : 'hover:bg-gray-50',
+            ]"
+            @click="seleccionarComunidad(o.id, c.id)"
           >
-            {{ t('ctx.createFirst') }}
+            <div
+              :class="[
+                'w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0 font-extrabold text-[11px]',
+                esActiva(o.id, c.id) ? 'bg-brand-primary-100 text-brand-primary-800' : 'bg-[#eef0f2] text-[#5a6b5f]',
+              ]"
+            >
+              {{ c.nombre.charAt(0).toUpperCase() }}
+            </div>
+            <span
+              :class="[
+                'text-[13px] truncate',
+                esActiva(o.id, c.id) ? 'font-extrabold text-brand-primary-800' : 'font-bold text-gray-700',
+              ]"
+            >{{ c.nombre }}</span>
+            <svg v-if="esActiva(o.id, c.id)" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] ml-auto shrink-0 text-brand-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
           </button>
-        </div>
+        </template>
 
         <p v-if="!orgs.length && !esSuperadmin" class="px-3 py-4 text-xs text-gray-400 text-center">
           {{ t('ctx.noAccess') }}
@@ -87,29 +142,32 @@
 
 <script setup lang="ts">
 const { t } = useT()
-const route = useRoute()
 const { isCollapsed } = useSidebar()
-const { orgs, esSuperadmin, orgActiva, comunidadActiva, setContexto } = useContexto()
+const { orgs, destinos, tipo, esSuperadmin, orgActiva, comunidadActiva, setContexto, setOrg } = useContexto()
 
 const abierto = ref(false)
-const rutaActual = computed(() => route.path)
 
-// En /platform el switcher muestra el módulo, no el contexto: es donde estás parado.
-const enPlatform = computed(() => rutaActual.value.startsWith('/platform'))
+// Con un solo destino el contexto no se elige: el trigger es solo una etiqueta de dónde
+// estás. (Un botón disabled no abre el popover — Reka no recibe el click.)
+const esEstatico = computed(() => destinos.value.length <= 1)
 
 const titulo = computed(() => {
-  if (enPlatform.value) return 'Platform'
-  return comunidadActiva.value?.nombre ?? orgActiva.value?.nombre ?? t('ctx.pick')
+  if (tipo.value === 'platform') return 'Platform'
+  if (tipo.value === 'comunidad' && comunidadActiva.value) return comunidadActiva.value.nombre
+  return orgActiva.value?.nombre ?? t('ctx.pick')
 })
 const subtitulo = computed(() => {
-  if (enPlatform.value) return t('ctx.operator')
-  if (comunidadActiva.value) return orgActiva.value?.nombre ?? ''
-  return orgActiva.value ? t('ctx.noCommunity') : ''
+  if (tipo.value === 'platform') return t('ctx.operator')
+  if (tipo.value === 'comunidad' && comunidadActiva.value) return orgActiva.value?.nombre ?? ''
+  return orgActiva.value ? t('ctx.org') : ''
 })
 const inicial = computed(() => (titulo.value || '?').charAt(0).toUpperCase())
 
 function esActiva(oid: number, cid: number) {
-  return !enPlatform.value && orgActiva.value?.id === oid && comunidadActiva.value?.id === cid
+  return tipo.value === 'comunidad' && orgActiva.value?.id === oid && comunidadActiva.value?.id === cid
+}
+function esOrgActiva(oid: number) {
+  return tipo.value === 'organizacion' && orgActiva.value?.id === oid
 }
 
 function seleccionarPlatform() {
@@ -121,9 +179,11 @@ function seleccionarComunidad(oid: number, cid: number) {
   setContexto(oid, cid)
   navigateTo('/dashboard')
 }
+// Elegir la org = contexto de nivel organización; su home es el detalle de la org. La
+// comunidad recordada se conserva (setOrg): cambiar de contexto no destruye estado.
 function seleccionarOrg(oid: number) {
   abierto.value = false
-  setContexto(oid, null)
-  navigateTo('/organizacion/comunidades')
+  setOrg(oid)
+  navigateTo('/organizacion')
 }
 </script>

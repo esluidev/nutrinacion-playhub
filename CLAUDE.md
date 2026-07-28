@@ -51,9 +51,12 @@ La carpeta del proyecto en Obsidian se monta como `obsidian/` (symlink al vault 
    - Leer para saber el estado reciente, las últimas decisiones y qué cambió.
    - Añadir entradas después de trabajo relevante, decisiones, migraciones o cambios de contexto.
 
-3. `tasks/` — trabajo ejecutable.
-   - Usarlo para tareas concretas que deban seguirse y cerrarse.
-   - Cada tarea debe ser autocontenida y apuntar al contexto del proyecto cuando haga falta.
+3. `obsidian/Tareas/` — trabajo ejecutable. Vive dentro del vault del proyecto.
+   - Cada tarea es un `.md` autocontenido, con el frontmatter del vault
+     (`proyecto: nutrinacion`, `estado`, etc.) y el cuerpo en cuatro secciones
+     (`## Spec`, `## Plan`, `## Tareas`, `## Log`).
+   - Antes de arrancar o tomar notas: leer `Ficha.md`, escanear `Actividad.md`
+     y revisar `Notas/` y `Docs/` para entender decisiones vigentes del proyecto.
 
 4. `obsidian/Notas/` — notas de trabajo y contexto liviano.
    - Usarlo para investigación, hallazgos rápidos, recordatorios, edge cases o notas demasiado pequeñas para un documento completo.
@@ -70,6 +73,18 @@ Usar la memoria/actividad global solo cuando el trabajo cruza varios proyectos o
 - `/Users/luis/Library/Mobile Documents/com~apple~CloudDocs/Obsidian/Eslui/Proyectos/Sistema de Trabajo/Memoria.md`
 - `/Users/luis/Library/Mobile Documents/com~apple~CloudDocs/Obsidian/Eslui/Proyectos/Sistema de Trabajo/Actividad.md`
 
+## Protocolo de inicio de sesión
+
+Al iniciar cualquier sesión de Claude Code en este repo:
+
+1. Confirmar la raíz del repo con `pwd`.
+2. Correr `git status --short` y conservar el estado inicial en contexto.
+3. Confirmar que `obsidian/` existe y apunta al vault del proyecto.
+4. Leer `obsidian/Ficha.md` y `obsidian/Actividad.md` antes de implementar.
+5. Si se trabaja sobre una tarea, leer el archivo correspondiente en `obsidian/Tareas/`.
+6. Leer solo las notas/docs relevantes en `obsidian/Notas/`, `obsidian/Docs/` y `docs/` según el área tocada.
+7. No iniciar implementación no trivial hasta que la tarea tenga `## Plan` con `Leer:` / `Tocar:` o una lista explícita equivalente de archivos a leer y tocar.
+
 ## Documentación (leer solo lo que toques)
 
 - Arquitectura y convenciones: `docs/architecture.md` · Glosario: `docs/glossary.md`
@@ -78,11 +93,19 @@ Usar la memoria/actividad global solo cuando el trabajo cruza varios proyectos o
 - Backend/datos: `docs/backend.md` · Diseño: `docs/design.md`
 
 ## Tareas
-Viven en `tasks/` (vault de Obsidian). Un `.md` por tarea. Frontmatter: `proyecto: nutrinacion`
-+ `estado:`. Nombre: `NNN-<app>-<slug>` — número de secuencia de **3 dígitos** (`001`…) primero,
-para orden global de progreso, luego prefijo de app (`admin-`, `educators-`, `studio-`,
-`shared-`). El número se asigna al crear (siguiente correlativo), es estable y no se reordena ni
-reutiliza. Ej.: `003-studio-storyboard-detalle-editable.md`.
+
+Las tareas viven dentro del vault del proyecto, en `obsidian/Tareas/`
+(el symlink `obsidian/` apunta a `Eslui/Proyectos/Nutrinacion Workshops`).
+Un `.md` por tarea. Frontmatter: `proyecto: nutrinacion` + `estado:`.
+Nombre: `NNN-<app>-<slug>` — número de secuencia de **3 dígitos** (`001`…)
+primero, para orden global de progreso, luego prefijo de app (`admin-`,
+`educators-`, `studio-`, `shared-`). El número se asigna al crear (siguiente
+correlativo), es estable y no se reordena ni reutiliza. Ej.:
+`003-studio-storyboard-detalle-editable.md`.
+
+El agente **vive dentro del vault del proyecto**: antes de crear, arrancar o
+cerrar una tarea, leer `obsidian/Ficha.md` y `obsidian/Actividad.md`, y
+revisar lo relevante en `obsidian/Notas/` y `obsidian/Docs/`.
 
 Cuatro secciones en el cuerpo:
 
@@ -104,6 +127,22 @@ Ciclo:
 
 Estados: `backlog` → `pendiente` → `haciendo` → `revision` → `finalizada`.
 `finalizada` la marca solo el usuario, nunca el agente.
+
+## Handoff Git — obligatorio
+
+Antes de decir que una tarea está lista para revisión:
+
+1. Correr `./scripts/verify.sh` desde la raíz del repo.
+2. Correr `git status --short` y revisar el diff.
+3. Commitear todos los cambios relevantes de código/docs usando la convención de commits del proyecto.
+4. Agregar al `## Log` de la tarea:
+   - timestamp
+   - salida real de `verify.sh`
+   - `git status --short` final
+   - hash del commit
+5. Pasar la tarea a `revision` solo después de registrar la verificación y el commit.
+6. Nunca marcar `finalizada`; eso lo hace únicamente el usuario tras QA manual.
+7. Si no se puede commitear, no decir que está lista. Dejar la tarea en `haciendo` o claramente bloqueada y documentar el motivo en `## Log`.
 
 ## Verificación y tests — obligatorio antes de cerrar
 

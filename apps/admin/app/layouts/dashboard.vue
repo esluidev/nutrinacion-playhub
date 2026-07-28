@@ -1,15 +1,19 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-brand-bg">
     <LayoutSidebar :is-open="sidebarOpen" :is-collapsed="isCollapsed" @close="sidebarOpen = false" />
 
     <div :class="[
-      'flex flex-col min-h-screen transition-all duration-300 ease-in-out',
-      isCollapsed ? 'lg:pl-16' : 'lg:pl-64',
+      'flex flex-col min-h-screen transition-all duration-200 ease-in-out',
+      isCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64',
     ]">
       <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
-      <main class="flex-1 p-4 lg:p-6">
-        <slot />
+      <!-- max-w: el mock está diseñado a 1440; sin tope, en monitores anchos el
+           contenido se desparrama y el diseño se ve chico y disperso. -->
+      <main class="flex-1 p-5 lg:p-8">
+        <div class="max-w-[1440px] mx-auto w-full">
+          <slot />
+        </div>
       </main>
     </div>
   </div>

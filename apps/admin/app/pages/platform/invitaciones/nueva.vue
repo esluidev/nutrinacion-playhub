@@ -1,5 +1,6 @@
 <template>
-  <div class="max-w-xl mx-auto">
+  <div class="max-w-[640px] mx-auto">
+    <UiPageHeader :title="t('platform.invs.newTitle')" />
     <form class="card p-6 space-y-4" @submit.prevent="handleSubmit">
       <div class="space-y-1.5">
         <label class="block text-sm font-semibold text-gray-700">{{ t('platform.invs.org') }}</label>

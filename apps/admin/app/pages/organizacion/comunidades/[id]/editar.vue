@@ -1,8 +1,9 @@
 <template>
-  <div class="max-w-3xl mx-auto">
+  <div class="max-w-[640px] mx-auto">
+    <UiPageHeader :title="t('coms.editTitle')" />
     <div v-if="loading" class="card p-10 text-center text-sm text-gray-400">{{ t('common.loading') }}</div>
 
-    <form v-else class="space-y-5" @submit.prevent="handleSave">
+    <form v-else class="space-y-[18px]" @submit.prevent="handleSave">
       <div class="card p-6 space-y-4">
         <h2 class="section-title">{{ t('coms.section') }}</h2>
 

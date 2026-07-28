@@ -1,7 +1,8 @@
 <template>
-  <div :class="['relative', sizeClass]">
+  <!-- Control de toolbar (mock): blanco con borde, no el estilo tinte de formulario. -->
+  <div :class="['flex items-center gap-2 bg-white border border-gray-200 rounded-[10px] px-3.5 h-10 box-border focus-within:border-brand-primary-200 transition-colors', sizeClass]">
     <svg
-      class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+      class="w-[15px] h-[15px] text-gray-400 shrink-0 pointer-events-none"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -14,7 +15,7 @@
       :value="modelValue"
       type="text"
       :placeholder="placeholder"
-      class="input pl-10"
+      class="w-full bg-transparent border-none outline-none text-[13px] text-gray-800 placeholder-gray-400"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     >
   </div>
@@ -28,7 +29,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Buscar...',
+  placeholder: 'Buscar…',
   maxWidth: 'sm',
 })
 

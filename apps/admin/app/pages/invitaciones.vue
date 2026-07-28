@@ -1,5 +1,7 @@
 <template>
   <div>
+    <UiPageHeader :title="t('inbox.title')" :description="t('inbox.desc')" />
+
     <!-- Pendientes: lo accionable primero -->
     <div class="mb-8">
       <h2 class="section-title mb-3">{{ t('inbox.pending') }}</h2>

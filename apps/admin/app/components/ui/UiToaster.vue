@@ -7,21 +7,21 @@
       :key="item.id"
       :duration="item.duracion"
       :class="[
-        'pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 shadow-lg bg-white',
+        'pointer-events-auto flex items-start gap-3 rounded-[14px] p-3.5 shadow-lift text-white',
         'data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2 data-[state=open]:fade-in',
         'data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-2',
         'data-[swipe=end]:animate-out data-[swipe=end]:fade-out',
-        estilos[item.variante].borde,
+        estilos[item.variante].bg,
       ]"
       @update:open="(abierto: boolean) => !abierto && remove(item.id)"
     >
-      <span :class="['mt-0.5 shrink-0', estilos[item.variante].icono]">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+      <span class="w-8 h-8 rounded-[10px] bg-white/20 text-white flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" :d="estilos[item.variante].path" />
         </svg>
       </span>
 
-      <RekaToastDescription class="flex-1 text-sm text-brand-dark leading-snug pt-0.5">
+      <RekaToastDescription class="flex-1 text-[13px] font-semibold text-white/95 leading-snug pt-1">
         {{ item.mensaje }}
       </RekaToastDescription>
 
@@ -31,15 +31,15 @@
         as-child
       >
         <button
-          class="shrink-0 text-xs font-bold text-brand-primary-600 hover:underline pt-0.5"
+          class="shrink-0 text-xs font-bold text-white underline pt-1"
           @click="item.accion.onClick()"
         >
           {{ item.accion.label }}
         </button>
       </RekaToastAction>
 
-      <RekaToastClose class="shrink-0 text-gray-300 hover:text-gray-500 transition-colors" :aria-label="t('common.close')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <RekaToastClose class="shrink-0 w-6 h-6 rounded-[8px] flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors" :aria-label="t('common.close')">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </RekaToastClose>
@@ -58,25 +58,21 @@ import type { ToastVariante } from '~/composables/useToast'
 const { t } = useT()
 const { items, remove } = useToast()
 
-const estilos: Record<ToastVariante, { borde: string, icono: string, path: string }> = {
+const estilos: Record<ToastVariante, { bg: string, path: string }> = {
   success: {
-    borde: 'border-brand-primary/30',
-    icono: 'text-brand-primary-600',
+    bg: 'bg-[#2f9426]',
     path: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   },
   error: {
-    borde: 'border-red-200',
-    icono: 'text-red-500',
+    bg: 'bg-[#dc2626]',
     path: 'M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z',
   },
   warning: {
-    borde: 'border-amber-200',
-    icono: 'text-amber-500',
+    bg: 'bg-[#d97706]',
     path: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z',
   },
   info: {
-    borde: 'border-blue-200',
-    icono: 'text-blue-500',
+    bg: 'bg-[#2563eb]',
     path: 'm11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z',
   },
 }

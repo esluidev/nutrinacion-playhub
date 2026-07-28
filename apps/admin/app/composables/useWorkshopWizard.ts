@@ -1,4 +1,6 @@
 export type EducatorSelectionMode = 'individual' | 'group'
+export type WizardModalidad = 'PRESENCIAL' | 'ASIGNADO'
+export type WizardEstado = 'BORRADOR' | 'PROGRAMADO'
 
 export interface WizardState {
   storyboardId: number | null
@@ -12,6 +14,8 @@ export interface WizardState {
   date: string
   timeStart: string
   timeEnd: string
+  modalidad: WizardModalidad
+  estado: WizardEstado
 }
 
 export function useWorkshopWizard() {
@@ -40,6 +44,8 @@ export function useWorkshopWizard() {
       date: queryDate,
       timeStart: '',
       timeEnd: '',
+      modalidad: 'PRESENCIAL' as WizardModalidad,
+      estado: 'PROGRAMADO' as WizardEstado,
     }
   })
 
@@ -107,7 +113,7 @@ export function useWorkshopWizard() {
   function calculateEndTime(startTime: string, duration: string): string {
     if (!startTime) return ''
     const minutes = parseInt(duration) || 30
-    const [h, m] = startTime.split(':').map(Number)
+    const [h = 0, m = 0] = startTime.split(':').map(Number)
     const totalMin = h * 60 + m + minutes
     const endH = Math.floor(totalMin / 60) % 24
     const endM = totalMin % 60
@@ -126,8 +132,8 @@ export function useWorkshopWizard() {
 
   const steps = [
     { id: 1, label: 'Storyboard' },
-    { id: 2, label: 'Educador' },
-    { id: 3, label: 'Horario' },
+    { id: 2, label: 'Educadores' },
+    { id: 3, label: 'Detalles' },
     { id: 4, label: 'Resumen' },
   ]
 
@@ -157,9 +163,41 @@ export function useWorkshopWizard() {
   }
 
   async function submit() {
+    if (!state.value.storyboardId) return
     isSubmitting.value = true
-    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Una asignación por educador; si vino de un grupo, se recuerda el grupo. Grupos con
+    // miembros solapados no duplican asignaciones (unique en la base, y aquí se dedupe).
+    const crudas = state.value.educatorMode === 'group'
+      ? selectedGroups.value.flatMap(g => getGroupMembers(g.nombre).map(m => ({ educadorId: m.id, grupoId: g.id })))
+      : state.value.educatorIds.map(id => ({ educadorId: id, grupoId: null as number | null }))
+    const vistos = new Set<number>()
+    const asignaciones = crudas.filter((a) => {
+      if (vistos.has(a.educadorId)) return false
+      vistos.add(a.educadorId)
+      return true
+    })
+
+    const { createTaller } = useWorkshops()
+    const { error } = await createTaller({
+      titulo: state.value.title,
+      storyboardId: state.value.storyboardId,
+      fecha: state.value.date,
+      horaInicio: state.value.timeStart,
+      horaFin: state.value.timeEnd,
+      ubicacion: state.value.location,
+      notas: state.value.notes,
+      capacidad: state.value.capacity ? Number(state.value.capacity) : null,
+      modalidad: state.value.modalidad,
+      estado: state.value.estado,
+      asignaciones,
+    })
+
     isSubmitting.value = false
+    if (error) {
+      useToast().toast.error(error)
+      return
+    }
     isSuccess.value = true
   }
 
@@ -182,12 +220,14 @@ export function useWorkshopWizard() {
       date: queryDate,
       timeStart: '',
       timeEnd: '',
+      modalidad: 'PRESENCIAL',
+      estado: 'PROGRAMADO',
     }
   }
 
   function formatDateLong(dateStr: string): string {
     if (!dateStr) return '--'
-    const [y, m, d] = dateStr.split('-').map(Number)
+    const [y = 0, m = 1, d = 1] = dateStr.split('-').map(Number)
     const date = new Date(y, m - 1, d)
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']

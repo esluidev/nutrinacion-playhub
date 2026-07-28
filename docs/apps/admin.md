@@ -11,9 +11,9 @@ Aplicación web administrativa donde las comunidades gestionan su operación. St
 > storyboards) sigue con **datos estáticos** hasta migrarse (tarea 013).
 >
 > **Stack UI:** Tailwind + design system propio (`Ui*`) + **Reka UI** (headless: solo comportamiento y
-> accesibilidad; los estilos son nuestros). ⚠️ El **UI/UX quedó pobre** y se va a rehacer sobre un
-> **template** por elegir — pendientes: escala tipográfica, sidebar, y sacar la acción "crear
-> comunidad" del switcher (un switcher elige contexto, no ejecuta acciones). Ver tarea 013.
+> accesibilidad; los estilos son nuestros). El rediseño visual está aplicado desde
+> **`docs/Admin Rediseño.html`** — ese mock es la **fuente de verdad visual** de la app (tokens,
+> layouts y medidas); ante dudas de estilo, leerlo antes de inventar.
 
 ## Audiencia
 

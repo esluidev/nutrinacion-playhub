@@ -1,3 +1,5 @@
+import type { ActividadItem, AtencionItem, LicenciaLigera, OrgLigera } from '~/utils/platformResumen'
+
 // Capa de acceso a datos de la consola del superadmin (/platform).
 // Todo pasa por Supabase. El acceso a /platform lo gatea el middleware (perfiles.superadmin);
 // el RLS es simple (usuario autenticado) y no filtra por organización.
@@ -65,6 +67,22 @@ export interface DatosLicencia {
   notas: string
 }
 
+// Vista rápida del estado de la plataforma (dashboard de entrada del operador).
+// Las reglas de negocio (vigencia, atención, actividad) viven en utils/platformResumen.
+export interface ResumenPlatform {
+  organizaciones: number
+  orgsConLicenciaVigente: number
+  comunidades: number
+  educadores: number
+  talleres: number
+  talleresProgramados: number
+  licencias: { vigentes: number, trials: number, porVencer: number, vencidas: number }
+  atencion: AtencionItem[]
+  actividad: ActividadItem[]
+  invitacionesPendientes: number
+  invitacionesRecientes: { id: number, email: string | null, created_at: string, organizaciones: { nombre: string } | null }[]
+}
+
 function rango(page: number): [number, number] {
   const from = (page - 1) * PAGE_SIZE
   return [from, from + PAGE_SIZE - 1]
@@ -83,6 +101,51 @@ function normalizarOrg(p: DatosOrganizacion) {
 
 export function usePlatform() {
   const supabase = useSupabaseClient()
+
+  // ── Dashboard del operador ──────────────────────────────────────────────────
+  // Orgs y licencias se traen COMPLETAS pero ligeras (al scale objetivo, ~100 orgs):
+  // el desglose y la lista de atención se computan con las reglas puras de utils.
+  async function getResumenPlatform(): Promise<ResumenPlatform> {
+    const head = { count: 'exact' as const, head: true }
+    const hoy = new Date().toISOString().slice(0, 10)
+
+    const [orgsRes, licRes, educadores, talleres, programados, invPendientes, invRecientes] = await Promise.all([
+      supabase
+        .from('organizaciones')
+        .select('id, nombre, created_at, comunidades ( id, nombre, created_at ), administradores:organizacion_administradores ( id )'),
+      supabase
+        .from('licencias')
+        .select('id, estado, fecha_inicio, fecha_fin, max_comunidades, organizacion_id, created_at'),
+      supabase.from('educadores').select('id', head).is('deleted_at', null),
+      supabase.from('talleres').select('id', head),
+      supabase.from('talleres').select('id', head).eq('estado', 'PROGRAMADO'),
+      supabase.from('invitaciones').select('id', head).eq('role', 'ADMIN').eq('estado', 'PENDIENTE'),
+      supabase
+        .from('invitaciones')
+        .select('id, email, created_at, organizaciones!inner ( nombre )')
+        .eq('role', 'ADMIN')
+        .eq('estado', 'PENDIENTE')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ])
+
+    const orgs = (orgsRes.data as unknown as OrgLigera[] | null) ?? []
+    const licencias = (licRes.data as LicenciaLigera[] | null) ?? []
+
+    return {
+      organizaciones: orgs.length,
+      orgsConLicenciaVigente: orgs.filter(o => licenciaVigenteDe(licencias, o.id, hoy)).length,
+      comunidades: orgs.reduce((total, o) => total + o.comunidades.length, 0),
+      educadores: educadores.count ?? 0,
+      talleres: talleres.count ?? 0,
+      talleresProgramados: programados.count ?? 0,
+      licencias: resumenLicencias(licencias, hoy),
+      atencion: construirAtencion(orgs, licencias, hoy),
+      actividad: construirActividad(orgs),
+      invitacionesPendientes: invPendientes.count ?? 0,
+      invitacionesRecientes: (invRecientes.data as ResumenPlatform['invitacionesRecientes'] | null) ?? [],
+    }
+  }
 
   // ── Catálogo ──────────────────────────────────────────────────────────────
   async function listTiposOrganizacion() {
@@ -174,6 +237,16 @@ export function usePlatform() {
     const { error } = await supabase
       .from('organizaciones')
       .update(normalizarOrg(payload))
+      .eq('id', id)
+    return { error: error?.message ?? null }
+  }
+
+  // Las FK (comunidades, licencias, admins) son restrict: si tiene datos colgando,
+  // Postgres lo rechaza y el error se muestra tal cual — no hay borrado en cascada.
+  async function deleteOrganizacion(id: number) {
+    const { error } = await supabase
+      .from('organizaciones')
+      .delete()
       .eq('id', id)
     return { error: error?.message ?? null }
   }
@@ -280,6 +353,7 @@ export function usePlatform() {
   }
 
   return {
+    getResumenPlatform,
     listTiposOrganizacion,
     listPaises,
     listOrganizacionesSimple,
@@ -287,6 +361,7 @@ export function usePlatform() {
     getOrganizacion,
     createOrganizacion,
     updateOrganizacion,
+    deleteOrganizacion,
     setTitular,
     listLicencias,
     getLicencia,

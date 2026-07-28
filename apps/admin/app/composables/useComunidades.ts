@@ -66,6 +66,24 @@ export function useComunidades() {
     return { error: error?.message ?? null }
   }
 
+  // Lo que se lleva el borrado en cascada: conteos REALES para que la confirmación
+  // le diga la verdad al admin antes de destruir nada.
+  async function resumenBorrado(id: number) {
+    const head = { count: 'exact' as const, head: true }
+    const [educadores, grupos, talleres, colaboradores] = await Promise.all([
+      supabase.from('educadores').select('id', head).eq('comunidad_id', id),
+      supabase.from('grupos').select('id', head).eq('comunidad_id', id),
+      supabase.from('talleres').select('id', head).eq('comunidad_id', id),
+      supabase.from('colaboradores').select('id', head).eq('comunidad_id', id),
+    ])
+    return {
+      educadores: educadores.count ?? 0,
+      grupos: grupos.count ?? 0,
+      talleres: talleres.count ?? 0,
+      colaboradores: colaboradores.count ?? 0,
+    }
+  }
+
   // La FK de `comunidades` en organizaciones es `on delete restrict` hacia arriba, pero hacia
   // abajo cascadea: borrar una comunidad se lleva sus educadores, grupos y talleres.
   async function remove(id: number) {
@@ -73,5 +91,5 @@ export function useComunidades() {
     return { error: error?.message ?? null }
   }
 
-  return { listPorOrg, get, create, update, remove }
+  return { listPorOrg, get, create, update, remove, resumenBorrado }
 }

@@ -1,5 +1,6 @@
 <template>
-  <div class="max-w-3xl mx-auto">
+  <div class="max-w-[640px] mx-auto">
+    <UiPageHeader :title="t('platform.lics.editTitle')" />
     <div v-if="loading" class="card p-10 text-center text-sm text-gray-400">{{ t('common.loading') }}</div>
 
     <div v-else-if="!cargada" class="card p-10 text-center text-sm text-gray-500">

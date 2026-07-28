@@ -1,3 +1,5 @@
+export type PlannerStatus = 'programado' | 'completado' | 'borrador'
+
 export interface PlannerWorkshop {
   id: number
   title: string
@@ -7,32 +9,7 @@ export interface PlannerWorkshop {
   accentColor: string
   fecha: string // 'YYYY-MM-DD'
   storyboard: string
-}
-
-const ACCENT_COLORS = [
-  'bg-brand-primary',
-  'bg-brand-secondary',
-  'bg-brand-accent',
-  'bg-brand-coral',
-  'bg-brand-purple',
-]
-
-function weekday(monday: Date, offset: number): string {
-  const d = new Date(monday)
-  d.setDate(d.getDate() + offset)
-  return formatDate(d)
-}
-
-function buildMockWorkshops(): PlannerWorkshop[] {
-  const mon = getMondayOfWeek(new Date())
-  const todayStr = formatDate(new Date())
-  return [
-    { id: 1, title: 'Los Frijoles Magicos', time: '09:00 - 10:30', educator: 'Maria Lopez Hernandez', location: 'Aula 3A - Centro Comunitario', accentColor: 'bg-brand-primary', fecha: todayStr, storyboard: 'Los Frijoles Magicos' },
-    { id: 2, title: 'El Huevo Alimento Diario', time: '10:00 - 11:30', educator: 'Carlos Ramirez Torres', location: 'Salon Principal', accentColor: 'bg-brand-secondary', fecha: weekday(mon, 1), storyboard: 'El Huevo Alimento Diario' },
-    { id: 3, title: 'Agua: El Tesoro Azul', time: '09:30 - 11:00', educator: 'Ana Torres Gutierrez', location: 'Aula 1B', accentColor: 'bg-brand-accent', fecha: weekday(mon, 2), storyboard: 'Agua: El Superheroe Invisible' },
-    { id: 4, title: 'Frutas del Arcoiris', time: '11:00 - 12:30', educator: 'Pedro Sanchez Morales', location: 'Escuela Primaria Norte', accentColor: 'bg-brand-coral', fecha: weekday(mon, 3), storyboard: 'Detectives de Nutrientes' },
-    { id: 5, title: 'Verduras Heroicas', time: '10:00 - 11:30', educator: 'Maria Lopez Hernandez', location: 'Centro Cultural Sur', accentColor: 'bg-brand-primary', fecha: weekday(mon, 4), storyboard: 'La Huerta Magica' },
-  ]
+  status?: PlannerStatus // sin status = programado
 }
 
 function formatDate(d: Date): string {
@@ -58,14 +35,32 @@ const DAY_FULL = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado',
 export function usePlanner() {
   const weekOffset = useState('planner-weekOffset', () => 0)
   const activeView = useState<'kanban' | 'calendar'>('planner-activeView', () => 'kanban')
-  const workshops = useState<PlannerWorkshop[]>('planner-workshops', () => buildMockWorkshops())
-  const showMiniCalendar = useState('planner-showMiniCal', () => false)
-  const showAddModal = useState('planner-showAddModal', () => false)
-  const addModalDate = useState<string | null>('planner-addModalDate', () => null)
+  const statusFilter = useState<'todos' | PlannerStatus>('planner-statusFilter', () => 'todos')
+
+  // El planner es otra VISTA de los talleres reales (los cancelados no se planifican).
+  const { workshops: talleres, updateFecha } = useWorkshops()
+  const workshops = computed<PlannerWorkshop[]>(() =>
+    talleres.value
+      .filter(w => w.status !== 'cancelado')
+      .map(w => ({
+        id: w.id,
+        title: w.title,
+        time: w.time,
+        educator: w.educator,
+        location: w.location,
+        accentColor: w.accentColor,
+        fecha: w.date,
+        storyboard: w.storyboard,
+        status: w.status === 'programado' ? undefined : (w.status as PlannerStatus),
+      })))
 
   const today = new Date()
   const todayStr = formatDate(today)
   const baseMonday = getMondayOfWeek(today)
+
+  // Mes visible en la vista calendario. El toolbar navega semanas o meses según la vista,
+  // como en el rediseño: un solo control de rango arriba, no dos.
+  const monthAnchor = useState('planner-monthAnchor', () => ({ y: today.getFullYear(), m: today.getMonth() }))
 
   const currentMonday = computed(() => {
     const d = new Date(baseMonday)
@@ -73,12 +68,19 @@ export function usePlanner() {
     return d
   })
 
+  function matchesFilter(ws: PlannerWorkshop) {
+    if (statusFilter.value === 'todos') return true
+    return (ws.status ?? 'programado') === statusFilter.value
+  }
+
+  const visibleWorkshops = computed(() => workshops.value.filter(matchesFilter))
+
   const weekDays = computed(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(currentMonday.value)
       d.setDate(d.getDate() + i)
       const fecha = formatDate(d)
-      const dayWorkshops = workshops.value.filter(ws => ws.fecha === fecha)
+      const dayWorkshops = visibleWorkshops.value.filter(ws => ws.fecha === fecha)
 
       return {
         key: fecha,
@@ -101,66 +103,64 @@ export function usePlanner() {
     const sunMonth = MONTH_NAMES[sun.getMonth()]
 
     if (mon.getMonth() === sun.getMonth()) {
-      return `${mon.getDate()} - ${sun.getDate()} ${monMonth}, ${mon.getFullYear()}`
+      return `${mon.getDate()} – ${sun.getDate()} ${monMonth} ${mon.getFullYear()}`
     }
-    return `${mon.getDate()} ${monMonth} - ${sun.getDate()} ${sunMonth}, ${sun.getFullYear()}`
+    return `${mon.getDate()} ${monMonth} – ${sun.getDate()} ${sunMonth} ${sun.getFullYear()}`
   })
 
+  const MONTH_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+  const monthLabel = computed(() => `${MONTH_FULL[monthAnchor.value.m]} ${monthAnchor.value.y}`)
+
+  // Etiqueta del rango según la vista activa (semana ↔ mes).
+  const rangeLabel = computed(() => (activeView.value === 'calendar' ? monthLabel.value : weekLabel.value))
 
   function navigateWeek(dir: number) {
     weekOffset.value += dir
   }
 
+  function navigateMonth(dir: number) {
+    let m = monthAnchor.value.m + dir
+    let y = monthAnchor.value.y
+    if (m > 11) { m = 0; y++ }
+    else if (m < 0) { m = 11; y-- }
+    monthAnchor.value = { y, m }
+  }
+
+  // El prev/next del toolbar mueve la unidad que se está viendo.
+  function navigateRange(dir: number) {
+    if (activeView.value === 'calendar') navigateMonth(dir)
+    else navigateWeek(dir)
+  }
+
   function goToToday() {
     weekOffset.value = 0
+    monthAnchor.value = { y: today.getFullYear(), m: today.getMonth() }
   }
 
-  function goToDate(date: Date) {
-    const targetMonday = getMondayOfWeek(date)
-    const diffMs = targetMonday.getTime() - baseMonday.getTime()
-    weekOffset.value = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000))
-  }
-
+  // El drag & drop PERSISTE la fecha (optimista dentro de updateFecha).
   function moveWorkshop(id: number, newFecha: string) {
-    const idx = workshops.value.findIndex(ws => ws.id === id)
-    if (idx !== -1) {
-      workshops.value[idx] = { ...workshops.value[idx], fecha: newFecha }
-    }
-  }
-
-  let nextId = 100
-  function addWorkshop(ws: Omit<PlannerWorkshop, 'id' | 'accentColor'>) {
-    const colorIndex = workshops.value.length % ACCENT_COLORS.length
-    workshops.value.push({
-      ...ws,
-      id: nextId++,
-      accentColor: ACCENT_COLORS[colorIndex],
-    })
-  }
-
-  function openAddModal(fecha: string) {
-    addModalDate.value = fecha
-    showAddModal.value = true
+    void updateFecha(id, newFecha)
   }
 
   return {
     weekOffset,
     activeView,
     workshops,
-    showMiniCalendar,
-    showAddModal,
-    addModalDate,
+    visibleWorkshops,
+    statusFilter,
     today,
     todayStr,
     currentMonday,
+    monthAnchor,
     weekDays,
     weekLabel,
+    monthLabel,
+    rangeLabel,
     navigateWeek,
+    navigateMonth,
+    navigateRange,
     goToToday,
-    goToDate,
     moveWorkshop,
-    addWorkshop,
-    openAddModal,
     formatDate,
   }
 }

@@ -3,7 +3,6 @@
     <PlannerToolbar />
     <PlannerKanban v-if="activeView === 'kanban'" />
     <PlannerCalendarGrid v-else />
-    <PlannerAddWorkshopModal />
   </div>
 </template>
 

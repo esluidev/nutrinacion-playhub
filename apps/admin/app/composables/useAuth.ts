@@ -42,19 +42,22 @@ export function useAuth() {
       // `colaboradores` se consulta aparte para distinguir CÓMO llego a cada comunidad: por
       // administrar su organización o por estar asignado a ella.
       const [{ data: adminRows }, { data: comunidades }, { data: colabRows }] = await Promise.all([
-        supabase.from('organizacion_administradores').select('organizaciones(*)').eq('perfil_id', perfil.id),
+        supabase.from('organizacion_administradores').select('titular, organizaciones(*)').eq('perfil_id', perfil.id),
         supabase.from('comunidades').select('*, organizaciones ( id, nombre )'),
         supabase.from('colaboradores').select('comunidad_id').eq('perfil_id', perfil.id).eq('activo', true),
       ])
+
+      const admin = ((adminRows as { titular: boolean, organizaciones: Organizacion }[] | null) ?? [])
+        .filter(r => r.organizaciones)
 
       user.value = {
         id: authUser.id,
         email: authUser.email!,
         perfil,
-        organizaciones: ((adminRows as { organizaciones: Organizacion }[] | null) ?? [])
-          .map(r => r.organizaciones).filter(Boolean),
+        organizaciones: admin.map(r => r.organizaciones),
         comunidades: (comunidades as unknown as ComunidadConOrg[]) ?? [],
         colaboraEn: ((colabRows as { comunidad_id: number }[] | null) ?? []).map(r => r.comunidad_id),
+        titularDe: admin.filter(r => r.titular).map(r => r.organizaciones.id),
       }
     }
     catch {

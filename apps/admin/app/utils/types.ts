@@ -60,6 +60,7 @@ export interface AuthUser {
   organizaciones: Organizacion[]    // las que ADMINISTRO (via organizacion_administradores)
   comunidades: ComunidadConOrg[]    // a las que tengo acceso (el RLS de 0002 las filtra)
   colaboraEn: number[]              // ids de comunidades donde soy COLABORADOR activo
+  titularDe: number[]               // ids de orgs donde soy el TITULAR (puede invitar co-admins)
 }
 
 // Info de una invitacion validada, tal como la devuelve la Edge Function `canjear-invitacion`.

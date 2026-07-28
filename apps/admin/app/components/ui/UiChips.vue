@@ -4,10 +4,10 @@
       v-for="item in items"
       :key="item.value"
       :class="[
-        'inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap',
+        'inline-flex items-center gap-1.5 px-[15px] h-9 rounded-full text-[12.5px] font-bold transition-all duration-150 cursor-pointer whitespace-nowrap',
         modelValue === item.value
-          ? (item.activeClass || 'bg-brand-dark text-white shadow-sm')
-          : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700',
+          ? (item.activeClass || 'bg-brand-dark text-white')
+          : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-primary-200 hover:text-gray-800',
       ]"
       @click="$emit('update:modelValue', item.value)"
     >
@@ -16,8 +16,8 @@
       <span
         v-if="item.count !== undefined"
         :class="[
-          'px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none',
-          modelValue === item.value ? 'bg-white/20' : 'bg-gray-200/60',
+          'px-[7px] py-0.5 rounded-full text-[10.5px] font-extrabold leading-none',
+          modelValue === item.value ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500',
         ]"
       >
         {{ item.count }}

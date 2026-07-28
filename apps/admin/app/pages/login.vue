@@ -1,10 +1,11 @@
 <template>
   <div>
-    <h2 class="text-xl font-display font-bold text-gray-900 mb-6">
+    <h2 class="text-xl font-display font-semibold text-brand-dark mb-1.5">
       {{ t('auth.login.title') }}
     </h2>
+    <p class="text-[13px] text-gray-500 mb-7">{{ t('auth.login.subtitle') }}</p>
 
-    <form class="space-y-4" @submit.prevent="handleLogin">
+    <form class="space-y-[18px]" @submit.prevent="handleLogin">
       <UiInput
         id="email"
         v-model="email"
@@ -14,25 +15,30 @@
         required
       />
 
-      <UiInput
-        id="password"
-        v-model="password"
-        type="password"
-        :label="t('auth.login.password')"
-        placeholder="••••••••"
-        required
-      />
+      <div>
+        <div class="flex items-center justify-between mb-[7px]">
+          <label for="password" class="text-[13px] font-bold text-gray-700">{{ t('auth.login.password') }}</label>
+          <a class="text-xs font-semibold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer">{{ t('auth.login.forgot') }}</a>
+        </div>
+        <UiInput
+          id="password"
+          v-model="password"
+          type="password"
+          placeholder="••••••••"
+          required
+        />
+      </div>
 
       <p v-if="error" class="text-sm text-red-500">
         {{ error }}
       </p>
 
-      <UiButton type="submit" class="w-full" :loading="isLoading">
+      <UiButton type="submit" size="lg" class="w-full !mt-6" :loading="isLoading">
         {{ t('auth.login.submit') }}
       </UiButton>
     </form>
 
-    <p class="text-center text-sm text-gray-400 mt-6 leading-relaxed">
+    <p class="text-center text-[13px] text-gray-500 mt-6 leading-relaxed">
       {{ t('auth.login.inviteOnly') }}
     </p>
   </div>
@@ -63,7 +69,9 @@ async function handleLogin() {
     error.value = authError.message
   }
   else {
-    navigateTo('/dashboard')
+    // El aterrizaje lo decide la superficie de acceso (admin → su organización,
+    // colaborador → su comunidad, etc.), no una ruta fija.
+    navigateTo(useContexto().rutaInicial())
   }
 
   isLoading.value = false

@@ -40,7 +40,7 @@ const { destinos, irA } = useContexto()
 
 function subtitulo(d: Destino) {
   if (d.tipo === 'platform') return t('ctx.operator')
-  if (d.tipo === 'organizacion') return t('ctx.noCommunity')
+  if (d.tipo === 'organizacion') return t('ctx.org')
   return d.contexto ?? ''
 }
 </script>

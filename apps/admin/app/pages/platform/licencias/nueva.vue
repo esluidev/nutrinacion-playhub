@@ -1,6 +1,7 @@
 <template>
-  <div class="max-w-3xl mx-auto">
-    <form class="space-y-5" @submit.prevent="handleSave">
+  <div class="max-w-[640px] mx-auto">
+    <UiPageHeader :title="t('platform.lics.newTitle')" />
+    <form class="space-y-[18px]" @submit.prevent="handleSave">
       <div class="card p-6 space-y-4">
         <h2 class="section-title">{{ t('platform.lics.section') }}</h2>
 
