@@ -62,15 +62,15 @@ const emit = defineEmits<{
 // the row reads as a size line (codorniz → avestruz)
 const EGGS_BY_SIZE = [...eggsFor(props.locale ?? 'es')].sort((a, b) => a.sizeScale - b.sizeScale)
 
-// Egg width maps from the variety's real relative size onto the card range. The
-// smallest (codorniz) stays substantial; the biggest (avestruz) fills the card.
-const MIN_EGG_W = 112
-const MAX_EGG_W = 172
-const minScale = Math.min(...EGGS_BY_SIZE.map(e => e.sizeScale))
-const maxScale = Math.max(...EGGS_BY_SIZE.map(e => e.sizeScale))
+// Egg width follows the variety's real relative size (sizeScale) through a soft power
+// curve — the same rule as the retro quiz. Honest linear (5× range) made the small
+// eggs unreadable dots; plain √ still read small on the big cards. ^0.4 keeps the
+// size line teaching (codorniz clearly small, avestruz clearly dominant) with every
+// egg comfortably visible: codorniz 89 · gallina 112 · pata 120 · avestruz 170.
+const MAX_EGG_W = 170 // avestruz llena la carta (alto 221 ≤ área disponible)
+const SIZE_CURVE = 0.4
 function eggWidth(egg: Egg): number {
-  const t = (egg.sizeScale - minScale) / (maxScale - minScale || 1)
-  return Math.round(MIN_EGG_W + (MAX_EGG_W - MIN_EGG_W) * t)
+  return Math.round(MAX_EGG_W * egg.sizeScale ** SIZE_CURVE)
 }
 
 const revealed = ref(new Set<string>())

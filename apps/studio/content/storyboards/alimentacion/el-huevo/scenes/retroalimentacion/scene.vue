@@ -26,7 +26,7 @@
         @click="answer(option)"
       >
         <div class="quiz-art">
-          <component :is="option.art" v-bind="option.props ?? {}" />
+          <component :is="option.art" v-bind="option.props ?? {}" :style="artStyle(option)" />
         </div>
         <span class="sp-quiz-name">{{ option.label }}</span>
       </button>
@@ -75,6 +75,8 @@ interface QuizOption {
   props?: Record<string, unknown>
   /** Pastel de identidad para el fondo de la carta (--quiz-tint) */
   tint: string
+  /** Tamaño relativo del arte dentro de su caja (1 = llena). Comparaciones de tamaño. */
+  artScale?: number
 }
 
 interface QuizQuestion {
@@ -88,9 +90,26 @@ const part = (id: 'cascara' | 'clara' | 'yema', label: string): QuizOption => {
   return { id, label, art: markRaw(EggPartSticker), props: { part: id }, tint: pastelize(p.highlightColor) }
 }
 
+// Las variedades se muestran con su color/manchitas Y su tamaño relativo: en la
+// pregunta "¿cuál es el más grande?" el tamaño ES la respuesta que se refuerza
+// (descubrimiento ya la enseñó). La curva ^0.4 (la misma de descubrimiento) comprime
+// el rango real (5×) lo justo para que la codorniz siga legible en una caja de 110px.
 const eggOf = (id: string, label: string): QuizOption => {
   const egg = EGGS.find(e => e.id === id)!
-  return { id, label, art: markRaw(EggSticker), props: { body: egg.egg.body, outline: egg.egg.outline, speckled: egg.egg.speckled, speckle: egg.egg.speckle }, tint: pastelize(egg.color) }
+  return {
+    id,
+    label,
+    art: markRaw(EggSticker),
+    props: { body: egg.egg.body, speckled: egg.egg.speckled, speckle: egg.egg.speckle },
+    tint: pastelize(egg.color),
+    artScale: egg.sizeScale ** 0.4,
+  }
+}
+
+function artStyle(option: QuizOption) {
+  if (!option.artScale || option.artScale >= 1) return undefined
+  const pct = `${Math.round(option.artScale * 100)}%`
+  return { width: pct, height: pct }
 }
 
 const QUESTIONS: QuizQuestion[] = [

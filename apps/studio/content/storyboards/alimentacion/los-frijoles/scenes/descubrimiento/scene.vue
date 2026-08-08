@@ -42,9 +42,17 @@
               <line x1="200" y1="200" x2="76.44" y2="323.56" />
             </g>
 
-            <!-- Flat bean silhouettes inside each sector -->
+            <!-- Bean por sector: silueta plana mientras es misterio; al descubrirlo, el
+                 frijol REAL (cuerpo + trace + brillos del BeanSticker — la silueta es el
+                 mismo path) se enciende en su sector y ahí se queda: la ruleta recuerda
+                 lo ya descubierto. -->
             <g v-for="(b, i) in BEANS" :key="b.id" :transform="SILHOUETTE_TRANSFORMS[i]">
-              <path :d="BEAN_SILHOUETTE" :fill="b.sectorBean" />
+              <path v-if="!revealed.has(b.id)" :d="BEAN_SILHOUETTE" :fill="b.sectorBean" />
+              <g v-else class="wheel-bean-in">
+                <path :d="BEAN_SILHOUETTE" :fill="b.bean.body" stroke="#3d4256" stroke-width="10" stroke-linejoin="round" />
+                <path d="M171.111,237.747C171.564,233.63 168.593,229.925 164.476,229.472C160.356,229.031 156.654,231.99 156.201,236.107C154.004,256.075 147.57,270.433 135.34,282.665C123.108,294.896 108.749,301.331 88.781,303.527C84.663,303.98 81.693,307.685 82.146,311.802C82.568,315.641 85.817,318.483 89.592,318.483C89.866,318.483 90.143,318.467 90.421,318.437C114.012,315.842 131.137,308.081 145.946,293.271C160.754,278.462 168.515,261.337 171.111,237.747Z" fill="rgba(255,255,255,0.5)" />
+                <path d="M183.307,207.714C185.032,207.714 186.766,207.122 188.18,205.912C198.008,197.501 210.577,192.869 223.573,192.869C227.715,192.869 231.073,189.512 231.073,185.369C231.073,181.226 227.715,177.869 223.573,177.869C207.004,177.869 190.971,183.781 178.427,194.515C175.28,197.208 174.912,201.943 177.605,205.089C179.088,206.825 181.191,207.714 183.307,207.714Z" fill="rgba(255,255,255,0.5)" />
+              </g>
             </g>
 
             <circle cx="200" cy="200" r="30" fill="var(--paper)" />
@@ -289,6 +297,17 @@ onBeforeUnmount(() => {
   width: 60%;
   max-width: 125px;
   aspect-ratio: 1 / 0.78;
+}
+
+/* El frijol descubierto se enciende en su sector. SOLO opacidad: un transform de CSS
+   pisaría el transform SVG que posiciona el grupo en el sector. */
+.wheel-bean-in {
+  animation: wheel-bean-in 500ms ease-out both;
+}
+
+@keyframes wheel-bean-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>
 
