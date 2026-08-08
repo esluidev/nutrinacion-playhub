@@ -2,25 +2,24 @@
   <div v-if="sb">
     <!-- ═══════════ Alert informativo (sobre el header, sin acción) ═══════════ -->
     <div
-      v-if="regStatus === 'desincronizado'"
+      v-if="regStatus === 'desactualizado'"
       class="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 mb-4"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
       <p class="text-sm text-amber-800 min-w-0">
-        <span class="font-semibold">El build cambió respecto al catálogo registrado.</span>
-        Sin reflejar:
-        <span v-for="(it, i) in drift.items" :key="it.label" class="font-medium">{{ i ? ' · ' : ' ' }}{{ it.label }}</span>
-        <span class="text-amber-600"> — se reconcilia al guardar en Editar.</span>
+        <span class="font-semibold">El build cambió respecto a lo registrado.</span>
+        <span v-for="(d, i) in resultado.diferencias" :key="d" class="font-medium">{{ i ? ' · ' : ' ' }}{{ d }}</span>
+        <span class="text-amber-600"> — se resincroniza desde admin.</span>
       </p>
     </div>
     <div
-      v-else-if="!isRegistered"
+      v-else-if="regStatus === 'sin_registrar'"
       class="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 mb-4"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
       <p class="text-sm text-blue-800 min-w-0">
         <span class="font-semibold">Compilado, sin registrar.</span>
-        Creá el registro desde Editar para gestionarlo en el catálogo de admin.
+        Copiá la metadata y registralo desde Platform, en la app de admin.
       </p>
     </div>
 
@@ -31,6 +30,11 @@
           <div class="flex items-center gap-2.5">
             <span :class="['w-3 h-3 rounded-md shrink-0', sb.coverColor]" />
             <h2 class="text-2xl font-display font-bold text-brand-dark truncate leading-tight">{{ sb.title }}</h2>
+            <!-- Estado de publicación REAL, leído de Supabase por `clave`. -->
+            <UiBadge v-if="regStatus === 'sin_registrar'" variant="gray" dot>Sin registrar</UiBadge>
+            <UiBadge v-else :variant="varianteBadgePublicacion(fila?.estado)" dot>
+              {{ etiquetaPublicacion(fila?.estado) }}
+            </UiBadge>
           </div>
           <p class="text-xs text-gray-400 font-mono mt-1">{{ category }}/{{ id }}</p>
         </div>
@@ -40,25 +44,19 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21V3z" /></svg>
             Probar
           </NuxtLink>
-          <NuxtLink :to="`/storyboards/${category}/${id}/edit`" class="btn btn-outline btn-md">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Z" /></svg>
-            Editar
-          </NuxtLink>
-          <div v-if="isRegistered" class="relative">
-            <button class="btn btn-outline btn-md !px-2.5" title="Más acciones" @click="moreOpen = !moreOpen">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm0 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm0 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /></svg>
-            </button>
-            <div v-if="moreOpen" class="absolute right-0 top-full mt-2 w-60 bg-white rounded-xl border border-gray-200 shadow-lg py-1.5 z-50">
-              <button class="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors" @click="askRemove">
-                Quitar del catálogo de admin
-              </button>
-            </div>
-          </div>
+          <!-- Studio no escribe en Supabase: produce la metadata del build y una persona
+               la pega en admin/Platform, que hace el alta a mano (tarea 030). -->
+          <button
+            class="btn btn-outline btn-md"
+            :title="errorCopia || 'Copia el JSON de registro para pegarlo en admin'"
+            @click="copiarMetadata"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+            {{ etiquetaCopia }}
+          </button>
         </div>
       </div>
     </UiCard>
-
-    <div v-if="moreOpen" class="fixed inset-0 z-40" @click="moreOpen = false" />
 
     <!-- ═══════════ Información (solo lectura) + Clasificación/Build ═══════════
          Sin items-start: ambas cards de la fila estiran a la MISMA altura,
@@ -68,32 +66,27 @@
         <template #header>
           <div>
             <h3 class="section-title">Información</h3>
-            <p class="text-xs text-gray-400 mt-0.5">Contenido y guía general del storyboard · se edita en Editar</p>
+            <p class="text-xs text-gray-400 mt-0.5">Contenido y guía general · se administran en admin</p>
           </div>
         </template>
         <div class="p-6 space-y-5">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Descripción</p>
-            <p class="text-sm text-gray-600 leading-relaxed">{{ sb.description || '—' }}</p>
+            <p class="text-sm text-gray-600 leading-relaxed">{{ descripcion || '—' }}</p>
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Objetivo</p>
-            <p :class="['text-sm leading-relaxed', sb.objetivo?.es ? 'text-gray-600' : 'text-gray-300']">
-              {{ sb.objetivo?.es || 'Sin objetivo — completar en Editar.' }}
-            </p>
+            <p class="text-sm leading-relaxed text-gray-300">Se escribe en admin.</p>
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Bibliografía</p>
-            <p :class="['text-sm leading-relaxed', sb.bibliografia?.es ? 'text-gray-600' : 'text-gray-300']">
-              {{ sb.bibliografia?.es || 'Sin bibliografía — completar en Editar.' }}
-            </p>
+            <p class="text-sm leading-relaxed text-gray-300">Se escribe en admin.</p>
           </div>
         </div>
       </UiCard>
 
-      <!-- Solo lo que declara el storyboard.json — nada inventado: el catálogo
-           (duración, propiedad, países, estado) se muestra cuando exista de
-           verdad en Supabase; mientras tanto se edita en Editar. -->
+      <!-- Solo lo que declara el storyboard.json. El catálogo (duración, propiedad,
+           países, estado) es de la base y se administra en admin. -->
       <UiCard :padding="false" :hover="false">
         <template #header>
           <div>
@@ -138,7 +131,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <h3 class="section-title">Escenas</h3>
-            <p class="text-xs text-gray-400 mt-0.5">Estructura del build (solo lectura) · la guía pedagógica se edita por escena</p>
+            <p class="text-xs text-gray-400 mt-0.5">Estructura del build (solo lectura) · la guía pedagógica se escribe en admin</p>
           </div>
           <span class="badge badge-gray">{{ buildScenes.length }}</span>
         </div>
@@ -151,7 +144,6 @@
               <th class="px-5 py-3 w-10 font-semibold">#</th>
               <th class="px-3 py-3 font-semibold">Escena</th>
               <th class="px-3 py-3 font-semibold">Juego</th>
-              <th class="px-3 py-3 font-semibold">Guía pedagógica</th>
               <th class="px-5 py-3 text-right font-semibold">Acciones</th>
             </tr>
           </thead>
@@ -163,24 +155,15 @@
             >
               <td class="px-5 py-3 text-xs font-display font-semibold text-gray-400">{{ index + 1 }}</td>
               <td class="px-3 py-3 min-w-0">
-                <NuxtLink :to="sceneUrl(scene.folder)" class="block">
-                  <p class="font-semibold text-brand-dark truncate">{{ scene.title }}</p>
-                  <p class="text-xs text-gray-400 font-mono truncate">scenes/{{ scene.folder }}/</p>
-                </NuxtLink>
+                <p class="font-semibold text-brand-dark truncate">{{ scene.title }}</p>
+                <p class="text-xs text-gray-400 font-mono truncate">scenes/{{ scene.folder }}/</p>
               </td>
               <td class="px-3 py-3">
                 <UiBadge v-if="scene.loader" variant="green" dot>Implementado</UiBadge>
                 <UiBadge v-else variant="yellow" dot>Pendiente</UiBadge>
               </td>
-              <td class="px-3 py-3">
-                <span class="inline-flex items-center gap-2">
-                  <span :class="['w-2 h-2 rounded-full shrink-0', guideDot(scene.folder)]" />
-                  <span class="text-xs text-gray-500">{{ guideProgressFor(scene.folder).filled }}/{{ guideProgressFor(scene.folder).total }} secciones (ES)</span>
-                </span>
-              </td>
               <td class="px-5 py-3">
-                <div class="flex items-center justify-end gap-2">
-                  <NuxtLink :to="sceneUrl(scene.folder)" class="btn btn-outline btn-sm">Editar guía</NuxtLink>
+                <div class="flex items-center justify-end">
                   <NuxtLink :to="playUrl(index)" class="btn btn-ghost btn-sm !px-2" title="Probar esta escena">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21V3z" /></svg>
                   </NuxtLink>
@@ -192,21 +175,6 @@
       </div>
     </UiCard>
 
-    <!-- Confirmación destructiva -->
-    <div v-if="confirmRemove" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/30" @click="confirmRemove = false" />
-      <div class="relative bg-white rounded-2xl border border-gray-200 shadow-xl w-full max-w-md p-6">
-        <h3 class="text-lg font-display font-bold text-brand-dark">¿Quitar del catálogo de admin?</h3>
-        <p class="text-sm text-gray-500 mt-2">
-          «{{ sb.title }}» dejará de estar disponible en la app de admin. El build compilado no se toca.
-          (Archivar vs. borrar la fila se decide al conectar Supabase.)
-        </p>
-        <div class="flex justify-end gap-2 mt-6">
-          <UiButton variant="outline" size="sm" @click="confirmRemove = false">Cancelar</UiButton>
-          <UiButton variant="danger" size="sm" @click="removeFromCatalog">Quitar del catálogo</UiButton>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- No encontrado -->
@@ -219,23 +187,20 @@
 
 <script setup lang="ts">
 // ─────────────────────────────────────────────────────────────────────────────
-// Detalle de storyboard = VISTA administrativa de SOLO LECTURA: muestra el
-// catálogo (fila `storyboards` representada en el store) + metadatos del build,
-// y la tabla de escenas con acceso al editor de guía de cada una. La edición
-// del catálogo vive en su propia página (./edit), como un admin común.
+// Detalle de storyboard = VISTA DE SOLO LECTURA. Studio diseña y prueba; toda la
+// administración (alta, estado, guía pedagógica por escena, países, duración)
+// vive en admin/Platform a nivel superadmin (tarea 030). Acá solo se mira el
+// build, se prueba el runner y se copia la metadata para registrarlo allá.
 // ─────────────────────────────────────────────────────────────────────────────
+import { etiquetaPublicacion, varianteBadgePublicacion } from '~/utils/registroEstado'
+import { tr } from '~/types/i18n'
+
 const route = useRoute()
-const {
-  getStoryboard,
-  updateCatalog,
-  storyboardDrift,
-  sceneGuideProgress,
-} = useStoryboards()
+const { getStoryboard } = useStoryboards()
 
 const category = computed(() => String(route.params.category))
 const id = computed(() => String(route.params.id))
 
-// Fila VIVA del store (refleja lo guardado en Editar y en los editores de guía).
 const sb = computed(() => {
   const row = getStoryboard(id.value)
   return row && row.tipo === category.value ? row : undefined
@@ -246,44 +211,59 @@ const runner = useStoryboardRunner(category.value, id.value, 'es')
 const build = runner.definition
 const buildScenes = runner.scenes
 
-// borrador = compilado pero aún sin registrar (semilla de la representación 003).
-const isRegistered = computed(() => !!sb.value && sb.value.status !== 'borrador')
-const drift = computed(() => storyboardDrift(id.value))
-const regStatus = computed<'no_registrado' | 'sincronizado' | 'desincronizado'>(() => {
-  if (!isRegistered.value) return 'no_registrado'
-  return drift.value.has ? 'desincronizado' : 'sincronizado'
+// ── Metadata de registro ──────────────────────────────────────────────────────
+// El JSON build-owned con la forma de las tablas de Supabase. Se copia acá y se pega en
+// admin/Platform; Studio nunca escribe en la base.
+const { metadataDe, metadataComoJson } = useStoryboardMetadata()
+
+// ── Estado REAL en Supabase (solo lectura) ────────────────────────────────────
+const registro = useRegistroRemoto()
+onMounted(() => registro.cargar())
+
+const fila = computed(() => (sb.value ? registro.filaDe(sb.value.clave) : null))
+const resultado = computed(() => {
+  const meta = metadataDe(id.value)
+  return meta ? registro.estadoDe(meta) : { estado: 'sin_registrar' as const, diferencias: [] }
+})
+const regStatus = computed(() => resultado.value.estado)
+
+// Descripción, objetivo y bibliografía son editoriales: viven en la base.
+const descripcion = computed(() => (fila.value?.descripcion ? tr(fila.value.descripcion, 'es') : ''))
+const copiado = ref(false)
+const errorCopia = ref('')
+let temporizadorCopia: ReturnType<typeof setTimeout> | undefined
+
+const etiquetaCopia = computed(() => {
+  if (errorCopia.value) return 'No se pudo copiar'
+  return copiado.value ? 'Copiado' : 'Copiar metadata'
 })
 
-// ── Acciones ──────────────────────────────────────────────────────────────────
-const moreOpen = ref(false)
-const confirmRemove = ref(false)
-function askRemove() {
-  moreOpen.value = false
-  confirmRemove.value = true
-}
-function removeFromCatalog() {
-  // Representación: sin registro = status 'borrador' (la fila real se archiva o
-  // borra al conectar Supabase, según se decida).
-  updateCatalog(id.value, { status: 'borrador' })
-  confirmRemove.value = false
+async function copiarMetadata() {
+  const json = metadataComoJson(id.value)
+  if (!json) return
+  try {
+    await navigator.clipboard.writeText(json)
+    errorCopia.value = ''
+    copiado.value = true
+  }
+  catch {
+    // El portapapeles exige contexto seguro (https o localhost). Si falla, decirlo:
+    // que el botón se quede mudo es peor que el error.
+    errorCopia.value = 'El navegador bloqueó el portapapeles (requiere https o localhost)'
+    copiado.value = false
+  }
+  clearTimeout(temporizadorCopia)
+  temporizadorCopia = setTimeout(() => {
+    copiado.value = false
+    errorCopia.value = ''
+  }, 2500)
 }
 
+onBeforeUnmount(() => clearTimeout(temporizadorCopia))
+
+// ── Probar ────────────────────────────────────────────────────────────────────
 function playUrl(start?: number) {
   const base = `/play/${category.value}/${id.value}?lang=es`
   return start !== undefined ? `${base}&start=${start}` : base
-}
-function sceneUrl(folder: string) {
-  return `/storyboards/${category.value}/${id.value}/scenes/${folder}`
-}
-
-// ── Guía por escena: avance leído del store vivo ──────────────────────────────
-function guideProgressFor(folder: string) {
-  const live = sb.value?.scenes.find(s => s.folder === folder)
-  return sceneGuideProgress(live?.guia, 'es')
-}
-function guideDot(folder: string) {
-  const p = guideProgressFor(folder)
-  if (p.complete) return 'bg-green-500'
-  return p.filled > 0 ? 'bg-amber-400' : 'bg-gray-200'
 }
 </script>

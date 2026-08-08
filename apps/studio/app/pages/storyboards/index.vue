@@ -3,34 +3,50 @@
     <!-- Page Header -->
     <div class="mb-6">
       <h2 class="text-2xl font-display font-bold text-brand-dark">Storyboards</h2>
-      <p class="text-sm text-gray-500 mt-1">Talleres completos con sus escenas (juegos). Los juegos se crean con Claude Code y se gestionan aqui.</p>
+      <p class="text-sm text-gray-500 mt-1">
+        Talleres compilados con sus escenas. El registro y la publicación se administran en admin.
+      </p>
     </div>
 
-    <!-- Toolbar: search left, filter dropdowns right -->
+    <!-- No se puede leer el catálogo: hay que decirlo, no mostrar todo como "sin registrar". -->
+    <div v-if="registro.error.value" class="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+      <p class="text-sm text-red-800">
+        <span class="font-semibold">{{ registro.error.value }}</span>
+        No se puede mostrar el estado de registro.
+      </p>
+    </div>
+
+    <!-- Toolbar: búsqueda a la izquierda, filtros a la derecha -->
     <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
       <UiSearchInput v-model="search" placeholder="Buscar storyboard..." max-width="xs" />
       <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
-        <UiSelect v-model="activeStatus" :options="statusOptions" />
-        <UiSelect v-model="activePillar" :options="pillarOptions" />
-        <UiSelect v-model="activePropiedad" :options="propiedadOptions" />
+        <UiSelect v-model="filtroRegistro" :options="opcionesRegistro" />
+        <UiSelect v-model="filtroTipo" :options="opcionesTipo" />
       </div>
     </div>
 
     <!-- Grid -->
     <div v-if="filtered.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       <UiCard v-for="sb in filtered" :key="sb.id" :padding="false" class="flex flex-col overflow-hidden">
-        <!-- Cover band -->
         <div :class="['h-2 shrink-0', sb.coverColor]" />
 
         <div class="p-5 flex flex-col flex-1">
           <div class="flex items-center gap-2 mb-3 flex-wrap">
             <UiBadge variant="gray">{{ tipoLabel(sb.tipo) }}</UiBadge>
-            <UiBadge :variant="statusBadgeVariant(sb.status)" dot>{{ statusLabel(sb.status) }}</UiBadge>
-            <UiBadge :variant="propiedadBadgeVariant(sb.propiedad)">{{ propiedadLabel(sb.propiedad) }}</UiBadge>
+
+            <!-- Estado REAL, leído de Supabase por `clave`. Sin fila no hay estado de
+                 publicación que mostrar: está compilado pero nadie lo dio de alta. -->
+            <UiBadge v-if="estadoDe(sb).estado === 'sin_registrar'" variant="gray" dot>Sin registrar</UiBadge>
+            <UiBadge v-else :variant="varianteBadgePublicacion(filaDe(sb.clave)?.estado)" dot>
+              {{ etiquetaPublicacion(filaDe(sb.clave)?.estado) }}
+            </UiBadge>
+            <UiBadge v-if="estadoDe(sb).estado === 'desactualizado'" variant="coral">Desactualizado</UiBadge>
           </div>
 
           <h3 class="font-display font-semibold text-brand-dark leading-snug">{{ sb.title }}</h3>
-          <p class="text-sm text-gray-500 mt-1.5 line-clamp-2">{{ sb.description }}</p>
+          <p v-if="descripcionDe(sb)" class="text-sm text-gray-500 mt-1.5 line-clamp-2">{{ descripcionDe(sb) }}</p>
+          <p v-else class="text-sm text-gray-300 mt-1.5">Sin descripción — se escribe en admin.</p>
 
           <div class="flex items-center gap-4 text-xs text-gray-400 mt-4">
             <span class="inline-flex items-center gap-1">
@@ -40,7 +56,7 @@
               {{ sb.sceneCount }} escenas
             </span>
             <span>{{ audienceLabel(sb.audience) }}</span>
-            <span>{{ sb.duration }}</span>
+            <span v-if="filaDe(sb.clave)?.duracion_min">{{ filaDe(sb.clave)?.duracion_min }} min</span>
             <span class="uppercase">{{ sb.languages.join(' · ') }}</span>
           </div>
 
@@ -59,7 +75,6 @@
       </UiCard>
     </div>
 
-    <!-- Empty state -->
     <UiCard v-else class="text-center py-12">
       <p class="text-gray-400 text-sm">No hay storyboards que coincidan con la busqueda.</p>
     </UiCard>
@@ -67,36 +82,46 @@
 </template>
 
 <script setup lang="ts">
-import type { Storyboard, PublicationStatus, Propiedad, TipoStoryboard } from '~/types/storyboard'
+import { etiquetaPublicacion, varianteBadgePublicacion } from '~/utils/registroEstado'
+import type { EstadoRegistro } from '~/utils/registroEstado'
+import type { StoryboardBuild, TipoStoryboard } from '~/types/storyboard'
+import { tr } from '~/types/i18n'
 
-const {
-  storyboards,
-  statusLabel,
-  statusBadgeVariant,
-  propiedadLabel,
-  propiedadBadgeVariant,
-  tipoLabel,
-  audienceLabel,
-} = useStoryboards()
+const { storyboards, tipoLabel, audienceLabel } = useStoryboards()
+const { metadataDe } = useStoryboardMetadata()
+
+// Una sola consulta al catálogo, compartida con el detalle.
+const registro = useRegistroRemoto()
+const { filaDe } = registro
+onMounted(() => registro.cargar())
+
+function estadoDe(sb: StoryboardBuild) {
+  const meta = metadataDe(sb.id)
+  return meta ? registro.estadoDe(meta) : { estado: 'sin_registrar' as EstadoRegistro, diferencias: [] }
+}
+
+// La descripción es editorial: vive en la base, no en el build.
+function descripcionDe(sb: StoryboardBuild): string {
+  const desc = filaDe(sb.clave)?.descripcion
+  return desc ? tr(desc, 'es') : ''
+}
 
 const search = ref('')
-const activeStatus = ref('todos')
-const activePillar = ref('todos')
-const activePropiedad = ref('todos')
+const filtroRegistro = ref('todos')
+const filtroTipo = ref('todos')
 
-const statusOptions = computed(() => {
-  const all = storyboards.value
-  const count = (status: PublicationStatus) => all.filter(sb => sb.status === status).length
+const opcionesRegistro = computed(() => {
+  const todos = storyboards.value
+  const cuenta = (e: EstadoRegistro) => todos.filter(sb => estadoDe(sb).estado === e).length
   return [
-    { value: 'todos', label: 'Todos los estados', count: all.length },
-    { value: 'borrador', label: 'Borrador', count: count('borrador') },
-    { value: 'en_revision', label: 'En Revision', count: count('en_revision') },
-    { value: 'publicado', label: 'Publicado', count: count('publicado') },
-    { value: 'archivado', label: 'Archivado', count: count('archivado') },
+    { value: 'todos', label: 'Todo el registro', count: todos.length },
+    { value: 'sin_registrar', label: 'Sin registrar', count: cuenta('sin_registrar') },
+    { value: 'al_dia', label: 'Registrado', count: cuenta('al_dia') },
+    { value: 'desactualizado', label: 'Desactualizado', count: cuenta('desactualizado') },
   ]
 })
 
-const pillarOptions = computed(() => {
+const opcionesTipo = computed(() => {
   const tipos: TipoStoryboard[] = ['alimentacion', 'actividad-fisica', 'cuidado-personal', 'salud-emocional']
   return [
     { value: 'todos', label: 'Todos los tipos', count: storyboards.value.length },
@@ -108,38 +133,23 @@ const pillarOptions = computed(() => {
   ]
 })
 
-const propiedadOptions = computed(() => {
-  const propiedades: Propiedad[] = ['estandar', 'personalizado']
-  return [
-    { value: 'todos', label: 'Toda la propiedad', count: storyboards.value.length },
-    ...propiedades.map(p => ({
-      value: p,
-      label: propiedadLabel(p),
-      count: storyboards.value.filter(sb => sb.propiedad === p).length,
-    })),
-  ]
-})
-
 const filtered = computed(() => {
   let list = storyboards.value
-  if (activeStatus.value !== 'todos') {
-    list = list.filter(sb => sb.status === activeStatus.value)
+  if (filtroRegistro.value !== 'todos') {
+    list = list.filter(sb => estadoDe(sb).estado === filtroRegistro.value)
   }
-  if (activePillar.value !== 'todos') {
-    list = list.filter(sb => sb.tipo === activePillar.value)
-  }
-  if (activePropiedad.value !== 'todos') {
-    list = list.filter(sb => sb.propiedad === activePropiedad.value)
+  if (filtroTipo.value !== 'todos') {
+    list = list.filter(sb => sb.tipo === filtroTipo.value)
   }
   const q = search.value.trim().toLowerCase()
   if (q) {
     list = list.filter(sb =>
-      sb.title.toLowerCase().includes(q) || sb.description.toLowerCase().includes(q))
+      sb.title.toLowerCase().includes(q) || descripcionDe(sb).toLowerCase().includes(q))
   }
   return list
 })
 
-function playUrl(sb: Storyboard) {
+function playUrl(sb: StoryboardBuild) {
   return `/play/${sb.tipo}/${sb.id}?lang=es`
 }
 </script>

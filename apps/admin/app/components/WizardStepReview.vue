@@ -55,7 +55,7 @@
             <div class="min-w-0">
               <p class="text-[15px] font-extrabold text-gray-800">{{ selectedStoryboard.title }}</p>
               <p class="text-[12.5px] font-semibold text-gray-500 mt-0.5">
-                {{ selectedStoryboard.category }} · {{ selectedStoryboard.plan }} · {{ selectedStoryboard.duration }} · {{ selectedStoryboard.scenesCount }} escenas
+                {{ selectedStoryboard.category }} · {{ selectedStoryboard.pertenencia }} · {{ selectedStoryboard.duration }} · {{ selectedStoryboard.scenesCount }} escenas
               </p>
             </div>
           </div>

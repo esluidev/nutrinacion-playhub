@@ -1,5 +1,12 @@
 import type { Config } from 'tailwindcss'
 
+// Tokens del CHROME DE GESTIÓN de Studio, espejo de `apps/admin/tailwind.config.ts`: mismas
+// fuentes, misma paleta, mismos radios y sombras. Las dos apps las usa el mismo equipo y no
+// tiene sentido que se vean distintas.
+//
+// OJO: esto NO toca el design system de los JUEGOS. Ese vive en `app/assets/css/storyplay.css`
+// con sus propias variables CSS (`.sp-*`) y no depende de Tailwind — verificado: cero
+// `theme()`/`@apply` ahí y cero clases `brand-*`/`gray-*` en `content/`.
 export default <Partial<Config>>{
   content: [
     './app/**/*.{vue,js,ts}',
@@ -12,23 +19,58 @@ export default <Partial<Config>>{
         display: ['Fredoka', 'sans-serif'],
       },
 
+      borderRadius: {
+        // Radios firma del rediseño: card 18px, campo 12px, botón 11px.
+        card: '18px',
+        field: '12px',
+        btn: '11px',
+      },
+
+      boxShadow: {
+        // Sombras verdosas (base rgba(26,46,34) = brand.dark) del template.
+        card: '0 8px 20px -10px rgba(26,46,34,0.12)',
+        lift: '0 16px 32px -14px rgba(26,46,34,0.18)',
+        dropdown: '0 16px 36px -14px rgba(26,46,34,0.25)',
+        menu: '0 20px 44px -16px rgba(26,46,34,0.28)',
+        btn: '0 1px 2px rgba(26,46,34,0.1)',
+        cta: '0 4px 12px -2px rgba(67,180,53,0.4)',
+        auth: '0 12px 32px -12px rgba(26,46,34,0.12)',
+      },
+
       colors: {
+        // Neutrales VERDOSOS: reemplazan la escala gris de Tailwind para que todo el
+        // código existente (`text-gray-*`, `border-gray-*`, `bg-gray-*`) adopte la
+        // paleta sin tocar cada archivo. La superficie de página es fría (brand.bg)
+        // a propósito; el verdor vive en cards, bordes y texto.
+        gray: {
+          50: '#f5f8f5',
+          100: '#eef4ee',
+          200: '#e6efe6',
+          300: '#c2cfc5',
+          400: '#a3b3a7',
+          500: '#8a998e',
+          600: '#6b7d70',
+          700: '#3c4a41',
+          800: '#22302a',
+          900: '#1a2e22',
+        },
+
         brand: {
-          // Green - Primary action color (buttons, success, CTA)
+          // Verde — acción principal (botones, CTA, éxito).
           primary: {
-            DEFAULT: '#22c55e',
-            50: '#f0fdf4',
-            100: '#dcfce7',
-            200: '#bbf7d0',
-            300: '#86efac',
-            400: '#4ade80',
-            500: '#22c55e',
-            600: '#16a34a',
-            700: '#15803d',
-            800: '#166534',
-            900: '#14532d',
+            DEFAULT: '#43b435',
+            50: '#f3fdee',
+            100: '#e4fcd9',
+            200: '#caf8b6',
+            300: '#a2f188',
+            400: '#5fce4a',
+            500: '#43b435',
+            600: '#379e2b',
+            700: '#318f2c',
+            800: '#2a7127',
+            900: '#174019',
           },
-          // Teal - Secondary actions, info
+          // Teal — acciones secundarias, info.
           secondary: {
             DEFAULT: '#4ECDC4',
             50: '#edfffe',
@@ -42,7 +84,7 @@ export default <Partial<Config>>{
             800: '#1A5B57',
             900: '#123D3B',
           },
-          // Yellow - Highlights, stars, rewards
+          // Amarillo — destacados, recompensas.
           accent: {
             DEFAULT: '#FFE66D',
             50: '#fffdf0',
@@ -56,7 +98,7 @@ export default <Partial<Config>>{
             800: '#7A6825',
             900: '#524618',
           },
-          // Coral - Brand color, decorative
+          // Coral — color de marca, decorativo.
           coral: {
             DEFAULT: '#FF6B6B',
             50: '#fff5f5',
@@ -70,13 +112,13 @@ export default <Partial<Config>>{
             800: '#A82929',
             900: '#7A1F1F',
           },
-          // Purple - AI/Studio features
+          // Púrpura — en admin marca el contexto Platform; acá, la identidad de Studio.
           purple: {
             DEFAULT: '#A29BFE',
             50: '#f5f4ff',
             100: '#ebeaff',
             200: '#d7d4ff',
-            300: '#c3beff',
+            300: '#b8b2e8',
             400: '#A29BFE',
             500: '#827BDE',
             600: '#6B62C7',
@@ -84,11 +126,13 @@ export default <Partial<Config>>{
             800: '#403888',
             900: '#2D2860',
           },
-          // Dark - Headings, text
-          dark: '#2D3436',
-          // Backgrounds
-          bg: '#f7faf7',
+          // Oscuro — títulos, texto fuerte, chips activos, sombras.
+          dark: '#1a2e22',
+          // Fondos
+          bg: '#f4f5f7',
           surface: '#FFFFFF',
+          // Blanco con matiz verde: fondo de inputs, footers de card, info-boxes.
+          tint: '#fbfdfb',
         },
       },
     },

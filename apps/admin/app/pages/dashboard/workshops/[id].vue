@@ -89,7 +89,7 @@
           <div class="min-w-0 flex-1">
             <p class="text-[15px] font-extrabold text-gray-800">{{ storyboard.title }}</p>
             <p class="text-[12.5px] font-semibold text-gray-500 mt-[3px] mb-3">
-              {{ storyboard.category }} · {{ storyboard.plan }} · {{ storyboard.duration }} · {{ storyboard.scenesCount }} escenas · {{ storyboard.targetAge }}
+              {{ storyboard.category }} · {{ storyboard.pertenencia }} · {{ storyboard.duration }} · {{ storyboard.scenesCount }} escenas · {{ storyboard.targetAge }}
             </p>
             <a
               class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer"

@@ -1,7 +1,9 @@
+import { esRutaPublica } from '~/utils/rutasPublicas'
+
 export default defineNuxtRouteMiddleware(async (to) => {
-  // /play/** routes are public — they are loaded by Educators WebView without a session
-  if (to.path.startsWith('/play/')) return
-  if (to.path === '/login') return
+  // Qué es público vive en `utils/rutasPublicas.ts`, con tests. Lo crítico: `/play/**` es el
+  // runner y lo abre el webview de educadores SIN sesión — nunca protegerlo desde acá.
+  if (esRutaPublica(to.path)) return
 
   const { user, fetchUser, loading } = useAuth()
 
@@ -9,14 +11,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await fetchUser()
   }
 
-  const isAuthenticated = !!user.value
-
-  if (!isAuthenticated) {
+  // La gestión es solo para superadmin: `useAuth` deja `user` en null si el perfil no lo es,
+  // aunque las credenciales de Supabase sean válidas.
+  if (!user.value) {
     return navigateTo('/login')
-  }
-
-  // Redirect authenticated users away from login
-  if (isAuthenticated && to.path === '/login') {
-    return navigateTo('/')
   }
 })

@@ -45,7 +45,8 @@
             <p class="text-[13px] font-semibold text-brand-dark leading-tight">StoryPlay Studio</p>
             <p class="text-[11px] text-gray-400">{{ userEmail }}</p>
           </div>
-          <div class="w-8 h-8 rounded-full bg-brand-purple flex items-center justify-center">
+          <!-- Mismo tile del usuario que admin: cuadrado con radio 8, verde de acción. -->
+          <div class="w-7 h-7 rounded-[8px] bg-brand-primary flex items-center justify-center shrink-0">
             <span class="text-white font-bold text-xs">
               {{ userInitial }}
             </span>
@@ -127,7 +128,6 @@ const pageTitle = computed(() => {
 })
 
 const pageDescription = computed(() => {
-  if (route.path.startsWith('/storyboards/') && route.path.includes('/scenes/')) return 'Detalle de escena'
   if (route.path.match(/^\/storyboards\/[^/]+\/[^/]+$/)) return 'Detalle de storyboard'
   if (route.path.startsWith('/storyboards/')) return 'Biblioteca de contenido educativo'
   if (route.path.startsWith('/primitives/')) return 'Playground de primitiva'

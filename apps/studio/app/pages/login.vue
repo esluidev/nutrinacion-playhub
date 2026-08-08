@@ -40,11 +40,8 @@
       </UiButton>
     </form>
 
-    <!-- Demo hint -->
-    <div class="mt-6 rounded-lg bg-brand-purple-50 border border-brand-purple-200 px-4 py-3">
-      <p class="text-xs text-brand-purple-700 font-semibold mb-1">Credenciales de demo</p>
-      <p class="text-xs text-brand-purple-600 font-mono">admin@nutrinacion.com / studio</p>
-    </div>
+    <!-- Sin pistas sobre qué es esto ni quién puede entrar: la pantalla pública de una
+         herramienta interna no debe anunciar que es un panel de administración. -->
   </div>
 </template>
 

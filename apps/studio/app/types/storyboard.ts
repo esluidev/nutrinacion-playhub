@@ -1,60 +1,31 @@
-import type { Localized } from './i18n'
+// Tipos del BUILD de storyboards. Todo lo editorial (estado de publicación, guía
+// pedagógica, países, duración, propiedad) vive en Supabase y se administra en
+// admin/Platform (tarea 030): Studio no lo modela ni lo escribe.
 
-// Publication status values mirror future DB enum (Spanish snake_case)
-export type PublicationStatus = 'borrador' | 'en_revision' | 'publicado' | 'archivado'
-
-// Propiedad del contenido (deriva de storyboards.organizacion_id en la BD):
-// 'estandar' = sin dueño (catálogo base para todos) · 'personalizado' = de una
-// organización. No hay tiers gratis/premium (el acceso lo da la licencia).
-export type Propiedad = 'estandar' | 'personalizado'
-
-// Storyboard type (taxonomy) — the 4 platform pillars. "nutricion" is the
-// global product concept, NOT a taxonomy value: the food type is "alimentacion".
+// Tipo de storyboard (taxonomía) — las 4 áreas de la plataforma. "nutricion" es el
+// concepto global de producto, NO un valor de taxonomía: el tipo de comida es "alimentacion".
 export type TipoStoryboard = 'alimentacion' | 'actividad-fisica' | 'cuidado-personal' | 'salud-emocional'
 
-// Guía pedagógica de UNA escena (espejo de storyboard_escenas, catálogo-owned).
-// Cada sección es texto enriquecido Localized con sus preguntas/listas EMBEBIDAS
-// (pedagogia lleva las "Preguntas e interacciones sugeridas", psicologia las
-// "Preguntas de conexión emocional", cientifico la "Información de refuerzo",
-// consejos su lista). `mecanica` se completa cuando el juego de la escena está listo.
-export interface SceneGuide {
-  descripcion?: Localized
-  objetivo?: Localized
-  pedagogia?: Localized
-  psicologia?: Localized
-  cientifico?: Localized
-  consejos?: Localized
-  mecanica?: Localized
-}
-
-export interface StoryboardScene {
+export interface StoryboardBuildScene {
   folder: string
+  /** Título resuelto a español, para mostrar en la tabla de escenas. */
   title: string
-  guia?: SceneGuide
 }
 
-export interface StoryboardJson {
+/** Un storyboard tal como lo declara su `storyboard.json` — sin nada de la base. */
+export interface StoryboardBuild {
+  /** slug, que es como se navega en Studio y en el runner. */
   id: string
+  /** uuid estable: la identidad que une build ↔ fila de `storyboards`. */
   clave: string
   title: string
-  description: string
   tipo: TipoStoryboard
+  /** Código de categoría en minúscula-guion, o undefined si el build no la declara. */
   categoria?: string
   audience: string
-  duration: string
   languages: string[]
-  status: PublicationStatus
-  propiedad: Propiedad
-  organizacion?: string // organización dueña cuando propiedad = 'personalizado' (storyboards.organizacion_id)
-  paises: string[] // códigos ISO donde está disponible; vacío = global (storyboards.paises)
-  // Guía del storyboard (catálogo-owned, texto enriquecido Localized): se autora
-  // en Studio y vive en Supabase (storyboards.objetivo / storyboards.bibliografia).
-  objetivo?: Localized
-  bibliografia?: Localized
-  scenes: StoryboardScene[]
-  coverColor: string
-}
-
-export interface Storyboard extends StoryboardJson {
   sceneCount: number
+  scenes: StoryboardBuildScene[]
+  /** Color de portada derivado del tipo — la portada real la define admin. */
+  coverColor: string
 }

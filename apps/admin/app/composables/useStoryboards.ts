@@ -24,7 +24,10 @@ export interface Storyboard {
   title: string
   description: string
   category: string           // tipo de storyboard (alimentación, actividad física, …)
-  plan: 'Estándar' | 'Personalizado'
+  // Pertenencia: PÚBLICO = del catálogo base, sin organización dueña (storyboards.organizacion_id
+  // nulo). PERSONALIZADO = hecho para una organización. No es un nivel de pago: el acceso lo
+  // da la licencia.
+  pertenencia: 'Público' | 'Personalizado'
   targetAge: string
   duration: string
   coverBg: string
@@ -46,9 +49,9 @@ const COVER_COLORS = [
 ] as const
 
 const DEMO_STORYBOARDS: Storyboard[] = [
-  { id: 1, title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', plan: 'Estándar', targetAge: 'Kids', duration: '30 min', coverBg: COVER_COLORS[0], scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', bibliografia: '', scenes: [] },
-  { id: 2, title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', plan: 'Estándar', targetAge: 'Kids', duration: '25 min', coverBg: COVER_COLORS[1], scenesCount: 6, objective: 'Fomentar el movimiento diario.', bibliografia: '', scenes: [] },
-  { id: 3, title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', plan: 'Personalizado', targetAge: 'Kids', duration: '30 min', coverBg: COVER_COLORS[2], scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', bibliografia: '', scenes: [] },
+  { id: 1, title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', pertenencia: 'Público', targetAge: 'Kids', duration: '30 min', coverBg: COVER_COLORS[0], scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', bibliografia: '', scenes: [] },
+  { id: 2, title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', pertenencia: 'Público', targetAge: 'Kids', duration: '25 min', coverBg: COVER_COLORS[1], scenesCount: 6, objective: 'Fomentar el movimiento diario.', bibliografia: '', scenes: [] },
+  { id: 3, title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', pertenencia: 'Personalizado', targetAge: 'Kids', duration: '30 min', coverBg: COVER_COLORS[2], scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', bibliografia: '', scenes: [] },
 ]
 
 // El contenido viene como jsonb Localized: se resuelve al locale actual con fallback a es.
@@ -108,7 +111,7 @@ export function useStoryboards() {
       title: loc(row.titulo, locale.value),
       description: loc(row.descripcion, locale.value),
       category: loc(row.tipo?.nombre, locale.value) || '—',
-      plan: row.organizacion_id ? 'Personalizado' : 'Estándar',
+      pertenencia: row.organizacion_id ? 'Personalizado' : 'Público',
       targetAge: loc(row.audiencia?.nombre, locale.value) || '—',
       duration: row.duracion_min ? `${row.duracion_min} min` : '—',
       coverBg: COVER_COLORS[row.id % COVER_COLORS.length]!,
@@ -135,7 +138,7 @@ export function useStoryboards() {
       .from('storyboards')
       .select(SELECT_STORYBOARD)
       .eq('estado', 'PUBLICADO')
-    // Estándar (sin dueño) o personalizado de MI organización.
+    // Público (sin organización dueña) o personalizado de MI organización.
     query = orgActiva.value
       ? query.or(`organizacion_id.is.null,organizacion_id.eq.${orgActiva.value.id}`)
       : query.is('organizacion_id', null)
@@ -192,8 +195,8 @@ export function useStoryboards() {
     return sb
   }
 
-  function planBadgeClass(plan: string): string {
-    return plan === 'Personalizado' ? 'bg-brand-purple text-white' : 'bg-white/90 text-gray-700'
+  function pertenenciaBadgeClass(pertenencia: string): string {
+    return pertenencia === 'Personalizado' ? 'bg-brand-purple text-white' : 'bg-white/90 text-gray-700'
   }
 
   return {
@@ -202,7 +205,7 @@ export function useStoryboards() {
     refresh,
     getStoryboard,
     fetchDetalle,
-    planBadgeClass,
+    pertenenciaBadgeClass,
     coverColors: COVER_COLORS,
   }
 }

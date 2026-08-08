@@ -25,9 +25,7 @@
     ]">
       <UiLogo :show-text="!isCollapsed" :class="isCollapsed ? 'lg:hidden' : ''" />
       <div v-if="isCollapsed" class="hidden lg:flex items-center justify-center">
-        <div class="w-9 h-9 rounded-lg bg-brand-purple flex items-center justify-center">
-          <span class="text-white font-display font-bold text-lg leading-none">S</span>
-        </div>
+        <UiLogo :show-text="false" />
       </div>
       <!-- Mobile close -->
       <button class="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100" @click="$emit('close')">
@@ -57,22 +55,17 @@
             'group flex items-center rounded-xl text-sm font-medium transition-all duration-150 relative',
             isCollapsed ? 'gap-3 lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5' : 'gap-3 px-3 py-2.5',
             isActive(item.path)
-              ? 'bg-brand-purple-50 text-brand-purple-700 font-semibold'
+              ? 'bg-brand-primary-50 text-brand-primary-800 font-semibold shadow-[inset_0_0_0_1px_theme(colors.brand.primary.100)]'
               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
           ]"
           @click="$emit('close')"
         >
-          <!-- Active indicator bar -->
-          <span
-            v-if="isActive(item.path)"
-            class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-brand-purple-500"
-          />
-          <!-- Icon -->
+          <!-- Icono -->
           <span :class="[
             'flex items-center justify-center shrink-0 transition-colors',
             isCollapsed ? 'lg:w-9 lg:h-9 lg:rounded-lg' : '',
             isActive(item.path)
-              ? 'text-brand-purple-600'
+              ? 'text-brand-primary-700'
               : 'text-gray-400 group-hover:text-gray-500',
           ]">
             <svg xmlns="http://www.w3.org/2000/svg" :class="isCollapsed ? 'w-[20px] h-[20px] lg:w-5 lg:h-5' : 'w-[20px] h-[20px]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">

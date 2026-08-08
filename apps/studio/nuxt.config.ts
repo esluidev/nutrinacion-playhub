@@ -14,6 +14,14 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
   ],
 
+  // Mismo proyecto Supabase que admin. Studio solo LEE (ver app/utils/supabase.ts).
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
+    },
+  },
+
   css: [
     '~/assets/css/main.css',
     '~/assets/css/storyplay.css',

@@ -7,7 +7,7 @@
       <UiChips v-model="activeCategory" :items="categoryChips" />
       <div class="flex items-center gap-2.5">
         <UiSearchInput v-model="searchQuery" placeholder="Buscar storyboard…" max-width="xs" class="!w-[240px]" />
-        <UiSelect v-model="activePlan" variant="toolbar" prefix="Plan" :options="planOptions" />
+        <UiSelect v-model="activePertenencia" variant="toolbar" prefix="Pertenencia" :options="pertenenciaOptions" />
       </div>
     </div>
 
@@ -28,9 +28,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
             </svg>
           </div>
-          <!-- Plan badge -->
-          <span :class="['absolute top-[13px] right-[13px] inline-flex items-center text-[11px] font-extrabold px-[11px] py-1 rounded-full backdrop-blur-sm', planPill(sb.plan)]">
-            {{ sb.plan }}
+          <!-- Pertenencia: público o personalizado de la organización -->
+          <span :class="['absolute top-[13px] right-[13px] inline-flex items-center text-[11px] font-extrabold px-[11px] py-1 rounded-full backdrop-blur-sm', pertenenciaPill(sb.pertenencia)]">
+            {{ sb.pertenencia }}
           </span>
           <!-- Scenes count -->
           <span class="absolute bottom-[13px] left-[13px] inline-flex items-center text-[11px] font-extrabold px-[11px] py-1 rounded-full bg-white/85 text-brand-dark/70 backdrop-blur-sm">
@@ -129,7 +129,7 @@ const { storyboards } = useStoryboards()
 
 const searchQuery = ref('')
 const activeCategory = ref('all')
-const activePlan = ref('all')
+const activePertenencia = ref('all')
 const currentPage = ref(1)
 const perPage = 12
 
@@ -139,18 +139,18 @@ const categoryChips = computed(() => [
 ])
 
 // El catálogo real distingue estándar (de la plataforma) vs personalizado (de tu org).
-const planOptions = [
+const pertenenciaOptions = [
   { value: 'all', label: 'Todos' },
-  { value: 'Estándar', label: 'Estándar' },
+  { value: 'Público', label: 'Público' },
   { value: 'Personalizado', label: 'Personalizado' },
 ]
 
-const PLAN_PILL: Record<string, string> = {
-  'Estándar': 'bg-white/85 text-brand-primary-800',
+const PILL_PERTENENCIA: Record<string, string> = {
+  'Público': 'bg-white/85 text-brand-primary-800',
   'Personalizado': 'bg-white/85 text-brand-purple-700',
 }
-function planPill(plan: string) {
-  return PLAN_PILL[plan] ?? PLAN_PILL['Estándar']
+function pertenenciaPill(pertenencia: string) {
+  return PILL_PERTENENCIA[pertenencia] ?? PILL_PERTENENCIA['Público']
 }
 
 const dynamicCategories = computed(() => {
@@ -165,8 +165,8 @@ const filteredStoryboards = computed(() => {
     result = result.filter(sb => sb.category === activeCategory.value)
   }
 
-  if (activePlan.value !== 'all') {
-    result = result.filter(sb => sb.plan === activePlan.value)
+  if (activePertenencia.value !== 'all') {
+    result = result.filter(sb => sb.pertenencia === activePertenencia.value)
   }
 
   if (searchQuery.value.trim()) {
@@ -200,11 +200,11 @@ const paginatedStoryboards = computed(() => {
 function resetFilters() {
   searchQuery.value = ''
   activeCategory.value = 'all'
-  activePlan.value = 'all'
+  activePertenencia.value = 'all'
   currentPage.value = 1
 }
 
-watch([activeCategory, searchQuery, activePlan], () => {
+watch([activeCategory, searchQuery, activePertenencia], () => {
   currentPage.value = 1
 })
 </script>

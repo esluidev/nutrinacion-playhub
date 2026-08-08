@@ -97,7 +97,7 @@
             </div>
             <div class="flex items-center justify-between">
               <span class="text-[12.5px] text-gray-500 font-bold">Plan</span>
-              <span :class="['badge', storyboard.plan === 'Personalizado' ? 'badge-purple' : 'badge-green']">{{ storyboard.plan }}</span>
+              <span :class="['badge', storyboard.pertenencia === 'Personalizado' ? 'badge-purple' : 'badge-green']">{{ storyboard.pertenencia }}</span>
             </div>
           </div>
         </div>
