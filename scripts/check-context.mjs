@@ -10,8 +10,6 @@ const required = [
   'CLAUDE.md',
   'docs/README.md',
   'docs/testing/strategy.md',
-  'qa/README.md',
-  'qa/scenarios/TEMPLATE.md',
   'apps/admin/README.md',
   'apps/admin/AGENTS.md',
   'apps/admin/CLAUDE.md',
@@ -24,6 +22,10 @@ const required = [
 ]
 
 const failures = []
+
+if (existsSync(join(root, 'qa'))) {
+  failures.push('qa/ no debe existir: estrategia en docs/testing y ejecución en la tarea activa')
+}
 
 for (const relative of required) {
   if (!existsSync(join(root, relative))) failures.push(`falta ${relative}`)
@@ -59,7 +61,6 @@ const markdownRoots = [
   'README.md',
   'AGENTS.md',
   'docs',
-  'qa',
   'apps/admin/README.md',
   'apps/admin/AGENTS.md',
   'apps/studio/README.md',

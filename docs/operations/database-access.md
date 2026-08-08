@@ -27,9 +27,9 @@ herramientas. También recomienda no conectar MCP a producción:
 Codex:
 
 ```bash
-codex mcp add supabase-nutrinacion \
+codex mcp add supabase-workshops \
   --url 'https://mcp.supabase.com/mcp?project_ref=<project-ref>&read_only=true&features=database'
-codex mcp login supabase-nutrinacion
+codex mcp login supabase-workshops
 ```
 
 Claude Code usa la misma URL mediante su configuración MCP de proyecto. No versionar access
@@ -43,7 +43,7 @@ read-only.
 No se asume que el MCP está instalado. En una tarea relacionada con datos, el agente revisa primero
 las herramientas disponibles:
 
-- si aparece `supabase-nutrinacion` o una capacidad Supabase equivalente para este proyecto, la usa
+- si aparece `supabase-workshops` o una capacidad Supabase equivalente para este proyecto, la usa
   para introspección y QA remoto focal;
 - si no aparece, continúa con las migraciones versionadas y Supabase local; solo declara bloqueo si
   el criterio de aceptación exige observar el estado cloud;
@@ -51,7 +51,7 @@ las herramientas disponibles:
   copiar credenciales, PII ni resultados masivos.
 
 Esta regla vive también en `AGENTS.md` porque debe descubrirse antes de entrar a documentación
-profunda. El nombre estable recomendado del servidor es `supabase-nutrinacion`.
+profunda. El nombre estable recomendado del servidor es `supabase-workshops`.
 
 ## Estrategia de entornos: local primero
 

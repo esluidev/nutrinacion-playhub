@@ -32,8 +32,8 @@ npm test
 npm run build
 ```
 
-El QA autenticado y las mutaciones Supabase se ejecutan con escenarios de `../../qa/scenarios/`
-y autorización explícita cuando afecten datos reales.
+El QA autenticado sigue el `Plan de QA` de la tarea y `../../docs/testing/strategy.md`. Toda
+mutación Supabase requiere autorización explícita cuando afecte datos reales.
 
 ## Contexto para agentes
 

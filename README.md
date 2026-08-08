@@ -43,7 +43,6 @@ convierte en un solo artefacto de producción.
 apps/        Aplicaciones desplegables independientes.
 supabase/    Migraciones y Edge Functions del backend compartido.
 docs/        Arquitectura, dominio, UI, testing y operación estables.
-qa/          Escenarios repetibles de navegador, datos y evidencia.
 scripts/     Verificaciones reproducibles del monorepo.
 obsidian/    Symlink local al segundo cerebro operativo del proyecto.
 AGENTS.md    Reglas y router de contexto para agentes.
@@ -99,8 +98,12 @@ flutter test
 La estrategia completa y sus límites están en:
 
 - [`docs/testing/strategy.md`](docs/testing/strategy.md): capas y criterios de evidencia;
-- [`qa/README.md`](qa/README.md): navegador, Supabase y artefactos;
-- [`qa/scenarios/`](qa/scenarios/): flujos reutilizables.
+- [`docs/operations/database-access.md`](docs/operations/database-access.md): inspección viva con
+  MCP Supabase y fallback local;
+- el `Plan de QA` de cada tarea: datos, pasos de navegador, invariantes y salida esperada del flujo.
+
+No existe un directorio `qa/`: las reglas estables viven en `docs/testing/` y la ejecución concreta
+se documenta en la tarea para evitar otra fuente de verdad paralela.
 
 ## Fuentes de verdad
 

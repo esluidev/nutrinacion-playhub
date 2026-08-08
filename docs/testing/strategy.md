@@ -37,8 +37,8 @@ La existencia de una migración en Git no demuestra que esté aplicada.
 
 ### 4. Navegador/agente
 
-Los flujos críticos viven como escenarios versionados en `qa/scenarios/`. El navegador integrado
-puede reutilizar sesiones iniciadas, ejecutar pasos y capturar evidencia. Un escenario define:
+Los flujos críticos se definen en el `Plan de QA` de la tarea activa. El navegador integrado puede
+reutilizar sesiones iniciadas, ejecutar pasos y capturar evidencia. El plan debe definir:
 
 - riesgo y autorización necesaria;
 - datos/estado inicial;
@@ -48,6 +48,8 @@ puede reutilizar sesiones iniciadas, ejecutar pasos y capturar evidencia. Un esc
 - limpieza o reversibilidad.
 
 Capturas solas no prueban persistencia; consultas solas no prueban que la UI represente el estado.
+No se mantiene un directorio `qa/`: duplicaría alcance/estado respecto de Obsidian. Esta estrategia
+contiene las reglas estables y cada tarea conserva el procedimiento y la evidencia de su ejecución.
 
 ### 5. E2E determinista
 
@@ -58,7 +60,8 @@ taller y bridge Educators↔runner.
 ## Evidencia
 
 - Resumen exacto de comandos en el Log de la tarea.
-- Artefactos temporales en `qa/artifacts/<run-id>/` (ignorado por Git).
+- Capturas o artefactos temporales permanecen en la sesión/herramienta y se enlazan o resumen en la
+  tarea cuando aportan evidencia; no se versiona un almacén paralelo en el repositorio.
 - Sin contraseñas, tokens, anon/service keys, connection strings ni datos personales innecesarios.
 - Actividad recibe solo el hito, no la salida completa.
 

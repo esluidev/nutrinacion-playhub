@@ -35,7 +35,9 @@ Lee solo lo necesario para la tarea. El estado de trabajo no vive aquí: consult
 ## Calidad
 
 - [`testing/strategy.md`](testing/strategy.md): capas de verificación y evidencia.
-- [`../qa/README.md`](../qa/README.md): ejecución de escenarios de navegador/Supabase.
+- [`operations/database-access.md`](operations/database-access.md): inspección Supabase con MCP
+  read-only y pruebas local-first.
+- El flujo concreto de navegador/datos vive en el `Plan de QA` de la tarea activa.
 
 ## Autoridad y mantenimiento
 

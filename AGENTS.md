@@ -56,7 +56,7 @@ tres aplicaciones.
 ## Acceso vivo a Supabase
 
 Al iniciar una tarea que toque esquema, migraciones, RLS, Auth, persistencia o QA de datos, revisa
-las herramientas disponibles. Si existe el MCP `supabase-nutrinacion` —o una capacidad Supabase
+las herramientas disponibles. Si existe el MCP `supabase-workshops` —o una capacidad Supabase
 equivalente configurada para este proyecto— úsalo para introspección y verificación remota focal.
 
 - El perfil normal debe ser project-scoped, `read_only=true` y limitado a `features=database`.
