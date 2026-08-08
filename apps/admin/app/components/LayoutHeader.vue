@@ -203,9 +203,16 @@ const invsAbierto = ref(false)
 
 if (inv) {
   const { user: authUser } = useAuth()
+  // El header vive toda la sesión, así que es el lugar natural para el canal de Realtime
+  // (0010): una invitación nueva actualiza el sobre sin recargar. El correo puede no estar
+  // en el primer render, por eso va con watch y no con un onMounted suelto.
   watch(() => authUser.value?.email, (email) => {
-    if (email) inv.refreshPendientes()
+    if (!email) return
+    inv.refreshPendientes()
+    inv.suscribir(email)
   }, { immediate: true })
+
+  onUnmounted(() => inv.desuscribir())
 }
 
 // Close menu on route change

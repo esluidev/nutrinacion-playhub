@@ -52,6 +52,9 @@
       <template #cell-educadores="{ row }">
         <span class="text-gray-800 font-extrabold">{{ row.educadores?.[0]?.count ?? 0 }}</span>
       </template>
+      <template #cell-colaboradores="{ row }">
+        <span class="text-gray-800 font-extrabold">{{ row.colaboradores?.[0]?.count ?? 0 }}</span>
+      </template>
       <!-- Entrar no es una acción de tabla: la FILA entera es la puerta (clickable). -->
       <template #cell-acciones="{ row }">
         <div class="flex items-center justify-end gap-1">
@@ -123,6 +126,7 @@ const columns = computed(() => [
   { key: 'telefono', label: t('coms.colPhone') },
   { key: 'pais', label: t('coms.colCountry') },
   { key: 'educadores', label: t('coms.colEducators'), align: 'center' as const },
+  { key: 'colaboradores', label: t('coms.colCollaborators'), align: 'center' as const },
   { key: 'acciones', label: t('coms.colActions'), align: 'right' as const },
 ])
 
@@ -208,8 +212,8 @@ async function confirmarEliminar() {
 
 // Filas demo (dev sin Supabase): dejan ver columnas, acciones y el modal de borrado.
 const DEMO_COMUNIDADES: ComunidadFila[] = [
-  { id: 1, nombre: 'Comunidad Centro', descripcion: 'Centro comunitario', correo: 'centro@nutrinacion.com', telefono: '+52 55 1234 5678', pais: 'MX', organizacion_id: 1, created_at: '', educadores: [{ count: 6 }] },
-  { id: 2, nombre: 'Comunidad Norte', descripcion: 'Programa escolar', correo: null, telefono: null, pais: null, organizacion_id: 1, created_at: '', educadores: [{ count: 2 }] },
+  { id: 1, nombre: 'Comunidad Centro', descripcion: 'Centro comunitario', correo: 'centro@nutrinacion.com', telefono: '+52 55 1234 5678', pais: 'MX', organizacion_id: 1, created_at: '', educadores: [{ count: 6 }], colaboradores: [{ count: 2 }] },
+  { id: 2, nombre: 'Comunidad Norte', descripcion: 'Programa escolar', correo: null, telefono: null, pais: null, organizacion_id: 1, created_at: '', educadores: [{ count: 2 }], colaboradores: [{ count: 0 }] },
 ]
 
 async function cargar() {

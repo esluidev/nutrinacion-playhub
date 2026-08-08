@@ -1,3 +1,5 @@
+import type { RealtimeChannel } from '@supabase/supabase-js'
+
 // Bandeja de invitaciones de la persona autenticada: las dirigidas a SU correo.
 //
 // Una invitación a un correo que YA tiene cuenta no se canjea por link: aparece aquí y se
@@ -25,8 +27,15 @@ const SELECT = `
   comunidades ( id, nombre )
 `
 
+// Canal de Realtime único para toda la app: un RealtimeChannel no es estado serializable,
+// así que no puede vivir en `useState`. La app es SPA con un solo cliente de Supabase.
+let canal: RealtimeChannel | null = null
+
 export function useInvitaciones() {
-  const supabase = useSupabaseClient()
+  // El cliente se resuelve POR LLAMADA, no al invocar el composable: `utils/supabase.ts`
+  // lanza si faltan las env vars, así que construirlo aquí hacía que bastara con llamar a
+  // este composable para tumbar la página en dev sin Supabase.
+  const supabase = () => useSupabaseClient()
   const { t } = useT()
 
   // Compartido: el indicador del header y la página leen el mismo estado.
@@ -54,7 +63,7 @@ export function useInvitaciones() {
     const email = user.value?.email
     if (!email || !isSupabaseConfigured()) return []
 
-    const { data } = await supabase
+    const { data } = await supabase()
       .from('invitaciones')
       .select(SELECT)
       .eq('email', email.toLowerCase())
@@ -71,7 +80,8 @@ export function useInvitaciones() {
   }
 
   async function responder(token: string, accion: 'aceptar' | 'rechazar') {
-    const { data, error } = await supabase.functions.invoke('canjear-invitacion', {
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { data, error } = await supabase().functions.invoke('canjear-invitacion', {
       body: { action: accion, token },
     })
 
@@ -84,5 +94,32 @@ export function useInvitaciones() {
     return { error: null }
   }
 
-  return { pendientes, vigente, titulo, subtitulo, listMias, refreshPendientes, responder }
+  // ── Realtime (migración 0010) ────────────────────────────────────────────────
+  // Te invitan con la sesión abierta y el sobre del header lo refleja al instante, sin
+  // recargar. El canal es UNO para toda la app (SPA, un solo cliente): por eso vive a nivel
+  // de módulo y no en `useState` — un RealtimeChannel no es estado serializable.
+  //
+  // El filtro por correo es la clave: sin él llegarían también las invitaciones de las orgs
+  // que administro (el RLS las permite) y el contador del sobre —que es "las MÍAS"— se
+  // recalcularía por eventos que no le tocan.
+  async function suscribir(email: string) {
+    if (canal || !isSupabaseConfigured() || !email) return
+    canal = useSupabaseClient()
+      .channel('invitaciones-propias')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invitaciones', filter: `email=eq.${email.toLowerCase()}` },
+        () => { refreshPendientes() },
+      )
+      .subscribe()
+  }
+
+  async function desuscribir() {
+    if (!canal) return
+    const anterior = canal
+    canal = null
+    await useSupabaseClient().removeChannel(anterior)
+  }
+
+  return { pendientes, vigente, titulo, subtitulo, listMias, refreshPendientes, responder, suscribir, desuscribir }
 }

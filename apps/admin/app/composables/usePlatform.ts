@@ -99,28 +99,49 @@ function normalizarOrg(p: DatosOrganizacion) {
   }
 }
 
+// Platform no tiene filas demo: es la consola del operador y sus datos son reales por
+// definición. En dev sin Supabase cada función devuelve su valor NEUTRO, para que el
+// chrome (sidebar, toolbars, estados vacíos) se pueda recorrer sin sesión.
+const RESUMEN_VACIO: ResumenPlatform = {
+  organizaciones: 0,
+  orgsConLicenciaVigente: 0,
+  comunidades: 0,
+  educadores: 0,
+  talleres: 0,
+  talleresProgramados: 0,
+  licencias: { vigentes: 0, trials: 0, porVencer: 0, vencidas: 0 },
+  atencion: [],
+  actividad: [],
+  invitacionesPendientes: 0,
+  invitacionesRecientes: [],
+}
+
 export function usePlatform() {
-  const supabase = useSupabaseClient()
+  // El cliente se resuelve POR LLAMADA, no al invocar el composable: `utils/supabase.ts`
+  // lanza si faltan las env vars, así que construirlo aquí hacía que bastara con llamar a
+  // este composable para tumbar la página en dev sin Supabase.
+  const supabase = () => useSupabaseClient()
 
   // ── Dashboard del operador ──────────────────────────────────────────────────
   // Orgs y licencias se traen COMPLETAS pero ligeras (al scale objetivo, ~100 orgs):
   // el desglose y la lista de atención se computan con las reglas puras de utils.
   async function getResumenPlatform(): Promise<ResumenPlatform> {
+    if (!isSupabaseConfigured()) return RESUMEN_VACIO
     const head = { count: 'exact' as const, head: true }
     const hoy = new Date().toISOString().slice(0, 10)
 
     const [orgsRes, licRes, educadores, talleres, programados, invPendientes, invRecientes] = await Promise.all([
-      supabase
+      supabase()
         .from('organizaciones')
         .select('id, nombre, created_at, comunidades ( id, nombre, created_at ), administradores:organizacion_administradores ( id )'),
-      supabase
+      supabase()
         .from('licencias')
         .select('id, estado, fecha_inicio, fecha_fin, max_comunidades, organizacion_id, created_at'),
-      supabase.from('educadores').select('id', head).is('deleted_at', null),
-      supabase.from('talleres').select('id', head),
-      supabase.from('talleres').select('id', head).eq('estado', 'PROGRAMADO'),
-      supabase.from('invitaciones').select('id', head).eq('role', 'ADMIN').eq('estado', 'PENDIENTE'),
-      supabase
+      supabase().from('educadores').select('id', head).is('deleted_at', null),
+      supabase().from('talleres').select('id', head),
+      supabase().from('talleres').select('id', head).eq('estado', 'PROGRAMADO'),
+      supabase().from('invitaciones').select('id', head).eq('role', 'ADMIN').eq('estado', 'PENDIENTE'),
+      supabase()
         .from('invitaciones')
         .select('id, email, created_at, organizaciones!inner ( nombre )')
         .eq('role', 'ADMIN')
@@ -149,20 +170,23 @@ export function usePlatform() {
 
   // ── Catálogo ──────────────────────────────────────────────────────────────
   async function listTiposOrganizacion() {
-    const { data } = await supabase
+    if (!isSupabaseConfigured()) return [] as { id: number, codigo: string, nombre: Record<string, string> }[]
+    const { data } = await supabase()
       .from('tipos_organizacion').select('id, codigo, nombre').eq('activo', true).order('orden')
     return (data as { id: number, codigo: string, nombre: Record<string, string> }[] | null) ?? []
   }
 
   async function listPaises() {
-    const { data } = await supabase
+    if (!isSupabaseConfigured()) return [] as { codigo: string, nombre: Record<string, string>, bandera: string | null }[]
+    const { data } = await supabase()
       .from('paises').select('codigo, nombre, bandera').eq('activo', true).order('codigo')
     return (data as { codigo: string, nombre: Record<string, string>, bandera: string | null }[] | null) ?? []
   }
 
   // Orgs para dropdowns (id + nombre, sin paginar).
   async function listOrganizacionesSimple() {
-    const { data } = await supabase.from('organizaciones').select('id, nombre').order('nombre')
+    if (!isSupabaseConfigured()) return [] as { id: number, nombre: string }[]
+    const { data } = await supabase().from('organizaciones').select('id, nombre').order('nombre')
     return (data as { id: number, nombre: string }[] | null) ?? []
   }
 
@@ -173,17 +197,18 @@ export function usePlatform() {
     admins?: 'todos' | 'con' | 'sin'
     page?: number
   } = {}) {
+    if (!isSupabaseConfigured()) return { data: [] as OrgResumen[], total: 0 }
     const [from, to] = rango(opts.page ?? 1)
 
     // Filtro con/sin administradores: PostgREST no hace anti-join, así que resolvemos aparte
     // los ids de organización que tienen algún admin (barato al scale objetivo, ~100 orgs).
     let idsConAdmin: number[] | null = null
     if (opts.admins === 'con' || opts.admins === 'sin') {
-      const { data: rows } = await supabase.from('organizacion_administradores').select('organizacion_id')
+      const { data: rows } = await supabase().from('organizacion_administradores').select('organizacion_id')
       idsConAdmin = [...new Set(((rows as { organizacion_id: number }[] | null) ?? []).map(r => r.organizacion_id))]
     }
 
-    let query = supabase
+    let query = supabase()
       .from('organizaciones')
       .select(`
         id, nombre, correo, telefono, website, created_at, tipo_id,
@@ -210,7 +235,8 @@ export function usePlatform() {
   }
 
   async function getOrganizacion(id: number) {
-    const { data, error } = await supabase
+    if (!isSupabaseConfigured()) return { data: null, error: null }
+    const { data, error } = await supabase()
       .from('organizaciones')
       .select(`
         id, nombre, correo, telefono, website, created_at, tipo_id,
@@ -226,7 +252,8 @@ export function usePlatform() {
   }
 
   async function createOrganizacion(payload: DatosOrganizacion) {
-    const { data, error } = await supabase
+    if (!isSupabaseConfigured()) return { id: null as number | null, error: null as string | null }
+    const { data, error } = await supabase()
       .from('organizaciones')
       .insert(normalizarOrg(payload))
       .select('id').single()
@@ -234,7 +261,8 @@ export function usePlatform() {
   }
 
   async function updateOrganizacion(id: number, payload: DatosOrganizacion) {
-    const { error } = await supabase
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error } = await supabase()
       .from('organizaciones')
       .update(normalizarOrg(payload))
       .eq('id', id)
@@ -244,7 +272,8 @@ export function usePlatform() {
   // Las FK (comunidades, licencias, admins) son restrict: si tiene datos colgando,
   // Postgres lo rechaza y el error se muestra tal cual — no hay borrado en cascada.
   async function deleteOrganizacion(id: number) {
-    const { error } = await supabase
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error } = await supabase()
       .from('organizaciones')
       .delete()
       .eq('id', id)
@@ -253,12 +282,13 @@ export function usePlatform() {
 
   // Designa el titular de una organización: marca UN administrador y desmarca al resto.
   async function setTitular(organizacionId: number, adminId: number) {
-    const { error: e1 } = await supabase
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error: e1 } = await supabase()
       .from('organizacion_administradores')
       .update({ titular: false })
       .eq('organizacion_id', organizacionId)
     if (e1) return { error: e1.message }
-    const { error: e2 } = await supabase
+    const { error: e2 } = await supabase()
       .from('organizacion_administradores')
       .update({ titular: true })
       .eq('id', adminId)
@@ -267,8 +297,9 @@ export function usePlatform() {
 
   // ── Licencias (monitoreo + CRUD) ────────────────────────────────────────────
   async function listLicencias(opts: { q?: string, estado?: string, page?: number } = {}) {
+    if (!isSupabaseConfigured()) return { data: [] as LicenciaResumen[], total: 0 }
     const [from, to] = rango(opts.page ?? 1)
-    let query = supabase
+    let query = supabase()
       .from('licencias')
       .select(`
         id, estado, max_comunidades, max_educadores, max_personalizados,
@@ -286,30 +317,35 @@ export function usePlatform() {
   }
 
   async function getLicencia(id: number) {
-    const { data } = await supabase
+    if (!isSupabaseConfigured()) return null
+    const { data } = await supabase()
       .from('licencias').select('*, organizaciones ( id, nombre )').eq('id', id).maybeSingle()
     return data
   }
 
   async function createLicencia(payload: DatosLicencia) {
-    const { data, error } = await supabase.from('licencias').insert(payload).select('id').single()
+    if (!isSupabaseConfigured()) return { id: null as number | null, error: null as string | null }
+    const { data, error } = await supabase().from('licencias').insert(payload).select('id').single()
     return { id: (data?.id as number) ?? null, error: error?.message ?? null }
   }
 
   async function updateLicencia(id: number, payload: Omit<DatosLicencia, 'organizacion_id'>) {
-    const { error } = await supabase.from('licencias').update(payload).eq('id', id)
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error } = await supabase().from('licencias').update(payload).eq('id', id)
     return { error: error?.message ?? null }
   }
 
   async function deleteLicencia(id: number) {
-    const { error } = await supabase.from('licencias').delete().eq('id', id)
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error } = await supabase().from('licencias').delete().eq('id', id)
     return { error: error?.message ?? null }
   }
 
   // ── Invitaciones ADMIN (monitoreo de onboarding) ────────────────────────────
   async function listInvitacionesAdmin(opts: { q?: string, estado?: string, page?: number } = {}) {
+    if (!isSupabaseConfigured()) return { data: [] as InvitacionResumen[], total: 0 }
     const [from, to] = rango(opts.page ?? 1)
-    let query = supabase
+    let query = supabase()
       .from('invitaciones')
       .select(`
         id, token, role, email, estado, expira_en, idioma, created_at,
@@ -333,7 +369,8 @@ export function usePlatform() {
     idioma: string
     expira_en: string | null
   }) {
-    const { data, error } = await supabase
+    if (!isSupabaseConfigured()) return { data: null, error: null as string | null }
+    const { data, error } = await supabase()
       .from('invitaciones')
       .insert({
         organizacion_id: payload.organizacion_id,
@@ -348,7 +385,8 @@ export function usePlatform() {
   }
 
   async function revokeInvitacion(id: number) {
-    const { error } = await supabase.from('invitaciones').update({ estado: 'REVOCADA' }).eq('id', id)
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    const { error } = await supabase().from('invitaciones').update({ estado: 'REVOCADA' }).eq('id', id)
     return { error: error?.message ?? null }
   }
 
