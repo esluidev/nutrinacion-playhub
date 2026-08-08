@@ -1,8 +1,8 @@
 # Diseño
 
-> Estado: **skeleton.** Captura la identidad visual actual de cada app para no romperla;
-> los tokens y el sistema de componentes definitivos se pulen después. No introducir un
-> lenguaje visual nuevo sin acordarlo.
+> Documento de reglas vigentes y referencias. La implementación actual de tokens/componentes
+> en cada app manda sobre valores históricos. No introducir un lenguaje visual nuevo sin
+> acordarlo.
 
 Fuentes display redondeadas (tipo Fredoka) para títulos; cuerpo legible (tipo Nunito).
 
@@ -41,8 +41,12 @@ Kawaii/cartoon colorido y lúdico (se ejecuta frente a niños de 4-8 años). Tá
 
 ## studio
 
-Herramienta interna, funcional, no de cara al cliente: prioriza productividad sobre estética.
-UI en español. Puede reusar tokens de admin (ambas Nuxt). Se define al construir la app.
+Herramienta interna, funcional, no de cara al cliente. Su chrome de gestión ya está alineado al
+sistema de Admin (verde, grises, campos, radios y layout), conservando púrpura como acento de marca.
+La implementación vive en `apps/studio/tailwind.config.ts` y `app/assets/css/main.css`.
+
+El runner y las escenas NO heredan ese chrome: usan `storyplay.css`, primitivas y sprites. Mantener
+esa separación evita que un ajuste de gestión cambie accidentalmente la experiencia del juego.
 
 ## Estilos y primitivas de los juegos (StoryPlay)
 

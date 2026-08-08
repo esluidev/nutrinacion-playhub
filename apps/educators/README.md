@@ -1,17 +1,36 @@
-# nutrinacion_storyplay_flutter
+# StoryPlay Educators
 
-StoryPlay - Nutrición divertida para educadores
+Aplicación Flutter para que educadores ejecuten talleres en aula. Está orientada a tablet/PWA y a
+uso táctil landscape. Actualmente es un prototipo con pantallas y datos locales; la conexión real a
+Supabase, autenticación por código y bridge final con Studio siguen pendientes.
 
-## Getting Started
+## Superficies actuales
 
-This project is a starting point for a Flutter application.
+- login provisional;
+- listado de talleres;
+- ejecución del taller;
+- resumen y feedback;
+- integración web todavía no cerrada con el runner público de Studio.
 
-A few resources to get you started if this is your first Flutter project:
+## Desarrollo
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Verificación
+
+```bash
+flutter analyze
+flutter test
+```
+
+Educators aún no forma parte de `../../scripts/verify.sh`; toda tarea que la toque debe ejecutar
+estos comandos explícitamente.
+
+## Contexto
+
+- [`../../docs/apps/educators.md`](../../docs/apps/educators.md)
+- [`../../docs/games.md`](../../docs/games.md)
+- [`AGENTS.md`](AGENTS.md)

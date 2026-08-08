@@ -3,7 +3,7 @@
 // Supabase (docs/backend.md). Cuando la BD esté conectada, este composable pasa a
 // consultar Supabase; los consumidores (multiselect de disponibilidad, etc.) no
 // cambian. La UI de Studio es solo español, por eso `nombre` va en español.
-// Regla 6 de CLAUDE.md: todo acceso a datos pasa por un composable.
+// Regla de apps/studio/AGENTS.md: todo acceso a datos pasa por un composable.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Pais {

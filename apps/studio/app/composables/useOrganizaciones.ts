@@ -4,7 +4,7 @@
 // los storyboards personalizados (storyboards.organizacion_id). Cuando la BD esté
 // conectada, este composable consulta Supabase; los consumidores no cambian.
 // El `id` es string aquí (en la BD es bigint); se usa tal cual como valor guardado.
-// Regla 6 de CLAUDE.md: todo acceso a datos pasa por un composable.
+// Regla de apps/studio/AGENTS.md: todo acceso a datos pasa por un composable.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Organizacion {

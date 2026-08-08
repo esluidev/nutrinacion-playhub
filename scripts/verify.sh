@@ -9,15 +9,18 @@
 #   0 = todo OK
 #   ≠0 = al menos un chequeo falló (ver salida)
 #
-# Notas:
-#  - Mínimo a propósito: las apps están parcialmente implementadas y la BD no está
-#    conectada. Descomentá / ajustá los pasos a medida que cada app tenga sus scripts.
-#  - admin y studio son Nuxt (npm/pnpm). educators es Flutter (dart/flutter).
+# Cobertura actual:
+#  - admin y studio: contexto + typecheck + Vitest + build mediante npm.
+#  - educators: Flutter, todavía fuera de este script; se verifica de forma focal.
+#  - Supabase/RLS, cloud y navegador requieren las capas descritas en docs/testing/strategy.md.
 
 set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PKG_MANAGER="npm run"   # las apps Nuxt usan npm (lockfile package-lock.json)
+
+echo "→ Contexto y documentación"
+node "$ROOT/scripts/check-context.mjs"
 
 run_node_app() {
   local app="$1"; shift
@@ -61,10 +64,10 @@ run_flutter_app() {
 # admin (Nuxt) — typecheck + tests (vitest) + build
 run_node_app admin typecheck test build
 
-# studio (Nuxt)
-run_node_app studio typecheck build
+# studio (Nuxt) — typecheck + tests (vitest) + build
+run_node_app studio typecheck test build
 
-# educators (Flutter) — descomentar cuando el proyecto Flutter esté listo
+# educators (Flutter) — aún se verifica de forma focal; ver apps/educators/README.md
 # run_flutter_app educators
 
 # Las apps sin bloque activo todavía no tienen sus chequeos listos. Las tareas

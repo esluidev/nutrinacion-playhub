@@ -58,6 +58,7 @@ tasks
 # Test outputs
 coverage/
 .nyc_output/
+/qa/artifacts/
 
 # Misc
 *.tmp

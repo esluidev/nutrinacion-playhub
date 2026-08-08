@@ -1,49 +1,48 @@
-# App: Creador de juegos / Studio (`apps/studio`)
+# Studio (`apps/studio`)
 
-Herramienta interna de la startup para crear, almacenar y exponer los juegos HTML que
-componen las escenas de los storyboards. Stack: Nuxt. Solo español (uso interno).
+Aplicación Nuxt 4 interna y host del runner StoryPlay.
 
-> Estado: **no existe todavía.** Es una de las apps a construir. Este documento describe
-> la intención; los detalles técnicos finos se definirán al implementarla.
+## Estado vigente
 
-## Propósito
+- Gestión protegida con Supabase Auth y gate de superadmin.
+- `/play/**` público para previews y futuro webview de Educators.
+- Storyboards, escenas, sprites, primitivas y audio viven en el build de `content/`.
+- Produce metadata copiable y consulta Supabase para mostrar si el build está registrado/al día.
+- No escribe Supabase. Admin/Platform es la superficie editorial y de publicación.
+- Vitest cubre metadata, drift remoto y frontera de rutas públicas.
 
-Los juegos de las escenas son **HTML interactivos**, que un modelo de IA o un desarrollador
-puede escribir directamente. Studio es donde esos juegos se crean, guardan y publican.
+## Superficies
 
-## Responsabilidades
+- `app/pages/storyboards/`: catálogo build y detalle de solo lectura.
+- `app/pages/play/`: runner público.
+- `content/storyboards/`: contenido compilado por tipo/storyboard/escena.
+- `app/primitives/`: mecánicas reutilizables.
+- `app/sprites/`: arte reusable.
+- `app/assets/css/storyplay.css`: design system de juegos.
+- `app/assets/css/main.css`: chrome de gestión, separado del runner.
 
-1. **Crear juegos HTML** — un editor/entorno para construir los juegos interactivos de
-   cada escena (puzzles, retos, interacciones, mini-juegos).
-2. **Almacenar** — guardar los juegos y sus assets.
-3. **Exponer** — publicar los juegos de forma que la app de educadores los consuma vía
-   webview. Ver el contrato en `docs/games.md`.
-4. **Traducir** — los juegos se traducen aquí (studio es donde vive la traducción de los
-   juegos, aunque su propia UI sea solo español).
+## Contrato build/editorial
 
-## Audiencia
+Studio es dueño de clave, slug, idiomas, taxonomía, cantidad/orden/folder de escenas y contenido
+ejecutable. Admin es dueño de estado editorial, descripción, objetivo, bibliografía, duración,
+países/organización y guía. Títulos llegan como semilla y pueden corregirse en Admin.
 
-El equipo interno de Nutrinación (diseñadores de contenido, desarrolladores). No es una
-app de cara al cliente.
+## Reglas de contenido
 
-## A definir al implementar
+Antes de tocar una escena:
 
-- Cómo se modela un juego (estructura, metadatos, versión, idioma).
-- Cómo se asocia un juego a una escena de un storyboard.
-- El formato de empaquetado y publicación (un bundle HTML/JS/CSS por juego, hospedaje,
-  URL pública o firmada).
-- El contrato de comunicación juego ↔ app de educadores (eventos de inicio, progreso,
-  completado, recompensas). Ver `docs/games.md`.
-- Almacenamiento (Supabase Storage u otro) y control de acceso.
-- **Entrega** del audio narrado a educators (hospedaje/servido por webview). La
-  generación ya está definida: cada storyboard pregraba su narración con VoiceBox desde un
-  `audio.manifest.json` (ver `docs/storyboards.md` → Narración) usando
-  `scripts/generate_audio.py` (ver `scripts/README.md`); el runner ya la reproduce con
-  fallback a Web Speech.
+1. leer [`../game-rules.md`](../game-rules.md) completo;
+2. leer el contrato pedagógico del tipo en [`../storyboards.md`](../storyboards.md);
+3. revisar primitivas/sprites existentes y [`../design.md`](../design.md);
+4. mantener todo texto del juego localizado y audio alineado al texto runtime.
 
-## Notas
+## Verificación
 
-- UI de studio: solo español.
-- Los juegos creados aquí sí son multi-idioma (se traducen para las apps que los consumen);
-  el patrón de traducción del contenido vive en `docs/storyboards.md` (Traducciones).
-- Comparte el backend Supabase con las otras dos apps.
+```bash
+cd apps/studio
+npm run typecheck
+npm test
+npm run build
+```
+
+Para contenido, añadir QA visual en `/play/<tipo>/<slug>` con idioma y escena relevantes.

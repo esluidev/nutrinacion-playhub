@@ -1,73 +1,45 @@
-# App: Educadores / StoryPlay (`apps/educators`)
+# Educators / StoryPlay (`apps/educators`)
 
-Aplicación multiplataforma (Flutter) que los educadores usan en el aula para ejecutar los
-talleres asignados. Stack: Flutter + webview para los juegos. Multi-idioma (hoy solo
-español). PWA + tablets (iPad, Android), landscape como modo principal.
+Aplicación Flutter para educadores en aula, orientada a tablet/PWA y ejecución landscape.
 
-> Estado: parcialmente implementada, funcionando con **datos estáticos**. La base de
-> datos aún no está conectada.
+## Estado vigente
 
-## Audiencia y contexto
+Es un prototipo con pantallas locales de login, home, ejecución, resumen y feedback. No está
+conectada todavía a Supabase y el bridge productivo con el runner de Studio no está cerrado.
 
-El usuario es el educador (adulto), pero la app se ejecuta frente a niños de 4-8 años en
-el aula. Por eso el estilo es lúdico, colorido (kawaii), con gamificación. Optimizada para
-pantallas táctiles horizontales.
+No confundir la UI existente con un flujo end-to-end terminado.
 
-## Acceso
+## Flujo objetivo
 
-- Login con correo + código de acceso generado por el administrador de la comunidad.
-- **No se permite crear cuentas** desde aquí; las crea el administrador en la app admin.
+1. Educador inicia sesión con correo+código mediante un boundary de auth propio.
+2. Ve talleres/asignaciones de su comunidad.
+3. Abre la guía y ejecuta el runner público de Studio en webview.
+4. El host entrega idioma, escena y contexto; recibe progreso/cierre.
+5. Educators persiste asignación completada y feedback en Supabase.
 
-## Flujo de usuario
+## Responsabilidades
 
-### Dashboard de talleres
+- navegación y experiencia del educador;
+- sesión/autorización del educador;
+- datos de talleres/asignaciones/guía;
+- alojamiento y bridge del webview;
+- persistencia final del feedback.
 
-- Header con identidad StoryPlay, nombre del educador, aula, avatar.
-- Talleres asignados organizados por semana (lun-dom), con navegación entre semanas.
-- Cada tarjeta: título, horario, educador, ubicación.
-- Acciones: ver guía (preview) e iniciar taller.
+Los juegos, mecánicas y contenido no se reimplementan en Flutter.
 
-### Ejecución del taller
+## Diseño
 
-Pantalla principal de ejecución, optimizada para landscape. Estructura observada en el
-diseño actual (ver `docs/design.md`):
+Interfaz táctil, lúdica y legible frente a audiencia; landscape durante ejecución. Conservar los
+targets grandes y patrones actuales hasta que exista una decisión de rediseño. Ver
+[`../design.md`](../design.md).
 
-- **Header:** título del taller, progreso (X escenas), toggle **Lectura / Juego**,
-  botón salir.
-- **Columna de escenas (mapa de aventura):** lista de escenas con estados visuales
-  (completada, activa, bloqueada), líneas conectoras, nodo final "Finalizar taller".
-  Cada escena puede abrir su guía pedagógica y su juego.
-- **Área central (canvas):** muestra la escena actual. En modo **Lectura**, la narrativa.
-  En modo **Juego**, el juego HTML renderizado en un **webview**. Controles inferiores:
-  reiniciar, escena anterior, contador ("1 / 4"), escena siguiente.
-- **Columna de progreso/recompensas:** XP, nivel, barra de progreso, inventario de
-  recompensas (gema, diamante, ruby). Ver `docs/games.md`.
+## Verificación
 
-### Guía pedagógica (modal)
+```bash
+cd apps/educators
+flutter analyze
+flutter test
+```
 
-Overlay con el contenido docente de la escena: objetivo, guion sugerido, tips de dinámica.
-
-### Resumen de finalización
-
-Pantalla de celebración: XP total, porcentaje de escenas completadas, recompensas
-obtenidas. Continúa al feedback.
-
-### Feedback del educador
-
-- Calificación con estrellas (1-5).
-- Cantidad de niños atendidos.
-- Nivel de participación (bajo / medio / alto).
-- Comentarios.
-- Finaliza el taller y regresa al dashboard.
-
-## Juegos vía webview
-
-Cada escena tiene un juego HTML. La app de educadores **no implementa los juegos**; los
-renderiza desde Studio en un webview. Ver `docs/games.md` para el contrato
-(cómo se cargan, cómo se comunican el juego y la app, eventos de completado, etc.).
-
-## Diseño y convenciones
-
-Identidad visual en `docs/design.md` (kawaii, 3D, landscape, paleta cálida). Idioma, capa de
-datos y naming en `docs/architecture.md`. Hoy con datos estáticos; al conectar Supabase,
-abstraer el acceso a datos. El educador pertenece a una comunidad.
+Estos comandos aún no corren desde el verify raíz. El futuro bridge necesita pruebas de contrato y
+QA en dispositivo/web real, además del widget test.
