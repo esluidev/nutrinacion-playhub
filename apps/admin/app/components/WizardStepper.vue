@@ -1,5 +1,6 @@
 <template>
-  <div class="card px-6 py-[18px] mb-[22px]">
+  <!-- Paso actual en noche (estructura), completados en lima (hecho) y pendientes hundidos -->
+  <div class="ui-panel mb-6 px-6 py-4">
     <div class="flex items-center">
       <div
         v-for="(step, idx) in steps"
@@ -8,53 +9,51 @@
         :class="idx < steps.length - 1 ? 'flex-1' : ''"
       >
         <button
-          class="flex items-center gap-2.5"
+          type="button"
+          class="group flex items-center gap-2.5"
           :class="step.id < currentStep ? 'cursor-pointer' : 'cursor-default'"
+          :aria-current="currentStep === step.id ? 'step' : undefined"
           @click="onStepClick(step.id)"
         >
-          <!-- Círculo del paso -->
-          <div
+          <!-- Marca del paso -->
+          <span
+            :data-tone="step.id < currentStep ? 'lime' : currentStep === step.id ? 'night' : undefined"
             :class="[
-              'w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-200',
-              currentStep === step.id
-                ? 'bg-brand-primary text-white ring-4 ring-brand-primary-100'
-                : step.id < currentStep
-                  ? 'bg-brand-primary-100 text-brand-primary-800 hover:bg-brand-primary-200'
-                  : 'bg-gray-100 text-gray-400',
+              'ui-dot size-8 text-caption transition-colors',
+              step.id > currentStep && 'bg-sunken text-subtle',
             ]"
           >
-            <svg v-if="step.id < currentStep" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-            <span v-else class="font-display font-semibold text-sm">{{ step.id }}</span>
-          </div>
+            <UiIcon v-if="step.id < currentStep" name="check" class="size-4" />
+            <span v-else>{{ step.id }}</span>
+          </span>
 
           <!-- Label -->
           <span
             :class="[
-              'text-[12.5px] font-extrabold whitespace-nowrap hidden md:block transition-colors',
-              currentStep === step.id ? 'text-brand-dark'
-              : step.id < currentStep ? 'text-brand-primary-800'
-              : 'text-gray-400',
+              'hidden whitespace-nowrap text-caption font-extrabold transition-colors md:block',
+              currentStep === step.id ? 'text-ink'
+              : step.id < currentStep ? 'text-muted group-hover:text-ink'
+              : 'text-subtle',
             ]"
           >
             {{ step.label }}
           </span>
         </button>
 
-        <!-- Conector -->
+        <!-- Conector: lima cuando el tramo ya está hecho -->
         <div
           v-if="idx < steps.length - 1"
+          :data-tone="step.id < currentStep ? 'lime' : undefined"
           :class="[
-            'flex-1 h-0.5 mx-3.5 rounded-full transition-colors duration-300',
-            step.id < currentStep ? 'bg-brand-primary-200' : 'bg-gray-200',
+            'mx-3.5 h-0.5 flex-1 rounded-full transition-colors duration-300',
+            step.id < currentStep ? 'bg-(--tone-fill)' : 'bg-line',
           ]"
         />
       </div>
     </div>
 
     <!-- Mobile caption -->
-    <p class="md:hidden text-xs text-gray-400 text-center mt-3 font-semibold">
+    <p class="ui-caption mt-3 text-center md:hidden">
       Paso {{ currentStep }}: {{ steps.find(s => s.id === currentStep)?.label }}
     </p>
   </div>

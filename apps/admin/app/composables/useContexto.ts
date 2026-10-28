@@ -5,8 +5,8 @@
 //   comunidad     — operar una comunidad (talleres, educadores…). El resto.
 //
 // LA RUTA MANDA: el tipo se deriva del prefijo de la URL — una sola fuente de verdad, sin
-// estado híbrido. Lo persistido es solo QUÉ org y QUÉ comunidad están elegidas
-// ({orgId, comunidadId}); cambiar de tipo no destruye esa elección: pasar por /organizacion
+// estado híbrido. Se recuerda el último contexto del selector ({tipo, orgId, comunidadId}):
+// al entrar se vuelve ahí. Cambiar de tipo no destruye la elección: pasar por /organizacion
 // o /platform conserva la comunidad recordada para cuando vuelvas a operar.
 //
 // El sidebar es el ESPEJO del contexto activo: muestra solo la navegación del tipo actual.
@@ -31,7 +31,7 @@ export interface OrgCtx {
   comunidades: ComunidadCtx[]
 }
 
-// Un destino = un lugar al que puedo aterrizar. Alimenta el hub y el conteo de ambigüedad.
+// Un destino = un lugar al que puedo entrar. Si hay uno solo, el selector es estático.
 export interface Destino {
   tipo: TipoContexto
   ruta: string
@@ -165,13 +165,17 @@ export function useContexto() {
   })
 
   // ── Persistencia ───────────────────────────────────────────────────────────
-  function guardar() {
+  // El tipo guardado es el de la última ruta de contexto visitada (`recordarRuta`).
+  function guardar(tipoGuardado: TipoContexto | null = leer()?.tipo ?? null) {
     if (import.meta.client) {
-      localStorage.setItem(CLAVE, JSON.stringify({ orgId: orgId.value, comunidadId: comunidadId.value }))
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify({ tipo: tipoGuardado, orgId: orgId.value, comunidadId: comunidadId.value }))
+      }
+      catch { /* sin almacenamiento: se aterriza por rol */ }
     }
   }
 
-  function leer(): { orgId: number | null, comunidadId: number | null } | null {
+  function leer(): { tipo?: TipoContexto | null, orgId: number | null, comunidadId: number | null } | null {
     if (!import.meta.client) return null
     try {
       const raw = localStorage.getItem(CLAVE)
@@ -194,61 +198,66 @@ export function useContexto() {
     setContexto(nuevaOrg, conserva ? comunidadId.value : null)
   }
 
-  function irA(d: Destino) {
-    if (d.tipo === 'platform') return navigateTo(d.ruta)
-    setContexto(d.orgId ?? null, d.comunidadId ?? null)
-    return navigateTo(d.ruta)
+  // Lo llama el middleware al entrar en una ruta de contexto: así el selector recuerda dónde
+  // quedaste (Platform, la organización o la comunidad) para la próxima vez.
+  // «Mi perfil» cuelga de /dashboard pero no es de ninguna comunidad: no cuenta.
+  function recordarRuta(path: string) {
+    if (path.startsWith('/dashboard/perfil')) return
+    const t: TipoContexto | null = path.startsWith('/platform')
+      ? 'platform'
+      : path.startsWith('/organizacion')
+        ? 'organizacion'
+        : path.startsWith('/dashboard') ? 'comunidad' : null
+    if (t) guardar(t)
   }
 
   // ── Aterrizaje ─────────────────────────────────────────────────────────────
-  //   administras alguna org                → su detalle (/organizacion) — el home del admin
-  //   contexto guardado y todavía accesible → ahí
-  //   una sola comunidad accesible          → ahí (operar manda)
-  //   un solo destino                       → ahí
-  //   varios y ninguno guardado             → hub (que elija)
-  //   ninguno                               → sin acceso
+  // Manda el selector: se vuelve al último contexto si sigue siendo accesible (te pueden haber
+  // sacado de esa comunidad u organización). Sin nada recordado, por rol:
+  //   superadmin           → Platform
+  //   admin de una org     → su organización
+  //   colaborador          → su comunidad
+  //   ningún acceso        → sin acceso
   function rutaInicial(): string {
     if (!user.value) return '/login'
     if (!destinos.value.length) return '/sin-acceso'
 
     const g = leer()
-
-    // El admin aterriza SIEMPRE en su organización: el detalle es su punto de partida
-    // (uso de licencia, comunidades, equipo). Si administra varias, se respeta la
-    // guardada; la comunidad guardada se conserva para cuando baje a operar.
     const administradas = orgs.value.filter(o => o.esAdmin)
-    if (administradas.length) {
-      const org = administradas.find(o => o.id === g?.orgId) ?? administradas[0]!
-      const comunidad = org.comunidades.find(c => c.id === g?.comunidadId)?.id ?? null
-      setContexto(org.id, comunidad)
-      return '/organizacion'
-    }
+    const conComunidad = (cid: number | null | undefined) =>
+      orgs.value.find(o => o.comunidades.some(c => c.id === cid)) ?? null
 
-    // Colaborador: validar lo guardado contra la superficie real — te pueden haber
-    // sacado de esa comunidad.
-    if (g?.orgId) {
-      const d = destinos.value.find(x =>
-        x.tipo !== 'platform' && x.orgId === g.orgId && (x.comunidadId ?? null) === (g.comunidadId ?? null))
-      if (d) {
-        setContexto(d.orgId ?? null, d.comunidadId ?? null)
-        return d.ruta
+    // 1. El último contexto del selector.
+    if (g?.tipo === 'platform' && esSuperadmin.value) return '/platform'
+    if (g?.tipo === 'organizacion') {
+      const org = administradas.find(o => o.id === g.orgId)
+      if (org) {
+        setContexto(org.id, org.comunidades.some(c => c.id === g.comunidadId) ? g.comunidadId : null)
+        return '/organizacion'
+      }
+    }
+    if (g?.tipo === 'comunidad') {
+      const org = conComunidad(g.comunidadId)
+      if (org) {
+        setContexto(org.id, g.comunidadId)
+        return '/dashboard'
       }
     }
 
-    const comunidades = destinos.value.filter(x => x.tipo === 'comunidad')
-    if (comunidades.length === 1) {
-      const d = comunidades[0]!
-      setContexto(d.orgId!, d.comunidadId!)
-      return d.ruta
+    // 2. Por rol.
+    if (esSuperadmin.value) return '/platform'
+    if (administradas.length) {
+      const org = administradas.find(o => o.id === g?.orgId) ?? administradas[0]!
+      setContexto(org.id, org.comunidades.some(c => c.id === g?.comunidadId) ? g!.comunidadId : null)
+      return '/organizacion'
     }
-
-    if (destinos.value.length === 1) {
-      const d = destinos.value[0]!
-      if (d.tipo !== 'platform') setContexto(d.orgId ?? null, d.comunidadId ?? null)
-      return d.ruta
+    const org = conComunidad(g?.comunidadId) ?? orgs.value.find(o => o.comunidades.length)
+    if (org) {
+      const comunidad = org.comunidades.find(c => c.id === g?.comunidadId) ?? org.comunidades[0]!
+      setContexto(org.id, comunidad.id)
+      return '/dashboard'
     }
-
-    return '/inicio'
+    return '/sin-acceso'
   }
 
   // Asegura que SIEMPRE haya una org activa si la persona tiene algún acceso. Corre en cada
@@ -288,7 +297,7 @@ export function useContexto() {
     esTitularOrgActiva,
     setContexto,
     setOrg,
-    irA,
+    recordarRuta,
     rutaInicial,
     asegurarContexto,
     asegurarComunidad,

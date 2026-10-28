@@ -2,19 +2,9 @@
   <div>
     <UiPageHeader :title="t('platform.invs.title')" :description="t('platform.invs.desc')">
       <template #actions>
-        <UiButton @click="navigateTo('/platform/invitaciones/nueva')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {{ t('platform.invs.new') }}
-        </UiButton>
+        <UiButton icon="plus" to="/platform/invitaciones/nueva">{{ t('platform.invs.new') }}</UiButton>
       </template>
     </UiPageHeader>
-
-    <div class="flex items-center gap-2.5 mb-[22px] flex-wrap">
-      <UiSearchInput v-model="q" :placeholder="t('platform.invs.searchPh')" max-width="xs" class="!w-[280px]" />
-      <UiSelect v-model="estadoFiltro" variant="toolbar" :prefix="t('platform.invs.colState')" :options="estadoOpciones" />
-    </div>
 
     <UiDataTable
       :columns="columns"
@@ -27,56 +17,62 @@
       :empty-text="hayFiltros ? t('platform.invs.emptyFiltered') : t('platform.invs.empty')"
       @update:page="page = $event"
     >
+      <!-- Búsqueda y filtro en servidor: viven en la barra integrada de la tabla -->
+      <template #toolbar>
+        <UiSearchInput v-model="q" :placeholder="t('platform.invs.searchPh')" max-width="xs" />
+        <UiSelect v-model="estadoFiltro" variant="toolbar" :prefix="t('platform.invs.colState')" :options="estadoOpciones" />
+      </template>
+
       <template #cell-organizacion="{ row }">
         <NuxtLink
           v-if="row.organizaciones"
           :to="`/platform/organizaciones/${row.organizaciones.id}`"
-          class="flex items-center gap-3 group"
+          class="group flex min-w-0 items-center gap-3"
+          data-tone="sky"
         >
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
+          <!-- La organización no significa nada por sí misma: tono estable según su nombre -->
+          <UiSymbol size="md" :tone="uiToneFor(row.organizaciones.nombre)" class="font-black text-(--tone-strong)">
             {{ row.organizaciones.nombre.charAt(0).toUpperCase() }}
-          </div>
-          <p class="font-extrabold text-gray-800 group-hover:text-brand-primary-700 transition-colors">{{ row.organizaciones.nombre }}</p>
+          </UiSymbol>
+          <!-- Enlace: en tinta como el resto de nombres; al pasar, cielo (los enlaces son cielo) -->
+          <p class="truncate font-extrabold text-ink underline-offset-4 transition-colors group-hover:text-(--tone-strong) group-hover:underline">{{ row.organizaciones.nombre }}</p>
         </NuxtLink>
         <span v-else>—</span>
       </template>
       <template #cell-email="{ row }">
-        <span v-if="row.email" class="text-[13px] text-gray-700 font-semibold">{{ row.email }}</span>
-        <span v-else class="text-[13px] text-gray-500 font-semibold italic">{{ t('platform.invs.openLink') }}</span>
+        <!-- A quién se invitó: su nombre y, debajo, su correo -->
+        <p v-if="nombreInvitado(row)" class="truncate font-extrabold text-ink">{{ nombreInvitado(row) }}</p>
+        <p v-if="row.email" :class="['truncate font-semibold text-muted', nombreInvitado(row) && 'text-caption']">{{ row.email }}</p>
+        <p v-else class="font-semibold italic text-subtle">{{ t('platform.invs.openLink') }}</p>
       </template>
       <template #cell-estado="{ row }">
-        <UiBadge :variant="invitacionVariant(row.estado)" dot>{{ t('state.' + row.estado) }}</UiBadge>
+        <UiBadge :tone="invitacionTone(row.estado)" dot>{{ t('state.' + row.estado) }}</UiBadge>
       </template>
       <template #cell-vence="{ row }">
-        <span class="text-gray-500 text-xs font-semibold">{{ row.expira_en ? fechaCorta(row.expira_en) : '—' }}</span>
+        <span class="text-caption font-semibold text-muted">{{ row.expira_en ? fechaCorta(row.expira_en, locale) : '—' }}</span>
       </template>
       <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <button
-            :class="[
-              'w-[30px] h-[30px] rounded-[8px] flex items-center justify-center transition-colors',
-              copiado === row.token ? 'bg-brand-primary-50 text-brand-primary-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700',
-            ]"
+        <!-- Acciones de tabla: neutras. Copiar confirma con el check durante un momento -->
+        <div class="flex items-center justify-end gap-2">
+          <UiButton
+            tone="neutral"
+            size="sm"
+            :icon="copiado === row.token ? 'check' : 'link'"
+            icon-only
+            :label="copiado === row.token ? t('platform.invs.copied') : t('platform.invs.copyLink')"
             :title="copiado === row.token ? t('platform.invs.copied') : t('platform.invs.copyLink')"
             @click="copiarLink(row.token)"
-          >
-            <svg v-if="copiado === row.token" class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-            <svg v-else class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-            </svg>
-          </button>
-          <button
+          />
+          <UiButton
             v-if="row.estado === 'PENDIENTE'"
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            tone="neutral"
+            size="sm"
+            icon="close"
+            icon-only
+            :label="t('platform.invs.revoke')"
             :title="t('platform.invs.revoke')"
             @click="revocar(row.id)"
-          >
-            <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
+          />
         </div>
       </template>
     </UiDataTable>
@@ -85,7 +81,7 @@
 
 <script setup lang="ts">
 import type { InvitacionResumen } from '~/composables/usePlatform'
-import { PAGE_SIZE } from '~/composables/usePlatform'
+import { PAGE_SIZE } from '~/utils/paginacion'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.invs.title', descKey: 'platform.invs.desc' })
 
@@ -102,7 +98,7 @@ const copiado = ref<string | null>(null)
 
 const columns = computed(() => [
   { key: 'organizacion', label: t('platform.invs.colOrg') },
-  { key: 'email', label: t('platform.invs.colEmail') },
+  { key: 'email', label: t('platform.invs.colInvitee') },
   { key: 'estado', label: t('platform.invs.colState') },
   { key: 'vence', label: t('platform.invs.colExpires') },
   { key: 'acciones', label: t('platform.invs.colActions'), align: 'right' as const },
@@ -152,19 +148,12 @@ async function revocar(id: number) {
 }
 
 async function copiarLink(token: string) {
-  await navigator.clipboard.writeText(`${window.location.origin}/invitacion/${token}`)
+  if (!(await copiarTexto(`${window.location.origin}/invitacion/${token}`))) {
+    useToast().toast.error(t('parts.copyFailed'))
+    return
+  }
   copiado.value = token
   setTimeout(() => (copiado.value = null), 1500)
 }
 
-function invitacionVariant(estado?: string): 'green' | 'blue' | 'red' | 'gray' {
-  const map: Record<string, 'green' | 'blue' | 'red' | 'gray'> = {
-    PENDIENTE: 'blue', USADA: 'green', EXPIRADA: 'gray', REVOCADA: 'red',
-  }
-  return map[estado ?? ''] ?? 'gray'
-}
-
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 </script>

@@ -1,29 +1,31 @@
 <template>
-  <div class="max-w-[640px] mx-auto">
+  <div class="mx-auto max-w-2xl">
     <UiPageHeader title="Invitar Colaborador" :description="`Da acceso para operar ${comunidad}`" />
 
-    <form class="card p-6" @submit.prevent="submit">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
+    <form class="ui-panel p-6" @submit.prevent="submit">
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <!-- La comunidad la fija el contexto: aquí no se elige -->
-        <div class="sm:col-span-2 space-y-[7px]">
-          <label class="block text-[13px] font-bold text-gray-700">Comunidad</label>
-          <p class="input flex items-center !bg-gray-50 text-gray-600 cursor-default">{{ comunidad }}</p>
-          <p class="text-[11.5px] font-semibold text-gray-400">El colaborador podrá operar solo esta comunidad: talleres, educadores y planificador.</p>
+        <div class="sm:col-span-2">
+          <UiInput
+            :model-value="comunidad"
+            label="Comunidad"
+            disabled
+            hint="El colaborador podrá operar solo esta comunidad: talleres, educadores y planificador."
+          />
         </div>
+        <UiInput v-model="form.nombre" label="Nombre" required />
+        <UiInput v-model="form.apellido" label="Apellido" optional />
         <div class="sm:col-span-2">
           <UiInput v-model="form.email" type="email" label="Correo electrónico" placeholder="persona@correo.com" required />
         </div>
-        <div class="space-y-[7px]">
-          <label class="block text-[13px] font-bold text-gray-700">Idioma de la invitación</label>
-          <UiSelect v-model="form.idioma" size="md" :options="idiomaOptions" />
-        </div>
+        <UiSelect v-model="form.idioma" label="Idioma de la invitación" :options="idiomaOptions" />
         <UiInput v-model="form.expira" type="date" label="Vence" :min="hoy" />
       </div>
     </form>
 
-    <p v-if="error" class="text-sm text-red-500 mt-3">{{ error }}</p>
+    <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
-    <div class="flex items-center justify-end gap-2.5 mt-[18px]">
+    <div class="mt-5 flex items-center justify-end gap-3">
       <UiButton variant="outline" @click="navigateTo('/dashboard/colaboradores')">Cancelar</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">Enviar Invitación</UiButton>
     </div>
@@ -44,16 +46,17 @@ if (isSupabaseConfigured() && !administraOrgActiva.value && !esSuperadmin.value)
 
 const comunidad = computed(() => comunidadActiva.value?.nombre ?? 'tu comunidad')
 
-const hoy = new Date().toISOString().slice(0, 10)
+// Días del calendario local; la invitación vence al final del día elegido.
+const hoy = hoyLocal()
 
 function enTreintaDias() {
-  const d = new Date()
-  d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return hoyLocal(30)
 }
 
 const form = reactive({
   email: '',
+  nombre: '',
+  apellido: '',
   idioma: 'es',
   expira: enTreintaDias(),
 })
@@ -68,6 +71,10 @@ const error = ref('')
 
 async function submit() {
   error.value = ''
+  if (!form.nombre.trim()) {
+    error.value = 'Escribe el nombre: así sabrás a quién invitaste.'
+    return
+  }
   if (!form.email.trim()) {
     error.value = 'El correo es obligatorio.'
     return
@@ -76,8 +83,10 @@ async function submit() {
   saving.value = true
   const { error: err } = await invitar({
     email: form.email.trim(),
+    nombre: form.nombre,
+    apellido: form.apellido,
     idioma: form.idioma,
-    expira_en: form.expira ? new Date(form.expira).toISOString() : null,
+    expira_en: form.expira ? finDelDia(form.expira) : null,
   })
   saving.value = false
 

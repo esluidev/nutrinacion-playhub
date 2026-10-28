@@ -1,20 +1,13 @@
 <template>
   <div>
-    <UiPageHeader :title="t('platform.sbs.title')" :description="t('platform.sbs.desc')">
-      <template #actions>
-        <UiButton @click="navigateTo('/platform/storyboards/nuevo')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {{ t('platform.sbs.new') }}
-        </UiButton>
-      </template>
-    </UiPageHeader>
+    <!-- Los storyboards los registra Player desde su JSON: aquí no hay alta. -->
+    <UiPageHeader :title="t('platform.sbs.title')" :description="t('platform.sbs.desc')" />
 
-    <div class="flex items-center gap-2.5 mb-[22px] flex-wrap">
-      <UiSearchInput v-model="q" :placeholder="t('platform.sbs.searchPh')" max-width="xs" class="!w-[280px]" />
+    <div class="mb-6 flex flex-wrap items-center gap-2.5">
+      <UiSearchInput v-model="q" :placeholder="t('platform.sbs.searchPh')" max-width="xs" />
       <UiSelect v-model="estadoFiltro" variant="toolbar" :prefix="t('platform.sbs.colState')" :options="estadoOpciones" />
       <UiSelect v-model="tipoFiltro" variant="toolbar" :prefix="t('platform.sbs.colType')" :options="tipoOpciones" />
+      <UiSelect v-model="idiomaFiltro" variant="toolbar" :prefix="t('platform.sbs.colLanguage')" :options="idiomaOpciones" />
     </div>
 
     <UiDataTable
@@ -32,48 +25,53 @@
     >
       <template #cell-storyboard="{ row }">
         <div class="flex items-center gap-3">
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
+          <!-- La portada lleva el tono del área del storyboard (alimentación en sol, actividad física en cielo…). -->
+          <span class="ui-symbol ui-symbol-md text-body font-black text-(--tone-strong)" v-bind="tinte(row)" aria-hidden="true">
             {{ loc(row.titulo).charAt(0).toUpperCase() }}
-          </div>
+          </span>
           <div class="min-w-0">
-            <p class="font-extrabold text-gray-800 truncate">{{ loc(row.titulo) }}</p>
-            <p class="text-[12.5px] text-gray-400 font-mono truncate">{{ row.slug }}</p>
+            <p class="truncate font-extrabold text-ink">{{ loc(row.titulo) }}</p>
+            <p class="truncate font-mono text-caption text-muted">{{ row.slug }}</p>
           </div>
         </div>
       </template>
       <template #cell-tipo="{ row }">
-        <span class="text-[13px] text-gray-600 font-semibold">{{ loc(row.tipo?.nombre) || '—' }}</span>
+        <span class="text-body font-semibold text-muted">{{ t('catalogo.categoria.' + row.categoria) }}</span>
       </template>
       <template #cell-estado="{ row }">
-        <UiBadge :variant="estadoVariant(row.estado)" dot>{{ t('sbState.' + row.estado) }}</UiBadge>
+        <UiBadge :tone="uiPublicationTone(row.estado_publicacion)" dot>{{ t('sbState.' + row.estado_publicacion) }}</UiBadge>
       </template>
       <template #cell-propiedad="{ row }">
-        <UiBadge v-if="row.organizaciones" variant="purple">{{ row.organizaciones.nombre }}</UiBadge>
-        <span v-else class="text-[13px] text-gray-500 font-semibold">{{ t('platform.sbs.standard') }}</span>
+        <UiBadge v-if="row.organizaciones" :tone="uiToneFor(row.organizaciones.nombre)">{{ row.organizaciones.nombre }}</UiBadge>
+        <span v-else class="text-body font-semibold text-muted">{{ t('platform.sbs.standard') }}</span>
       </template>
       <template #cell-contenido="{ row }">
-        <span class="text-[13px] text-gray-600 font-semibold">
+        <span class="text-body font-semibold text-muted">
           {{ tCount(t, 'platform.sbs.scenesCount', row.numero_escenas) }}
-          <span class="text-gray-300"> · </span>
+          <span class="text-subtle"> · </span>
           <span class="uppercase">{{ (row.idiomas ?? []).join('·') }}</span>
         </span>
       </template>
       <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <button
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+        <div class="flex items-center justify-end gap-1.5">
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="pencil"
+            icon-only
+            :label="t('common.edit')"
             :title="t('common.edit')"
             @click.stop="navigateTo(`/platform/storyboards/${row.id}/editar`)"
-          >
-            <UiIcon name="edit" class="w-[15px] h-[15px]" />
-          </button>
-          <button
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+          />
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="trash"
+            icon-only
+            :label="t('common.delete')"
             :title="t('common.delete')"
             @click.stop="pedirEliminar(row)"
-          >
-            <UiIcon name="delete" class="w-[15px] h-[15px]" />
-          </button>
+          />
         </div>
       </template>
     </UiDataTable>
@@ -95,7 +93,7 @@
 
 <script setup lang="ts">
 import type { StoryboardFila } from '~/composables/usePlatformStoryboards'
-import { PAGE_SIZE } from '~/composables/usePlatformStoryboards'
+import { PAGE_SIZE } from '~/utils/paginacion'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.title', descKey: 'platform.sbs.desc' })
@@ -111,6 +109,7 @@ const page = ref(1)
 const q = ref('')
 const estadoFiltro = ref('todos')
 const tipoFiltro = ref('todos')
+const idiomaFiltro = ref('todos')
 
 function loc(valor: Localized | null | undefined): string {
   if (!valor) return ''
@@ -128,7 +127,7 @@ const columns = computed(() => [
 
 const estadoOpciones = computed(() => [
   { value: 'todos', label: t('common.all') },
-  { value: 'BORRADOR', label: t('sbState.BORRADOR') },
+  { value: 'REGISTRADO', label: t('sbState.REGISTRADO') },
   { value: 'EN_REVISION', label: t('sbState.EN_REVISION') },
   { value: 'PUBLICADO', label: t('sbState.PUBLICADO') },
   { value: 'ARCHIVADO', label: t('sbState.ARCHIVADO') },
@@ -142,15 +141,18 @@ const tipoOpciones = computed(() => [
   { value: 'SALUD_EMOCIONAL', label: t('sbType.SALUD_EMOCIONAL') },
 ])
 
-const hayFiltros = computed(() => !!q.value || estadoFiltro.value !== 'todos' || tipoFiltro.value !== 'todos')
+const idiomaOpciones = computed(() => [
+  { value: 'todos', label: t('common.all') },
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'English' },
+])
 
-function estadoVariant(estado: string) {
-  switch (estado) {
-    case 'PUBLICADO': return 'green' as const
-    case 'EN_REVISION': return 'amber' as const
-    case 'ARCHIVADO': return 'coral' as const
-    default: return 'gray' as const
-  }
+const hayFiltros = computed(() => !!q.value || estadoFiltro.value !== 'todos' || tipoFiltro.value !== 'todos' || idiomaFiltro.value !== 'todos')
+
+
+// El área educativa del storyboard (ALIMENTACION → alimentacion): `data-area` la tiñe; sin área, neutro.
+function tinte(sb: StoryboardFila): Record<string, string> {
+  return uiAreaAttrs(uiAreaOf(sb.categoria))
 }
 
 async function cargar() {
@@ -158,7 +160,8 @@ async function cargar() {
   const { data, total: n } = await listStoryboards({
     q: q.value,
     estado: estadoFiltro.value,
-    tipo: tipoFiltro.value,
+    categoria: tipoFiltro.value,
+    idioma: idiomaFiltro.value,
     page: page.value,
   })
   storyboards.value = data
@@ -168,7 +171,7 @@ async function cargar() {
 
 // Cambiar un filtro vuelve a la página 1: quedarse en la 3 de un resultado de 2 filas
 // muestra una tabla vacía sin explicación.
-watch([q, estadoFiltro, tipoFiltro], () => {
+watch([q, estadoFiltro, tipoFiltro, idiomaFiltro], () => {
   if (page.value !== 1) page.value = 1
   else cargar()
 })

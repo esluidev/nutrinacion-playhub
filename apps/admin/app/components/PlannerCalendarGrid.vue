@@ -1,63 +1,31 @@
 <template>
-  <div class="card overflow-hidden">
+  <div class="ui-panel overflow-hidden">
     <!-- Encabezados de día (la navegación del mes vive en el toolbar) -->
-    <div class="grid grid-cols-7 border-b border-gray-100">
-      <div
-        v-for="(d, i) in dayHeaders"
-        :key="d"
-        :class="[
-          'py-2.5 text-center text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400',
-          i < 6 ? 'border-r border-gray-100' : '',
-        ]"
-      >
+    <div class="grid grid-cols-7 border-b border-line">
+      <div v-for="(d, i) in dayHeaders" :key="d" :class="['eyebrow py-2.5 text-center', i < 6 && 'border-r border-line']">
         {{ d }}
       </div>
     </div>
 
     <!-- Semanas -->
-    <div
-      v-for="(week, wIdx) in calendarWeeks"
-      :key="wIdx"
-      class="grid grid-cols-7 border-b border-gray-100 last:border-b-0"
-    >
+    <div v-for="(week, wIdx) in calendarWeeks" :key="wIdx" class="grid grid-cols-7 border-b border-line last:border-b-0">
       <div
         v-for="(cell, cIdx) in week"
         :key="cell.fecha"
+        :data-tone="cell.isToday ? 'sun' : undefined"
         :class="[
-          'min-h-[104px] px-[9px] py-2 min-w-0 overflow-hidden',
-          cIdx < 6 ? 'border-r border-gray-100' : '',
-          !cell.isCurrentMonth ? 'bg-gray-50/60' : '',
-          cell.isToday ? 'bg-brand-primary-50' : '',
+          'min-h-[104px] min-w-0 overflow-hidden p-2',
+          cIdx < 6 && 'border-r border-line',
+          cell.isToday ? 'bg-(--tone-wash)' : !cell.isCurrentMonth && 'bg-canvas',
         ]"
       >
-        <!-- Número de día -->
-        <div class="flex items-center justify-between mb-1.5">
-          <span
-            v-if="cell.isToday"
-            class="w-[22px] h-[22px] rounded-full bg-brand-primary text-white inline-flex items-center justify-center text-[11px] font-extrabold"
-          >
-            {{ cell.day }}
-          </span>
-          <span
-            v-else
-            :class="['text-xs font-extrabold', cell.isCurrentMonth ? 'text-gray-800' : 'text-gray-300']"
-          >
-            {{ cell.day }}
-          </span>
-          <span v-if="cell.isToday" class="text-[9px] font-extrabold text-brand-primary-700 tracking-[0.06em]">HOY</span>
+        <div class="mb-1.5 flex items-center justify-between">
+          <span :class="['ui-day ui-day-sm', !cell.isCurrentMonth && 'is-outside']" :aria-current="cell.isToday ? 'date' : undefined">{{ cell.day }}</span>
+          <span v-if="cell.isToday" class="eyebrow text-(--tone-strong)">Hoy</span>
         </div>
 
-        <!-- Talleres del día -->
-        <div class="flex flex-col gap-[3px]">
-          <div
-            v-for="ws in cell.workshops"
-            :key="ws.id"
-            class="flex items-center gap-1.5 px-[7px] py-1 rounded-[7px] bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
-            @click="navigateTo('/dashboard/workshops/' + ws.id)"
-          >
-            <span :class="['w-[7px] h-[7px] rounded-full shrink-0', ws.accentColor]" />
-            <span class="text-[10.5px] font-bold text-gray-700 truncate">{{ ws.title }}</span>
-          </div>
+        <div class="flex flex-col gap-0.5">
+          <PlannerWorkshopCard v-for="ws in cell.workshops" :key="ws.id" :workshop="ws" compact />
         </div>
       </div>
     </div>

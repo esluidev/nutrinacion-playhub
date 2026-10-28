@@ -1,3 +1,5 @@
+// Compartir en desarrollo por Tailscale: la capa @playhub/ui deja entrar a Vite los nombres *.ts.net
+// y `urlEnEsteEquipo` cambia localhost (Supabase, Player) por el equipo con que se abrió la app.
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
 
@@ -11,10 +13,12 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  // UI Kit compartido (packages/ui): tokens, Ui* y Tailwind 4, en densidad compact.
+  extends: ['@playhub/ui'],
+
   modules: [
-    '@nuxtjs/tailwindcss',
     // Reka UI: primitivas SIN estilos (foco, teclado, ARIA, portales, colisión). Va DEBAJO de
-    // nuestros Ui*, que siguen poniendo el Tailwind y la marca. Los componentes se auto-importan
+    // los Ui* del kit, que ponen los estilos. Los componentes se auto-importan
     // con el prefijo `Reka` para no chocar con los nuestros.
     'reka-ui/nuxt',
   ],
@@ -40,20 +44,13 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Nutrinacion Workshops',
+      title: 'PlayHub Admin',
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: {
         lang: 'es',
       },
-      link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap',
-        },
-      ],
+      link: [{ rel: 'icon', href: '/ui/nutrinacion-isotipo.png', type: 'image/png' }],
     },
   },
 })

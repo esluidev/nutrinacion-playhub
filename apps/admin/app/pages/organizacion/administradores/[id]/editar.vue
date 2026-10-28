@@ -2,32 +2,32 @@
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('admins.editTitle')" :description="t('admins.editDesc')" />
 
-    <div v-if="loading" class="card p-10 text-center text-sm text-gray-400">{{ t('common.loading') }}</div>
+    <div v-if="loading" class="ui-panel p-10 text-center text-body font-semibold text-subtle">{{ t('common.loading') }}</div>
 
-    <form v-else-if="admin" class="card p-6 space-y-4" @submit.prevent="handleSave">
+    <form v-else-if="admin" class="ui-panel ui-panel-body space-y-4" @submit.prevent="handleSave">
       <div class="grid grid-cols-2 gap-3">
         <UiInput id="nombre" v-model="form.nombre" :label="t('auth.invite.firstName')" required />
         <UiInput id="apellido" v-model="form.apellido" :label="t('auth.invite.lastName')" />
       </div>
 
       <!-- El correo vive atado a la cuenta (auth): aquí solo se muestra -->
-      <div class="space-y-1.5">
-        <label class="block text-sm font-semibold text-gray-700">{{ t('admins.email') }}</label>
-        <p class="input flex items-center !bg-gray-50 text-gray-500 cursor-not-allowed select-all">{{ admin.perfil?.email ?? '—' }}</p>
-        <p class="text-[11.5px] text-gray-400">{{ t('admins.emailLocked') }}</p>
+      <div>
+        <label class="field-label">{{ t('admins.email') }}</label>
+        <p class="field flex cursor-not-allowed select-all items-center bg-canvas text-muted">{{ admin.perfil?.email ?? '—' }}</p>
+        <p class="field-help">{{ t('admins.emailLocked') }}</p>
       </div>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
       <div class="flex items-center justify-end gap-2 pt-2">
-        <UiButton variant="outline" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
+        <UiButton tone="neutral" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
         <UiButton size="sm" type="submit" :loading="saving">{{ t('common.save') }}</UiButton>
       </div>
     </form>
 
-    <div v-else class="card p-10 text-center text-sm text-gray-500">
+    <div v-else class="ui-panel ui-text p-10 text-center">
       {{ t('admins.notFound') }}
-      <NuxtLink to="/organizacion/administradores" class="text-brand-primary-700 font-semibold ml-1">{{ t('platform.orgDetail.back') }}</NuxtLink>
+      <NuxtLink to="/organizacion/administradores" class="ui-link ml-1" data-tone="sky">{{ t('platform.orgDetail.back') }}</NuxtLink>
     </div>
   </div>
 </template>

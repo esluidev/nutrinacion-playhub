@@ -1,6 +1,9 @@
+import type { Modalidad } from '~/composables/useWorkshops'
+
 export type EducatorSelectionMode = 'individual' | 'group'
-export type WizardModalidad = 'PRESENCIAL' | 'ASIGNADO'
-export type WizardEstado = 'BORRADOR' | 'PROGRAMADO'
+export type WizardModalidad = Modalidad
+// Cómo queda el taller al crearlo: borrador, en revisión (otro lo confirma) o publicado.
+export type WizardEstado = 'BORRADOR' | 'EN_REVISION' | 'PUBLICADO'
 
 export interface WizardState {
   storyboardId: number | null
@@ -9,6 +12,8 @@ export interface WizardState {
   groupIds: number[]
   title: string
   location: string
+  group: string         // el grupo que asiste («2.º B»)
+  language: string      // el idioma del contenido: uno de los del storyboard
   notes: string
   capacity: string
   date: string
@@ -16,6 +21,7 @@ export interface WizardState {
   timeEnd: string
   modalidad: WizardModalidad
   estado: WizardEstado
+  jornadaId: string     // '' = sin jornada
 }
 
 export function useWorkshopWizard() {
@@ -39,13 +45,16 @@ export function useWorkshopWizard() {
       groupIds: [],
       title: '',
       location: '',
+      group: '',
+      language: 'es',
       notes: '',
       capacity: '25',
       date: queryDate,
       timeStart: '',
       timeEnd: '',
       modalidad: 'PRESENCIAL' as WizardModalidad,
-      estado: 'PROGRAMADO' as WizardEstado,
+      estado: 'PUBLICADO' as WizardEstado,
+      jornadaId: '',
     }
   })
 
@@ -74,6 +83,9 @@ export function useWorkshopWizard() {
     if (sb) {
       if (!state.value.title) {
         state.value.title = sb.title
+      }
+      if (!sb.languages.includes(state.value.language)) {
+        state.value.language = sb.languages[0] ?? 'es'
       }
       if (state.value.timeStart) {
         state.value.timeEnd = calculateEndTime(state.value.timeStart, sb.duration)
@@ -186,10 +198,13 @@ export function useWorkshopWizard() {
       horaInicio: state.value.timeStart,
       horaFin: state.value.timeEnd,
       ubicacion: state.value.location,
+      grupo: state.value.group,
+      idioma: state.value.language,
       notas: state.value.notes,
       capacidad: state.value.capacity ? Number(state.value.capacity) : null,
       modalidad: state.value.modalidad,
       estado: state.value.estado,
+      jornadaId: state.value.jornadaId ? Number(state.value.jornadaId) : null,
       asignaciones,
     })
 
@@ -215,13 +230,16 @@ export function useWorkshopWizard() {
       groupIds: [],
       title: '',
       location: '',
+      group: '',
+      language: 'es',
       notes: '',
       capacity: '25',
       date: queryDate,
       timeStart: '',
       timeEnd: '',
       modalidad: 'PRESENCIAL',
-      estado: 'PROGRAMADO',
+      estado: 'PUBLICADO',
+      jornadaId: '',
     }
   }
 

@@ -1,4 +1,6 @@
-// Equipo de la comunidad activa (educadores + grupos) sobre Supabase.
+// Equipo de la comunidad activa sobre Supabase: los educadores ligados a ella
+// (comunidad_educadores) y sus grupos (educador_grupos). El educador es de la organización
+// (0004): darlo de alta en una comunidad lo crea en la organización si no existía y lo liga.
 // ADAPTADOR: la UI consume las mismas formas de siempre (Educator/EducatorGroup, con
 // initials/colores calculados aquí); la fuente es la base. En dev sin Supabase se sirven
 // filas demo. La carga es perezosa y por comunidad: al invocarse con un contexto distinto
@@ -10,8 +12,6 @@ export interface EducatorGroup {
   descripcion: string
   miembros: number
   estado: 'activo' | 'inactivo'
-  iconBg: string
-  iconColor: string
 }
 
 export interface Educator {
@@ -22,45 +22,41 @@ export interface Educator {
   email: string
   telefono: string
   estado: 'activo' | 'inactivo'
-  grupo: string            // primer grupo (chip de la card)
+  // El acceso a Educators: con PIN, con la activación pendiente o sin código todavía.
+  acceso: 'pin' | 'pendiente' | 'sin-codigo'
+  grupo: string            // primer grupo (chip de la card); '' si no está en ninguno
   grupos: string[]         // todos (la membresía real es N:M)
   grupoIds: number[]
   talleres: number
-  avatarBg: string
-  accentColor: string
 }
 
-// Paleta determinista por id: el mismo educador siempre luce igual.
-const AVATAR_COLORS = ['bg-emerald-600', 'bg-blue-600', 'bg-violet-600', 'bg-amber-600', 'bg-rose-600', 'bg-teal-600'] as const
-const ACCENT_COLORS = ['bg-emerald-500', 'bg-blue-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-teal-500'] as const
-const GROUP_STYLES = [
-  { iconBg: 'bg-brand-primary-50', iconColor: 'text-brand-primary-600' },
-  { iconBg: 'bg-brand-secondary-50', iconColor: 'text-brand-secondary-600' },
-  { iconBg: 'bg-brand-purple-50', iconColor: 'text-brand-purple-600' },
-] as const
-
 const DEMO_EDUCATORS: Educator[] = [
-  { id: 1, nombre: 'Maria Lopez Hernandez', initials: 'ML', profesion: 'Nutrióloga', email: 'maria.lopez@nutrinacion.org', telefono: '+52 55 1234 5678', estado: 'activo', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 8, avatarBg: AVATAR_COLORS[0], accentColor: ACCENT_COLORS[0] },
-  { id: 2, nombre: 'Carlos Ramirez Torres', initials: 'CR', profesion: 'Educador en Salud', email: 'carlos.ramirez@nutrinacion.org', telefono: '+52 55 2345 6789', estado: 'activo', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 5, avatarBg: AVATAR_COLORS[1], accentColor: ACCENT_COLORS[1] },
-  { id: 3, nombre: 'Ana Torres Gutierrez', initials: 'AT', profesion: 'Psicóloga Infantil', email: 'ana.torres@nutrinacion.org', telefono: '+52 55 3456 7890', estado: 'activo', grupo: 'Zona Sur', grupos: ['Zona Sur'], grupoIds: [2], talleres: 6, avatarBg: AVATAR_COLORS[2], accentColor: ACCENT_COLORS[2] },
-  { id: 4, nombre: 'Pedro Sanchez Morales', initials: 'PS', profesion: 'Chef Educativo', email: 'pedro.sanchez@nutrinacion.org', telefono: '+52 55 4567 8901', estado: 'activo', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 4, avatarBg: AVATAR_COLORS[3], accentColor: ACCENT_COLORS[3] },
+  { id: 1, nombre: 'Maria Lopez Hernandez', initials: 'ML', profesion: 'Nutrióloga', email: 'maria.lopez@nutrinacion.org', telefono: '+52 55 1234 5678', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 8 },
+  { id: 2, nombre: 'Carlos Ramirez Torres', initials: 'CR', profesion: 'Educador en Salud', email: 'carlos.ramirez@nutrinacion.org', telefono: '+52 55 2345 6789', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 5 },
+  { id: 3, nombre: 'Ana Torres Gutierrez', initials: 'AT', profesion: 'Psicóloga Infantil', email: 'ana.torres@nutrinacion.org', telefono: '+52 55 3456 7890', estado: 'activo', acceso: 'pin', grupo: 'Zona Sur', grupos: ['Zona Sur'], grupoIds: [2], talleres: 6 },
+  { id: 4, nombre: 'Pedro Sanchez Morales', initials: 'PS', profesion: 'Chef Educativo', email: 'pedro.sanchez@nutrinacion.org', telefono: '+52 55 4567 8901', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 4 },
 ]
 
 const DEMO_GROUPS: EducatorGroup[] = [
-  { id: 1, nombre: 'Zona Norte', descripcion: 'Educadores asignados a escuelas y centros comunitarios de la zona norte', miembros: 3, estado: 'activo', ...GROUP_STYLES[0] },
-  { id: 2, nombre: 'Zona Sur', descripcion: 'Equipo dedicado a talleres en comunidades rurales del sur', miembros: 1, estado: 'activo', ...GROUP_STYLES[1] },
+  { id: 1, nombre: 'Zona Norte', descripcion: 'Educadores asignados a escuelas y centros comunitarios de la zona norte', miembros: 3, estado: 'activo' },
+  { id: 2, nombre: 'Zona Sur', descripcion: 'Equipo dedicado a talleres en comunidades rurales del sur', miembros: 1, estado: 'activo' },
 ]
 
-interface EducadorRow {
-  id: number
-  nombre: string
-  apellido: string | null
-  correo: string | null
-  telefono: string | null
-  profesion: string | null
+interface LigaRow {
   activo: boolean
-  grupos_educadores: { grupos: { id: number, nombre: string } | null }[]
-  asignaciones: { count: number }[]
+  educador: {
+    id: number
+    nombre: string
+    apellido: string | null
+    correo: string | null
+    telefono: string | null
+    profesion: string | null
+    activo: boolean
+    deleted_at: string | null
+    tiene_pin: boolean
+    activacion_pendiente: boolean
+    educador_grupo_miembros: { comunidad_id: number, grupo: { id: number, nombre: string } | null }[]
+  } | null
 }
 
 interface GrupoRow {
@@ -91,42 +87,52 @@ export function useEducators() {
     state.value.loading = true
     const supabase = useSupabaseClient()
 
-    const [{ data: eduRows }, { data: grupoRows }] = await Promise.all([
+    const [{ data: ligaRows }, { data: grupoRows }, { data: asignaciones }] = await Promise.all([
       supabase
-        .from('educadores')
+        .from('comunidad_educadores')
         .select(`
-          id, nombre, apellido, correo, telefono, profesion, activo,
-          grupos_educadores ( grupos ( id, nombre ) ),
-          asignaciones:taller_asignaciones_educadores ( count )
+          activo,
+          educador:educadores (
+            id, nombre, apellido, correo, telefono, profesion, activo, deleted_at, tiene_pin, activacion_pendiente,
+            educador_grupo_miembros ( comunidad_id, grupo:educador_grupos ( id, nombre ) )
+          )
         `)
-        .eq('comunidad_id', cid)
-        .is('deleted_at', null)
-        .order('nombre'),
+        .eq('comunidad_id', cid),
       supabase
-        .from('grupos')
-        .select('id, nombre, descripcion, activo, miembros:grupos_educadores ( count )')
+        .from('educador_grupos')
+        .select('id, nombre, descripcion, activo, miembros:educador_grupo_miembros ( count )')
         .eq('comunidad_id', cid)
         .order('nombre'),
+      // Los workshops de cada educador en ESTA comunidad (puede estar en otras).
+      supabase.from('workshop_educadores').select('educador_id').eq('comunidad_id', cid),
     ])
 
-    state.value.educators = (((eduRows as unknown) as EducadorRow[] | null) ?? []).map((e) => {
-      const grupos = e.grupos_educadores.map(g => g.grupos).filter((g): g is { id: number, nombre: string } => !!g)
-      return {
-        id: e.id,
-        nombre: `${e.nombre} ${e.apellido ?? ''}`.trim(),
-        initials: iniciales(e.nombre, e.apellido),
-        profesion: e.profesion ?? '—',
-        email: e.correo ?? '—',
-        telefono: e.telefono ?? '—',
-        estado: e.activo ? 'activo' : 'inactivo',
-        grupo: grupos[0]?.nombre ?? '—',
-        grupos: grupos.map(g => g.nombre),
-        grupoIds: grupos.map(g => g.id),
-        talleres: e.asignaciones?.[0]?.count ?? 0,
-        avatarBg: AVATAR_COLORS[e.id % AVATAR_COLORS.length]!,
-        accentColor: ACCENT_COLORS[e.id % ACCENT_COLORS.length]!,
-      }
-    })
+    const talleres = new Map<number, number>()
+    for (const a of asignaciones ?? []) talleres.set(a.educador_id, (talleres.get(a.educador_id) ?? 0) + 1)
+
+    state.value.educators = (((ligaRows as unknown) as LigaRow[] | null) ?? [])
+      .filter((l): l is LigaRow & { educador: NonNullable<LigaRow['educador']> } => !!l.educador && !l.educador.deleted_at)
+      .map(({ activo, educador: e }) => {
+        const grupos = e.educador_grupo_miembros
+          .filter(g => g.comunidad_id === cid)
+          .map(g => g.grupo)
+          .filter((g): g is { id: number, nombre: string } => !!g)
+        return {
+          id: e.id,
+          nombre: `${e.nombre} ${e.apellido ?? ''}`.trim(),
+          initials: iniciales(e.nombre, e.apellido),
+          profesion: e.profesion ?? '—',
+          email: e.correo ?? '—',
+          telefono: e.telefono ?? '—',
+          estado: activo && e.activo ? 'activo' : 'inactivo',
+          acceso: e.tiene_pin ? 'pin' : e.activacion_pendiente ? 'pendiente' : 'sin-codigo',
+          grupo: grupos[0]?.nombre ?? '',
+          grupos: grupos.map(g => g.nombre),
+          grupoIds: grupos.map(g => g.id),
+          talleres: talleres.get(e.id) ?? 0,
+        } satisfies Educator
+      })
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
 
     state.value.groups = (((grupoRows as unknown) as GrupoRow[] | null) ?? []).map(g => ({
       id: g.id,
@@ -134,7 +140,6 @@ export function useEducators() {
       descripcion: g.descripcion ?? '',
       miembros: g.miembros?.[0]?.count ?? 0,
       estado: g.activo ? 'activo' : 'inactivo',
-      ...GROUP_STYLES[g.id % GROUP_STYLES.length]!,
     }))
 
     state.value.comunidadId = cid
@@ -178,23 +183,47 @@ export function useEducators() {
     if (demo) return { error: null }
     if (!comunidadActiva.value) return { error: 'Sin comunidad activa' }
     const supabase = useSupabaseClient()
-    const { data, error } = await supabase
+    const comunidadId = comunidadActiva.value.id
+    const correo = datos.correo.trim().toLowerCase()
+
+    // El educador es de la organización: si ya existe con ese correo (en otra de sus
+    // comunidades), solo se liga a esta; si no, se crea.
+    const { data: existente } = await supabase
       .from('educadores')
-      .insert({
-        nombre: datos.nombre.trim(),
-        apellido: datos.apellido.trim() || null,
-        correo: datos.correo.trim() || null,
-        telefono: datos.telefono.trim() || null,
-        profesion: datos.profesion.trim() || null,
-        comunidad_id: comunidadActiva.value.id,
-      })
       .select('id')
-      .single()
-    if (error) return { error: error.message }
+      .eq('organizacion_id', comunidadActiva.value.organizacionId)
+      .ilike('correo', correo)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    let educadorId = existente?.id ?? null
+    if (!educadorId) {
+      const { data, error } = await supabase
+        .from('educadores')
+        .insert({
+          nombre: datos.nombre.trim(),
+          apellido: datos.apellido.trim() || null,
+          correo,
+          telefono: datos.telefono.trim() || null,
+          profesion: datos.profesion.trim() || null,
+          organizacion_id: comunidadActiva.value.organizacionId,
+        })
+        .select('id')
+        .single()
+      if (error) return { error: error.message }
+      educadorId = data.id
+    }
+
+    const { error: eLiga } = await supabase
+      .from('comunidad_educadores')
+      .upsert({ educador_id: educadorId, comunidad_id: comunidadId, activo: true }, { onConflict: 'educador_id,comunidad_id' })
+    if (eLiga) return { error: eLiga.message }
+
+    const data = { id: educadorId }
     if (datos.grupoId) {
       const { error: e2 } = await supabase
-        .from('grupos_educadores')
-        .insert({ grupo_id: datos.grupoId, educador_id: data.id as number })
+        .from('educador_grupo_miembros')
+        .insert({ educador_grupo_id: datos.grupoId, educador_id: data.id, comunidad_id: comunidadActiva.value.id })
       if (e2) return { error: e2.message }
     }
     await refresh()
@@ -206,7 +235,7 @@ export function useEducators() {
     if (!comunidadActiva.value) return { error: 'Sin comunidad activa' }
     const supabase = useSupabaseClient()
     const { data, error } = await supabase
-      .from('grupos')
+      .from('educador_grupos')
       .insert({
         nombre: datos.nombre.trim(),
         descripcion: datos.descripcion.trim() || null,
@@ -216,13 +245,34 @@ export function useEducators() {
       .single()
     if (error) return { error: error.message }
     if (datos.educadorIds.length) {
+      const comunidadId = comunidadActiva.value.id
       const { error: e2 } = await supabase
-        .from('grupos_educadores')
-        .insert(datos.educadorIds.map(id => ({ grupo_id: data.id as number, educador_id: id })))
+        .from('educador_grupo_miembros')
+        .insert(datos.educadorIds.map(id => ({ educador_grupo_id: data.id, educador_id: id, comunidad_id: comunidadId })))
       if (e2) return { error: e2.message }
     }
     await refresh()
     return { error: null }
+  }
+
+  // Activo o inactivo EN ESTA comunidad (comunidad_educadores.activo). Inactivo: no se le asignan
+  // workshops nuevos y la comunidad sale de su Educators; los que ya tenía asignados los sigue viendo.
+  async function cambiarActivo(educadorId: number, activo: boolean) {
+    if (demo) return { error: null }
+    if (!comunidadActiva.value) return { error: 'Sin comunidad activa' }
+    const { error } = await useSupabaseClient().from('comunidad_educadores')
+      .update({ activo }).eq('educador_id', educadorId).eq('comunidad_id', comunidadActiva.value.id)
+    await refresh()
+    return { error: error?.message ?? null }
+  }
+
+  // El código de activación de Educators (6 dígitos, 0006): con él, el educador elige su PIN la
+  // primera vez. La base lo devuelve una sola vez y guarda solo su hash; generar otro borra su PIN
+  // y cierra sus sesiones (sirve también si lo olvidó).
+  async function generarCodigo(educadorId: number): Promise<{ codigo: string | null, error: string | null }> {
+    if (demo) return { codigo: '000000', error: null }
+    const { data, error } = await useSupabaseClient().rpc('educador_generar_codigo', { p_educador_id: educadorId })
+    return { codigo: data ?? null, error: error?.message ?? null }
   }
 
   return {
@@ -237,5 +287,7 @@ export function useEducators() {
     refresh,
     createEducador,
     createGrupo,
+    generarCodigo,
+    cambiarActivo,
   }
 }

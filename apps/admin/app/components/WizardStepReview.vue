@@ -1,21 +1,19 @@
 <template>
   <div>
-    <!-- Success State -->
+    <!-- Success State: lima, lo hecho -->
     <Transition
       enter-active-class="transition duration-500 ease-out"
       enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100"
     >
-      <div v-if="isSuccess" class="text-center py-16">
-        <div class="w-20 h-20 rounded-full bg-brand-primary-100 flex items-center justify-center mx-auto mb-5 animate-bounce-once">
-          <svg class="w-10 h-10 text-brand-primary animate-draw-check" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-display font-semibold text-brand-dark mb-2">Taller creado exitosamente</h2>
-        <p class="text-sm text-gray-400 mb-8">El taller ha sido programado correctamente</p>
+      <div v-if="isSuccess" class="py-16 text-center">
+        <UiSymbol tone="lime" size="xl" class="animate-bounce-once mx-auto mb-5">
+          <UiIcon name="check" class="animate-draw-check" />
+        </UiSymbol>
+        <h2 class="ui-title mb-2">Taller creado exitosamente</h2>
+        <p class="ui-text mb-8">El taller ha sido programado correctamente</p>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+        <div class="mx-auto flex max-w-md flex-col items-center justify-center gap-3 sm:flex-row">
           <UiButton class="w-full sm:w-auto" @click="navigateTo('/dashboard/planner')">
             Ir al Planificador
           </UiButton>
@@ -28,33 +26,33 @@
 
     <!-- Resumen -->
     <div v-if="!isSuccess" class="max-w-[760px] mx-auto">
-      <div class="card overflow-hidden">
-        <!-- Header -->
-        <div class="px-6 py-5 flex items-center justify-between gap-3.5 border-b border-gray-100">
+      <div class="ui-panel overflow-hidden">
+        <!-- Header: el estado con el tono de la sesión que se va a crear -->
+        <div class="ui-panel-header">
           <div>
-            <h3 class="text-[17px] font-display font-semibold text-brand-dark">Resumen del taller</h3>
-            <p class="text-[12.5px] text-gray-500 font-semibold mt-0.5">Revisa los datos antes de crear el taller</p>
+            <h3 class="ui-title">Resumen del taller</h3>
+            <p class="ui-caption mt-0.5">Revisa los datos antes de crear el taller</p>
           </div>
-          <UiBadge :variant="state.estado === 'PROGRAMADO' ? 'blue' : 'gray'" dot>
-            {{ state.estado === 'PROGRAMADO' ? 'Programado' : 'Borrador' }}
+          <UiBadge :tone="tone" dot>
+            {{ state.estado === 'PUBLICADO' ? 'Publicado' : state.estado === 'EN_REVISION' ? 'En revisión' : 'Borrador' }}
           </UiBadge>
         </div>
 
-        <!-- Storyboard -->
-        <div class="px-6 py-[18px]">
-          <div class="flex items-center justify-between mb-3.5">
-            <span class="text-[10px] font-extrabold tracking-[0.1em] uppercase text-gray-400">Storyboard</span>
-            <a class="text-[11.5px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="goToStep(1)">Editar</a>
+        <!-- Storyboard: su símbolo con el tono de su área educativa -->
+        <div class="px-6 py-5">
+          <div class="mb-3.5 flex items-center justify-between">
+            <span class="eyebrow">Storyboard</span>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(1)">Editar</button>
           </div>
-          <div v-if="selectedStoryboard" class="flex items-center gap-[15px]">
-            <div :class="['w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0', selectedStoryboard.coverBg]">
-              <svg class="w-[22px] h-[22px] text-white/90" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-              </svg>
-            </div>
+          <div v-if="selectedStoryboard" class="flex items-center gap-4">
+            <UiSymbol
+              icon="book"
+              size="md"
+                            v-bind="uiAreaAttrs(selectedStoryboard.area)"
+            />
             <div class="min-w-0">
-              <p class="text-[15px] font-extrabold text-gray-800">{{ selectedStoryboard.title }}</p>
-              <p class="text-[12.5px] font-semibold text-gray-500 mt-0.5">
+              <p class="text-body font-extrabold text-ink">{{ selectedStoryboard.title }}</p>
+              <p class="ui-caption mt-0.5">
                 {{ selectedStoryboard.category }} · {{ selectedStoryboard.pertenencia }} · {{ selectedStoryboard.duration }} · {{ selectedStoryboard.scenesCount }} escenas
               </p>
             </div>
@@ -62,108 +60,104 @@
         </div>
 
         <!-- Educadores / Grupos -->
-        <div class="border-t border-gray-100 px-6 py-[18px]">
-          <div class="flex items-center justify-between mb-3.5">
-            <span class="text-[10px] font-extrabold tracking-[0.1em] uppercase text-gray-400">
+        <div class="border-t border-line px-6 py-5">
+          <div class="mb-3.5 flex items-center justify-between">
+            <span class="eyebrow">
               {{ state.educatorMode === 'group' ? `Grupos (${selectedGroups.length})` : `Educadores (${selectedEducators.length})` }}
             </span>
-            <a class="text-[11.5px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="goToStep(2)">Editar</a>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(2)">Editar</button>
           </div>
           <div class="flex flex-col gap-3">
             <template v-if="selectedEducators.length > 0">
               <div v-for="edu in selectedEducators" :key="edu.id" class="flex items-center gap-3">
-                <div :class="['w-[38px] h-[38px] rounded-[11px] flex items-center justify-center text-white text-[13px] font-extrabold shrink-0', edu.avatarBg]">
-                  {{ edu.initials }}
-                </div>
+                <UiAvatar :name="edu.nombre" :initials="edu.initials" />
                 <div class="min-w-0">
-                  <p class="text-[13.5px] font-extrabold text-gray-800">{{ edu.nombre }}</p>
-                  <p class="text-[12px] font-semibold text-gray-500 mt-px">{{ edu.profesion }} · {{ edu.email }}</p>
+                  <p class="text-body font-extrabold text-ink">{{ edu.nombre }}</p>
+                  <p class="ui-caption mt-px">{{ edu.profesion }} · {{ edu.email }}</p>
                 </div>
               </div>
             </template>
             <template v-else-if="selectedGroups.length > 0">
               <div v-for="grupo in selectedGroups" :key="grupo.id" class="flex items-center gap-3">
-                <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-800 flex items-center justify-center font-extrabold text-[13px] shrink-0">
-                  G
-                </div>
+                <UiSymbol icon="users" size="md" :tone="uiToneFor(grupo.nombre)" />
                 <div class="min-w-0">
-                  <p class="text-[13.5px] font-extrabold text-gray-800">{{ grupo.nombre }}</p>
-                  <p class="text-[12px] font-semibold text-gray-500 mt-px">{{ grupo.miembros }} educadores · una asignación por educador</p>
+                  <p class="text-body font-extrabold text-ink">{{ grupo.nombre }}</p>
+                  <p class="ui-caption mt-px">{{ grupo.miembros }} educadores · una asignación por educador</p>
                 </div>
               </div>
             </template>
           </div>
         </div>
 
-        <!-- Horario y ubicación -->
-        <div class="border-t border-gray-100 px-6 py-[18px]">
-          <div class="flex items-center justify-between mb-3.5">
-            <span class="text-[10px] font-extrabold tracking-[0.1em] uppercase text-gray-400">Horario y ubicación</span>
-            <a class="text-[11.5px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="goToStep(3)">Editar</a>
+        <!-- Horario y ubicación: la hora con el tono de la sesión -->
+        <div class="border-t border-line px-6 py-5">
+          <div class="mb-3.5 flex items-center justify-between">
+            <span class="eyebrow">Horario y ubicación</span>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(3)">Editar</button>
           </div>
-          <div class="flex flex-col gap-[11px]">
-            <div class="flex items-start gap-[11px]">
-              <svg class="w-4 h-4 text-gray-400 mt-px shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-              </svg>
+          <div class="flex flex-col gap-3">
+            <div class="flex items-start gap-3">
+              <UiIcon name="calendar" class="mt-px size-4 shrink-0 text-subtle" />
               <div>
-                <p class="text-[13.5px] font-extrabold text-gray-800">{{ formatDateLong(state.date) }}</p>
-                <p class="text-[12px] font-semibold text-gray-500 mt-0.5">
-                  {{ state.timeStart || '—' }}{{ state.timeEnd ? ` – ${state.timeEnd}` : '' }} · fin calculado por la duración del storyboard
+                <p class="text-body font-extrabold text-ink">{{ formatDateLong(state.date) }}</p>
+                <p class="ui-caption mt-0.5" :data-tone="tone">
+                  <span class="font-extrabold tabular-nums text-(--tone-strong)">{{ state.timeStart || '—' }}{{ state.timeEnd ? ` – ${state.timeEnd}` : '' }}</span> · fin calculado por la duración del storyboard
                 </p>
               </div>
             </div>
-            <div v-if="state.location" class="flex items-center gap-[11px]">
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-              <p class="text-[13px] font-semibold text-gray-700">{{ state.location }}</p>
+            <div v-if="state.location" class="flex items-center gap-3">
+              <UiIcon name="map-pin" class="size-4 shrink-0 text-subtle" />
+              <p class="text-body font-semibold text-muted">{{ state.location }}</p>
             </div>
-            <div v-if="state.notes" class="flex items-center gap-[11px]">
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-              </svg>
-              <p class="text-[13px] font-semibold text-gray-500 italic">{{ state.notes }}</p>
+            <div v-if="state.notes" class="flex items-center gap-3">
+              <UiIcon name="chat" class="size-4 shrink-0 text-subtle" />
+              <p class="text-body font-semibold italic text-muted">{{ state.notes }}</p>
             </div>
           </div>
         </div>
 
         <!-- Footer strip -->
-        <div class="border-t border-gray-100 px-6 py-[15px] flex items-center gap-7 flex-wrap bg-brand-tint">
-          <div class="flex items-baseline gap-[7px]">
-            <span class="text-[11.5px] text-gray-400 font-bold">Modalidad</span>
-            <span class="text-[12.5px] font-extrabold text-gray-700">{{ state.modalidad === 'PRESENCIAL' ? 'Presencial' : 'Asignado' }}</span>
+        <div class="ui-panel-footer flex flex-wrap items-center gap-x-7 gap-y-2">
+          <div class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Modalidad</span>
+            <span class="text-caption font-extrabold text-muted">{{ MODALIDADES[state.modalidad].label }}</span>
           </div>
-          <div class="flex items-baseline gap-[7px]">
-            <span class="text-[11.5px] text-gray-400 font-bold">Asignaciones</span>
-            <span class="text-[12.5px] font-extrabold text-gray-700">{{ assignmentCount }}</span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Asignaciones</span>
+            <span class="text-caption font-extrabold tabular-nums text-muted">{{ assignmentCount }}</span>
           </div>
-          <div v-if="state.capacity" class="flex items-baseline gap-[7px]">
-            <span class="text-[11.5px] text-gray-400 font-bold">Capacidad</span>
-            <span class="text-[12.5px] font-extrabold text-gray-700">{{ state.capacity }} participantes</span>
+          <div v-if="jornada" class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Jornada</span>
+            <span class="text-caption font-extrabold text-muted">{{ jornada }}</span>
           </div>
-          <div v-if="selectedStoryboard" class="flex items-baseline gap-[7px]">
-            <span class="text-[11.5px] text-gray-400 font-bold">Duración</span>
-            <span class="text-[12.5px] font-extrabold text-gray-700">{{ selectedStoryboard.duration }}</span>
+          <div v-if="state.group" class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Grupo</span>
+            <span class="text-caption font-extrabold text-muted">{{ state.group }}</span>
+          </div>
+          <div v-if="state.capacity" class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Asistentes estimados</span>
+            <span class="text-caption font-extrabold text-muted">{{ state.capacity }}</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Idioma</span>
+            <span class="text-caption font-extrabold text-muted">{{ state.language.toUpperCase() }}</span>
+          </div>
+          <div v-if="selectedStoryboard" class="flex items-baseline gap-2">
+            <span class="text-caption font-bold text-subtle">Duración</span>
+            <span class="text-caption font-extrabold text-muted">{{ selectedStoryboard.duration }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Nota según estado -->
-      <div
-        :class="[
-          'flex items-start gap-[11px] mt-3.5 px-4 py-[13px] rounded-[13px] text-[12.5px] font-semibold leading-relaxed',
-          state.estado === 'PROGRAMADO' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600',
-        ]"
-      >
-        <svg class="w-[17px] h-[17px] shrink-0 mt-px" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-        </svg>
+      <!-- Nota según estado: publicado es información de lo próximo (cielo); lo demás, neutro -->
+      <div class="alert mt-4" :data-tone="state.estado === 'PUBLICADO' ? 'sky' : 'neutral'">
+        <UiIcon name="info" />
         <p>
-          {{ state.estado === 'PROGRAMADO'
-            ? 'Al programar el taller, los educadores asignados recibirán la sesión en su app de StoryPlay.'
-            : 'El borrador se guarda en Talleres; podrás completar fecha y educadores más adelante.' }}
+          {{ state.estado === 'PUBLICADO'
+            ? 'Al publicar el taller, los educadores asignados lo verán en Educators.'
+            : state.estado === 'EN_REVISION'
+              ? 'Queda en revisión: otra persona de la comunidad o de la organización lo confirma y lo publica.'
+              : 'El borrador se guarda en Talleres; podrás completar fecha y educadores más adelante.' }}
         </p>
       </div>
     </div>
@@ -171,12 +165,25 @@
 </template>
 
 <script setup lang="ts">
+import { MODALIDADES } from '~/composables/useWorkshops'
+import type { JornadaFila } from '~/composables/useJornadas'
 const { state, selectedStoryboard, selectedEducators, selectedGroups, selectedGroupsMembers, isSuccess, goToStep, formatDateLong } = useWorkshopWizard()
+
+// La jornada elegida en el paso de programación (lista cargada ahí).
+const jornadas = useState<JornadaFila[]>('wizard-jornadas', () => [])
+const jornada = computed(() => jornadas.value.find(j => String(j.id) === state.value.jornadaId)?.nombre ?? '')
 
 // Un grupo genera una asignación por cada miembro.
 const assignmentCount = computed(() =>
   state.value.educatorMode === 'group' ? selectedGroupsMembers.value.length : selectedEducators.value.length,
 )
+
+// Tono de la sesión que se va a crear, igual que en la lista y el planner: programada hoy → sol,
+// programada otro día → cielo, borrador → neutro.
+const tone = computed(() =>
+  sessionTone(state.value.estado === 'PUBLICADO' ? 'programado' : 'borrador', state.value.date),
+)
+
 </script>
 
 <style scoped>

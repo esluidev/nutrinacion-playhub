@@ -1,3 +1,4 @@
+import type { Enums } from '~/utils/db'
 // Capa de datos del nivel organización (/organizacion/*): lo que un admin gestiona de SU
 // org. A diferencia de usePlatform (consola del operador, cruza todas las orgs), aquí todo
 // se acota a la organización activa del contexto.
@@ -12,6 +13,8 @@ export interface AdminDeOrg {
 export interface InvitacionAdminPendiente {
   id: number
   email: string | null
+  nombre: string | null
+  apellido: string | null
   estado: string
   expira_en: string | null
   created_at: string
@@ -105,9 +108,9 @@ export function useOrganizacion() {
         .select(`
           id, nombre, correo, telefono, website, created_at,
           tipo:tipos_organizacion ( nombre ),
-          licencias ( id, estado, max_comunidades, max_educadores, max_personalizados,
+          licencias:organizacion_licencias ( id, estado, max_comunidades, max_educadores, max_personalizados,
             fecha_inicio, fecha_fin, paises, notas, created_at ),
-          comunidades ( id, nombre, pais, educadores ( count ), talleres ( count ) ),
+          comunidades ( id, nombre, pais, educadores:comunidad_educadores ( count ), talleres:workshops ( count ) ),
           administradores:organizacion_administradores ( id, titular, perfil:perfiles ( nombre, apellido, email ) )
         `)
         .eq('id', orgActiva.value.id)
@@ -128,10 +131,11 @@ export function useOrganizacion() {
     if (!isSupabaseConfigured()) return { max: 5, usadas: 2 }
     if (!orgActiva.value) return { max: null, usadas: 0 }
     const supabase = useSupabaseClient()
+    // UTC a propósito: replica el trigger, que compara con `current_date` de la base (UTC).
     const hoy = new Date().toISOString().slice(0, 10)
     const [{ data: lic }, { count }] = await Promise.all([
       supabase
-        .from('licencias')
+        .from('organizacion_licencias')
         .select('max_comunidades')
         .eq('organizacion_id', orgActiva.value.id)
         .in('estado', ['ACTIVA', 'TRIAL'])
@@ -197,7 +201,7 @@ export function useOrganizacion() {
     if (!isSupabaseConfigured() || !orgActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('invitaciones')
-      .select('id, email, estado, expira_en, created_at')
+      .select('id, email, nombre, apellido, estado, expira_en, created_at')
       .eq('organizacion_id', orgActiva.value.id)
       .eq('role', 'ADMIN')
       .eq('estado', 'PENDIENTE')
@@ -210,6 +214,8 @@ export function useOrganizacion() {
   // Webhook → correo (mismo flujo que las invitaciones de Platform).
   async function invitarAdministrador(payload: {
     email: string
+    nombre: string
+    apellido: string
     idioma: string
     expira_en: string | null
   }): Promise<{ error: string | null }> {
@@ -222,7 +228,9 @@ export function useOrganizacion() {
         role: 'ADMIN',
         comunidad_id: null,
         email: payload.email || null,
-        idioma: payload.idioma,
+        nombre: payload.nombre.trim() || null,
+        apellido: payload.apellido.trim() || null,
+        idioma: payload.idioma as Enums<'idioma'>,
         expira_en: payload.expira_en,
       })
     return { error: error?.message ?? null }

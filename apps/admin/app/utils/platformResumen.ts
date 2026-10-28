@@ -1,5 +1,8 @@
-// Reglas de negocio del dashboard del operador (/platform): qué licencia está vigente,
-// cómo se desglosa el parque de licencias y qué organizaciones NECESITAN ATENCIÓN.
+// Reglas de negocio del dashboard del operador (/platform): la administración de las
+// organizaciones. Qué licencia está vigente, en qué punto está cada organización (operando, en
+// alta, sin licencia), cómo se desglosa el parque de licencias, qué organizaciones NECESITAN
+// ATENCIÓN y la actividad de las organizaciones. La operación de cada una (comunidades,
+// educadores, talleres) no es asunto de Platform.
 // Funciones puras (la fecha entra como parámetro): usePlatform las alimenta con datos
 // de Supabase y los tests las ejercitan directo.
 
@@ -17,8 +20,8 @@ export interface OrgLigera {
   id: number
   nombre: string
   created_at: string
-  comunidades: { id: number, nombre: string, created_at: string }[]
-  administradores: { id: number }[]
+  comunidades: number       // cuántas usa de su licencia (solo para el cupo)
+  administradores: { id: number, created_at: string, nombre: string }[]
 }
 
 // Orden = severidad: primero lo roto, luego lo urgente, luego el onboarding y la venta.
@@ -33,11 +36,12 @@ export interface AtencionItem {
 }
 
 export interface ActividadItem {
-  tipo: 'org' | 'comunidad'
-  nombre: string
-  orgNombre?: string     // para comunidades
+  tipo: 'org' | 'licencia' | 'renovacion' | 'admin'
+  orgNombre: string
   orgId: number
   fecha: string
+  persona?: string       // para 'admin'
+  licenciaId?: number    // para 'licencia' y 'renovacion'
 }
 
 // Vigente = ACTIVA o TRIAL, ya iniciada, sin fin o con fin no pasado (criterio del trigger 0007).
@@ -62,6 +66,20 @@ export function resumenLicencias(licencias: LicenciaLigera[], hoy: string) {
     porVencer: vigentes.filter(l => l.fecha_fin && l.fecha_fin.slice(0, 10) <= en30).length,
     vencidas: licencias.filter(l =>
       l.estado === 'VENCIDA' || (!!l.fecha_fin && l.fecha_fin.slice(0, 10) < hoy)).length,
+  }
+}
+
+// En qué punto está cada organización. Operando = licencia vigente y al menos un administrador;
+// en alta = sin administradores todavía; sin licencia = sin una vigente (no abre comunidades).
+export function resumenOrganizaciones(orgs: OrgLigera[], licencias: LicenciaLigera[], hoy: string) {
+  const hace30 = fechaMas(hoy, -30)
+  const conVigente = orgs.filter(o => licenciaVigenteDe(licencias, o.id, hoy))
+  return {
+    total: orgs.length,
+    nuevas: orgs.filter(o => o.created_at.slice(0, 10) >= hace30).length,
+    operando: conVigente.filter(o => o.administradores.length > 0).length,
+    enAlta: orgs.filter(o => !o.administradores.length).length,
+    sinLicencia: orgs.length - conVigente.length,
   }
 }
 
@@ -92,7 +110,7 @@ export function construirAtencion(orgs: OrgLigera[], licencias: LicenciaLigera[]
     }
 
     // Cupo lleno no es un problema: es una señal de ampliación. Va al final.
-    if (vigente && o.comunidades.length >= vigente.max_comunidades) {
+    if (vigente && o.comunidades >= vigente.max_comunidades) {
       items.push({ tipo: 'cupo_lleno', orgId: o.id, orgNombre: o.nombre, licenciaId: vigente.id })
     }
   }
@@ -104,14 +122,30 @@ export function construirAtencion(orgs: OrgLigera[], licencias: LicenciaLigera[]
     severidad[a.tipo] - severidad[b.tipo] || (a.dias ?? 0) - (b.dias ?? 0))
 }
 
-// Pulso de adopción: altas recientes de organizaciones y comunidades, mezcladas.
-export function construirActividad(orgs: OrgLigera[], limite = 6): ActividadItem[] {
+// Actividad de las organizaciones: altas, licencias emitidas o renovadas y administradores que se
+// incorporan, de la más reciente a la más antigua.
+export function construirActividad(orgs: OrgLigera[], licencias: LicenciaLigera[], limite = 6): ActividadItem[] {
   const items: ActividadItem[] = []
+  const nombre = new Map(orgs.map(o => [o.id, o.nombre]))
   for (const o of orgs) {
-    items.push({ tipo: 'org', nombre: o.nombre, orgId: o.id, fecha: o.created_at })
-    for (const c of o.comunidades) {
-      items.push({ tipo: 'comunidad', nombre: c.nombre, orgNombre: o.nombre, orgId: o.id, fecha: c.created_at })
+    items.push({ tipo: 'org', orgNombre: o.nombre, orgId: o.id, fecha: o.created_at })
+    for (const a of o.administradores) {
+      items.push({ tipo: 'admin', orgNombre: o.nombre, orgId: o.id, fecha: a.created_at, persona: a.nombre })
     }
+  }
+  const porOrg = [...licencias].sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
+  const vistas = new Set<number>()
+  for (const l of porOrg) {
+    const orgNombre = nombre.get(l.organizacion_id)
+    if (!orgNombre) continue
+    items.push({
+      tipo: vistas.has(l.organizacion_id) ? 'renovacion' : 'licencia',
+      orgNombre,
+      orgId: l.organizacion_id,
+      fecha: l.created_at,
+      licenciaId: l.id,
+    })
+    vistas.add(l.organizacion_id)
   }
   return items.sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, limite)
 }

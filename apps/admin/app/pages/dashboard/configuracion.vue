@@ -1,102 +1,180 @@
 <template>
-  <div class="max-w-[720px] mx-auto">
-    <UiPageHeader title="Configuración" :description="subtitulo" />
+  <div class="mx-auto max-w-3xl">
+    <UiPageHeader :title="t('config.title')" :description="subtitulo" />
 
-    <div class="flex flex-col gap-[22px]">
-      <!-- Datos de la comunidad -->
-      <div class="card p-6">
-        <p class="text-[14.5px] font-extrabold text-gray-800 mb-1">Datos de la comunidad</p>
-        <p class="text-[12.5px] font-semibold text-gray-500 mb-[18px]">Visibles para todos los que operan {{ comunidad }}.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
-          <div class="sm:col-span-2">
-            <UiInput v-model="form.nombre" label="Nombre" />
-          </div>
-          <div class="sm:col-span-2 space-y-[7px]">
-            <label class="block text-[13px] font-bold text-gray-700">Descripción <span class="text-gray-400 font-semibold">(opcional)</span></label>
-            <textarea v-model="form.descripcion" class="input !h-auto min-h-[70px] py-3 resize-y" />
-          </div>
-          <UiInput v-model="form.correo" type="email" label="Correo de contacto" />
-          <UiInput v-model="form.telefono" label="Teléfono" />
-          <div class="sm:col-span-2 space-y-[7px]">
-            <label class="block text-[13px] font-bold text-gray-700">País</label>
-            <UiSelect v-model="form.pais" size="md" :options="paisOptions" />
+    <div v-if="cargando" class="ui-panel ui-text p-10 text-center">{{ t('common.loading') }}</div>
+
+    <div v-else class="flex flex-col gap-6">
+      <!-- Datos de la comunidad: los edita quien administra la organización (RLS) -->
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div class="min-w-0">
+            <h2 class="ui-title">{{ t('coms.section') }}</h2>
+            <p class="ui-caption mt-0.5">{{ puedeEditar ? t('config.sectionDesc', { comunidad }) : t('config.readOnly') }}</p>
           </div>
         </div>
-      </div>
+        <div class="ui-panel-body grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <UiInput v-model="form.nombre" class="sm:col-span-2" :label="t('coms.name')" :disabled="!puedeEditar" required />
+          <UiTextarea v-model="form.descripcion" class="sm:col-span-2" :label="t('coms.description')" optional :rows="3" :disabled="!puedeEditar" />
+          <UiInput v-model="form.correo" type="email" :label="t('coms.email')" :disabled="!puedeEditar" />
+          <UiInput v-model="form.telefono" :label="t('coms.phone')" :disabled="!puedeEditar" />
+          <UiSelect v-model="form.pais" class="sm:col-span-2" :label="t('coms.country')" :placeholder="t('coms.countryPh')" :options="paisOptions" :disabled="!puedeEditar" />
+          <p v-if="error" class="field-error sm:col-span-2">{{ error }}</p>
+        </div>
+      </section>
 
       <!-- Organización -->
-      <div class="card overflow-hidden">
-        <div class="px-6 py-[18px] border-b border-gray-100">
-          <p class="text-[14.5px] font-extrabold text-gray-800">Organización</p>
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <h2 class="ui-title">{{ t('config.org') }}</h2>
         </div>
-        <div class="flex items-center gap-3 px-6 py-[15px]">
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
+        <div class="flex items-center gap-3 px-6 py-4">
+          <!-- Organización: tono estable por nombre -->
+          <UiSymbol size="md" :tone="uiToneFor(organizacion)" class="text-body font-black">
             {{ organizacion.charAt(0) }}
-          </div>
+          </UiSymbol>
           <div class="min-w-0 flex-1">
-            <p class="font-extrabold text-gray-800 text-[13.5px]">{{ organizacion }}</p>
-            <p class="text-[12px] font-semibold text-gray-500 mt-0.5">Los datos de la organización y su licencia se gestionan desde el contexto de organización.</p>
+            <p class="text-body font-extrabold text-ink">{{ organizacion }}</p>
+            <p class="ui-caption mt-0.5">{{ t('config.orgDesc') }}</p>
           </div>
-          <UiButton variant="outline" size="sm" class="shrink-0" @click="navigateTo('/organizacion/comunidades')">Ir a la organización</UiButton>
+          <UiButton v-if="administraOrgActiva" variant="outline" size="sm" class="shrink-0" @click="navigateTo('/organizacion/comunidades')">
+            {{ t('config.goOrg') }}
+          </UiButton>
         </div>
-      </div>
+      </section>
 
-      <!-- Zona de peligro -->
-      <div class="card !border-red-200 p-5 flex items-center gap-3.5">
+      <!-- Zona de peligro: eliminar es coral -->
+      <section v-if="puedeEditar" class="ui-panel flex items-center gap-4 border-(--tone-tint-edge) p-5" data-tone="coral">
         <div class="min-w-0 flex-1">
-          <p class="text-[13.5px] font-extrabold text-red-700">Eliminar comunidad</p>
-          <p class="text-[12.5px] font-semibold text-gray-500 mt-0.5">Se pierde el acceso de sus colaboradores y su historial de talleres. Esta acción no se puede deshacer.</p>
+          <h2 class="text-body font-extrabold text-(--tone-strong)">{{ t('coms.deleteTitle') }}</h2>
+          <p class="ui-caption mt-0.5">{{ t('config.deleteDesc') }}</p>
         </div>
-        <button
-          class="inline-flex items-center h-9 px-4 rounded-btn border-[1.5px] border-red-200 text-red-600 bg-white text-[12.5px] font-bold hover:bg-red-50 transition-colors shrink-0"
-          @click="eliminar"
-        >
-          Eliminar
-        </button>
-      </div>
+        <UiButton tone="coral" size="sm" class="shrink-0" @click="pedirEliminar">{{ t('common.delete') }}</UiButton>
+      </section>
     </div>
 
-    <div class="flex items-center justify-end gap-2.5 mt-[22px]">
-      <UiButton variant="outline" @click="navigateTo('/dashboard')">Cancelar</UiButton>
-      <UiButton type="button" @click="submit">Guardar Cambios</UiButton>
+    <!-- Una sola acción principal: Guardar -->
+    <div v-if="puedeEditar && !cargando" class="mt-6 flex items-center justify-end gap-3">
+      <UiButton variant="outline" @click="navigateTo('/dashboard')">{{ t('common.cancel') }}</UiButton>
+      <UiButton :loading="guardando" icon="check" @click="submit">{{ t('common.save') }}</UiButton>
     </div>
+
+    <!-- Borrar es PERMANENTE y cascadea: dice qué se lleva y exige escribir el nombre -->
+    <UiConfirmDialog
+      :open="borrando"
+      :title="t('coms.deleteTitle')"
+      :confirm-label="t('coms.deleteConfirm')"
+      :require-text="comunidad"
+      :require-label="t('coms.deleteTypeName')"
+      :loading="guardando"
+      @update:open="(v) => borrando = v"
+      @confirm="confirmarEliminar"
+    >
+      <p>{{ t('coms.deleteWarn', { nombre: comunidad }) }}</p>
+      <ul v-if="resumen && lineasResumen.length" class="mt-3 space-y-1 font-semibold text-muted">
+        <li v-for="linea in lineasResumen" :key="linea" class="flex items-center gap-2">
+          <!-- Lo que se pierde: coral -->
+          <span class="size-1.5 shrink-0 rounded-full bg-(--tone-fill)" data-tone="coral" />{{ linea }}
+        </li>
+      </ul>
+      <p v-else-if="resumen" class="mt-3 text-subtle">{{ t('coms.deleteNoData') }}</p>
+      <p v-else class="mt-3 text-subtle">{{ t('common.loading') }}</p>
+    </UiConfirmDialog>
   </div>
 </template>
 
 <script setup lang="ts">
+// Configuración de la comunidad activa. Leerla, cualquiera que la opere; editarla y eliminarla,
+// quien administra su organización (la RLS de `comunidades` lo exige igual).
 definePageMeta({ layout: 'dashboard' })
 
-const { t } = useT()
+const { t, locale } = useT()
 const { toast } = useToast()
-const { comunidadActiva, orgActiva } = useContexto()
+const { comunidadActiva, orgActiva, administraOrgActiva } = useContexto()
+const { fetchUser } = useAuth()
+const { get, update, remove, resumenBorrado } = useComunidades()
 
-const comunidad = computed(() => comunidadActiva.value?.nombre ?? t('common.myOrg'))
+const comunidad = computed(() => comunidadActiva.value?.nombre ?? '')
 const organizacion = computed(() => orgActiva.value?.nombre ?? 'Nutrinación')
 const subtitulo = computed(() => `${comunidad.value} · ${organizacion.value}`)
+const puedeEditar = computed(() => administraOrgActiva.value)
 
-const form = reactive({
-  nombre: comunidadActiva.value?.nombre ?? '',
-  descripcion: '',
-  correo: '',
-  telefono: '',
-  pais: 'MX',
-})
+const cargando = ref(true)
+const guardando = ref(false)
+const error = ref('')
+const form = reactive({ nombre: '', descripcion: '', correo: '', telefono: '', pais: '' })
 
-watch(comunidadActiva, (c) => {
-  if (c) form.nombre = c.nombre
-})
+const paises = ref<{ codigo: string, nombre: Record<string, string>, bandera: string | null }[]>([])
+const paisOptions = computed(() => paises.value.map(p => ({
+  value: p.codigo,
+  label: `${p.bandera ?? ''} ${p.nombre[locale.value] ?? p.nombre.es ?? p.codigo}`.trim(),
+})))
 
-const paisOptions = [
-  { value: 'MX', label: '🇲🇽 México' },
-  { value: 'GT', label: '🇬🇹 Guatemala' },
-  { value: 'SV', label: '🇸🇻 El Salvador' },
-]
-
-function submit() {
-  toast.success(`Cambios guardados. La información de ${comunidad.value} se actualizó.`)
-  navigateTo('/dashboard')
+async function cargar() {
+  const id = comunidadActiva.value?.id
+  if (!id) return
+  cargando.value = true
+  const [fila, lista] = await Promise.all([get(id), isSupabaseConfigured() ? usePlatform().listPaises() : Promise.resolve([])])
+  paises.value = lista
+  Object.assign(form, {
+    nombre: fila?.nombre ?? comunidad.value,
+    descripcion: fila?.descripcion ?? '',
+    correo: fila?.correo ?? '',
+    telefono: fila?.telefono ?? '',
+    pais: fila?.pais ?? '',
+  })
+  cargando.value = false
 }
-function eliminar() {
-  toast.error('Esta acción requiere confirmación desde el backend.')
+watch(() => comunidadActiva.value?.id, cargar, { immediate: true })
+
+async function submit() {
+  error.value = ''
+  if (!form.nombre.trim()) { error.value = t('coms.nameRequired'); return }
+  if (!form.pais) { error.value = t('coms.countryRequired'); return }
+  const c = comunidadActiva.value
+  if (!c) return
+  guardando.value = true
+  const { error: e } = await update(c.id, { ...form, organizacion_id: c.organizacionId })
+  guardando.value = false
+  if (e) { error.value = e; return }
+  toast.success(t('config.saved'))
+  // El nombre sale en el switcher y la cabecera: se recarga el árbol de acceso.
+  await fetchUser()
+}
+
+// ── Eliminar ─────────────────────────────────────────────────────────────────
+const borrando = ref(false)
+const resumen = ref<Awaited<ReturnType<typeof resumenBorrado>> | null>(null)
+const lineasResumen = computed(() => {
+  const r = resumen.value
+  if (!r) return []
+  return [
+    [r.educadores, tCount(t, 'orgHome.educadoresCount', r.educadores)],
+    [r.grupos, tCount(t, 'coms.gruposCount', r.grupos)],
+    [r.talleres, tCount(t, 'orgHome.talleresCount', r.talleres)],
+    [r.colaboradores, tCount(t, 'coms.colaboradoresCount', r.colaboradores)],
+    [r.participantes, tCount(t, 'coms.participantesCount', r.participantes)],
+  ].filter(([n]) => (n as number) > 0).map(([, linea]) => linea as string)
+})
+
+function pedirEliminar() {
+  const id = comunidadActiva.value?.id
+  if (!id) return
+  resumen.value = null
+  borrando.value = true
+  resumenBorrado(id).then((r) => { resumen.value = r })
+}
+
+async function confirmarEliminar() {
+  const id = comunidadActiva.value?.id
+  if (!id) return
+  guardando.value = true
+  const { error: e } = await remove(id)
+  guardando.value = false
+  if (e) { toast.error(e); return }
+  borrando.value = false
+  toast.success(t('coms.deleted'))
+  await fetchUser()
+  navigateTo('/organizacion/comunidades')
 }
 </script>

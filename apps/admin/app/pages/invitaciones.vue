@@ -2,9 +2,9 @@
   <div>
     <UiPageHeader :title="t('inbox.title')" :description="t('inbox.desc')" />
 
-    <!-- Pendientes: lo accionable primero -->
+    <!-- Pendientes: lo accionable primero. Aceptar es la acción principal (lima); rechazar, neutra. -->
     <div class="mb-8">
-      <h2 class="section-title mb-3">{{ t('inbox.pending') }}</h2>
+      <h2 class="ui-title mb-3">{{ t('inbox.pending') }}</h2>
       <UiDataTable
         :columns="colsPendientes"
         :rows="pendientes"
@@ -13,34 +13,38 @@
         :empty-text="t('inbox.noPending')"
       >
         <template #cell-invitacion="{ row }">
-          <p class="font-semibold text-brand-dark">{{ titulo(row) }}</p>
-          <p class="text-xs text-gray-400">{{ subtitulo(row) }}</p>
+          <p class="font-extrabold text-ink">{{ titulo(row) }}</p>
+          <p class="ui-caption">{{ subtitulo(row) }}</p>
         </template>
         <template #cell-vence="{ row }">
-          <span class="text-xs text-gray-400">{{ row.expira_en ? fechaCorta(row.expira_en) : '—' }}</span>
+          <span class="ui-caption">{{ row.expira_en ? fechaCorta(row.expira_en, locale) : '—' }}</span>
         </template>
         <template #cell-acciones="{ row }">
-          <button
-            class="text-xs text-brand-primary-600 font-semibold hover:underline disabled:opacity-40"
-            :disabled="!!respondiendo"
-            @click="responderA(row, 'aceptar')"
-          >
-            {{ t('inbox.accept') }}
-          </button>
-          <button
-            class="text-xs text-gray-500 font-semibold hover:underline ml-3 disabled:opacity-40"
-            :disabled="!!respondiendo"
-            @click="responderA(row, 'rechazar')"
-          >
-            {{ t('inbox.decline') }}
-          </button>
+          <div class="flex justify-end gap-2">
+            <UiButton
+              size="sm"
+              icon="check"
+              :disabled="!!respondiendo"
+              @click="responderA(row, 'aceptar')"
+            >
+              {{ t('inbox.accept') }}
+            </UiButton>
+            <UiButton
+              size="sm"
+              variant="outline"
+              :disabled="!!respondiendo"
+              @click="responderA(row, 'rechazar')"
+            >
+              {{ t('inbox.decline') }}
+            </UiButton>
+          </div>
         </template>
       </UiDataTable>
     </div>
 
     <!-- Historial: lo ya resuelto -->
     <div>
-      <h2 class="section-title mb-3">{{ t('inbox.history') }}</h2>
+      <h2 class="ui-title mb-3">{{ t('inbox.history') }}</h2>
       <UiDataTable
         :columns="colsHistorial"
         :rows="historial"
@@ -49,14 +53,14 @@
         :empty-text="t('inbox.noHistory')"
       >
         <template #cell-invitacion="{ row }">
-          <p class="font-medium text-brand-dark">{{ titulo(row) }}</p>
-          <p class="text-xs text-gray-400">{{ subtitulo(row) }}</p>
+          <p class="font-extrabold text-ink">{{ titulo(row) }}</p>
+          <p class="ui-caption">{{ subtitulo(row) }}</p>
         </template>
         <template #cell-estado="{ row }">
-          <UiBadge :variant="estadoVariant(row)">{{ t('state.' + estadoReal(row)) }}</UiBadge>
+          <UiBadge :tone="estadoTone(row)">{{ t('state.' + estadoReal(row)) }}</UiBadge>
         </template>
         <template #cell-fecha="{ row }">
-          <span class="text-xs text-gray-400">{{ fechaCorta(row.created_at) }}</span>
+          <span class="ui-caption">{{ fechaCorta(row.created_at, locale) }}</span>
         </template>
       </UiDataTable>
     </div>
@@ -95,11 +99,9 @@ const colsHistorial = computed(() => [
 function estadoReal(i: InvitacionMia) {
   return i.estado === 'PENDIENTE' && !vigente(i) ? 'EXPIRADA' : i.estado
 }
-function estadoVariant(i: InvitacionMia): 'green' | 'blue' | 'red' | 'gray' {
-  const map: Record<string, 'green' | 'blue' | 'red' | 'gray'> = {
-    USADA: 'green', PENDIENTE: 'blue', RECHAZADA: 'gray', REVOCADA: 'red', EXPIRADA: 'gray',
-  }
-  return map[estadoReal(i)] ?? 'gray'
+// Color = significado, el mismo que en Platform (utils/tonos.ts).
+function estadoTone(i: InvitacionMia) {
+  return invitacionTone(estadoReal(i))
 }
 
 async function cargar() {
@@ -141,7 +143,4 @@ async function responderA(i: InvitacionMia, accion: 'aceptar' | 'rechazar') {
   await cargar()
 }
 
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 </script>

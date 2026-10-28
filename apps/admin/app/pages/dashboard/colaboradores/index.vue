@@ -3,8 +3,7 @@
     <UiPageHeader title="Colaboradores" description="Personas con acceso a operar tu comunidad">
       <template #actions>
         <!-- Invitar colaboradores es del admin de la org (la RLS lo exige igual) -->
-        <UiButton v-if="puedeInvitar" @click="navigateTo('/dashboard/colaboradores/nuevo')">
-          <UiIcon name="invite" class="w-4 h-4" stroke-width="2.25" />
+        <UiButton v-if="puedeInvitar" icon="user-plus" @click="navigateTo('/dashboard/colaboradores/nuevo')">
           Invitar Colaborador
         </UiButton>
       </template>
@@ -22,59 +21,48 @@
       :filters="filtros"
     >
       <template #cell-nombre="{ row }">
-        <div class="flex items-center gap-3 min-w-0">
-          <div :class="['w-[34px] h-[34px] rounded-full flex items-center justify-center shrink-0 text-white font-extrabold text-[12px]', row.avatarBg]">
-            {{ row.initials }}
-          </div>
+        <div class="flex min-w-0 items-center gap-3">
+          <UiAvatar :name="row.nombre" :initials="row.initials" />
           <div class="min-w-0">
-            <p class="font-extrabold text-gray-800 text-[13.5px] truncate">{{ row.nombre }}</p>
-            <p class="text-[12px] font-semibold text-gray-500 truncate">{{ row.email }}</p>
+            <p class="truncate text-body font-extrabold text-ink">{{ row.nombre }}</p>
+            <p class="truncate text-caption font-semibold text-muted">{{ row.email }}</p>
           </div>
         </div>
       </template>
       <template #cell-desde="{ row }">
-        <span class="text-[13px] text-gray-700 font-semibold">{{ fechaCorta(row.created_at) }}</span>
+        <span class="text-body font-semibold text-muted">{{ fechaCorta(row.created_at, 'es') }}</span>
       </template>
       <template #cell-estado="{ row }">
-        <UiBadge :variant="row.activo ? 'green' : 'gray'" dot>{{ row.activo ? 'Activo' : 'Inactivo' }}</UiBadge>
+        <!-- Activo en lima con punto (vigente); inactivo, neutro -->
+        <UiBadge :tone="row.activo ? 'lime' : 'neutral'" :dot="row.activo">{{ row.activo ? 'Activo' : 'Inactivo' }}</UiBadge>
       </template>
       <template #cell-acciones="{ row }">
+        <!-- Acciones de tabla: neutras, como en el kit -->
         <div v-if="puedeInvitar" class="flex items-center justify-end">
-          <button
-            v-if="row.activo"
-            class="inline-flex items-center gap-1.5 h-[30px] px-[11px] rounded-[8px] text-[12px] font-bold text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-            @click.stop="cambiarActivo(row, false)"
-          >
+          <UiButton v-if="row.activo" variant="outline" size="sm" @click.stop="cambiarActivo(row, false)">
             Desactivar
-          </button>
-          <button
-            v-else
-            class="inline-flex items-center gap-1.5 h-[30px] px-[11px] rounded-[8px] text-[12px] font-bold text-gray-400 hover:bg-brand-primary-50 hover:text-brand-primary-700 transition-colors"
-            @click.stop="cambiarActivo(row, true)"
-          >
+          </UiButton>
+          <UiButton v-else variant="outline" size="sm" @click.stop="cambiarActivo(row, true)">
             Reactivar
-          </button>
+          </UiButton>
         </div>
       </template>
     </UiDataTable>
 
     <!-- Invitaciones pendientes: cierran el ciclo "invité → ¿ya entró?" -->
-    <div v-if="pendientes.length" class="mt-6">
-      <p class="text-[11px] font-extrabold tracking-wider text-gray-400 uppercase mb-2">Invitaciones pendientes</p>
-      <div class="card divide-y divide-gray-100">
-        <div v-for="inv in pendientes" :key="inv.id" class="flex items-center gap-3 px-4 py-3">
-          <div class="w-[30px] h-[30px] rounded-[9px] bg-[#fff8e6] text-[#a16207] flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-            </svg>
-          </div>
+    <section v-if="pendientes.length" class="mt-6">
+      <p class="eyebrow mb-2">Invitaciones pendientes</p>
+      <div class="ui-panel divide-y divide-line">
+        <div v-for="inv in pendientes" :key="inv.id" class="flex items-center gap-3 px-5 py-3">
+          <!-- Invitación pendiente: uva -->
+          <UiSymbol icon="mail" size="sm" tone="grape" />
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-bold text-gray-800 truncate">{{ inv.email ?? '— (link abierto)' }}</p>
-            <p class="text-xs text-gray-400">{{ inv.expira_en ? `Vence el ${fechaCorta(inv.expira_en)}` : 'Sin vencimiento' }}</p>
+            <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? '— (link abierto)' }}</p>
+            <p class="ui-caption">{{ [nombreInvitado(inv) && inv.email, inv.expira_en ? `Vence el ${fechaCorta(inv.expira_en, 'es')}` : 'Sin vencimiento'].filter(Boolean).join(' · ') }}</p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -108,9 +96,6 @@ const filtros = [{
 
 const pendientes = ref<InvitacionColabPendiente[]>([])
 
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 async function cambiarActivo(c: ColaboradorFila, activo: boolean) {
   const { error } = await setActivo(c.id, activo)

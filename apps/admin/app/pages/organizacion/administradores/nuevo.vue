@@ -1,21 +1,22 @@
 <template>
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('admins.newTitle')" :description="t('admins.newDesc')" />
-    <form class="card p-6 space-y-4" @submit.prevent="handleSubmit">
+    <form class="ui-panel ui-panel-body space-y-4" @submit.prevent="handleSubmit">
+      <div class="grid grid-cols-2 gap-3">
+        <UiInput id="nombre" v-model="form.nombre" :label="t('platform.invs.firstName')" required />
+        <UiInput id="apellido" v-model="form.apellido" :label="t('platform.invs.lastName')" optional />
+      </div>
       <UiInput id="email" v-model="form.email" type="email" :label="t('admins.email')" :placeholder="t('admins.emailPh')" required />
 
       <div class="grid grid-cols-2 gap-3">
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('admins.language') }}</label>
-          <UiSelect v-model="form.idioma" :options="idiomaOpciones" size="md" />
-        </div>
+        <UiSelect v-model="form.idioma" :options="idiomaOpciones" :label="t('admins.language')" />
         <UiInput id="expira" v-model="form.expira" type="date" :label="t('admins.expiresLabel')" :min="hoy" />
       </div>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
       <div class="flex items-center justify-end gap-2 pt-2">
-        <UiButton variant="outline" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
+        <UiButton tone="neutral" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
         <UiButton size="sm" type="submit" :loading="saving">{{ t('admins.submit') }}</UiButton>
       </div>
     </form>
@@ -44,16 +45,17 @@ const idiomaOpciones = computed(() => [
   { value: 'en', label: t('lang.en') },
 ])
 
-const hoy = new Date().toISOString().slice(0, 10)
+// Días del calendario local; la invitación vence al final del día elegido.
+const hoy = hoyLocal()
 
 function enTreintaDias() {
-  const d = new Date()
-  d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return hoyLocal(30)
 }
 
 const form = ref({
   email: '',
+  nombre: '',
+  apellido: '',
   idioma: 'es',
   expira: enTreintaDias(),
 })
@@ -64,6 +66,10 @@ function volver() {
 
 async function handleSubmit() {
   error.value = ''
+  if (!form.value.nombre.trim()) {
+    error.value = t('platform.invs.nameRequired')
+    return
+  }
   if (!form.value.email.trim()) {
     error.value = t('admins.emailRequired')
     return
@@ -72,8 +78,10 @@ async function handleSubmit() {
   saving.value = true
   const { error: err } = await invitarAdministrador({
     email: form.value.email.trim(),
+    nombre: form.value.nombre,
+    apellido: form.value.apellido,
     idioma: form.value.idioma,
-    expira_en: form.value.expira ? new Date(form.value.expira).toISOString() : null,
+    expira_en: form.value.expira ? finDelDia(form.value.expira) : null,
   })
   saving.value = false
 

@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-brand-bg">
+  <div class="min-h-screen bg-canvas">
     <LayoutSidebar :is-open="sidebarOpen" :is-collapsed="isCollapsed" @close="sidebarOpen = false" />
 
     <div :class="[
       'flex flex-col min-h-screen transition-all duration-200 ease-in-out',
-      isCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64',
+      isCollapsed ? 'lg:pl-19' : 'lg:pl-64',
     ]">
       <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 

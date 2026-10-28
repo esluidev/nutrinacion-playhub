@@ -1,21 +1,21 @@
 <template>
   <div>
     <template v-if="estado === 'validando'">
-      <p class="text-sm text-gray-500 text-center py-10">
-        {{ t('auth.invite.validating') }}
-      </p>
+      <div class="flex flex-col items-center gap-4 py-10">
+        <UiSpinner />
+        <p class="ui-text text-center">
+          {{ t('auth.invite.validating') }}
+        </p>
+      </div>
     </template>
 
+    <!-- Inválida, vencida o revocada: coral (lo que ya no vale) -->
     <template v-else-if="estado === 'invalida'">
-      <div class="flex justify-center mb-4">
-        <div class="w-12 h-12 rounded-[14px] bg-amber-50 text-amber-600 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
-        </div>
-      </div>
-      <h2 class="text-xl font-display font-semibold text-brand-dark text-center mb-2">
+      <UiSymbol icon="warning" tone="coral" class="mx-auto mb-4" />
+      <h2 class="ui-title mb-2 text-center">
         {{ t('auth.invite.invalidTitle') }}
       </h2>
-      <p class="text-sm text-gray-500 text-center mb-6 leading-relaxed">
+      <p class="ui-text mb-6 text-center">
         {{ error }}
       </p>
       <div class="flex justify-center">
@@ -23,17 +23,13 @@
       </div>
     </template>
 
-    <!-- Ya tiene cuenta: no hay nada que crear, la acepta dentro de la app -->
+    <!-- Ya tiene cuenta: no hay nada que crear, la acepta dentro de la app. Información: cielo -->
     <template v-else-if="estado === 'existente'">
-      <div class="flex justify-center mb-4">
-        <div class="w-12 h-12 rounded-[14px] bg-blue-50 text-blue-600 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
-        </div>
-      </div>
-      <h2 class="text-xl font-display font-semibold text-brand-dark text-center mb-2">
+      <UiSymbol icon="user" tone="sky" class="mx-auto mb-4" />
+      <h2 class="ui-title mb-2 text-center">
         {{ t('auth.invite.hasAccountTitle') }}
       </h2>
-      <p class="text-sm text-gray-500 text-center mb-6 leading-relaxed">
+      <p class="ui-text mb-6 text-center">
         {{ t('auth.invite.hasAccountText', { email: info?.email ?? '' }) }}
       </p>
       <div class="flex justify-center">
@@ -42,21 +38,21 @@
     </template>
 
     <template v-else>
-      <h2 class="text-xl font-display font-semibold text-brand-dark mb-1.5">
+      <h2 class="ui-title mb-1.5">
         {{ t('auth.invite.createTitle') }}
       </h2>
-      <p class="text-[13px] text-gray-500 mb-6">{{ t('auth.invite.subtitle') }}</p>
+      <p class="ui-text mb-6">{{ t('auth.invite.subtitle') }}</p>
 
-      <!-- Banner de invitación -->
-      <div class="flex items-center gap-3 p-3.5 rounded-[13px] bg-brand-primary-50 border border-brand-primary-100 mb-6">
-        <div class="w-9 h-9 rounded-[10px] bg-white text-brand-primary-800 flex items-center justify-center shrink-0 font-extrabold text-sm">N</div>
-        <p class="text-[12.5px] text-gray-700 font-semibold leading-snug">
-          {{ t('auth.invite.as') }} <span class="font-extrabold text-gray-800">{{ roleLabel }}</span>
-          {{ t('auth.invite.in') }} <span class="font-extrabold text-gray-800">{{ info?.organizacion }}</span><template v-if="info?.comunidad"> · {{ info.comunidad }}</template>
+      <!-- Banner de invitación: una invitación es novedad, uva -->
+      <div data-tone="grape" class="mb-6 flex items-center gap-3 rounded-control border border-(--tone-tint-edge) bg-(--tone-wash) p-3.5">
+        <UiSymbol size="md" icon="mail" tone="grape" />
+        <p class="text-caption font-semibold leading-snug text-muted">
+          {{ t('auth.invite.as') }} <span class="font-extrabold text-ink">{{ roleLabel }}</span>
+          {{ t('auth.invite.in') }} <span class="font-extrabold text-ink">{{ info?.organizacion }}</span><template v-if="info?.comunidad"> · {{ info.comunidad }}</template>
         </p>
       </div>
 
-      <form class="space-y-[18px]" @submit.prevent="handleSubmit">
+      <form class="space-y-5" @submit.prevent="handleSubmit">
         <div class="grid grid-cols-2 gap-3">
           <UiInput id="nombre" v-model="form.nombre" :label="t('auth.invite.firstName')" placeholder="María" required />
           <UiInput id="apellido" v-model="form.apellido" :label="t('auth.invite.lastName')" placeholder="López" />
@@ -90,11 +86,12 @@
           required
         />
 
-        <p v-if="error" class="text-sm text-red-500">
+        <UiAlert v-if="error" tone="danger">
           {{ error }}
-        </p>
+        </UiAlert>
 
-        <UiButton type="submit" size="lg" class="w-full !mt-6" :loading="submitting">
+        <!-- La única acción principal de la vista: lima -->
+        <UiButton type="submit" size="lg" block class="mt-6" :loading="submitting">
           {{ t('auth.invite.submit') }}
         </UiButton>
       </form>
@@ -120,7 +117,9 @@ const submitting = ref(false)
 
 const form = ref({ nombre: '', apellido: '', email: '', password: '', confirm: '' })
 const emailLocked = computed(() => !!info.value?.email)
-const roleLabel = computed(() => (info.value?.role === 'ADMIN' ? t('auth.invite.roleAdmin') : t('auth.invite.roleCollab')))
+const roleLabel = computed(() => (info.value?.titular
+  ? t('auth.invite.roleTitular')
+  : info.value?.role === 'ADMIN' ? t('auth.invite.roleAdmin') : t('auth.invite.roleCollab')))
 
 onMounted(async () => {
   if (!isSupabaseConfigured()) {
@@ -138,6 +137,9 @@ onMounted(async () => {
 
   info.value = data
   if (data.email) form.value.email = data.email
+  // A quién se invitó: se puede corregir antes de crear la cuenta.
+  form.value.nombre = data.nombre ?? ''
+  form.value.apellido = data.apellido ?? ''
 
   // Si ese correo ya tiene cuenta, este no es el camino: se acepta desde /invitaciones.
   estado.value = data.cuentaExiste ? 'existente' : 'ok'

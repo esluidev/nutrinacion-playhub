@@ -2,148 +2,129 @@
   <div>
     <UiPageHeader :title="greeting" :description="headerDesc">
       <template #actions>
-        <UiButton @click="navigateTo('/dashboard/workshops/new')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+        <UiButton icon="plus" @click="navigateTo('/dashboard/workshops/new')">
           Nuevo Taller
         </UiButton>
       </template>
     </UiPageHeader>
 
-    <!-- Stat Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="card card-hover px-6 py-[22px] flex flex-col gap-3.5"
-      >
-        <div class="flex items-center justify-between">
-          <span class="text-[12.5px] font-bold text-[#7d8d81]">{{ stat.label }}</span>
-          <div :class="['w-[34px] h-[34px] rounded-[10px] flex items-center justify-center', stat.iconBg, stat.iconColor]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="stat.icon" />
-            </svg>
-          </div>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-[34px] font-display font-semibold text-brand-dark leading-none">{{ stat.value }}</span>
-          <span class="text-xs font-semibold text-gray-400">{{ stat.sub }}</span>
+    <!-- Cifras: cada símbolo lleva el tono de lo que mide (programados en cielo; el resto, neutro) -->
+    <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div v-for="stat in stats" :key="stat.label" class="ui-panel ui-stat">
+        <UiSymbol size="md" :icon="stat.icon" :tone="stat.tone" />
+        <div class="min-w-0">
+          <p class="flex items-baseline gap-1.5">
+            <span class="ui-stat-value">{{ stat.value }}</span>
+            <span v-if="stat.sub" class="ui-caption">{{ stat.sub }}</span>
+          </p>
+          <p class="ui-stat-label">{{ stat.label }}</p>
         </div>
       </div>
     </div>
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-[22px] items-start">
+    <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <!-- Left column (2/3) -->
-      <div class="lg:col-span-2 space-y-[22px]">
-        <!-- Proximos Talleres -->
-        <div class="card overflow-hidden">
-          <div class="px-6 py-5 flex items-center justify-between">
-            <h3 class="text-base font-display font-semibold text-brand-dark">Próximos talleres</h3>
-            <a class="inline-flex items-center gap-1 text-[13px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="navigateTo('/dashboard/planner')">
+      <div class="space-y-6 lg:col-span-2">
+        <!-- Próximos talleres: el día y la hora llevan el tono de la sesión (hoy en sol, próxima en cielo) -->
+        <section class="ui-panel overflow-hidden">
+          <header class="ui-panel-header">
+            <h3 class="ui-title">Próximos talleres</h3>
+            <NuxtLink to="/dashboard/planner" class="ui-link text-body" data-tone="sky">
               Abrir planificador
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </a>
-          </div>
+              <UiIcon name="chevron-right" class="size-3.5" />
+            </NuxtLink>
+          </header>
 
-          <div
-            v-for="workshop in programados"
-            :key="workshop.id"
-            class="px-6 py-[15px] flex items-center gap-4 border-t border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-            @click="navigateTo('/dashboard/workshops/' + workshop.id)"
-          >
+          <div class="divide-y divide-line">
             <div
-              :class="[
-                'w-[46px] h-[50px] rounded-[13px] flex flex-col items-center justify-center gap-0.5 shrink-0',
-                isToday(workshop.date) ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600',
-              ]"
+              v-for="workshop in programados"
+              :key="workshop.id"
+              :data-tone="workshop.tone"
+              class="flex cursor-pointer items-center gap-4 px-6 py-4 transition-colors hover:bg-canvas"
+              @click="navigateTo('/dashboard/workshops/' + workshop.id)"
             >
-              <span class="text-[10px] font-extrabold tracking-wide leading-none">{{ dowShort(workshop.date) }}</span>
-              <span class="text-[19px] font-display font-semibold leading-tight">{{ domNum(workshop.date) }}</span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="text-[14.5px] font-bold text-gray-800 truncate">{{ workshop.title }}</p>
-              <p class="text-[12.5px] text-gray-500 truncate mt-0.5">{{ workshop.time }} · {{ workshop.location }}</p>
-            </div>
-            <div class="flex items-center gap-2.5 shrink-0">
-              <div :class="['w-[26px] h-[26px] rounded-full flex items-center justify-center text-[9px] font-extrabold text-white', workshop.avatarBg]">
-                {{ workshop.initials }}
+              <span class="ui-time w-14">
+                <span>{{ dowShort(workshop.date) }}</span>
+                <strong>{{ domNum(workshop.date) }}</strong>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-body font-extrabold text-ink">{{ workshop.title }}</p>
+                <p class="ui-caption mt-0.5 truncate">
+                  <span class="font-extrabold tabular-nums text-(--tone-strong)">{{ workshop.time }}</span> · {{ workshop.location }}
+                </p>
               </div>
-              <span class="text-[12.5px] font-semibold text-gray-600 hidden sm:block">{{ workshop.educator }}</span>
+              <div class="flex shrink-0 items-center gap-2.5">
+                <UiAvatar :name="workshop.educator" :initials="workshop.initials" size="sm" />
+                <span class="hidden text-caption font-semibold text-muted sm:block">{{ workshop.educator }}</span>
+              </div>
             </div>
           </div>
-          <div v-if="!programados.length" class="px-6 py-8 text-center text-sm text-gray-400 border-t border-gray-100">
+          <p v-if="!programados.length" class="ui-caption px-6 py-8 text-center">
             No hay talleres programados
-          </div>
-        </div>
+          </p>
+        </section>
 
-        <!-- Completados Recientemente -->
-        <div class="card overflow-hidden">
-          <div class="px-6 py-5 flex items-center justify-between">
-            <h3 class="text-base font-display font-semibold text-brand-dark">Completados recientemente</h3>
-            <a class="text-[13px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="navigateTo('/dashboard/workshops')">
+        <!-- Completados recientemente: lima, el tono de lo cerrado -->
+        <section class="ui-panel overflow-hidden">
+          <header class="ui-panel-header">
+            <h3 class="ui-title">Completados recientemente</h3>
+            <NuxtLink to="/dashboard/workshops" class="ui-link text-body" data-tone="sky">
               Ver todos
-            </a>
-          </div>
+            </NuxtLink>
+          </header>
 
-          <div
-            v-for="workshop in completados"
-            :key="workshop.id"
-            class="px-6 py-[15px] flex items-center gap-4 border-t border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-            @click="navigateTo('/dashboard/workshops/' + workshop.id)"
-          >
-            <div class="w-[38px] h-[38px] rounded-[12px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
+          <div class="divide-y divide-line">
+            <div
+              v-for="workshop in completados"
+              :key="workshop.id"
+              class="flex cursor-pointer items-center gap-4 px-6 py-4 transition-colors hover:bg-canvas"
+              @click="navigateTo('/dashboard/workshops/' + workshop.id)"
+            >
+              <UiSymbol size="md" icon="check" :tone="workshop.tone" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-body font-extrabold text-ink">{{ workshop.title }}</p>
+                <p class="ui-caption mt-0.5 truncate">{{ workshop.location }}</p>
+              </div>
+              <span class="ui-caption shrink-0 tabular-nums">{{ formatShortDate(workshop.date) }}</span>
             </div>
-            <div class="min-w-0 flex-1">
-              <p class="text-[14.5px] font-bold text-gray-800 truncate">{{ workshop.title }}</p>
-              <p class="text-[12.5px] text-gray-500 truncate mt-0.5">{{ workshop.location }}</p>
-            </div>
-            <span class="text-[12.5px] font-semibold text-gray-500 shrink-0">{{ formatShortDate(workshop.date) }}</span>
           </div>
-          <div v-if="!completados.length" class="px-6 py-8 text-center text-sm text-gray-400 border-t border-gray-100">
+          <p v-if="!completados.length" class="ui-caption px-6 py-8 text-center">
             No hay talleres completados
-          </div>
-        </div>
+          </p>
+        </section>
       </div>
 
       <!-- Right column (1/3) -->
-      <div class="space-y-[22px]">
-        <!-- Acciones Rapidas -->
-        <div class="card p-[22px]">
-          <h3 class="text-base font-display font-semibold text-brand-dark mb-4">Acciones rápidas</h3>
-          <div class="space-y-2">
+      <div class="space-y-6">
+        <!-- Acciones rápidas: cada acceso con el tono de lo que abre, no todos en lima -->
+        <section>
+          <h3 class="ui-title mb-3">Acciones rápidas</h3>
+          <div class="space-y-3">
             <button
               v-for="action in quickActions"
               :key="action.label"
-              class="w-full flex items-center gap-3 p-3.5 rounded-[13px] border border-gray-100 bg-brand-tint hover:border-brand-primary-200 hover:bg-brand-primary-50/60 transition-all text-left"
+              type="button"
+              class="ui-panel ui-panel-interactive flex w-full items-center gap-3 p-4 text-left"
               @click="navigateTo(action.to)"
             >
-              <div :class="['w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0', action.iconBg]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-                  <path stroke-linecap="round" stroke-linejoin="round" :d="action.icon" />
-                </svg>
-              </div>
-              <div class="min-w-0">
-                <p class="text-gray-800 font-bold text-[13.5px] leading-tight">{{ action.label }}</p>
-                <p class="text-[12px] text-gray-500 mt-0.5">{{ action.sub }}</p>
-              </div>
+              <UiSymbol size="md" :icon="action.icon" :tone="action.tone" />
+              <span class="min-w-0 flex-1">
+                <span class="block text-body font-extrabold leading-tight text-ink">{{ action.label }}</span>
+                <span class="ui-caption mt-0.5 block">{{ action.sub }}</span>
+              </span>
+              <UiIcon name="chevron-right" class="size-4 text-subtle" />
             </button>
           </div>
-        </div>
+        </section>
 
         <!-- Equipo -->
-        <div class="card p-[22px]">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-display font-semibold text-brand-dark">Equipo</h3>
-            <a class="text-[13px] font-bold text-brand-primary-700 hover:text-brand-primary-800 cursor-pointer" @click="navigateTo('/dashboard/educators')">
+        <section class="ui-panel p-6">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="ui-title">Equipo</h3>
+            <NuxtLink to="/dashboard/educators" class="ui-link text-body" data-tone="sky">
               Ver todos
-            </a>
+            </NuxtLink>
           </div>
           <div class="space-y-3.5">
             <div
@@ -151,52 +132,54 @@
               :key="edu.id"
               class="flex items-center gap-3"
             >
-              <div :class="['w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] font-extrabold text-white shrink-0', edu.avatarBg]">
-                {{ edu.initials }}
-              </div>
+              <UiAvatar :name="edu.nombre" :initials="edu.initials" />
               <div class="min-w-0">
-                <p class="text-[13.5px] font-bold text-gray-800 truncate">{{ edu.nombre }}</p>
-                <p class="text-[12px] text-gray-500">{{ edu.profesion }}</p>
+                <p class="truncate text-body font-extrabold text-ink">{{ edu.nombre }}</p>
+                <p class="ui-caption">{{ edu.profesion }}</p>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Estado de Talleres -->
-        <div class="card p-[22px]">
-          <h3 class="text-base font-display font-semibold text-brand-dark mb-4">Estado de talleres</h3>
+        <!-- Estado de talleres: los mismos tonos que los estados de sesión -->
+        <section class="ui-panel p-6">
+          <h3 class="ui-title mb-4">Estado de talleres</h3>
 
           <!-- Segmented bar -->
-          <div class="h-[9px] rounded-full flex overflow-hidden gap-0.5 mb-4 bg-gray-100">
+          <div class="mb-4 flex h-2 gap-0.5 overflow-hidden rounded-full bg-sunken">
             <div
               v-for="seg in statusSegments"
               :key="seg.status"
-              :class="['h-full rounded-full', seg.color]"
+              :data-tone="seg.tone"
+              class="h-full rounded-full bg-(--tone-mid)"
               :style="{ width: (seg.percent || 0.5) + '%' }"
             />
           </div>
 
           <!-- Legend -->
-          <div class="space-y-[9px]">
+          <div class="space-y-2">
             <div
               v-for="seg in statusSegments"
               :key="'legend-' + seg.status"
-              class="flex items-center justify-between text-[12.5px]"
+              class="flex items-center justify-between text-caption"
             >
               <div class="flex items-center gap-2">
-                <span :class="['w-2 h-2 rounded-full', seg.color]" />
-                <span class="text-gray-600 font-semibold">{{ seg.label }}</span>
+                <span :data-tone="seg.tone" class="size-2 rounded-full bg-(--tone-mid)" />
+                <span class="font-semibold text-muted">{{ seg.label }}</span>
               </div>
-              <span class="font-extrabold text-gray-800">{{ seg.count }}</span>
+              <span class="font-extrabold tabular-nums text-ink">{{ seg.count }}</span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
+import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
+
 definePageMeta({ layout: 'dashboard' })
 
 const { t } = useT()
@@ -245,12 +228,6 @@ function domNum(dateStr: string): string {
   if (!dateStr) return '—'
   return String(parseDate(dateStr).getDate())
 }
-function isToday(dateStr: string): boolean {
-  if (!dateStr) return false
-  const d = parseDate(dateStr)
-  const hoy = new Date()
-  return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate()
-}
 
 // Computed data
 const programados = computed(() =>
@@ -267,20 +244,34 @@ const completados = computed(() =>
     .slice(0, 2),
 )
 
-const totalWorkshops = computed(() => workshops.value.length)
+// Las cifras cuentan lo que sigue vivo (no lo archivado) en el mes y la semana en curso (lunes a domingo).
+const local = (d: Date) => d.toLocaleDateString('en-CA')
+const mesActual = local(new Date()).slice(0, 7)
+const semana = (() => {
+  const lunes = new Date()
+  lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7))
+  const domingo = new Date(lunes)
+  domingo.setDate(lunes.getDate() + 6)
+  return { desde: local(lunes), hasta: local(domingo) }
+})()
+const vivos = computed(() => workshops.value.filter(w => w.status !== 'archivado'))
+const totalWorkshops = computed(() => vivos.value.length)
+const delMes = computed(() => vivos.value.filter(w => w.date.startsWith(mesActual)).length)
+const programadosSemana = computed(() => vivos.value
+  .filter(w => w.status === 'programado' && w.date >= semana.desde && w.date <= semana.hasta).length)
 
 const teamMembers = computed(() => activeEducators.value.slice(0, 4))
 
 const statusSegments = computed(() => {
-  const statuses = [
-    { status: 'programado', label: 'Programados', color: 'bg-blue-500' },
-    { status: 'completado', label: 'Completados', color: 'bg-brand-primary-500' },
-    { status: 'cancelado', label: 'Cancelados', color: 'bg-red-400' },
-    { status: 'borrador', label: 'Borrador', color: 'bg-gray-300' },
+  const statuses: { status: string, label: string, tone: UiTone }[] = [
+    { status: 'programado', label: 'Programados', tone: 'sky' },
+    { status: 'completado', label: 'Completados', tone: 'lime' },
+    { status: 'cancelado', label: 'Cancelados', tone: 'coral' },
+    { status: 'borrador', label: 'Borrador', tone: 'neutral' },
   ]
   const total = totalWorkshops.value
   return statuses.map(s => {
-    const count = workshops.value.filter(w => w.status === s.status).length
+    const count = vivos.value.filter(w => w.status === s.status).length
     return {
       ...s,
       count,
@@ -289,64 +280,64 @@ const statusSegments = computed(() => {
   })
 })
 
-// Stat cards
-const stats = computed(() => [
+// Cifras: el símbolo lleva el tono de lo que mide. Programados → cielo (lo próximo); el total,
+// los educadores y el catálogo no miden un estado, así que van en neutro.
+interface Stat { label: string, value: number, sub: string, icon: UiIconName, tone: UiTone }
+const stats = computed<Stat[]>(() => [
   {
-    label: 'Total de talleres',
-    value: totalWorkshops.value,
+    label: 'Talleres',
+    value: delMes.value,
     sub: 'este mes',
-    icon: 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
-    iconBg: 'bg-brand-primary-50',
-    iconColor: 'text-brand-primary-700',
+    icon: 'clapperboard',
+    tone: 'neutral',
   },
   {
     label: 'Programados',
-    value: workshops.value.filter(w => w.status === 'programado').length,
+    value: programadosSemana.value,
     sub: 'esta semana',
-    icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
+    icon: 'calendar',
+    tone: 'sky',
   },
   {
     label: 'Educadores activos',
     value: activeEducators.value.length,
     sub: '',
-    icon: 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
-    iconBg: 'bg-brand-secondary-50',
-    iconColor: 'text-brand-secondary-600',
+    icon: 'users',
+    tone: 'neutral',
   },
   {
     label: 'Storyboards',
     value: storyboards.value.length,
     sub: 'disponibles',
-    icon: 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z',
-    iconBg: 'bg-brand-purple-50',
-    iconColor: 'text-brand-purple-600',
+    icon: 'book',
+    tone: 'neutral',
   },
 ])
 
-// Quick actions
-const quickActions = [
+// Accesos rápidos: el tono dice qué abren. Nuevo taller → cielo (crea una sesión programada);
+// agregar educador → uva (le llega una invitación); explorar storyboards → neutro.
+interface QuickAction { label: string, sub: string, to: string, icon: UiIconName, tone: UiTone }
+const quickActions: QuickAction[] = [
   {
     label: 'Nuevo Taller',
     sub: 'Crear y programar',
     to: '/dashboard/workshops/new',
-    iconBg: 'bg-brand-primary',
-    icon: 'M12 4.5v15m7.5-7.5h-15',
+    icon: 'plus',
+    tone: 'sky',
   },
   {
     label: 'Agregar Educador',
     sub: 'Registrar miembro del equipo',
     to: '/dashboard/educators/nuevo',
-    iconBg: 'bg-brand-secondary',
-    icon: 'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z',
+    icon: 'user-plus',
+    tone: 'grape',
   },
   {
     label: 'Explorar Storyboards',
     sub: 'Biblioteca de contenido',
     to: '/dashboard/storyboards',
-    iconBg: 'bg-brand-purple',
-    icon: 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
+    icon: 'book',
+    tone: 'neutral',
   },
 ]
 </script>

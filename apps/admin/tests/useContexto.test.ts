@@ -65,8 +65,8 @@ beforeEach(() => {
   usuario.value = null
 })
 
-function guardar(orgId: number | null, comunidadId: number | null) {
-  almacen.set('nutrinacion.contexto', JSON.stringify({ orgId, comunidadId }))
+function guardar(orgId: number | null, comunidadId: number | null, tipo?: 'platform' | 'organizacion' | 'comunidad') {
+  almacen.set('nutrinacion.contexto', JSON.stringify({ tipo, orgId, comunidadId }))
 }
 
 // ── Tipo derivado de la ruta ─────────────────────────────────────────────────
@@ -115,7 +115,7 @@ describe('rutaInicial', () => {
     expect(useContexto().rutaInicial()).toBe('/sin-acceso')
   })
 
-  it('el admin aterriza SIEMPRE en su organización', () => {
+  it('el admin sin contexto recordado aterriza en su organización', () => {
     usuario.value = hacerUsuario({
       organizaciones: [ORG_A],
       comunidades: [comunidad(10, 'Centro', ORG_A)],
@@ -168,13 +168,66 @@ describe('rutaInicial', () => {
     expect(ctx.comunidadActiva.value?.id).toBe(11)
   })
 
-  it('colaborador con guardado ya inaccesible + varias comunidades → hub', () => {
+  it('colaborador con guardado ya inaccesible + varias comunidades → su primera comunidad', () => {
     usuario.value = hacerUsuario({
       comunidades: [comunidad(10, 'Centro', ORG_A), comunidad(11, 'Norte', ORG_A)],
       colaboraEn: [10, 11],
     })
-    guardar(2, 99)
-    expect(useContexto().rutaInicial()).toBe('/inicio')
+    guardar(2, 99, 'comunidad')
+    const ctx = useContexto()
+    expect(ctx.rutaInicial()).toBe('/dashboard')
+    expect(ctx.comunidadActiva.value?.id).toBe(10)
+  })
+
+  it('manda el selector: el admin que quedó en una comunidad vuelve a ella', () => {
+    usuario.value = hacerUsuario({
+      organizaciones: [ORG_A],
+      comunidades: [comunidad(10, 'Centro', ORG_A), comunidad(11, 'Norte', ORG_A)],
+    })
+    guardar(1, 11, 'comunidad')
+    const ctx = useContexto()
+    expect(ctx.rutaInicial()).toBe('/dashboard')
+    expect(ctx.comunidadActiva.value?.id).toBe(11)
+  })
+
+  it('superadmin sin contexto recordado → platform, aunque vea comunidades', () => {
+    usuario.value = hacerUsuario({
+      superadmin: true,
+      comunidades: [comunidad(10, 'Centro', ORG_A), comunidad(20, 'Sur', ORG_B)],
+    })
+    expect(useContexto().rutaInicial()).toBe('/platform')
+  })
+
+  it('superadmin que quedó en una comunidad vuelve a ella', () => {
+    usuario.value = hacerUsuario({
+      superadmin: true,
+      comunidades: [comunidad(10, 'Centro', ORG_A), comunidad(20, 'Sur', ORG_B)],
+    })
+    guardar(2, 20, 'comunidad')
+    const ctx = useContexto()
+    expect(ctx.rutaInicial()).toBe('/dashboard')
+    expect(ctx.comunidadActiva.value?.id).toBe(20)
+  })
+
+  it('admin que quedó en Platform sin ser superadmin → su organización', () => {
+    usuario.value = hacerUsuario({ organizaciones: [ORG_A] })
+    guardar(1, null, 'platform')
+    expect(useContexto().rutaInicial()).toBe('/organizacion')
+  })
+
+  it('recordarRuta guarda el tipo de la ruta y la elección actual', () => {
+    usuario.value = hacerUsuario({
+      organizaciones: [ORG_A],
+      comunidades: [comunidad(10, 'Centro', ORG_A)],
+    })
+    const ctx = useContexto()
+    ctx.setContexto(1, 10)
+    ctx.recordarRuta('/organizacion/jornadas')
+    expect(JSON.parse(almacen.get('nutrinacion.contexto')!)).toEqual({ tipo: 'organizacion', orgId: 1, comunidadId: 10 })
+    ctx.recordarRuta('/dashboard/perfil')
+    expect(JSON.parse(almacen.get('nutrinacion.contexto')!).tipo).toBe('organizacion')
+    ctx.recordarRuta('/dashboard/workshops')
+    expect(JSON.parse(almacen.get('nutrinacion.contexto')!).tipo).toBe('comunidad')
   })
 
   it('superadmin sin org ni comunidades → platform', () => {

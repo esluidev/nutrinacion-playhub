@@ -1,30 +1,31 @@
 <template>
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('platform.orgs.newTitle')" />
-    <form class="space-y-[18px]" @submit.prevent="handleSave">
-      <div class="card p-6 space-y-4">
-        <h2 class="section-title">{{ t('platform.orgs.dataSection') }}</h2>
-
-        <UiInput id="nombre" v-model="form.nombre" :label="t('platform.orgs.name')" placeholder="Colegio San Jose" required />
-
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('platform.orgs.type') }}</label>
-          <UiSelect v-model="form.tipo_id" :options="tipoOpciones" size="md" :placeholder="t('platform.orgs.typePh')" />
+    <form class="space-y-5" @submit.prevent="handleSave">
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <h2 class="ui-title">{{ t('platform.orgs.dataSection') }}</h2>
         </div>
+        <div class="ui-panel-body space-y-4">
+          <UiInput id="nombre" v-model="form.nombre" :label="t('platform.orgs.name')" placeholder="Colegio San Jose" required />
 
-        <UiInput id="correo" v-model="form.correo" type="email" :label="t('platform.orgs.email')" :placeholder="t('platform.orgs.emailPh')" />
+          <UiSelect v-model="form.tipo_id" :options="tipoOpciones" :label="t('platform.orgs.type')" :placeholder="t('platform.orgs.typePh')" />
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <UiInput id="telefono" v-model="form.telefono" :label="t('platform.orgs.phone')" :placeholder="t('platform.orgs.phonePh')" />
-          <UiInput id="website" v-model="form.website" type="url" :label="t('platform.orgs.website')" :placeholder="t('platform.orgs.websitePh')" />
+          <UiInput id="correo" v-model="form.correo" type="email" :label="t('platform.orgs.email')" :placeholder="t('platform.orgs.emailPh')" />
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <UiInput id="telefono" v-model="form.telefono" :label="t('platform.orgs.phone')" :placeholder="t('platform.orgs.phonePh')" />
+            <UiInput id="website" v-model="form.website" type="url" :label="t('platform.orgs.website')" :placeholder="t('platform.orgs.websitePh')" />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
-      <div class="flex items-center justify-end gap-2 pt-1 pb-2">
-        <UiButton variant="outline" size="sm" type="button" @click="navigateTo('/platform/organizaciones')">{{ t('common.cancel') }}</UiButton>
-        <UiButton size="sm" type="submit" :loading="saving">{{ t('common.create') }}</UiButton>
+      <!-- Una sola acción principal (lima); cancelar, neutro -->
+      <div class="flex items-center justify-end gap-3 pb-2">
+        <UiButton tone="neutral" type="button" @click="navigateTo('/platform/organizaciones')">{{ t('common.cancel') }}</UiButton>
+        <UiButton type="submit" :loading="saving">{{ t('common.create') }}</UiButton>
       </div>
     </form>
   </div>

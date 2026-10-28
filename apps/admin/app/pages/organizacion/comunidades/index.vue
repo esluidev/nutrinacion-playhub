@@ -5,8 +5,7 @@
         <!-- El cupo lo exige la base (trigger 0007); el botón solo se apaga y el motivo
              vive en su tooltip — sin aritmética en pantalla. -->
         <div :title="puedeCrear ? undefined : motivoSinAlta">
-          <UiButton :disabled="!puedeCrear" @click="navigateTo('/organizacion/comunidades/nueva')">
-            <UiIcon name="add" class="w-4 h-4" stroke-width="2.25" />
+          <UiButton icon="plus" :disabled="!puedeCrear" @click="navigateTo('/organizacion/comunidades/nueva')">
             {{ t('coms.new') }}
           </UiButton>
         </div>
@@ -28,51 +27,59 @@
     >
       <template #cell-nombre="{ row }">
         <div class="flex items-center gap-3">
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
+          <!-- La comunidad no significa nada por sí misma: tono estable según su nombre -->
+          <UiSymbol size="md" :tone="uiToneFor(row.nombre)" class="font-black text-(--tone-strong)">
             {{ row.nombre.charAt(0).toUpperCase() }}
-          </div>
+          </UiSymbol>
           <div class="min-w-0">
-            <p class="font-extrabold text-gray-800">{{ row.nombre }}</p>
-            <p v-if="row.descripcion" class="text-[12.5px] text-gray-500 truncate max-w-md">{{ row.descripcion }}</p>
+            <p class="font-extrabold text-ink">{{ row.nombre }}</p>
+            <p v-if="row.descripcion" class="ui-caption max-w-md truncate">{{ row.descripcion }}</p>
           </div>
         </div>
       </template>
       <template #cell-correo="{ row }">
-        <span v-if="row.correo" class="block text-[13px] text-gray-700 font-semibold truncate">{{ row.correo }}</span>
-        <span v-else class="text-gray-300 font-semibold">—</span>
+        <span v-if="row.correo" class="block truncate text-body font-semibold text-muted">{{ row.correo }}</span>
+        <span v-else class="font-semibold text-disabled">—</span>
       </template>
       <template #cell-telefono="{ row }">
-        <span v-if="row.telefono" class="text-[13px] text-gray-700 font-semibold">{{ row.telefono }}</span>
-        <span v-else class="text-gray-300 font-semibold">—</span>
+        <span v-if="row.telefono" class="text-body font-semibold text-muted">{{ row.telefono }}</span>
+        <span v-else class="font-semibold text-disabled">—</span>
       </template>
       <template #cell-pais="{ row }">
-        <span v-if="row.pais" class="text-gray-700 text-[13px] font-semibold">{{ paisLabel(row.pais) }}</span>
-        <span v-else class="text-gray-300 font-semibold">—</span>
+        <span v-if="row.pais" class="text-body font-semibold text-muted">{{ paisLabel(row.pais) }}</span>
+        <span v-else class="font-semibold text-disabled">—</span>
       </template>
       <template #cell-educadores="{ row }">
-        <span class="text-gray-800 font-extrabold">{{ row.educadores?.[0]?.count ?? 0 }}</span>
+        <span class="font-extrabold tabular-nums text-ink">{{ row.educadores?.[0]?.count ?? 0 }}</span>
       </template>
       <template #cell-colaboradores="{ row }">
-        <span class="text-gray-800 font-extrabold">{{ row.colaboradores?.[0]?.count ?? 0 }}</span>
+        <span class="font-extrabold tabular-nums text-ink">{{ row.colaboradores?.[0]?.count ?? 0 }}</span>
       </template>
-      <!-- Entrar no es una acción de tabla: la FILA entera es la puerta (clickable). -->
+      <template #cell-participantes="{ row }">
+        <span class="font-extrabold tabular-nums text-ink">{{ row.participantes?.[0]?.count ?? 0 }}</span>
+      </template>
+      <!-- Entrar no es una acción de tabla: la FILA entera es la puerta (clickable).
+           Acciones de tabla: neutras; el borrado se confirma en coral (UiConfirmDialog). -->
       <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <NuxtLink
-            :to="`/organizacion/comunidades/${row.id}/editar`"
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+        <div class="flex items-center justify-end gap-2">
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="pencil"
+            icon-only
+            :label="t('coms.edit')"
             :title="t('coms.edit')"
-            @click.stop
-          >
-            <UiIcon name="edit" class="w-[15px] h-[15px]" />
-          </NuxtLink>
-          <button
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            @click.stop="navigateTo(`/organizacion/comunidades/${row.id}/editar`)"
+          />
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="trash"
+            icon-only
+            :label="t('common.delete')"
             :title="t('common.delete')"
             @click.stop="pedirEliminar(row)"
-          >
-            <UiIcon name="delete" class="w-[15px] h-[15px]" />
-          </button>
+          />
         </div>
       </template>
     </UiDataTable>
@@ -90,13 +97,14 @@
       @confirm="confirmarEliminar"
     >
       <p>{{ t('coms.deleteWarn', { nombre: borrando?.nombre ?? '' }) }}</p>
-      <ul v-if="resumen && lineasResumen.length" class="mt-3 space-y-1 font-semibold text-gray-700">
+      <ul v-if="resumen && lineasResumen.length" class="mt-3 space-y-1 font-semibold text-muted">
         <li v-for="linea in lineasResumen" :key="linea" class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />{{ linea }}
+          <!-- Lo que se pierde: coral -->
+          <span class="size-1.5 shrink-0 rounded-full bg-(--tone-fill)" data-tone="coral" />{{ linea }}
         </li>
       </ul>
-      <p v-else-if="resumen" class="mt-3 text-gray-400">{{ t('coms.deleteNoData') }}</p>
-      <p v-else class="mt-3 text-gray-400">{{ t('common.loading') }}</p>
+      <p v-else-if="resumen" class="mt-3 text-subtle">{{ t('coms.deleteNoData') }}</p>
+      <p v-else class="mt-3 text-subtle">{{ t('common.loading') }}</p>
     </UiConfirmDialog>
   </div>
 </template>
@@ -122,11 +130,13 @@ const loading = ref(true)
 
 const columns = computed(() => [
   { key: 'nombre', label: t('coms.colName') },
-  { key: 'correo', label: t('coms.colEmail') },
-  { key: 'telefono', label: t('coms.colPhone') },
+  // El contacto cede su sitio a las cifras en pantallas estrechas (se ve al editar la comunidad).
+  { key: 'correo', label: t('coms.colEmail'), headerClass: 'hidden xl:table-cell', cellClass: 'hidden xl:table-cell' },
+  { key: 'telefono', label: t('coms.colPhone'), headerClass: 'hidden xl:table-cell', cellClass: 'hidden xl:table-cell' },
   { key: 'pais', label: t('coms.colCountry') },
   { key: 'educadores', label: t('coms.colEducators'), align: 'center' as const },
   { key: 'colaboradores', label: t('coms.colCollaborators'), align: 'center' as const },
+  { key: 'participantes', label: t('coms.colParticipants'), align: 'center' as const },
   { key: 'acciones', label: t('coms.colActions'), align: 'right' as const },
 ])
 
@@ -164,7 +174,7 @@ const motivoSinAlta = computed(() =>
 // Borrar una comunidad CASCADEA. El modal muestra los conteos reales de lo que se va
 // y exige escribir el nombre; solo entonces se ejecuta.
 const borrando = ref<ComunidadFila | null>(null)
-const resumen = ref<{ educadores: number, grupos: number, talleres: number, colaboradores: number } | null>(null)
+const resumen = ref<{ educadores: number, grupos: number, talleres: number, colaboradores: number, participantes: number } | null>(null)
 const eliminando = ref(false)
 
 const lineasResumen = computed(() => {
@@ -175,6 +185,7 @@ const lineasResumen = computed(() => {
     [r.grupos, tCount(t, 'coms.gruposCount', r.grupos)],
     [r.talleres, tCount(t, 'orgHome.talleresCount', r.talleres)],
     [r.colaboradores, tCount(t, 'coms.colaboradoresCount', r.colaboradores)],
+    [r.participantes, tCount(t, 'coms.participantesCount', r.participantes)],
   ].filter(([n]) => (n as number) > 0).map(([, linea]) => linea as string)
 })
 
@@ -183,7 +194,7 @@ function pedirEliminar(c: ComunidadFila) {
   resumen.value = null
   if (!comus) {
     // Demo: conteos de muestra para ver el modal completo.
-    resumen.value = { educadores: 6, grupos: 2, talleres: 6, colaboradores: 1 }
+    resumen.value = { educadores: 6, grupos: 2, talleres: 6, colaboradores: 1, participantes: 12 }
     return
   }
   comus.resumenBorrado(c.id).then((r) => { resumen.value = r })
@@ -212,8 +223,8 @@ async function confirmarEliminar() {
 
 // Filas demo (dev sin Supabase): dejan ver columnas, acciones y el modal de borrado.
 const DEMO_COMUNIDADES: ComunidadFila[] = [
-  { id: 1, nombre: 'Comunidad Centro', descripcion: 'Centro comunitario', correo: 'centro@nutrinacion.com', telefono: '+52 55 1234 5678', pais: 'MX', organizacion_id: 1, created_at: '', educadores: [{ count: 6 }], colaboradores: [{ count: 2 }] },
-  { id: 2, nombre: 'Comunidad Norte', descripcion: 'Programa escolar', correo: null, telefono: null, pais: null, organizacion_id: 1, created_at: '', educadores: [{ count: 2 }], colaboradores: [{ count: 0 }] },
+  { id: 1, nombre: 'Comunidad Centro', descripcion: 'Centro comunitario', correo: 'centro@nutrinacion.com', telefono: '+52 55 1234 5678', pais: 'MX', organizacion_id: 1, created_at: '', educadores: [{ count: 6 }], colaboradores: [{ count: 2 }], participantes: [{ count: 12 }] },
+  { id: 2, nombre: 'Comunidad Norte', descripcion: 'Programa escolar', correo: null, telefono: null, pais: 'MX', organizacion_id: 1, created_at: '', educadores: [{ count: 2 }], colaboradores: [{ count: 0 }], participantes: [{ count: 0 }] },
 ]
 
 async function cargar() {

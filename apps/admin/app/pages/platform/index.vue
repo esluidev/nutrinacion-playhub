@@ -1,144 +1,135 @@
 <template>
-  <!-- Dashboard del operador: el corazón de la plataforma. Negocio (licencias y su
-       desglose), lo que NECESITA ATENCIÓN (reglas en utils/platformResumen), adopción
-       real (comunidades/educadores/talleres) y el pulso de altas recientes. -->
+  <!-- Dashboard del operador: la administración de las organizaciones. En qué punto está cada
+       una, el parque de licencias, lo que NECESITA ATENCIÓN (reglas en utils/platformResumen), la
+       actividad de las organizaciones y las invitaciones de administrador. La operación de cada
+       organización (comunidades, educadores, talleres) es asunto suyo, no de Platform. -->
   <div>
     <UiPageHeader title="Platform" :description="t('platformHome.desc')" />
 
-    <div v-if="loading" class="card p-10 text-center text-sm text-gray-400">{{ t('common.loading') }}</div>
+    <div v-if="loading" class="ui-panel p-10 text-center text-body font-semibold text-subtle">{{ t('common.loading') }}</div>
 
     <template v-else-if="resumen">
-      <!-- Stat tiles -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
+      <!-- Organizaciones: el total va neutro; operando en lima, en alta en sol, sin licencia en coral -->
+      <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <NuxtLink
           v-for="stat in stats"
           :key="stat.label"
           :to="stat.to"
-          class="card card-hover px-6 py-[22px] flex flex-col gap-3.5"
+          class="ui-panel ui-panel-interactive ui-stat"
         >
-          <div class="flex items-center justify-between">
-            <span class="text-[12.5px] font-bold text-[#7d8d81]">{{ stat.label }}</span>
-            <div :class="['w-[34px] h-[34px] rounded-[10px] flex items-center justify-center', stat.iconBg, stat.iconColor]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="stat.icon" />
-              </svg>
-            </div>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <span class="text-[34px] font-display font-semibold text-brand-dark leading-none">{{ stat.value }}</span>
-            <span v-if="stat.sub" class="text-xs font-semibold text-gray-400">{{ stat.sub }}</span>
+          <UiSymbol size="md" :icon="stat.icon" :tone="stat.tone" />
+          <div class="min-w-0">
+            <p class="ui-stat-value">{{ stat.value }}</p>
+            <p class="ui-stat-label truncate">{{ stat.label }}</p>
+            <p v-if="stat.sub" class="mt-0.5 truncate text-micro font-bold text-subtle">{{ stat.sub }}</p>
           </div>
         </NuxtLink>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-[22px] items-start">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <!-- Columna principal -->
-        <div class="lg:col-span-2 space-y-[22px]">
-          <!-- Parque de licencias -->
-          <div class="card overflow-hidden">
-            <div class="px-6 py-5 flex items-center justify-between">
-              <h3 class="text-base font-display font-semibold text-brand-dark">{{ t('nav.licenses') }}</h3>
-              <NuxtLink to="/platform/licencias" class="inline-flex items-center gap-1 text-[13px] font-bold text-brand-primary-700 hover:text-brand-primary-800">
+        <div class="space-y-6 lg:col-span-2">
+          <!-- Parque de licencias: vigentes en lima, en prueba en cielo, por vencer en sol y vencidas en coral -->
+          <div class="ui-panel overflow-hidden">
+            <div class="ui-panel-header">
+              <h2 class="ui-title">{{ t('nav.licenses') }}</h2>
+              <NuxtLink to="/platform/licencias" class="ui-link text-body" data-tone="sky">
                 {{ t('common.viewAll') }}
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
+                <UiIcon name="chevron-right" class="size-3.5" />
               </NuxtLink>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-gray-100 divide-x divide-gray-100">
-              <div v-for="m in miniLicencias" :key="m.label" class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <span :class="['w-2 h-2 rounded-full shrink-0', m.dot]" />
-                  <span class="text-[22px] font-display font-semibold text-brand-dark leading-none">{{ m.value }}</span>
+            <div class="grid grid-cols-2 sm:grid-cols-4">
+              <div v-for="m in miniLicencias" :key="m.label" class="ui-stat">
+                <UiSymbol size="md" :icon="m.icon" :tone="m.tone" />
+                <div class="min-w-0">
+                  <p class="ui-stat-value">{{ m.value }}</p>
+                  <p class="ui-stat-label">{{ m.label }}</p>
                 </div>
-                <p class="text-[11px] text-gray-500 font-bold uppercase tracking-[0.05em] mt-1.5">{{ m.label }}</p>
               </div>
             </div>
           </div>
 
-          <!-- Necesita atención -->
-          <div class="card overflow-hidden">
-            <div class="px-6 py-5">
-              <h3 class="text-base font-display font-semibold text-brand-dark">
+          <!-- Necesita atención: el símbolo dice qué pasa (coral = falta o venció; sol = pendiente; cielo = información) -->
+          <div class="ui-panel overflow-hidden">
+            <div class="ui-panel-header">
+              <h2 class="ui-title">
                 {{ t('platformHome.atencion') }}
-                <span v-if="resumen.atencion.length" class="text-gray-400 font-bold text-[14px]">· {{ resumen.atencion.length }}</span>
-              </h3>
+                <span v-if="resumen.atencion.length" class="text-body font-bold text-subtle">· {{ resumen.atencion.length }}</span>
+              </h2>
             </div>
-            <p v-if="!resumen.atencion.length" class="px-6 pb-6 text-sm text-gray-400">
+            <p v-if="!resumen.atencion.length" class="px-6 py-5 text-body font-semibold text-subtle">
               {{ t('platformHome.atencionEmpty') }}
             </p>
-            <NuxtLink
-              v-for="(item, i) in resumen.atencion"
-              :key="`${item.tipo}-${item.orgId}`"
-              :to="destinoAtencion(item)"
-              :class="['px-6 py-[13px] flex items-center gap-3.5 hover:bg-gray-50 transition-colors', i > 0 || true ? 'border-t border-gray-100' : '']"
-            >
-              <span :class="['w-2 h-2 rounded-full shrink-0', DOT_ATENCION[item.tipo]]" />
-              <div class="min-w-0 flex-1">
-                <p class="text-[13.5px] font-extrabold text-gray-800 truncate">{{ item.orgNombre }}</p>
-                <p class="text-[12px] text-gray-500 font-semibold mt-px">{{ labelAtencion(item) }}</p>
-              </div>
-              <svg class="w-[14px] h-[14px] text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </NuxtLink>
+            <div v-else class="divide-y divide-line">
+              <NuxtLink
+                v-for="item in resumen.atencion"
+                :key="`${item.tipo}-${item.orgId}`"
+                :to="destinoAtencion(item)"
+                class="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-canvas"
+              >
+                <UiSymbol size="sm" :icon="ATENCION[item.tipo].icon" :tone="ATENCION[item.tipo].tone" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-body font-extrabold text-ink">{{ item.orgNombre }}</p>
+                  <p class="mt-px text-caption font-semibold text-muted">{{ labelAtencion(item) }}</p>
+                </div>
+                <UiIcon name="chevron-right" class="size-3.5 shrink-0 text-disabled" />
+              </NuxtLink>
+            </div>
           </div>
         </div>
 
         <!-- Columna derecha -->
-        <div class="space-y-[22px]">
-          <!-- Actividad reciente -->
-          <div class="card overflow-hidden">
-            <div class="px-6 py-5">
-              <h3 class="text-base font-display font-semibold text-brand-dark">{{ t('platformHome.actividad') }}</h3>
+        <div class="space-y-6">
+          <!-- Actividad de las organizaciones: cada una con su tono estable (según su nombre) -->
+          <div class="ui-panel overflow-hidden">
+            <div class="ui-panel-header">
+              <h2 class="ui-title">{{ t('platformHome.actividad') }}</h2>
             </div>
-            <p v-if="!resumen.actividad.length" class="px-6 pb-6 text-sm text-gray-400">—</p>
-            <NuxtLink
-              v-for="a in resumen.actividad"
-              :key="`${a.tipo}-${a.nombre}-${a.fecha}`"
-              :to="`/platform/organizaciones/${a.orgId}`"
-              class="px-6 py-3 flex items-center gap-3 border-t border-gray-100 hover:bg-gray-50 transition-colors"
-            >
-              <div
-                :class="[
-                  'w-[32px] h-[32px] rounded-[10px] flex items-center justify-center shrink-0',
-                  a.tipo === 'org' ? 'bg-brand-primary-50 text-brand-primary-700' : 'bg-[#eff6ff] text-[#2563eb]',
-                ]"
+            <p v-if="!resumen.actividad.length" class="px-6 py-5 text-body font-semibold text-subtle">—</p>
+            <div v-else class="divide-y divide-line">
+              <NuxtLink
+                v-for="a in resumen.actividad"
+                :key="`${a.tipo}-${a.orgId}-${a.fecha}-${a.persona ?? ''}`"
+                :to="a.licenciaId ? `/platform/licencias/${a.licenciaId}` : `/platform/organizaciones/${a.orgId}`"
+                class="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-canvas"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                  <path stroke-linecap="round" stroke-linejoin="round" :d="a.tipo === 'org' ? IC.org : IC.com" />
-                </svg>
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-[13px] font-extrabold text-gray-800 truncate">{{ a.nombre }}</p>
-                <p class="text-[11.5px] text-gray-500 font-semibold mt-px truncate">
-                  {{ a.tipo === 'org' ? t('platformHome.actividadOrg') : t('platformHome.actividadComunidad', { org: a.orgNombre ?? '' }) }} · {{ fechaCorta(a.fecha) }}
-                </p>
-              </div>
-            </NuxtLink>
+                <UiSymbol size="sm" :icon="ACTIVIDAD_ICONO[a.tipo]" :tone="uiToneFor(a.orgNombre)" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-body font-extrabold text-ink">{{ a.orgNombre }}</p>
+                  <p class="mt-px truncate text-caption font-semibold text-muted">
+                    {{ labelActividad(a) }} · {{ fechaCorta(a.fecha, locale) }}
+                  </p>
+                </div>
+              </NuxtLink>
+            </div>
           </div>
 
-          <!-- Invitaciones ADMIN pendientes -->
-          <div class="card overflow-hidden">
-            <div class="px-6 py-5 flex items-center justify-between">
-              <h3 class="text-base font-display font-semibold text-brand-dark">
+          <!-- Invitaciones ADMIN pendientes: invitación pendiente = uva -->
+          <div class="ui-panel overflow-hidden">
+            <div class="ui-panel-header">
+              <h2 class="ui-title">
                 {{ t('platformHome.pendingInvites') }}
-                <span v-if="resumen.invitacionesPendientes" class="text-gray-400 font-bold text-[14px]">· {{ resumen.invitacionesPendientes }}</span>
-              </h3>
-              <NuxtLink to="/platform/invitaciones" class="text-[13px] font-bold text-brand-primary-700 hover:text-brand-primary-800">
+                <span v-if="resumen.invitacionesPendientes" class="text-body font-bold text-subtle">· {{ resumen.invitacionesPendientes }}</span>
+              </h2>
+              <NuxtLink to="/platform/invitaciones" class="ui-link shrink-0 text-body" data-tone="sky">
                 {{ t('common.viewAll') }}
               </NuxtLink>
             </div>
-            <p v-if="!resumen.invitacionesRecientes.length" class="px-6 pb-6 text-sm text-gray-400">
+            <p v-if="!resumen.invitacionesRecientes.length" class="px-6 py-5 text-body font-semibold text-subtle">
               {{ t('platformHome.invitesEmpty') }}
             </p>
-            <div
-              v-for="inv in resumen.invitacionesRecientes"
-              :key="inv.id"
-              class="px-6 py-3 border-t border-gray-100"
-            >
-              <p class="text-[13px] font-bold text-gray-800 truncate">{{ inv.email ?? t('platform.invs.openLink') }}</p>
-              <p class="text-[11.5px] text-gray-500 font-semibold mt-px truncate">{{ inv.organizaciones?.nombre ?? '—' }} · {{ fechaCorta(inv.created_at) }}</p>
+            <div v-else class="divide-y divide-line">
+              <div
+                v-for="inv in resumen.invitacionesRecientes"
+                :key="inv.id"
+                class="flex items-center gap-3 px-6 py-3"
+              >
+                <UiSymbol size="sm" icon="mail" tone="grape" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('platform.invs.openLink') }}</p>
+                  <p class="mt-px truncate text-caption font-semibold text-muted">{{ inv.organizaciones?.nombre ?? '—' }} · {{ fechaCorta(inv.created_at, locale) }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -148,8 +139,10 @@
 </template>
 
 <script setup lang="ts">
+import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
+import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
 import type { ResumenPlatform } from '~/composables/usePlatform'
-import type { AtencionItem, AtencionTipo } from '~/utils/platformResumen'
+import type { ActividadItem, AtencionItem, AtencionTipo } from '~/utils/platformResumen'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'nav.dashboard' })
 
@@ -161,12 +154,7 @@ const resumen = ref<ResumenPlatform | null>(null)
 const loading = ref(true)
 
 const DEMO_RESUMEN: ResumenPlatform = {
-  organizaciones: 3,
-  orgsConLicenciaVigente: 2,
-  comunidades: 5,
-  educadores: 14,
-  talleres: 12,
-  talleresProgramados: 4,
+  organizaciones: { total: 3, nuevas: 1, operando: 1, enAlta: 1, sinLicencia: 1 },
   licencias: { vigentes: 2, trials: 1, porVencer: 1, vencidas: 1 },
   atencion: [
     { tipo: 'lic_vencida_activa', orgId: 3, orgNombre: 'Colegio Andes', licenciaId: 3 },
@@ -175,75 +163,44 @@ const DEMO_RESUMEN: ResumenPlatform = {
     { tipo: 'cupo_lleno', orgId: 1, orgNombre: 'Nutrinación', licenciaId: 1 },
   ],
   actividad: [
-    { tipo: 'comunidad', nombre: 'Comunidad Norte', orgNombre: 'Nutrinación', orgId: 1, fecha: '2026-07-18T00:00:00Z' },
-    { tipo: 'org', nombre: 'Fundación Crecer', orgId: 2, fecha: '2026-07-01T00:00:00Z' },
-    { tipo: 'comunidad', nombre: 'Comunidad Centro', orgNombre: 'Nutrinación', orgId: 1, fecha: '2026-06-20T00:00:00Z' },
+    { tipo: 'admin', orgNombre: 'Fundación Crecer', orgId: 2, fecha: '2026-07-18T00:00:00Z', persona: 'Ana Pérez' },
+    { tipo: 'renovacion', orgNombre: 'Nutrinación', orgId: 1, fecha: '2026-07-10T00:00:00Z', licenciaId: 1 },
+    { tipo: 'org', orgNombre: 'Fundación Crecer', orgId: 2, fecha: '2026-07-01T00:00:00Z' },
   ],
   invitacionesPendientes: 1,
   invitacionesRecientes: [
-    { id: 1, email: 'ana.perez@fundacioncrecer.org', created_at: '2026-07-14T00:00:00Z', organizaciones: { nombre: 'Fundación Crecer' } },
+    { id: 1, email: 'ana.perez@fundacioncrecer.org', nombre: 'Ana', apellido: 'Pérez', created_at: '2026-07-14T00:00:00Z', organizaciones: { nombre: 'Fundación Crecer' } },
   ],
 }
 
-const IC = {
-  org: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z',
-  com: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21',
-  edu: 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
-  tall: 'M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18',
-}
+// Cifras de las organizaciones: el símbolo lleva el tono de lo que mide (el total, neutro).
+interface StatPlatform { label: string, value: number, sub: string, to: string, icon: UiIconName, tone: UiTone }
+const stats = computed<StatPlatform[]>(() => {
+  const o = resumen.value?.organizaciones
+  return [
+    { label: t('nav.organizations'), value: o?.total ?? 0, sub: t('platformHome.orgsNuevas', { n: o?.nuevas ?? 0 }), to: '/platform/organizaciones', icon: 'building', tone: 'neutral' },
+    { label: t('platformHome.operando'), value: o?.operando ?? 0, sub: t('platformHome.operandoSub'), to: '/platform/organizaciones', icon: 'check-circle', tone: 'lime' },
+    { label: t('platformHome.enAlta'), value: o?.enAlta ?? 0, sub: t('platformHome.enAltaSub'), to: '/platform/organizaciones', icon: 'user-plus', tone: 'sun' },
+    { label: t('platformHome.sinLicencia'), value: o?.sinLicencia ?? 0, sub: t('platformHome.sinLicenciaSub'), to: '/platform/licencias', icon: 'license', tone: 'coral' },
+  ]
+})
 
-const stats = computed(() => [
-  {
-    label: t('nav.organizations'),
-    value: resumen.value?.organizaciones ?? 0,
-    sub: t('platformHome.conLicencia', { n: resumen.value?.orgsConLicenciaVigente ?? 0 }),
-    to: '/platform/organizaciones',
-    icon: IC.org,
-    iconBg: 'bg-brand-primary-50',
-    iconColor: 'text-brand-primary-700',
-  },
-  {
-    label: t('nav.communities'),
-    value: resumen.value?.comunidades ?? 0,
-    sub: '',
-    to: '/platform/organizaciones',
-    icon: IC.com,
-    iconBg: 'bg-[#eff6ff]',
-    iconColor: 'text-[#2563eb]',
-  },
-  {
-    label: t('platform.orgDetail.educators'),
-    value: resumen.value?.educadores ?? 0,
-    sub: '',
-    to: '/platform/organizaciones',
-    icon: IC.edu,
-    iconBg: 'bg-[#edfffe]',
-    iconColor: 'text-[#2E9D95]',
-  },
-  {
-    label: t('nav.workshops'),
-    value: resumen.value?.talleres ?? 0,
-    sub: t('platformHome.programados', { n: resumen.value?.talleresProgramados ?? 0 }),
-    to: '/platform/organizaciones',
-    icon: IC.tall,
-    iconBg: 'bg-brand-purple-50',
-    iconColor: 'text-brand-purple-600',
-  },
+// Licencias: vigente → lima, en prueba → cielo (información), por vencer → sol, vencida → coral.
+const miniLicencias = computed<{ label: string, value: number, icon: UiIconName, tone: UiTone }[]>(() => [
+  { label: t('platformHome.licVigentes'), value: resumen.value?.licencias.vigentes ?? 0, icon: 'check-circle', tone: 'lime' },
+  { label: t('platformHome.licTrials'), value: resumen.value?.licencias.trials ?? 0, icon: 'license', tone: 'sky' },
+  { label: t('platformHome.licPorVencer'), value: resumen.value?.licencias.porVencer ?? 0, icon: 'clock', tone: 'sun' },
+  { label: t('platformHome.licVencidas'), value: resumen.value?.licencias.vencidas ?? 0, icon: 'warning', tone: 'coral' },
 ])
 
-const miniLicencias = computed(() => [
-  { label: t('platformHome.licVigentes'), value: resumen.value?.licencias.vigentes ?? 0, dot: 'bg-brand-primary-500' },
-  { label: t('platformHome.licTrials'), value: resumen.value?.licencias.trials ?? 0, dot: 'bg-blue-500' },
-  { label: t('platformHome.licPorVencer'), value: resumen.value?.licencias.porVencer ?? 0, dot: 'bg-amber-500' },
-  { label: t('platformHome.licVencidas'), value: resumen.value?.licencias.vencidas ?? 0, dot: 'bg-red-500' },
-])
-
-const DOT_ATENCION: Record<AtencionTipo, string> = {
-  lic_vencida_activa: 'bg-red-500',
-  sin_licencia: 'bg-red-400',
-  lic_vence: 'bg-amber-500',
-  sin_admins: 'bg-amber-400',
-  cupo_lleno: 'bg-blue-500',
+// Qué necesita atención, por severidad: lo roto o lo que falta en coral; lo pendiente (vence pronto,
+// onboarding sin administradores) en sol; lo informativo (cupo lleno, oportunidad de venta) en cielo.
+const ATENCION: Record<AtencionTipo, { icon: UiIconName, tone: UiTone }> = {
+  lic_vencida_activa: { icon: 'warning', tone: 'coral' },
+  sin_licencia: { icon: 'license', tone: 'coral' },
+  lic_vence: { icon: 'clock', tone: 'sun' },
+  sin_admins: { icon: 'user-plus', tone: 'sun' },
+  cupo_lleno: { icon: 'chart', tone: 'sky' },
 }
 
 function labelAtencion(item: AtencionItem): string {
@@ -259,6 +216,21 @@ function labelAtencion(item: AtencionItem): string {
   }
 }
 
+const ACTIVIDAD_ICONO: Record<ActividadItem['tipo'], UiIconName> = {
+  org: 'building',
+  licencia: 'license',
+  renovacion: 'retry',
+  admin: 'user-plus',
+}
+function labelActividad(a: ActividadItem): string {
+  switch (a.tipo) {
+    case 'org': return t('platformHome.actividadOrg')
+    case 'licencia': return t('platformHome.actividadLicencia')
+    case 'renovacion': return t('platformHome.actividadRenovacion')
+    case 'admin': return t('platformHome.actividadAdmin', { nombre: a.persona ?? '—' })
+  }
+}
+
 // Lo de licencias aterriza en la licencia; el resto, en el detalle de la org.
 function destinoAtencion(item: AtencionItem): string {
   if ((item.tipo === 'lic_vence' || item.tipo === 'lic_vencida_activa') && item.licenciaId) {
@@ -267,9 +239,6 @@ function destinoAtencion(item: AtencionItem): string {
   return `/platform/organizaciones/${item.orgId}`
 }
 
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 onMounted(async () => {
   resumen.value = platform ? await platform.getResumenPlatform() : DEMO_RESUMEN

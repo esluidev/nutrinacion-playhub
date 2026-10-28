@@ -1,92 +1,98 @@
 <template>
-  <div v-if="sb && escena" class="max-w-3xl mx-auto">
+  <div v-if="sb && escena" class="mx-auto max-w-3xl">
     <UiPageHeader
       :title="`${escena.orden} · ${loc(escena.titulo)}`"
-      :description="`${loc(sb.titulo)} · scenes/${escena.folder}/`"
+      :description="`${loc(sb.titulo)} · scenes/${escena.carpeta}/`"
     >
       <template #actions>
-        <a v-if="urlRunner" :href="urlRunner" target="_blank" rel="noopener" class="btn btn-outline btn-md">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21V3z" /></svg>
+        <!-- Probar es secundario: la acción de esta vista es guardar la guía. -->
+        <UiButton v-if="urlRunner" tone="neutral" icon="play" :href="urlRunner" target="_blank" rel="noopener">
           {{ t('platform.sbs.testScene') }}
-        </a>
+        </UiButton>
       </template>
     </UiPageHeader>
 
-    <div class="card p-6">
-      <div class="flex items-center justify-between gap-3 mb-1">
-        <h3 class="section-title">{{ t('platform.sbs.guideTitle') }}</h3>
+    <UiCard>
+      <div class="mb-1 flex items-center justify-between gap-3">
+        <h3 class="ui-title">{{ t('platform.sbs.guideTitle') }}</h3>
         <!-- Navegación entre escenas sin volver al detalle: la guía se escribe en tandas. -->
-        <div class="flex items-center gap-1.5">
+        <div class="ui-group">
           <NuxtLink
             v-if="escenaAnterior"
             :to="`/platform/storyboards/${sb.id}/escenas/${escenaAnterior.id}`"
-            class="btn btn-ghost btn-sm !px-2"
+            class="ui-group-item"
             :title="loc(escenaAnterior.titulo)"
-          >←</NuxtLink>
-          <span class="text-xs text-gray-400 font-semibold">{{ escena.orden }}/{{ sb.escenas.length }}</span>
+            :aria-label="loc(escenaAnterior.titulo)"
+          >
+            <UiIcon name="chevron-left" />
+          </NuxtLink>
+          <span class="ui-group-label">{{ escena.orden }}/{{ sb.escenas.length }}</span>
           <NuxtLink
             v-if="escenaSiguiente"
             :to="`/platform/storyboards/${sb.id}/escenas/${escenaSiguiente.id}`"
-            class="btn btn-ghost btn-sm !px-2"
+            class="ui-group-item"
             :title="loc(escenaSiguiente.titulo)"
-          >→</NuxtLink>
+            :aria-label="loc(escenaSiguiente.titulo)"
+          >
+            <UiIcon name="chevron-right" />
+          </NuxtLink>
         </div>
       </div>
-      <p class="text-[13px] text-gray-500 mb-4">{{ t('platform.sbs.guideDesc') }}</p>
+      <p class="ui-text mb-4">{{ t('platform.sbs.guideDesc') }}</p>
 
-      <div v-if="idiomas.length > 1" class="flex items-center gap-1.5 mb-5">
-        <button
-          v-for="l in idiomas"
-          :key="l"
-          type="button"
-          :class="['chip', l === idiomaActivo ? 'chip-active' : 'chip-inactive']"
-          @click="idiomaActivo = l"
-        >
-          {{ l.toUpperCase() }}
-        </button>
-      </div>
+      <UiTabs
+        v-if="idiomas.length > 1"
+        v-model="idiomaActivo"
+        :items="pestanasIdioma"
+        :label="t('platform.sbs.fLanguages')"
+        fit
+        class="mb-5"
+      />
 
       <div class="space-y-5">
-        <div v-for="seccion in secciones" :key="seccion.key">
-          <label class="block text-[13px] font-bold text-gray-700 mb-0.5">{{ seccion.label }}</label>
-          <p class="text-xs text-gray-400 mb-1.5">{{ seccion.hint }}</p>
-          <textarea
-            v-model="guia[seccion.key][idiomaActivo]"
-            class="input !h-28 !py-2.5"
-          />
+        <UiTextarea
+          v-for="seccion in secciones"
+          :key="seccion.key"
+          v-model="guia[seccion.key][idiomaActivo]"
+          :label="seccion.label"
+          :hint="seccion.hint"
+        />
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UiButton tone="neutral" @click="navigateTo(`/platform/storyboards/${sb.id}`)">{{ t('common.cancel') }}</UiButton>
+          <UiButton :loading="guardando" @click="guardar">{{ t('common.save') }}</UiButton>
         </div>
-      </div>
-
-      <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
-        <UiButton variant="outline" @click="navigateTo(`/platform/storyboards/${sb.id}`)">{{ t('common.cancel') }}</UiButton>
-        <UiButton :loading="guardando" @click="guardar">{{ t('common.save') }}</UiButton>
-      </div>
-    </div>
+      </template>
+    </UiCard>
   </div>
 
-  <div v-else-if="!cargando" class="card p-12 text-center">
-    <p class="text-gray-500 font-semibold mb-1">{{ t('platform.sbs.sceneNotFound') }}</p>
-    <UiButton variant="outline" size="sm" class="mt-3" @click="navigateTo('/platform/storyboards')">
-      {{ t('platform.orgDetail.back') }}
-    </UiButton>
-  </div>
+  <UiCard v-else-if="!cargando">
+    <UiEmptyState icon="search" :title="t('platform.sbs.sceneNotFound')">
+      <UiButton tone="neutral" size="sm" @click="navigateTo('/platform/storyboards')">
+        {{ t('platform.orgDetail.back') }}
+      </UiButton>
+    </UiEmptyState>
+  </UiCard>
 </template>
 
 <script setup lang="ts">
 import type { EscenaFila, SeccionGuia, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
-import { seccionesGuia } from '~/composables/usePlatformStoryboards'
+import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
+import { carpetaDeCategoria, seccionesGuia } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.guideTitle', descKey: 'platform.sbs.desc' })
 
 const { t, locale } = useT()
 const route = useRoute()
-const { getStoryboard, actualizarGuia, getStudioUrl } = usePlatformStoryboards()
+const { getStoryboard, actualizarGuia, getPlayerUrl } = usePlatformStoryboards()
 const { toast } = useToast()
 
 const sb = ref<StoryboardDetalle | null>(null)
 const cargando = ref(true)
-const studioUrl = ref<string | null>(null)
+const playerUrl = ref<string | null>(null)
 
 function loc(valor: Localized | null | undefined): string {
   if (!valor) return ''
@@ -100,11 +106,10 @@ const escena = computed<EscenaFila | null>(() => {
 
 const idiomas = computed(() => (sb.value?.idiomas?.length ? sb.value.idiomas : ['es']))
 const idiomaActivo = ref('es')
+const pestanasIdioma = computed(() => idiomas.value.map(l => ({ value: l, label: l.toUpperCase() })))
 
-// Las 7 secciones editables, siempre como objeto por idioma (columnas jsonb).
-const guia = reactive<Record<SeccionGuia, Localized>>({
-  descripcion: {}, objetivo: {}, pedagogia: {}, psicologia: {}, cientifico: {}, consejos: {}, mecanica: {},
-})
+// Las 12 secciones de la plantilla de la guía, siempre como objeto por idioma (columnas jsonb).
+const guia = reactive(Object.fromEntries(seccionesGuia.map(s => [s, {}])) as Record<SeccionGuia, Localized>)
 
 // La ruta cambia sin desmontar la página al navegar entre escenas (← →): resembrar siempre.
 watch(escena, (fila) => {
@@ -118,9 +123,9 @@ watch(escena, (fila) => {
 
 onMounted(async () => {
   const id = Number(route.params.id)
-  ;[sb.value, studioUrl.value] = await Promise.all([
+  ;[sb.value, playerUrl.value] = await Promise.all([
     Number.isFinite(id) ? getStoryboard(id) : Promise.resolve(null),
-    getStudioUrl(),
+    getPlayerUrl(),
   ])
   cargando.value = false
   idiomaActivo.value = idiomas.value[0] ?? 'es'
@@ -131,10 +136,12 @@ const escenaAnterior = computed(() => (indice.value > 0 ? sb.value!.escenas[indi
 const escenaSiguiente = computed(() =>
   (indice.value >= 0 && indice.value < (sb.value?.escenas.length ?? 0) - 1 ? sb.value!.escenas[indice.value + 1] : null))
 
+// El runner abre en esta escena por su carpeta (`?escena=`, docs/runner.md).
 const urlRunner = computed(() => {
-  if (!studioUrl.value || !sb.value?.tipo || !escena.value) return null
-  const tipoSlug = sb.value.tipo.codigo.toLowerCase().replace(/_/g, '-')
-  return `${studioUrl.value}/play/${tipoSlug}/${sb.value.slug}?lang=es&start=${escena.value.orden - 1}`
+  if (!playerUrl.value || !sb.value || !escena.value) return null
+  return runnerUrl(playerUrl.value, {
+    eje: carpetaDeCategoria(sb.value.categoria), slug: sb.value.slug, modo: 'educator', idioma: sb.value.idiomas[0], escena: escena.value.carpeta,
+  })
 })
 
 const secciones = computed(() => seccionesGuia.map(key => ({

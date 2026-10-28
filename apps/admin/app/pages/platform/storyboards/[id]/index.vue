@@ -2,128 +2,136 @@
   <div v-if="sb">
     <UiPageHeader :title="loc(sb.titulo)" :description="sb.slug">
       <template #actions>
-        <!-- El runner vive en Studio: el link se arma con configuracion.studio_url. Sin esa
+        <!-- El runner vive en Player: el enlace se arma con la URL de Player de `configuracion`. Sin esa
              clave (o en demo) el botón no aparece — un "Probar" que no abre nada es peor. -->
-        <a v-if="urlRunner" :href="urlRunner" target="_blank" rel="noopener" class="btn btn-outline btn-md">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21V3z" /></svg>
+        <UiButton v-if="urlRunner" tone="neutral" icon="play" :href="urlRunner" target="_blank" rel="noopener">
           {{ t('platform.sbs.test') }}
-        </a>
-        <UiButton @click="navigateTo(`/platform/storyboards/${sb.id}/editar`)">
-          <UiIcon name="edit" class="w-4 h-4" />
-          {{ t('common.edit') }}
         </UiButton>
+        <!-- Editar es la acción de la consola: la única en lima. -->
+        <UiButton icon="pencil" :to="`/platform/storyboards/${sb.id}/editar`">{{ t('common.edit') }}</UiButton>
       </template>
     </UiPageHeader>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Lo editorial (solo lectura acá; se cambia en Editar) -->
-      <div class="card p-6 lg:col-span-2">
-        <div class="flex items-center gap-2 mb-4">
-          <h3 class="section-title">{{ t('platform.sbs.information') }}</h3>
-          <UiBadge :variant="estadoVariant(sb.estado)" dot>{{ t('sbState.' + sb.estado) }}</UiBadge>
-          <UiBadge v-if="sb.organizaciones" variant="purple">{{ sb.organizaciones.nombre }}</UiBadge>
-          <UiBadge v-else variant="gray">{{ t('platform.sbs.standard') }}</UiBadge>
+      <div class="ui-panel p-6 lg:col-span-2">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <h3 class="ui-title">{{ t('platform.sbs.information') }}</h3>
+          <UiBadge :tone="uiPublicationTone(sb.estado_publicacion)" dot>{{ t('sbState.' + sb.estado_publicacion) }}</UiBadge>
+          <UiBadge v-if="sb.organizaciones" :tone="uiToneFor(sb.organizaciones.nombre)">{{ sb.organizaciones.nombre }}</UiBadge>
+          <UiBadge v-else tone="neutral">{{ t('platform.sbs.standard') }}</UiBadge>
         </div>
         <div class="space-y-5">
           <div v-for="campo in camposEditoriales" :key="campo.label">
-            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ campo.label }}</p>
-            <p :class="['text-sm leading-relaxed', campo.valor ? 'text-gray-600' : 'text-gray-300']">
+            <p class="eyebrow mb-1.5">{{ campo.label }}</p>
+            <p :class="['ui-text', !campo.valor && 'text-disabled']">
               {{ campo.valor || t('platform.sbs.emptyField') }}
             </p>
           </div>
           <div class="flex flex-wrap gap-x-8 gap-y-2 pt-1">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">{{ t('platform.sbs.fDuration') }}</p>
-              <p class="text-sm font-bold text-gray-800">{{ sb.duracion_min ? `${sb.duracion_min} min` : '—' }}</p>
+              <p class="eyebrow mb-1">{{ t('platform.sbs.fDuration') }}</p>
+              <p class="text-body font-extrabold text-ink">{{ sb.duracion_min ? `${sb.duracion_min} min` : '—' }}</p>
             </div>
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">{{ t('platform.sbs.fCountries') }}</p>
-              <p class="text-sm font-bold text-gray-800">{{ sb.paises?.length ? sb.paises.join(', ') : t('platform.orgDetail.global') }}</p>
+              <p class="eyebrow mb-1">{{ t('platform.sbs.fCountries') }}</p>
+              <p class="text-body font-extrabold text-ink">{{ sb.paises_disponibles.length ? sb.paises_disponibles.join(', ') : t('platform.sbs.noCountries') }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Lo build-owned: se resincroniza repegando la metadata en Editar -->
-      <div class="card p-0">
-        <div class="px-5 pt-5 pb-3">
-          <h3 class="section-title">{{ t('platform.sbs.fromBuildShort') }}</h3>
-          <p class="text-xs text-gray-400 mt-0.5">{{ t('platform.sbs.fromBuildDesc') }}</p>
+      <div class="ui-panel">
+        <div class="px-5 pb-3 pt-5">
+          <h3 class="ui-title">{{ t('platform.sbs.fromBuildShort') }}</h3>
+          <p class="ui-caption mt-0.5">{{ t('platform.sbs.fromBuildDesc') }}</p>
         </div>
-        <dl class="px-5 pb-3 divide-y divide-gray-100">
+        <dl class="divide-y divide-line px-5 pb-3">
           <div v-for="d in datosDelBuild" :key="d.label" class="flex items-baseline justify-between gap-2 py-2.5">
-            <dt class="text-xs text-gray-400 shrink-0">{{ d.label }}</dt>
-            <dd class="text-[13px] font-bold text-gray-800 font-mono truncate" :title="d.valor">{{ d.valor }}</dd>
+            <dt class="ui-caption shrink-0">{{ d.label }}</dt>
+            <dd class="truncate font-mono text-body font-extrabold text-ink" :title="d.valor">{{ d.valor }}</dd>
           </div>
         </dl>
       </div>
     </div>
 
-    <!-- Escenas: la guía pedagógica se escribe por escena -->
-    <UiDataTable
-      :columns="columnasEscenas"
-      :rows="sb.escenas"
-      :row-key="(e) => e.id"
-      :empty-text="t('platform.sbs.noScenes')"
-      clickable
-      @row-click="(e) => navigateTo(`/platform/storyboards/${sb!.id}/escenas/${e.id}`)"
-    >
-      <template #cell-orden="{ row }">
-        <span class="text-xs font-display font-semibold text-gray-400">{{ row.orden }}</span>
-      </template>
-      <template #cell-escena="{ row }">
-        <p class="font-extrabold text-gray-800">{{ loc(row.titulo) }}</p>
-        <p class="text-[12.5px] text-gray-400 font-mono">scenes/{{ row.folder }}/</p>
-      </template>
-      <template #cell-guia="{ row }">
-        <span class="inline-flex items-center gap-2">
-          <span :class="['w-2 h-2 rounded-full shrink-0', dotGuia(row)]" />
-          <span class="text-[13px] text-gray-500 font-semibold">{{ t('platform.sbs.guideProgress', { n: avanceGuia(row) }) }}</span>
-        </span>
-      </template>
-      <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1.5">
-          <NuxtLink :to="`/platform/storyboards/${sb!.id}/escenas/${row.id}`" class="btn btn-outline btn-sm" @click.stop>
-            {{ t('platform.sbs.editGuide') }}
-          </NuxtLink>
-          <a
-            v-if="urlRunner"
-            :href="`${urlRunner}&start=${row.orden - 1}`"
-            target="_blank"
-            rel="noopener"
-            class="btn btn-ghost btn-sm !px-2"
-            :title="t('platform.sbs.testScene')"
-            @click.stop
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21V3z" /></svg>
-          </a>
-        </div>
-      </template>
-    </UiDataTable>
+    <!-- Escenas: la guía pedagógica se escribe por escena. Toda la fila abre la guía; probar
+         una escena es secundario (neutro), como el «Probar» del encabezado. -->
+    <section class="ui-panel overflow-hidden">
+      <div class="ui-panel-header">
+        <h3 class="ui-title">{{ t('platform.sbs.fScenes') }}</h3>
+      </div>
+      <p v-if="!sb.escenas.length" class="ui-text px-6 py-14 text-center">{{ t('platform.sbs.noScenes') }}</p>
+      <ol v-else class="divide-y divide-line">
+        <li
+          v-for="escena in sb.escenas"
+          :key="escena.id"
+          class="flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3.5 transition-colors hover:bg-canvas"
+          @click="navigateTo(`/platform/storyboards/${sb!.id}/escenas/${escena.id}`)"
+        >
+          <!-- El número lleva el tono del área del storyboard, como su portada en el catálogo. -->
+          <span class="ui-symbol ui-symbol-sm" v-bind="tinte" aria-hidden="true">{{ escena.orden }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-extrabold text-ink">{{ loc(escena.titulo) }}</p>
+            <p class="truncate font-mono text-caption text-muted">scenes/{{ escena.carpeta }}/</p>
+          </div>
+          <UiBadge :tone="tonoGuia(escena)" dot class="shrink-0" :title="t('platform.sbs.colGuide')">
+            {{ t('platform.sbs.guideProgress', { n: avanceGuia(escena) }) }}
+          </UiBadge>
+          <div class="flex shrink-0 items-center gap-1.5">
+            <UiButton
+              tone="neutral"
+              size="sm"
+              icon="pencil"
+              :to="`/platform/storyboards/${sb!.id}/escenas/${escena.id}`"
+              @click.stop
+            >
+              {{ t('platform.sbs.editGuide') }}
+            </UiButton>
+            <UiButton
+              v-if="urlRunner"
+              tone="neutral"
+              size="sm"
+              icon="play"
+              icon-only
+              :label="t('platform.sbs.testScene')"
+              :title="t('platform.sbs.testScene')"
+              :href="urlEscena(escena.carpeta) ?? undefined"
+              target="_blank"
+              rel="noopener"
+              @click.stop
+            />
+          </div>
+        </li>
+      </ol>
+    </section>
   </div>
 
-  <div v-else-if="!cargando" class="card p-12 text-center">
-    <p class="text-gray-500 font-semibold mb-1">{{ t('platform.sbs.notFound') }}</p>
-    <UiButton variant="outline" size="sm" class="mt-3" @click="navigateTo('/platform/storyboards')">
-      {{ t('platform.orgDetail.back') }}
-    </UiButton>
-  </div>
+  <UiCard v-else-if="!cargando">
+    <UiEmptyState icon="search" :title="t('platform.sbs.notFound')">
+      <UiButton tone="neutral" size="sm" @click="navigateTo('/platform/storyboards')">
+        {{ t('platform.orgDetail.back') }}
+      </UiButton>
+    </UiEmptyState>
+  </UiCard>
 </template>
 
 <script setup lang="ts">
 import type { EscenaFila, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
-import { seccionesGuia } from '~/composables/usePlatformStoryboards'
+import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
+import { carpetaDeCategoria, seccionesGuia } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.title', descKey: 'platform.sbs.desc' })
 
 const { t, locale } = useT()
 const route = useRoute()
-const { getStoryboard, getStudioUrl } = usePlatformStoryboards()
+const { getStoryboard, getPlayerUrl } = usePlatformStoryboards()
 
 const sb = ref<StoryboardDetalle | null>(null)
 const cargando = ref(true)
-const studioUrl = ref<string | null>(null)
+const playerUrl = ref<string | null>(null)
 
 function loc(valor: Localized | null | undefined): string {
   if (!valor) return ''
@@ -132,27 +140,30 @@ function loc(valor: Localized | null | undefined): string {
 
 onMounted(async () => {
   const id = Number(route.params.id)
-  ;[sb.value, studioUrl.value] = await Promise.all([
+  ;[sb.value, playerUrl.value] = await Promise.all([
     Number.isFinite(id) ? getStoryboard(id) : Promise.resolve(null),
-    getStudioUrl(),
+    getPlayerUrl(),
   ])
   cargando.value = false
 })
 
-// /play/<tipo-slug>/<slug>?lang=es — el tipo viaja como código (ACTIVIDAD_FISICA) y la ruta
-// del runner usa minúscula-guion.
-const urlRunner = computed(() => {
-  if (!studioUrl.value || !sb.value?.tipo) return null
-  const tipoSlug = sb.value.tipo.codigo.toLowerCase().replace(/_/g, '-')
-  return `${studioUrl.value}/play/${tipoSlug}/${sb.value.slug}?lang=es`
-})
+// El runner de Player en modo educador, con la carpeta de la categoría (docs/runner.md).
+const urlRunner = computed(() => urlEscena())
+function urlEscena(escena?: string): string | null {
+  if (!playerUrl.value || !sb.value) return null
+  return runnerUrl(playerUrl.value, {
+    eje: carpetaDeCategoria(sb.value.categoria), slug: sb.value.slug, modo: 'educator', idioma: sb.value.idiomas[0], escena,
+  })
+}
 
 const camposEditoriales = computed(() => {
   if (!sb.value) return []
   return [
-    { label: t('platform.sbs.fDescription'), valor: loc(sb.value.descripcion) },
-    { label: t('platform.sbs.fObjective'), valor: loc(sb.value.objetivo) },
-    { label: t('platform.sbs.fBibliography'), valor: loc(sb.value.bibliografia) },
+    { label: t('platform.sbs.fDescription'), valor: loc(sb.value.guia?.descripcion) },
+    { label: t('platform.sbs.fObjective'), valor: loc(sb.value.guia?.objetivo) },
+    { label: t('platform.sbs.fPublic'), valor: loc(sb.value.guia?.publico) },
+    ...(sb.value.organizacion_id ? [{ label: t('platform.sbs.fAdaptedTo'), valor: loc(sb.value.guia?.adaptado_a) }] : []),
+    { label: t('platform.sbs.fGuideVersion'), valor: sb.value.guia?.version ?? '' },
   ]
 })
 
@@ -164,41 +175,33 @@ function nombreIdioma(codigo: string): string {
 const datosDelBuild = computed(() => {
   if (!sb.value) return []
   return [
-    { label: t('platform.sbs.colType'), valor: sb.value.tipo?.codigo ?? '—' },
-    { label: t('platform.sbs.fCategory'), valor: sb.value.categoria?.codigo ?? '—' },
-    { label: t('platform.sbs.fAudience'), valor: sb.value.audiencia?.codigo ?? '—' },
+    { label: t('platform.sbs.colType'), valor: t('catalogo.categoria.' + sb.value.categoria) },
+    { label: t('platform.sbs.fCategory'), valor: sb.value.subcategoria ? t('catalogo.subcategoria.' + sb.value.subcategoria) : '—' },
+    { label: t('platform.sbs.fAudience'), valor: t('catalogo.edicion.' + sb.value.edicion) },
+    { label: t('platform.sbs.fHealthFocus'), valor: sb.value.enfoques_salud.map(e => t('catalogo.enfoque.' + e)).join(' · ') || '—' },
     { label: t('platform.sbs.fScenes'), valor: String(sb.value.numero_escenas) },
     { label: t('platform.sbs.fLanguages'), valor: (sb.value.idiomas ?? []).map(nombreIdioma).join(' · ') },
+    { label: t('platform.sbs.fBuildVersion'), valor: sb.value.version_build ?? '—' },
     { label: t('platform.sbs.fKey'), valor: sb.value.clave },
   ]
 })
 
-const columnasEscenas = computed(() => [
-  { key: 'orden', label: '#' },
-  { key: 'escena', label: t('platform.sbs.colScene') },
-  { key: 'guia', label: t('platform.sbs.colGuide') },
-  { key: 'acciones', label: '', align: 'right' as const },
-])
+// El área educativa del storyboard (ALIMENTACION → alimentacion): `data-area` la tiñe; sin área, neutro.
+const tinte = computed<Record<string, string>>(() => uiAreaAttrs(uiAreaOf(sb.value?.categoria)))
 
-// Avance de la guía en ESPAÑOL (el idioma base del contenido): secciones con texto de las 7.
+// Avance de la guía en ESPAÑOL (el idioma base del contenido): secciones con texto de las 12.
 function avanceGuia(escena: EscenaFila): number {
   return seccionesGuia.filter(s => !!escena[s]?.es?.trim()).length
 }
 
-// `mecanica` se llena cuando el juego está listo: la guía se considera completa con las
-// otras 6 (misma regla que usaba Studio).
-function dotGuia(escena: EscenaFila): string {
-  const sinMecanica = seccionesGuia.filter(s => s !== 'mecanica' && !!escena[s]?.es?.trim()).length
-  if (sinMecanica >= 6) return 'bg-brand-primary-500'
-  return avanceGuia(escena) > 0 ? 'bg-amber-400' : 'bg-gray-200'
+// Mecánica y material se completan cuando el juego está implementado (plantilla de la guía):
+// la guía está completa con las otras 10. Completa en lima, empezada en sol (pendiente), sin
+// empezar en neutro.
+const SECCIONES_DEL_JUEGO = ['mecanica', 'material']
+function tonoGuia(escena: EscenaFila) {
+  const escritas = seccionesGuia.filter(s => !SECCIONES_DEL_JUEGO.includes(s) && !!escena[s]?.es?.trim()).length
+  if (escritas >= seccionesGuia.length - SECCIONES_DEL_JUEGO.length) return 'lime' as const
+  return avanceGuia(escena) > 0 ? 'sun' as const : 'neutral' as const
 }
 
-function estadoVariant(estado: string) {
-  switch (estado) {
-    case 'PUBLICADO': return 'green' as const
-    case 'EN_REVISION': return 'amber' as const
-    case 'ARCHIVADO': return 'coral' as const
-    default: return 'gray' as const
-  }
-}
 </script>

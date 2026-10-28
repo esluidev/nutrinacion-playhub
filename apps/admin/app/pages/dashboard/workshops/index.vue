@@ -2,108 +2,91 @@
   <div>
     <UiPageHeader title="Talleres" description="Todos los talleres de tu comunidad">
       <template #actions>
-        <UiButton @click="navigateTo('/dashboard/workshops/new')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+        <UiButton icon="plus" @click="navigateTo('/dashboard/workshops/new')">
           Nuevo Taller
         </UiButton>
       </template>
     </UiPageHeader>
 
     <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-3.5 mb-[22px] flex-wrap">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <UiChips v-model="activeTab" :items="statusTabs" />
-      <UiSearchInput v-model="searchQuery" placeholder="Buscar taller…" max-width="xs" class="!w-[240px]" />
+      <UiSearchInput v-model="searchQuery" placeholder="Buscar taller…" max-width="xs" />
     </div>
 
-    <!-- Workshop Card Grid -->
+    <!-- Tarjetas: cada una lleva el tono de su sesión (hoy en sol, próxima en cielo, completada en lima…) -->
     <div
       v-if="paginatedWorkshops.length > 0"
-      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[22px]"
+      class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
     >
-      <div
+      <article
         v-for="workshop in paginatedWorkshops"
         :key="workshop.id"
-        class="card card-interactive overflow-hidden"
+        :data-tone="workshop.tone"
+        class="ui-panel ui-panel-interactive relative flex flex-col overflow-hidden"
         @click="goToWorkshop(workshop.id)"
       >
-        <div class="p-[22px] pb-[18px]">
-          <div class="flex items-center justify-between gap-2.5 mb-3.5">
-            <span :class="['w-2.5 h-2.5 rounded-[4px]', workshop.accentColor]" />
-            <UiBadge :variant="statusVariant(workshop.status)" dot>{{ workshop.statusLabel }}</UiBadge>
-          </div>
-          <h3 class="text-base font-display font-semibold text-brand-dark leading-tight">{{ workshop.title }}</h3>
-          <p class="text-[12.5px] text-gray-500 mt-0.5 mb-[18px]">{{ workshop.storyboard }}</p>
-          <div class="flex flex-col gap-[9px]">
-            <div class="flex items-center gap-2.5 text-[13px] font-semibold text-gray-600">
-              <svg class="w-[15px] h-[15px] text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-              </svg>
-              {{ formatShortDate(workshop.date) }} · {{ workshop.time || '—' }}
+        <span class="absolute inset-y-0 left-0 w-1 bg-(--tone-fill)" aria-hidden="true" />
+        <div class="ui-panel-body flex-1">
+          <UiBadge :tone="workshop.tone" dot class="mb-3">{{ workshop.statusLabel }}</UiBadge>
+          <h3 class="text-subtitle font-black leading-tight text-ink">{{ workshop.title }}</h3>
+          <p class="ui-caption mb-4 mt-0.5">{{ workshop.storyboard }}</p>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2.5 text-body font-semibold text-muted">
+              <UiIcon name="calendar" class="size-4 shrink-0 text-subtle" />
+              <span>
+                {{ formatShortDate(workshop.date) }} ·
+                <span class="font-extrabold tabular-nums text-(--tone-strong)">{{ workshop.time || '—' }}</span>
+              </span>
             </div>
-            <div class="flex items-center gap-2.5 text-[13px] font-semibold text-gray-600">
-              <svg class="w-[15px] h-[15px] text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
+            <div class="flex items-center gap-2.5 text-body font-semibold text-muted">
+              <UiIcon name="map-pin" class="size-4 shrink-0 text-subtle" />
               <span class="truncate">{{ workshop.location }}</span>
             </div>
           </div>
         </div>
-        <div class="px-[22px] py-3.5 border-t border-gray-100 flex items-center justify-between bg-brand-tint">
-          <div class="flex items-center gap-2.5">
-            <div :class="['w-[26px] h-[26px] rounded-full flex items-center justify-center text-[9px] font-extrabold text-white shrink-0', workshop.avatarBg]">
-              {{ workshop.initials }}
-            </div>
-            <span class="text-[12.5px] font-bold text-gray-600">{{ workshop.educator }}</span>
+        <div class="ui-panel-footer flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2.5">
+            <UiAvatar :name="workshop.educator" :initials="workshop.initials" size="sm" />
+            <span class="truncate text-caption font-bold text-muted">{{ workshop.educator }}</span>
           </div>
-          <span v-if="workshop.capacity" class="text-[12px] font-semibold text-gray-500">{{ workshop.capacity }} participantes</span>
+          <span v-if="workshop.capacity" class="ui-caption shrink-0">{{ workshop.capacity }} participantes</span>
         </div>
-      </div>
+      </article>
     </div>
 
     <!-- Empty State -->
-    <div
-      v-else
-      class="card p-16 flex flex-col items-center justify-center text-center"
-    >
-      <div class="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center mb-5">
-        <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
-      </div>
-      <h3 class="font-display font-semibold text-brand-dark text-lg mb-2">Sin resultados</h3>
-      <p class="text-sm text-gray-400 max-w-sm leading-relaxed">
-        No se encontraron talleres con los filtros aplicados.
-      </p>
-      <UiButton variant="outline" size="sm" class="mt-5" @click="resetFilters">
-        Limpiar filtros
-      </UiButton>
+    <div v-else class="ui-panel">
+      <UiEmptyState
+        icon="search"
+        title="Sin resultados"
+        text="No se encontraron talleres con los filtros aplicados."
+      >
+        <UiButton variant="outline" size="sm" @click="resetFilters">
+          Limpiar filtros
+        </UiButton>
+      </UiEmptyState>
     </div>
 
     <!-- Pagination -->
-    <div v-if="paginatedWorkshops.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-7">
-      <p class="text-xs text-gray-400">
-        Página <span class="font-bold text-gray-800">{{ currentPage }}</span> de <span class="font-bold text-gray-800">{{ totalPages }}</span>
+    <div v-if="paginatedWorkshops.length > 0" class="mt-7 flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <p class="ui-caption">
+        Página <span class="font-extrabold text-ink">{{ currentPage }}</span> de <span class="font-extrabold text-ink">{{ totalPages }}</span>
       </p>
-      <div class="flex items-center gap-1.5">
-        <UiButton variant="outline" size="sm" :disabled="currentPage === 1" @click="currentPage--">Anterior</UiButton>
+      <nav class="ui-pagination">
+        <button type="button" class="ui-page px-3" :disabled="currentPage === 1" @click="currentPage--">Anterior</button>
         <button
           v-for="page in visiblePages"
           :key="page"
-          :class="[
-            'w-8 h-8 rounded-[9px] text-xs font-bold flex items-center justify-center transition-colors',
-            page === currentPage
-              ? 'bg-brand-dark text-white'
-              : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
-          ]"
+          type="button"
+          class="ui-page"
+          :aria-current="page === currentPage ? 'page' : undefined"
           @click="currentPage = page"
         >
           {{ page }}
         </button>
-        <UiButton variant="outline" size="sm" :disabled="currentPage === totalPages" @click="currentPage++">Siguiente</UiButton>
-      </div>
+        <button type="button" class="ui-page px-3" :disabled="currentPage === totalPages" @click="currentPage++">Siguiente</button>
+      </nav>
     </div>
   </div>
 </template>
@@ -111,7 +94,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard' })
 
-const { workshops, statusVariant } = useWorkshops()
+const { workshops } = useWorkshops()
 
 const searchQuery = ref('')
 const activeTab = ref('todos')
@@ -124,13 +107,19 @@ function resetFilters() {
   currentPage.value = 1
 }
 
+// «Todos» deja fuera los archivados (descartados): tienen su propia pestaña. Las que no tienen
+// talleres no se muestran, salvo «Todos».
+const cuenta = (status: string) => workshops.value.filter(w => w.status === status).length
 const statusTabs = computed(() => [
-  { label: 'Todos', value: 'todos', count: workshops.value.length },
-  { label: 'Programados', value: 'programado', count: workshops.value.filter(w => w.status === 'programado').length },
-  { label: 'Completados', value: 'completado', count: workshops.value.filter(w => w.status === 'completado').length },
-  { label: 'Cancelados', value: 'cancelado', count: workshops.value.filter(w => w.status === 'cancelado').length },
-  { label: 'Borrador', value: 'borrador', count: workshops.value.filter(w => w.status === 'borrador').length },
-])
+  { label: 'Todos', value: 'todos', count: workshops.value.filter(w => w.status !== 'archivado').length },
+  { label: 'Programados', value: 'programado', count: cuenta('programado') },
+  { label: 'Realizados', value: 'completado', count: cuenta('completado') },
+  { label: 'Sin realizar', value: 'sin_realizar', count: cuenta('sin_realizar') },
+  { label: 'En revisión', value: 'revision', count: cuenta('revision') },
+  { label: 'Borrador', value: 'borrador', count: cuenta('borrador') },
+  { label: 'Cancelados', value: 'cancelado', count: cuenta('cancelado') },
+  { label: 'Archivados', value: 'archivado', count: cuenta('archivado') },
+].filter(t => t.value === 'todos' || t.count > 0))
 
 function goToWorkshop(id: number) {
   navigateTo('/dashboard/workshops/' + id)
@@ -149,9 +138,9 @@ function formatShortDate(dateStr: string): string {
 const filteredWorkshops = computed(() => {
   let result = [...workshops.value]
 
-  if (activeTab.value !== 'todos') {
-    result = result.filter(w => w.status === activeTab.value)
-  }
+  result = activeTab.value === 'todos'
+    ? result.filter(w => w.status !== 'archivado')
+    : result.filter(w => w.status === activeTab.value)
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()

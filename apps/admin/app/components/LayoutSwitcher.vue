@@ -3,71 +3,60 @@
        El panel es además el "hub": de un vistazo se ve a qué tienes acceso y con qué rol.
        REGLAS: el switcher SOLO elige contexto — ninguna acción (crear/editar) vive aquí.
        El trigger refleja el TIPO actual (lo dicta la ruta, vía useContexto). Con un solo
-       destino no hay nada que elegir: queda como etiqueta estática (sin chevron ni panel). -->
+       destino no hay nada que elegir: queda como etiqueta estática (sin chevron ni panel).
+       COLOR: el contexto activo es estructura (hundido y en tinta), nunca lima. Cada org y
+       comunidad lleva un tono estable que sale de su nombre (uiToneFor); Platform, noche. -->
   <RekaPopoverRoot v-model:open="abierto">
     <RekaPopoverTrigger as-child>
+      <!-- ui-picker del kit; con un solo destino queda deshabilitado y se ve como etiqueta plana -->
       <button
+        type="button"
         :disabled="esEstatico"
-        :class="[
-          'w-full flex items-center rounded-[13px] bg-brand-bg text-left transition-colors',
-          esEstatico ? 'cursor-default' : 'hover:bg-[#e9ebee]',
-          isCollapsed ? 'lg:justify-center lg:gap-0 lg:px-0 lg:py-2 gap-[11px] px-3 py-[11px]' : 'gap-[11px] px-3 py-[11px]',
-        ]"
+        :class="['ui-picker', isCollapsed && 'lg:justify-center lg:px-0']"
         :title="esEstatico ? undefined : t('ctx.switch')"
       >
-        <!-- El morado de Platform vive SOLO aquí: es la pista de que estás en otro módulo -->
-        <div
-          class="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 font-extrabold text-sm"
-          :class="tipo === 'platform' ? 'bg-brand-purple-50 text-brand-purple-600' : 'bg-brand-primary-100 text-brand-primary-800'"
-        >
-          {{ inicial }}
-        </div>
+        <!-- Platform es otro módulo (la consola del operador): su símbolo va en noche -->
+        <UiSymbol size="sm" :tone="simboloTono">{{ inicial }}</UiSymbol>
         <div v-if="!isCollapsed" class="min-w-0 flex-1">
-          <p
-            class="text-[9.5px] font-extrabold tracking-[0.1em] uppercase leading-tight truncate"
-            :class="tipo === 'platform' ? 'text-brand-purple-300' : 'text-gray-400'"
-          >{{ subtitulo }}</p>
-          <p class="text-[14px] font-bold text-brand-dark leading-[1.2] truncate mt-px">{{ titulo }}</p>
+          <p class="eyebrow truncate leading-tight">{{ subtitulo }}</p>
+          <p class="mt-px truncate text-body font-bold leading-tight text-ink">{{ titulo }}</p>
         </div>
-        <svg v-if="!isCollapsed && !esEstatico" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15 12 18.75 15.75 15M8.25 9 12 5.25 15.75 9" />
-        </svg>
+        <UiIcon v-if="!isCollapsed && !esEstatico" name="chevrons-up-down" />
       </button>
     </RekaPopoverTrigger>
 
     <RekaPopoverPortal>
+      <!-- Menú del kit dentro del portal de Reka (ui-listbox-floating), por encima del sidebar. -->
       <RekaPopoverContent
         side="bottom"
         align="start"
         :side-offset="6"
-        class="w-[236px] max-h-[70vh] overflow-y-auto scrollbar-thin bg-white rounded-[14px] border border-[#e0e6e2] shadow-menu p-1.5 z-50"
+        class="ui-listbox ui-listbox-floating scrollbar-thin max-h-[70vh] w-60"
       >
         <!-- Platform no es una org más: es otro módulo (la consola del operador) -->
         <template v-if="esSuperadmin">
           <button
-            :class="[
-              'w-full flex items-center gap-2.5 px-3 py-[9px] rounded-[10px] text-[13px] transition-colors',
-              tipo === 'platform' ? 'bg-brand-purple-50 text-brand-purple-700 font-extrabold' : 'text-gray-700 font-bold hover:bg-brand-purple-50/60',
-            ]"
+            type="button"
+            :class="['ui-option py-1', tipo === 'platform' && 'bg-sunken font-black']"
+            :aria-current="tipo === 'platform' ? 'true' : undefined"
             @click="seleccionarPlatform"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand-purple-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.66-6.66-1.42 1.42M7.76 16.24l-1.42 1.42m0-11.32 1.42 1.42m8.48 8.48 1.42 1.42" />
-            </svg>
-            Platform
-            <span class="ml-auto text-[9.5px] font-extrabold tracking-[0.1em] text-brand-purple-300 uppercase">{{ t('ctx.operator') }}</span>
+            <span class="flex min-w-0 items-center gap-2.5">
+              <UiSymbol size="sm" icon="sun" tone="night" />
+              Platform
+            </span>
+            <span class="eyebrow shrink-0">{{ t('ctx.operator') }}</span>
           </button>
-          <div v-if="orgs.length" class="h-px bg-[#f0f2f0] my-1.5 mx-1" />
+          <div v-if="orgs.length" class="mx-1 my-1.5 h-px bg-line" />
         </template>
 
         <!-- Una sección por organización; sus comunidades dentro. Así se ve que la comunidad
              vive DENTRO de la org, que es como está el modelo. La cabecera es SOLO etiqueta;
              lo elegible siempre es una FILA (la org, si la administras, y sus comunidades). -->
         <template v-for="o in orgs" :key="o.id">
-          <div class="w-full flex items-center justify-between gap-2 px-3 pt-2 pb-[5px]">
-            <span class="text-[10px] font-extrabold tracking-[0.12em] uppercase truncate text-gray-400">{{ o.nombre }}</span>
-            <span class="text-[10px] font-bold text-gray-300 shrink-0">
+          <div class="flex w-full items-center justify-between gap-2 px-3 pb-1.5 pt-2">
+            <span class="eyebrow truncate">{{ o.nombre }}</span>
+            <span class="shrink-0 text-micro font-bold text-disabled">
               {{ o.esAdmin ? t('ctx.admin') : t('ctx.collab') }}
             </span>
           </div>
@@ -75,64 +64,36 @@
           <!-- La org como contexto: una opción con el mismo lenguaje que las comunidades -->
           <button
             v-if="o.esAdmin"
-            :class="[
-              'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] transition-colors',
-              esOrgActiva(o.id) ? 'bg-brand-primary-50' : 'hover:bg-gray-50',
-            ]"
+            type="button"
+            :class="['ui-option py-1', esOrgActiva(o.id) && 'bg-sunken font-black']"
+            :aria-current="esOrgActiva(o.id) ? 'true' : undefined"
             :title="t('ctx.goOrg')"
             @click="seleccionarOrg(o.id)"
           >
-            <div
-              :class="[
-                'w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0',
-                esOrgActiva(o.id) ? 'bg-brand-primary-100 text-brand-primary-800' : 'bg-[#eef0f2] text-[#5a6b5f]',
-              ]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
-              </svg>
-            </div>
-            <span
-              :class="[
-                'text-[13px] truncate',
-                esOrgActiva(o.id) ? 'font-extrabold text-brand-primary-800' : 'font-bold text-gray-700',
-              ]"
-            >{{ t('ctx.org') }}</span>
-            <svg v-if="esOrgActiva(o.id)" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] ml-auto shrink-0 text-brand-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
+            <span class="flex min-w-0 items-center gap-2.5">
+              <UiSymbol size="sm" icon="building" :tone="uiToneFor(o.nombre)" />
+              <span class="truncate">{{ t('ctx.org') }}</span>
+            </span>
+            <UiIcon v-if="esOrgActiva(o.id)" name="check" class="size-4" />
           </button>
 
           <button
             v-for="c in o.comunidades"
             :key="c.id"
-            :class="[
-              'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] transition-colors',
-              esActiva(o.id, c.id) ? 'bg-brand-primary-50' : 'hover:bg-gray-50',
-            ]"
+            type="button"
+            :class="['ui-option py-1', esActiva(o.id, c.id) && 'bg-sunken font-black']"
+            :aria-current="esActiva(o.id, c.id) ? 'true' : undefined"
             @click="seleccionarComunidad(o.id, c.id)"
           >
-            <div
-              :class="[
-                'w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0 font-extrabold text-[11px]',
-                esActiva(o.id, c.id) ? 'bg-brand-primary-100 text-brand-primary-800' : 'bg-[#eef0f2] text-[#5a6b5f]',
-              ]"
-            >
-              {{ c.nombre.charAt(0).toUpperCase() }}
-            </div>
-            <span
-              :class="[
-                'text-[13px] truncate',
-                esActiva(o.id, c.id) ? 'font-extrabold text-brand-primary-800' : 'font-bold text-gray-700',
-              ]"
-            >{{ c.nombre }}</span>
-            <svg v-if="esActiva(o.id, c.id)" xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px] ml-auto shrink-0 text-brand-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
+            <span class="flex min-w-0 items-center gap-2.5">
+              <UiSymbol size="sm" :tone="uiToneFor(c.nombre)">{{ c.nombre.charAt(0).toUpperCase() }}</UiSymbol>
+              <span class="truncate">{{ c.nombre }}</span>
+            </span>
+            <UiIcon v-if="esActiva(o.id, c.id)" name="check" class="size-4" />
           </button>
         </template>
 
-        <p v-if="!orgs.length && !esSuperadmin" class="px-3 py-4 text-xs text-gray-400 text-center">
+        <p v-if="!orgs.length && !esSuperadmin" class="px-3 py-4 text-center text-caption text-subtle">
           {{ t('ctx.noAccess') }}
         </p>
       </RekaPopoverContent>
@@ -162,6 +123,9 @@ const subtitulo = computed(() => {
   return orgActiva.value ? t('ctx.org') : ''
 })
 const inicial = computed(() => (titulo.value || '?').charAt(0).toUpperCase())
+
+// El símbolo del trigger lleva el mismo tono que la org o comunidad en el panel.
+const simboloTono = computed(() => (tipo.value === 'platform' ? 'night' : uiToneFor(titulo.value || '?')))
 
 function esActiva(oid: number, cid: number) {
   return tipo.value === 'comunidad' && orgActiva.value?.id === oid && comunidadActiva.value?.id === cid

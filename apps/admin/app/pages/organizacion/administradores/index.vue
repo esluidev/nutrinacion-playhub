@@ -3,8 +3,7 @@
     <UiPageHeader :title="t('admins.title')" :description="t('admins.desc')">
       <template #actions>
         <!-- Invitar co-admins es del TITULAR (designarlo sigue siendo de Platform) -->
-        <UiButton v-if="esTitularOrgActiva" @click="navigateTo('/organizacion/administradores/nuevo')">
-          <UiIcon name="add" class="w-4 h-4" stroke-width="2.25" />
+        <UiButton v-if="esTitularOrgActiva" icon="user-plus" @click="navigateTo('/organizacion/administradores/nuevo')">
           {{ t('admins.invite') }}
         </UiButton>
       </template>
@@ -23,65 +22,58 @@
       :filters="filtros"
     >
       <template #cell-nombre="{ row }">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
-            {{ row.nombreCompleto.charAt(0).toUpperCase() }}
-          </div>
+        <div class="flex min-w-0 items-center gap-3">
+          <UiAvatar :name="row.nombreCompleto" />
           <div class="min-w-0">
-            <p class="font-extrabold text-gray-800 truncate">{{ row.nombreCompleto }}</p>
-            <p v-if="row.correo" class="text-[12.5px] text-gray-500 truncate">{{ row.correo }}</p>
+            <p class="truncate font-extrabold text-ink">{{ row.nombreCompleto }}</p>
+            <p v-if="row.correo" class="ui-caption truncate">{{ row.correo }}</p>
           </div>
         </div>
       </template>
       <template #cell-desde="{ row }">
-        <span class="text-[13px] text-gray-700 font-semibold">{{ fechaCorta(row.created_at) }}</span>
+        <span class="text-body font-semibold text-muted">{{ fechaCorta(row.created_at, locale) }}</span>
       </template>
       <template #cell-rol="{ row }">
-        <span
-          v-if="row.titular"
-          class="inline-flex items-center text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-brand-primary-50 text-brand-primary-800"
-        >{{ t('admins.titular') }}</span>
-        <span
-          v-else
-          class="inline-flex items-center text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-gray-100 text-gray-600"
-        >{{ t('admins.coadmin') }}</span>
+        <!-- El rol no es un estado: titular es información (cielo); co-admin, neutro -->
+        <UiBadge v-if="row.titular" tone="sky">{{ t('admins.titular') }}</UiBadge>
+        <UiBadge v-else tone="neutral">{{ t('admins.coadmin') }}</UiBadge>
       </template>
       <template #cell-acciones="{ row }">
-        <div v-if="puedeGestionar" class="flex items-center justify-end gap-1">
-          <NuxtLink
-            :to="`/organizacion/administradores/${row.id}/editar`"
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+        <!-- Acciones de tabla: neutras; quitar el acceso se confirma en coral (UiConfirmDialog) -->
+        <div v-if="puedeGestionar" class="flex items-center justify-end gap-2">
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="pencil"
+            icon-only
+            :label="t('common.edit')"
             :title="t('common.edit')"
-            @click.stop
-          >
-            <UiIcon name="edit" class="w-[15px] h-[15px]" />
-          </NuxtLink>
+            @click.stop="navigateTo(`/organizacion/administradores/${row.id}/editar`)"
+          />
           <!-- Al titular no se le quita el acceso desde aquí: primero se designa otro en Platform -->
-          <button
+          <UiButton
             v-if="!row.titular"
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            tone="neutral"
+            size="sm"
+            icon="trash"
+            icon-only
+            :label="t('admins.remove')"
             :title="t('admins.remove')"
             @click.stop="pedirQuitar(row)"
-          >
-            <UiIcon name="delete" class="w-[15px] h-[15px]" />
-          </button>
+          />
         </div>
       </template>
     </UiDataTable>
 
-    <!-- Invitaciones que aún no se aceptan: cierran el ciclo "invité → ¿ya entró?" -->
+    <!-- Invitaciones que aún no se aceptan: cierran el ciclo "invité → ¿ya entró?" (pendiente = uva) -->
     <div v-if="pendientes.length" class="mt-6">
-      <p class="text-[11px] font-extrabold tracking-wider text-gray-400 uppercase mb-2">{{ t('admins.pending') }}</p>
-      <div class="card divide-y divide-gray-100">
-        <div v-for="inv in pendientes" :key="inv.id" class="flex items-center gap-3 px-4 py-3">
-          <div class="w-[30px] h-[30px] rounded-[9px] bg-[#fff8e6] text-[#a16207] flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-            </svg>
-          </div>
+      <p class="eyebrow mb-3">{{ t('admins.pending') }}</p>
+      <div class="ui-panel divide-y divide-line">
+        <div v-for="inv in pendientes" :key="inv.id" class="flex items-center gap-3 px-5 py-3">
+          <UiSymbol size="sm" icon="mail" tone="grape" />
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-bold text-gray-800 truncate">{{ inv.email ?? t('admins.openLink') }}</p>
-            <p class="text-xs text-gray-400">{{ venceLabel(inv) }}</p>
+            <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('admins.openLink') }}</p>
+            <p class="text-caption font-semibold text-subtle">{{ [nombreInvitado(inv) && inv.email, venceLabel(inv)].filter(Boolean).join(' · ') }}</p>
           </div>
         </div>
       </div>
@@ -148,9 +140,6 @@ function nombreDe(a: AdminDeOrg) {
   return nombre || a.perfil?.email || '—'
 }
 
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 function venceLabel(inv: InvitacionAdminPendiente) {
   if (!inv.expira_en) return t('admins.noExpiry')

@@ -2,128 +2,143 @@
   <div>
     <UiPageHeader title="Educadores" description="Tu equipo y sus grupos de trabajo">
       <template #actions>
-        <UiButton variant="outline" @click="navigateTo('/dashboard/educators/grupo-nuevo')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+        <UiButton variant="outline" icon="plus" @click="navigateTo('/dashboard/educators/grupo-nuevo')">
           Nuevo Grupo
         </UiButton>
-        <UiButton @click="navigateTo('/dashboard/educators/nuevo')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-          </svg>
+        <UiButton icon="user-plus" @click="navigateTo('/dashboard/educators/nuevo')">
           Agregar Educador
         </UiButton>
       </template>
     </UiPageHeader>
 
-    <!-- Toolbar: segmented toggle + search + filters -->
-    <div class="flex items-center justify-between gap-3.5 mb-[22px] flex-wrap">
-      <div class="flex items-center bg-white border border-gray-200 rounded-[11px] p-[3px] gap-0.5">
-        <button
-          v-for="tab in tabItems"
-          :key="tab.value"
-          :class="[
-            'h-[34px] px-4 rounded-[8px] text-[12.5px] font-bold transition-colors',
-            activeTab === tab.value ? 'bg-brand-primary text-white' : 'text-gray-500 hover:text-gray-800',
-          ]"
-          @click="activeTab = tab.value as 'educadores' | 'grupos'"
-        >
-          {{ tab.label }} · {{ tab.count }}
-        </button>
-      </div>
-      <div v-if="activeTab === 'educadores'" class="flex items-center gap-2.5">
-        <UiSearchInput v-model="searchQuery" placeholder="Buscar educador…" max-width="xs" class="!w-[220px]" />
+    <!-- Toolbar: selector de vista + búsqueda + filtros -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <UiTabs v-model="tabModel" :items="tabItems" fit />
+      <div v-if="activeTab === 'educadores'" class="flex items-center gap-3">
+        <UiSearchInput v-model="searchQuery" placeholder="Buscar educador…" max-width="xs" />
         <UiSelect v-model="filterEstado" variant="toolbar" prefix="Estado" :options="estadoOptions" />
       </div>
     </div>
 
     <!-- EDUCADORES TAB -->
     <div v-if="activeTab === 'educadores'">
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[22px]">
-        <div
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <article
           v-for="educator in filteredEducators"
           :key="educator.id"
-          class="card card-interactive p-[22px]"
+          class="ui-panel p-6"
         >
-          <div class="flex items-center gap-3.5 mb-[18px]">
-            <div :class="['w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 text-white font-extrabold text-[15px]', educator.avatarBg]">
-              {{ educator.initials }}
-            </div>
+          <div class="mb-5 flex items-center gap-3">
+            <UiAvatar :name="educator.nombre" :initials="educator.initials" size="lg" />
             <div class="min-w-0 flex-1">
-              <h3 class="text-[15px] font-extrabold text-gray-800 truncate">{{ educator.nombre }}</h3>
-              <p class="text-[12.5px] font-semibold text-gray-500 mt-0.5">{{ educator.profesion }}</p>
+              <h3 class="truncate text-body font-extrabold text-ink">{{ educator.nombre }}</h3>
+              <p class="mt-0.5 text-caption font-semibold text-muted">{{ educator.profesion }}</p>
             </div>
-            <UiBadge :variant="educator.estado === 'activo' ? 'green' : 'gray'" dot class="shrink-0">
+            <UiBadge :tone="educator.estado === 'activo' ? 'lime' : 'neutral'" :dot="educator.estado === 'activo'" class="shrink-0">
               {{ educator.estado === 'activo' ? 'Activo' : 'Inactivo' }}
             </UiBadge>
           </div>
 
-          <div class="flex flex-col gap-2 p-3.5 bg-brand-tint rounded-[12px] border border-gray-100">
-            <div class="flex items-center gap-2.5 text-[12.5px] font-semibold text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-              </svg>
+          <div class="flex flex-col gap-2 rounded-control-sm border border-line bg-canvas p-3.5">
+            <div class="flex items-center gap-2.5 text-caption font-semibold text-muted">
+              <UiIcon name="mail" class="size-3.5 shrink-0 text-subtle" />
               <span class="truncate">{{ educator.email }}</span>
             </div>
-            <div class="flex items-center gap-2.5 text-[12.5px] font-semibold text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-              </svg>
+            <div class="flex items-center gap-2.5 text-caption font-semibold text-muted">
+              <UiIcon name="phone" class="size-3.5 shrink-0 text-subtle" />
               {{ educator.telefono }}
             </div>
           </div>
 
-          <div class="flex items-center gap-2 mt-3.5">
-            <span class="inline-flex items-center text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-gray-100 text-gray-600">{{ educator.grupo }}</span>
-            <span class="inline-flex items-center text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-brand-primary-50 text-brand-primary-800">{{ educator.talleres }} talleres</span>
+          <div class="mt-4 flex items-center gap-2">
+            <!-- Etiquetas sin significado: neutras (un grupo en lima se leería como «Activo») -->
+            <UiBadge v-if="educator.grupo" tone="neutral">{{ educator.grupo }}</UiBadge>
+            <UiBadge tone="neutral">{{ educator.talleres }} talleres</UiBadge>
+            <!-- El acceso solo avisa lo que falta: activación pendiente (sol) o sin código (coral). -->
+            <UiBadge v-if="educator.acceso !== 'pin'" :tone="educator.acceso === 'pendiente' ? 'sun' : 'coral'">
+              {{ educator.acceso === 'pendiente' ? 'Sin activar' : 'Sin acceso' }}
+            </UiBadge>
+            <UiButton class="ml-auto" variant="outline" size="sm" icon="key" @click="abrirCodigo(educator)">
+              Acceso
+            </UiButton>
           </div>
-        </div>
+        </article>
       </div>
 
-      <div v-if="!filteredEducators.length" class="card p-16 text-center">
-        <p class="text-sm font-bold text-gray-600">No se encontraron educadores</p>
-        <p class="text-xs text-gray-400 mt-1">Intenta ajustar los filtros de búsqueda</p>
-        <UiButton variant="ghost" size="sm" class="mt-4" @click="resetFilters">Limpiar filtros</UiButton>
+      <div v-if="!filteredEducators.length" class="ui-panel">
+        <UiEmptyState icon="search" title="No se encontraron educadores" text="Intenta ajustar los filtros de búsqueda">
+          <UiButton variant="outline" size="sm" @click="resetFilters">Limpiar filtros</UiButton>
+        </UiEmptyState>
       </div>
     </div>
 
+    <!-- Código de activación de Educators: se ve una sola vez; con él, el educador elige su PIN. -->
+    <UiDialog :open="!!educadorCodigo" title="Acceso a Educators" @update:open="(v) => { if (!v) cerrarCodigo() }">
+      <template v-if="educadorCodigo">
+        <p class="ui-text">
+          {{ educadorCodigo.nombre }} entra en Educators con <strong class="text-ink">{{ educadorCodigo.email }}</strong> y un PIN de
+          6 dígitos que elige la primera vez, con el código de activación que generas aquí.
+        </p>
+        <div v-if="codigo" class="mt-5 rounded-control border border-line bg-canvas px-5 py-4 text-center">
+          <p class="eyebrow mb-1">Código de activación</p>
+          <p class="ui-stat-value font-mono tracking-widest">{{ codigo }}</p>
+          <p class="ui-caption mt-2">Compártelo ahora: después solo se puede generar otro.</p>
+        </div>
+        <p v-else class="ui-caption mt-4">
+          {{ educadorCodigo.acceso === 'pin'
+            ? 'Ya eligió su PIN. Si lo olvidó, genera un código nuevo: su PIN deja de valer y se cierran sus sesiones.'
+            : 'Aún no tiene PIN. Si ya tenía un código, el nuevo lo sustituye.' }}
+        </p>
+
+        <!-- Su vínculo con esta comunidad: inactivo no recibe talleres nuevos -->
+        <div class="mt-6 border-t border-line pt-5">
+          <UiSwitch
+            :model-value="educadorCodigo.activo"
+            :disabled="cambiandoActivo"
+            :label="`Activo en ${comunidadNombre}`"
+            @update:model-value="alternarActivo"
+          />
+          <p class="ui-caption mt-2">
+            Inactivo: no se le asignan talleres nuevos y esta comunidad deja de aparecer en su Educators. Los talleres que ya tiene
+            asignados los sigue viendo.
+          </p>
+        </div>
+      </template>
+      <template #actions>
+        <UiButton v-if="!codigo" :loading="generando" icon="key" @click="generar">Generar código de activación</UiButton>
+        <UiButton v-else icon="copy" @click="copiar">Copiar</UiButton>
+      </template>
+    </UiDialog>
+
     <!-- GRUPOS TAB -->
     <div v-if="activeTab === 'grupos'">
-      <div v-if="grupos.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[22px]">
-        <div
+      <div v-if="grupos.length" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <article
           v-for="grupo in grupos"
           :key="grupo.id"
-          class="card card-interactive p-[22px]"
+          class="ui-panel p-6"
         >
-          <div class="flex items-start gap-3.5 mb-3">
-            <div :class="['w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0', grupo.iconBg]">
-              <svg xmlns="http://www.w3.org/2000/svg" :class="['w-5 h-5', grupo.iconColor]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-              </svg>
-            </div>
+          <div class="mb-3 flex items-start gap-3">
+            <UiSymbol icon="users" size="md" :tone="uiToneFor(grupo.nombre)" />
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-2">
-                <h3 class="text-[15px] font-extrabold text-gray-800 truncate">{{ grupo.nombre }}</h3>
-                <UiBadge :variant="grupo.estado === 'activo' ? 'green' : 'gray'" dot class="shrink-0">
+                <h3 class="truncate text-body font-extrabold text-ink">{{ grupo.nombre }}</h3>
+                <UiBadge :tone="grupo.estado === 'activo' ? 'lime' : 'neutral'" :dot="grupo.estado === 'activo'" class="shrink-0">
                   {{ grupo.estado === 'activo' ? 'Activo' : 'Inactivo' }}
                 </UiBadge>
               </div>
-              <p class="text-[12.5px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">{{ grupo.descripcion }}</p>
+              <p class="ui-caption mt-1 line-clamp-2">{{ grupo.descripcion }}</p>
             </div>
           </div>
-          <span class="inline-flex items-center gap-1 text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-brand-purple-50 text-brand-purple-700">
-            {{ grupo.miembros }} miembros
-          </span>
-        </div>
+          <UiBadge tone="neutral">{{ grupo.miembros }} miembros</UiBadge>
+        </article>
       </div>
 
-      <div v-else class="card p-16 text-center">
-        <h3 class="font-display font-semibold text-brand-dark text-lg mb-2">No hay grupos</h3>
-        <p class="text-sm text-gray-400 max-w-sm mx-auto leading-relaxed">
-          Crea un grupo para organizar a los educadores por zona o especialidad.
-        </p>
-        <UiButton class="mt-5" @click="navigateTo('/dashboard/educators/grupo-nuevo')">Crear Grupo</UiButton>
+      <div v-else class="ui-panel">
+        <UiEmptyState icon="users" title="No hay grupos" text="Crea un grupo para organizar a los educadores por zona o especialidad.">
+          <!-- La acción principal de la vista ya es «Agregar Educador»: esta va neutra -->
+          <UiButton variant="outline" icon="plus" @click="navigateTo('/dashboard/educators/grupo-nuevo')">Crear Grupo</UiButton>
+        </UiEmptyState>
       </div>
     </div>
   </div>
@@ -133,6 +148,11 @@
 definePageMeta({ layout: 'dashboard' })
 
 const activeTab = ref<'educadores' | 'grupos'>('educadores')
+// Puente tipado: UiTabs habla en string; la pestaña es una unión cerrada.
+const tabModel = computed({
+  get: () => activeTab.value as string,
+  set: v => (activeTab.value = v as 'educadores' | 'grupos'),
+})
 const searchQuery = ref('')
 const filterEstado = ref('')
 
@@ -142,11 +162,62 @@ const estadoOptions = [
   { value: 'inactivo', label: 'Inactivos' },
 ]
 
-const { educators, groups: grupos } = useEducators()
+const { educators, groups: grupos, generarCodigo, cambiarActivo, refresh } = useEducators()
+const { toast } = useToast()
+const { comunidadActiva } = useContexto()
+const comunidadNombre = computed(() => comunidadActiva.value?.nombre ?? 'esta comunidad')
+
+// ── Código de acceso ──────────────────────────────────────────────────────────
+const educadorCodigo = ref<{ id: number, nombre: string, email: string, acceso: string, activo: boolean } | null>(null)
+const codigo = ref('')
+const generando = ref(false)
+const cambiandoActivo = ref(false)
+
+function abrirCodigo(educator: { id: number, nombre: string, email: string, acceso: string, estado: string }) {
+  educadorCodigo.value = { id: educator.id, nombre: educator.nombre, email: educator.email, acceso: educator.acceso, activo: educator.estado === 'activo' }
+  codigo.value = ''
+}
+
+async function alternarActivo(activo: boolean) {
+  const e = educadorCodigo.value
+  if (!e) return
+  cambiandoActivo.value = true
+  const { error } = await cambiarActivo(e.id, activo)
+  cambiandoActivo.value = false
+  if (error) {
+    toast.error(error)
+    return
+  }
+  e.activo = activo
+  toast.success(activo ? `${e.nombre} está activo en ${comunidadNombre.value}.` : `${e.nombre} queda inactivo en ${comunidadNombre.value}.`)
+}
+
+function cerrarCodigo() {
+  educadorCodigo.value = null
+  codigo.value = ''
+}
+
+async function generar() {
+  if (!educadorCodigo.value) return
+  generando.value = true
+  const { codigo: nuevo, error } = await generarCodigo(educadorCodigo.value.id)
+  generando.value = false
+  if (error || !nuevo) {
+    toast.error(error ?? 'No se pudo generar el código.')
+    return
+  }
+  codigo.value = nuevo
+  refresh()
+}
+
+async function copiar() {
+  if (await copiarTexto(codigo.value)) toast.success('Código copiado.')
+  else toast.error('No se pudo copiar: anótalo a mano.')
+}
 
 const tabItems = computed(() => [
-  { value: 'educadores', label: 'Educadores', count: educators.value.length },
-  { value: 'grupos', label: 'Grupos', count: grupos.value.length },
+  { value: 'educadores', label: `Educadores · ${educators.value.length}` },
+  { value: 'grupos', label: `Grupos · ${grupos.value.length}` },
 ])
 
 function resetFilters() {

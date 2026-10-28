@@ -1,34 +1,28 @@
 <template>
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('coms.editTitle')" />
-    <div v-if="loading" class="card p-10 text-center text-sm text-gray-400">{{ t('common.loading') }}</div>
+    <div v-if="loading" class="ui-panel p-10 text-center text-body font-semibold text-subtle">{{ t('common.loading') }}</div>
 
-    <form v-else class="space-y-[18px]" @submit.prevent="handleSave">
-      <div class="card p-6 space-y-4">
-        <h2 class="section-title">{{ t('coms.section') }}</h2>
+    <form v-else class="space-y-5" @submit.prevent="handleSave">
+      <div class="ui-panel ui-panel-body space-y-4">
+        <h2 class="ui-title">{{ t('coms.section') }}</h2>
 
         <UiInput id="nombre" v-model="form.nombre" :label="t('coms.name')" :placeholder="t('coms.namePh')" required />
 
-        <div class="space-y-1.5">
-          <label for="descripcion" class="block text-sm font-semibold text-gray-700">{{ t('coms.description') }}</label>
-          <textarea id="descripcion" v-model="form.descripcion" rows="2" class="input !h-auto py-2" />
-        </div>
+        <UiTextarea id="descripcion" v-model="form.descripcion" :label="t('coms.description')" :rows="2" />
 
         <div class="grid gap-4 sm:grid-cols-2">
           <UiInput id="correo" v-model="form.correo" type="email" :label="t('coms.email')" placeholder="sede@organizacion.com" />
           <UiInput id="telefono" v-model="form.telefono" :label="t('coms.phone')" placeholder="+503 0000 0000" />
         </div>
 
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('coms.country') }}</label>
-          <UiSelect v-model="form.pais" :options="paisOpciones" size="md" :placeholder="t('coms.countryPh')" />
-        </div>
+        <UiSelect v-model="form.pais" :options="paisOpciones" :label="t('coms.country')" :placeholder="t('coms.countryPh')" />
       </div>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
       <div class="flex items-center justify-end gap-2 pt-1 pb-2">
-        <UiButton variant="outline" size="sm" type="button" @click="navigateTo('/organizacion/comunidades')">{{ t('common.cancel') }}</UiButton>
+        <UiButton tone="neutral" size="sm" type="button" @click="navigateTo('/organizacion/comunidades')">{{ t('common.cancel') }}</UiButton>
         <UiButton size="sm" type="submit" :loading="saving">{{ t('common.save') }}</UiButton>
       </div>
     </form>
@@ -81,9 +75,13 @@ async function handleSave() {
     error.value = t('coms.nameRequired')
     return
   }
+  if (!form.value.pais) {
+    error.value = t('coms.countryRequired')
+    return
+  }
 
   saving.value = true
-  const { error: err } = await update(id, form.value)
+  const { error: err } = await update(id, { ...form.value, pais: form.value.pais })
   saving.value = false
 
   if (err) {

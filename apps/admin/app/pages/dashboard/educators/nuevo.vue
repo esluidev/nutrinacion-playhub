@@ -1,9 +1,9 @@
 <template>
-  <div class="max-w-[640px] mx-auto">
+  <div class="mx-auto max-w-2xl">
     <UiPageHeader title="Agregar Educador" :description="`Suma una persona al equipo de ${comunidad}`" />
 
-    <form class="card p-6" @submit.prevent="submit">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
+    <form class="ui-panel p-6" @submit.prevent="submit">
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
           <UiInput v-model="form.nombre" label="Nombre completo" placeholder="Ej. Carmen Díaz Morales" required />
         </div>
@@ -13,22 +13,23 @@
             type="email"
             label="Correo electrónico"
             placeholder="carmen@nutrinacion.com"
-            hint="Recibirá una invitación para activar su cuenta en la app de StoryPlay."
+            hint="Con este correo entra en Educators. Luego genera su código de activación en «Acceso»: con él elige su PIN."
             required
           />
         </div>
         <UiInput v-model="form.telefono" label="Teléfono" placeholder="+52 55 0000 0000" optional />
         <UiInput v-model="form.puesto" label="Puesto" placeholder="Ej. Nutrióloga" />
-        <div class="sm:col-span-2 space-y-[7px]">
-          <label class="block text-[13px] font-bold text-gray-700">Grupo <span class="text-gray-400 font-semibold">(opcional)</span></label>
-          <UiSelect v-model="form.grupo" size="md" :options="grupoOptions" placeholder="Sin grupo" />
+        <!-- UiSelect no tiene `optional`: la etiqueta replica la de UiInput -->
+        <div class="sm:col-span-2">
+          <label class="field-label">Grupo <span class="font-semibold text-muted">(opcional)</span></label>
+          <UiSelect v-model="form.grupo" :options="grupoOptions" placeholder="Sin grupo" />
         </div>
       </div>
     </form>
 
-    <p v-if="error" class="text-sm text-red-500 mt-3">{{ error }}</p>
+    <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
-    <div class="flex items-center justify-end gap-2.5 mt-[18px]">
+    <div class="mt-5 flex items-center justify-end gap-3">
       <UiButton variant="outline" @click="navigateTo('/dashboard/educators')">Cancelar</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">Agregar Educador</UiButton>
     </div>

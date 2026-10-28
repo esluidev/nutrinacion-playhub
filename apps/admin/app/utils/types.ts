@@ -67,6 +67,9 @@ export interface AuthUser {
 export interface InvitacionInfo {
   role: Extract<Role, 'ADMIN' | 'COLABORADOR'>
   email: string | null
+  nombre: string            // a quién se invitó: rellena el registro
+  apellido: string
+  titular: boolean          // invitación de administrador que será el titular
   organizacion: string
   comunidad: string | null
   // Si el correo invitado ya tiene cuenta, esta pagina no ofrece crear una: la invitacion se

@@ -3,7 +3,7 @@
 
 import type { LicenciaLigera, OrgLigera } from '~/utils/platformResumen'
 import { describe, expect, it } from 'vitest'
-import { construirActividad, construirAtencion, esVigente, resumenLicencias } from '~/utils/platformResumen'
+import { construirActividad, construirAtencion, esVigente, resumenLicencias, resumenOrganizaciones } from '~/utils/platformResumen'
 
 const HOY = '2026-07-22'
 
@@ -28,8 +28,8 @@ function org(sobre: Partial<OrgLigera>): OrgLigera {
     id: seq,
     nombre: `Org ${seq}`,
     created_at: '2026-01-01T00:00:00Z',
-    comunidades: [],
-    administradores: [{ id: 1 }],
+    comunidades: 0,
+    administradores: [{ id: 1, created_at: '2026-01-01T00:00:00Z', nombre: 'Ana' }],
     ...sobre,
   }
 }
@@ -93,7 +93,7 @@ describe('construirAtencion', () => {
 
   it('vigente con fin lejano o sin fin no genera atención', () => {
     const items = construirAtencion(
-      [org({ id: 1, comunidades: [{ id: 1, nombre: 'C', created_at: '' }] })],
+      [org({ id: 1, comunidades: 1 })],
       [lic({ organizacion_id: 1, fecha_fin: '2026-12-31' })],
       HOY,
     )
@@ -105,7 +105,7 @@ describe('construirAtencion', () => {
       id: 1,
       nombre: 'Llena',
       administradores: [],
-      comunidades: [{ id: 1, nombre: 'A', created_at: '' }, { id: 2, nombre: 'B', created_at: '' }],
+      comunidades: 2,
     })
     const items = construirAtencion([o], [lic({ organizacion_id: 1, max_comunidades: 2 })], HOY)
     expect(items.map(x => x.tipo)).toEqual(['sin_admins', 'cupo_lleno'])
@@ -130,16 +130,30 @@ describe('construirAtencion', () => {
   })
 })
 
-describe('construirActividad', () => {
-  it('mezcla orgs y comunidades por fecha descendente y respeta el límite', () => {
+describe('resumenOrganizaciones', () => {
+  it('separa operando, en alta y sin licencia, y cuenta las nuevas de 30 días', () => {
     const orgs = [
-      org({ id: 1, nombre: 'Vieja', created_at: '2026-01-01T00:00:00Z', comunidades: [
-        { id: 10, nombre: 'Nueva Comunidad', created_at: '2026-07-20T00:00:00Z' },
-      ] }),
-      org({ id: 2, nombre: 'Reciente', created_at: '2026-07-10T00:00:00Z' }),
+      org({ id: 1, created_at: '2026-01-01T00:00:00Z' }),                       // operando
+      org({ id: 2, created_at: '2026-07-10T00:00:00Z', administradores: [] }),  // en alta, nueva
+      org({ id: 3, created_at: '2026-06-01T00:00:00Z' }),                       // sin licencia
     ]
-    const items = construirActividad(orgs, 2)
-    expect(items.map(x => x.nombre)).toEqual(['Nueva Comunidad', 'Reciente'])
-    expect(items[0]).toEqual(expect.objectContaining({ tipo: 'comunidad', orgNombre: 'Vieja' }))
+    const licencias = [lic({ organizacion_id: 1 }), lic({ organizacion_id: 2 })]
+    expect(resumenOrganizaciones(orgs, licencias, HOY)).toEqual({ total: 3, nuevas: 1, operando: 1, enAlta: 1, sinLicencia: 1 })
+  })
+})
+
+describe('construirActividad', () => {
+  it('altas, licencias (la segunda de una org es renovación) y administradores, por fecha descendente', () => {
+    const orgs = [
+      org({ id: 1, nombre: 'Vieja', created_at: '2026-01-01T00:00:00Z', administradores: [{ id: 1, created_at: '2026-07-20T00:00:00Z', nombre: 'Ana' }] }),
+      org({ id: 2, nombre: 'Reciente', created_at: '2026-07-10T00:00:00Z', administradores: [] }),
+    ]
+    const licencias = [
+      lic({ organizacion_id: 1, created_at: '2026-01-02T00:00:00Z' }),
+      lic({ organizacion_id: 1, created_at: '2026-07-15T00:00:00Z' }),
+    ]
+    const items = construirActividad(orgs, licencias, 3)
+    expect(items.map(x => [x.tipo, x.orgNombre])).toEqual([['admin', 'Vieja'], ['renovacion', 'Vieja'], ['org', 'Reciente']])
+    expect(items[0]!.persona).toBe('Ana')
   })
 })

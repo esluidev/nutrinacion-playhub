@@ -12,10 +12,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthenticated = !!u
   const isSuper = u?.perfil.superadmin === true
 
-  // Rutas publicas: inicio, login e invitacion (registro por token, sin sesion).
+  // Rutas publicas: inicio, login, invitacion (registro por token, sin sesion) y restablecer
+  // (llega con la sesion de recuperacion del enlace; si ya no vale, la pagina lo dice).
   const isPublicRoute
     = to.path === '/'
     || to.path === '/login'
+    || to.path === '/restablecer'
     || to.path.startsWith('/invitacion/')
 
   if (!isAuthenticated && !isPublicRoute) {
@@ -24,12 +26,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!isAuthenticated) return
 
-  const { rutaInicial, asegurarContexto, asegurarComunidad, administraOrgActiva, destinos } = useContexto()
+  const { rutaInicial, asegurarContexto, asegurarComunidad, administraOrgActiva, destinos, recordarRuta } = useContexto()
 
-  // Aterrizaje: no hay reglas por tipo de usuario. Se resuelve por la SUPERFICIE DE ACCESO —
-  // contexto guardado y aun valido → ahi; una sola comunidad → ahi; un solo destino → ahi;
-  // varios → hub; ninguno → sin acceso.
-  if (to.path === '/login' || to.path === '/') {
+  // Aterrizaje: el ultimo contexto del selector, si sigue valido; si no, por rol (superadmin →
+  // Platform, admin → su organizacion, colaborador → su comunidad). Ver `rutaInicial`.
+  // `/inicio` era el antiguo selector de destino: los enlaces viejos aterrizan igual.
+  if (to.path === '/login' || to.path === '/' || to.path === '/inicio') {
     return navigateTo(rutaInicial())
   }
 
@@ -55,6 +57,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (!destinos.value.length) return navigateTo('/sin-acceso')
     // Admin sin comunidades todavia: al home de su org (ahi vive el CTA de crear la primera).
     if (administraOrgActiva.value) return navigateTo('/organizacion')
-    return navigateTo('/inicio')
+    return navigateTo(rutaInicial())
   }
+
+  // El selector recuerda donde quedaste para la proxima entrada.
+  recordarRuta(to.path)
 })

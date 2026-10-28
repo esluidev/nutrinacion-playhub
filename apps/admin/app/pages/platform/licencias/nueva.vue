@@ -1,63 +1,61 @@
 <template>
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('platform.lics.newTitle')" />
-    <form class="space-y-[18px]" @submit.prevent="handleSave">
-      <div class="card p-6 space-y-4">
-        <h2 class="section-title">{{ t('platform.lics.section') }}</h2>
-
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('platform.lics.org') }}</label>
-          <UiSelect v-model="form.organizacion_id" :options="orgOpciones" size="md" :placeholder="t('platform.lics.orgPh')" :disabled="orgLocked" />
+    <form class="space-y-5" @submit.prevent="handleSave">
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <h2 class="ui-title">{{ t('platform.lics.section') }}</h2>
         </div>
+        <div class="ui-panel-body space-y-4">
+          <UiSelect v-model="form.organizacion_id" :options="orgOpciones" :label="t('platform.lics.org')" :placeholder="t('platform.lics.orgPh')" :disabled="orgLocked" />
 
-        <div class="grid grid-cols-3 gap-3">
-          <UiInput id="max_com" v-model.number="form.max_comunidades" type="number" :label="t('platform.lics.communities')" />
-          <UiInput id="max_edu" v-model.number="form.max_educadores" type="number" :label="t('platform.lics.educators')" />
-          <UiInput id="max_per" v-model.number="form.max_personalizados" type="number" :label="t('platform.lics.custom')" />
-        </div>
-
-        <div class="grid grid-cols-3 gap-3">
-          <div class="space-y-1.5">
-            <label class="block text-sm font-semibold text-gray-700">{{ t('platform.lics.state') }}</label>
-            <UiSelect v-model="form.estado" :options="estadoOpciones" size="md" />
+          <div class="grid grid-cols-3 gap-3">
+            <UiInput id="max_com" v-model.number="form.max_comunidades" type="number" :label="t('platform.lics.communities')" />
+            <UiInput id="max_edu" v-model.number="form.max_educadores" type="number" :label="t('platform.lics.educators')" />
+            <UiInput id="max_per" v-model.number="form.max_personalizados" type="number" :label="t('platform.lics.custom')" />
           </div>
-          <UiInput id="fecha_inicio" v-model="form.fecha_inicio" type="date" :label="t('platform.lics.start')" />
-          <UiInput id="fecha_fin" v-model="form.fecha_fin" type="date" :label="t('platform.lics.end')" :min="form.fecha_inicio" />
-        </div>
 
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('platform.lics.countriesLabel') }}</label>
-          <p class="text-xs text-gray-400 mb-1">{{ t('platform.lics.countriesHint') }}</p>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="p in paises"
-              :key="p.codigo"
-              type="button"
-              :class="['chip', form.paises.includes(p.codigo) ? 'chip-active' : 'chip-inactive']"
-              @click="togglePais(p.codigo)"
-            >
-              <span class="mr-1">{{ p.bandera }}</span>{{ p.nombre?.es ?? p.codigo }}
-            </button>
+          <div class="grid grid-cols-3 gap-3">
+            <UiSelect v-model="form.estado" :options="estadoOpciones" :label="t('platform.lics.state')" />
+            <UiInput id="fecha_inicio" v-model="form.fecha_inicio" type="date" :label="t('platform.lics.start')" />
+            <UiInput id="fecha_fin" v-model="form.fecha_fin" type="date" :label="t('platform.lics.end')" :min="form.fecha_inicio" />
           </div>
+
+          <!-- Países: elección múltiple con filtros del kit (pulsado = noche, estructura) -->
+          <div role="group" aria-labelledby="paises-label">
+            <p id="paises-label" class="field-label">{{ t('platform.lics.countriesLabel') }}</p>
+            <p class="ui-caption mb-3">{{ t('platform.lics.countriesHint') }}</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="p in paises"
+                :key="p.codigo"
+                type="button"
+                class="filter filter-sm"
+                :aria-pressed="form.paises.includes(p.codigo)"
+                @click="togglePais(p.codigo)"
+              >
+                <span v-if="p.bandera">{{ p.bandera }}</span>{{ p.nombre?.es ?? p.codigo }}
+              </button>
+            </div>
+          </div>
+
+          <UiTextarea id="notas" v-model="form.notas" :rows="2" :label="t('platform.lics.notes')" :placeholder="t('platform.lics.notesPh')" />
         </div>
+      </section>
 
-        <div class="space-y-1.5">
-          <label for="notas" class="block text-sm font-semibold text-gray-700">{{ t('platform.lics.notes') }}</label>
-          <textarea id="notas" v-model="form.notas" rows="2" class="input !h-auto py-2" :placeholder="t('platform.lics.notesPh')" />
-        </div>
-      </div>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-
-      <div class="flex items-center justify-end gap-2 pt-1 pb-2">
-        <UiButton variant="outline" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
-        <UiButton size="sm" type="submit" :loading="saving">{{ t('platform.lics.create') }}</UiButton>
+      <!-- Una sola acción principal (lima); cancelar, neutro -->
+      <div class="flex items-center justify-end gap-3 pb-2">
+        <UiButton tone="neutral" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
+        <UiButton type="submit" :loading="saving">{{ t('platform.lics.create') }}</UiButton>
       </div>
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Enums } from '~/utils/db'
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.lics.newTitle' })
 
 const { t } = useT()
@@ -81,7 +79,7 @@ const estadoOpciones = computed(() => [
 ])
 
 function hoy() {
-  return new Date().toISOString().slice(0, 10)
+  return hoyLocal()
 }
 
 const form = ref({
@@ -89,7 +87,7 @@ const form = ref({
   max_comunidades: 1,
   max_educadores: 10,
   max_personalizados: 0,
-  estado: 'ACTIVA',
+  estado: 'ACTIVA' as Enums<'estado_licencia'>,
   fecha_inicio: hoy(),
   fecha_fin: '' as string,
   paises: [] as string[],

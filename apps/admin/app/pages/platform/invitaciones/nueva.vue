@@ -1,28 +1,37 @@
 <template>
   <div class="max-w-[640px] mx-auto">
     <UiPageHeader :title="t('platform.invs.newTitle')" />
-    <form class="card p-6 space-y-4" @submit.prevent="handleSubmit">
-      <div class="space-y-1.5">
-        <label class="block text-sm font-semibold text-gray-700">{{ t('platform.invs.org') }}</label>
-        <UiSelect v-model="form.organizacion_id" :options="orgOpciones" size="md" :placeholder="t('platform.invs.orgPh')" :disabled="orgLocked" />
-      </div>
-
-      <UiInput id="email" v-model="form.email" type="email" :label="t('platform.invs.email')" :placeholder="t('platform.invs.emailPh')" required />
+    <form class="ui-panel ui-panel-body space-y-4" @submit.prevent="handleSubmit">
+      <UiSelect v-model="form.organizacion_id" :options="orgOpciones" :label="t('platform.invs.org')" :placeholder="t('platform.invs.orgPh')" :disabled="orgLocked" />
 
       <div class="grid grid-cols-2 gap-3">
-        <div class="space-y-1.5">
-          <label class="block text-sm font-semibold text-gray-700">{{ t('platform.invs.language') }}</label>
-          <UiSelect v-model="form.idioma" :options="idiomaOpciones" size="md" />
-        </div>
+        <UiInput id="nombre" v-model="form.nombre" :label="t('platform.invs.firstName')" required />
+        <UiInput id="apellido" v-model="form.apellido" :label="t('platform.invs.lastName')" optional />
+      </div>
+      <UiInput id="email" v-model="form.email" type="email" :label="t('platform.invs.email')" :placeholder="t('platform.invs.emailPh')" required />
+
+      <!-- Titular: quien firma el contrato; uno por organización -->
+      <div v-if="form.organizacion_id">
+        <UiCheckbox v-model="form.titular" :label="t('platform.invs.titular')" />
+        <p class="field-help mt-1.5">
+          {{ !titularActual
+            ? t('platform.invs.titularNone')
+            : form.titular ? t('platform.invs.titularTransfer', { nombre: titularActual }) : t('platform.invs.titularCurrent', { nombre: titularActual }) }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <UiSelect v-model="form.idioma" :options="idiomaOpciones" :label="t('platform.invs.language')" />
         <UiInput id="expira" v-model="form.expira" type="date" :label="t('platform.invs.expires')" :min="hoy" />
       </div>
 
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-      <p v-if="ok" class="text-sm text-brand-primary-600">{{ t('platform.invs.sent') }}</p>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
+      <UiAlert v-if="ok" tone="success">{{ t('platform.invs.sent') }}</UiAlert>
 
-      <div class="flex items-center justify-end gap-2 pt-2">
-        <UiButton variant="outline" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
-        <UiButton size="sm" type="submit" :loading="saving">{{ t('platform.invs.submit') }}</UiButton>
+      <!-- Una sola acción principal (lima); cancelar, neutro -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <UiButton tone="neutral" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
+        <UiButton type="submit" icon="send" :loading="saving">{{ t('platform.invs.submit') }}</UiButton>
       </div>
     </form>
   </div>
@@ -33,7 +42,7 @@ definePageMeta({ layout: 'dashboard', titleKey: 'platform.invs.newTitle' })
 
 const { t } = useT()
 const route = useRoute()
-const { listOrganizacionesSimple, createInvitacionAdmin } = usePlatform()
+const { listOrganizacionesSimple, createInvitacionAdmin, titularDe } = usePlatform()
 
 const orgs = ref<{ id: number, nombre: string }[]>([])
 const saving = ref(false)
@@ -49,20 +58,29 @@ const idiomaOpciones = computed(() => [
   { value: 'en', label: t('lang.en') },
 ])
 
-const hoy = new Date().toISOString().slice(0, 10)
+// Días del calendario local; la invitación vence al final del día elegido.
+const hoy = hoyLocal()
 
 function enTreintaDias() {
-  const d = new Date()
-  d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return hoyLocal(30)
 }
 
 const form = ref({
   organizacion_id: preOrg as number | null,
   email: '',
+  nombre: '',
+  apellido: '',
+  titular: false,
   idioma: 'es',
   expira: enTreintaDias(),
 })
+
+// Sin titular, la invitación es de titular por defecto; si ya hay uno, se avisa de que pasaría.
+const titularActual = ref<string | null>(null)
+watch(() => form.value.organizacion_id, async (orgId) => {
+  titularActual.value = orgId ? await titularDe(orgId) : null
+  form.value.titular = !!orgId && !titularActual.value
+}, { immediate: true })
 
 onMounted(async () => {
   orgs.value = await listOrganizacionesSimple()
@@ -80,6 +98,10 @@ async function handleSubmit() {
     error.value = t('platform.invs.pickOrg')
     return
   }
+  if (!form.value.nombre.trim()) {
+    error.value = t('platform.invs.nameRequired')
+    return
+  }
   if (!form.value.email.trim()) {
     error.value = t('platform.invs.emailRequired')
     return
@@ -89,8 +111,11 @@ async function handleSubmit() {
   const { error: err } = await createInvitacionAdmin({
     organizacion_id: form.value.organizacion_id,
     email: form.value.email.trim(),
+    nombre: form.value.nombre,
+    apellido: form.value.apellido,
+    titular: form.value.titular,
     idioma: form.value.idioma,
-    expira_en: form.value.expira ? new Date(form.value.expira).toISOString() : null,
+    expira_en: form.value.expira ? finDelDia(form.value.expira) : null,
   })
   saving.value = false
 

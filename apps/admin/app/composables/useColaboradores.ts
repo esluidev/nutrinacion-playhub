@@ -1,3 +1,4 @@
+import type { Enums } from '~/utils/db'
 // Colaboradores de la comunidad activa sobre Supabase: quiénes pueden operarla desde el
 // admin. La invitación real la emite el admin de la org (RLS 0005/0006: role COLABORADOR
 // de sus comunidades); el INSERT dispara el Database Webhook → correo.
@@ -9,21 +10,20 @@ export interface ColaboradorFila {
   nombre: string
   email: string
   initials: string
-  avatarBg: string
 }
 
 export interface InvitacionColabPendiente {
   id: number
   email: string | null
+  nombre: string | null
+  apellido: string | null
   expira_en: string | null
   created_at: string
 }
 
-const AVATAR_COLORS = ['bg-violet-600', 'bg-cyan-600', 'bg-amber-600', 'bg-emerald-600', 'bg-rose-600'] as const
-
 const DEMO_COLABORADORES: ColaboradorFila[] = [
-  { id: 1, activo: true, created_at: '2026-06-01T00:00:00Z', nombre: 'Mariana González', email: 'mariana@nutrinacion.com', initials: 'MG', avatarBg: AVATAR_COLORS[0] },
-  { id: 2, activo: false, created_at: '2026-05-12T00:00:00Z', nombre: 'Diego Ramírez', email: 'diego@nutrinacion.com', initials: 'DR', avatarBg: AVATAR_COLORS[1] },
+  { id: 1, activo: true, created_at: '2026-06-01T00:00:00Z', nombre: 'Mariana González', email: 'mariana@nutrinacion.com', initials: 'MG' },
+  { id: 2, activo: false, created_at: '2026-05-12T00:00:00Z', nombre: 'Diego Ramírez', email: 'diego@nutrinacion.com', initials: 'DR' },
 ]
 
 interface ColaboradorRow {
@@ -48,7 +48,7 @@ export function useColaboradores() {
     if (!cid) return
     state.value.loading = true
     const { data } = await useSupabaseClient()
-      .from('colaboradores')
+      .from('comunidad_colaboradores')
       .select('id, activo, created_at, perfil:perfiles ( id, nombre, apellido, email )')
       .eq('comunidad_id', cid)
       .order('created_at')
@@ -62,7 +62,6 @@ export function useColaboradores() {
         nombre,
         email: c.perfil?.email ?? '—',
         initials: nombre.split(' ').slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || '?',
-        avatarBg: AVATAR_COLORS[c.id % AVATAR_COLORS.length]!,
       }
     })
     state.value.comunidadId = cid
@@ -80,7 +79,7 @@ export function useColaboradores() {
   // Desactivar corta el acceso sin borrar historial; se puede reactivar.
   async function setActivo(id: number, activo: boolean) {
     if (demo) return { error: null }
-    const { error } = await useSupabaseClient().from('colaboradores').update({ activo }).eq('id', id)
+    const { error } = await useSupabaseClient().from('comunidad_colaboradores').update({ activo }).eq('id', id)
     if (!error) await refresh()
     return { error: error?.message ?? null }
   }
@@ -89,7 +88,7 @@ export function useColaboradores() {
     if (demo || !comunidadActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('invitaciones')
-      .select('id, email, expira_en, created_at')
+      .select('id, email, nombre, apellido, expira_en, created_at')
       .eq('comunidad_id', comunidadActiva.value.id)
       .eq('role', 'COLABORADOR')
       .eq('estado', 'PENDIENTE')
@@ -97,7 +96,7 @@ export function useColaboradores() {
     return (data as InvitacionColabPendiente[] | null) ?? []
   }
 
-  async function invitar(payload: { email: string, idioma: string, expira_en: string | null }) {
+  async function invitar(payload: { email: string, nombre: string, apellido: string, idioma: string, expira_en: string | null }) {
     if (demo) return { error: null }
     if (!comunidadActiva.value || !orgActiva.value) return { error: 'Sin comunidad activa' }
     const { error } = await useSupabaseClient().from('invitaciones').insert({
@@ -105,7 +104,9 @@ export function useColaboradores() {
       comunidad_id: comunidadActiva.value.id,
       role: 'COLABORADOR',
       email: payload.email || null,
-      idioma: payload.idioma,
+      nombre: payload.nombre.trim() || null,
+      apellido: payload.apellido.trim() || null,
+      idioma: payload.idioma as Enums<'idioma'>,
       expira_en: payload.expira_en,
     })
     return { error: error?.message ?? null }

@@ -17,11 +17,11 @@
       <WizardStepReview v-else-if="currentStep === 4" key="step-4" />
     </Transition>
 
-    <!-- Navegación -->
+    <!-- Navegación: «Siguiente / Guardar» es la acción principal de la vista -->
     <div
       v-if="!isSuccess"
       :class="[
-        'flex items-center justify-between mt-[22px]',
+        'mt-6 flex items-center justify-between',
         currentStep === 4 ? 'max-w-[760px] mx-auto' : '',
       ]"
     >
@@ -29,22 +29,9 @@
         {{ currentStep > 1 ? 'Anterior' : 'Cancelar' }}
       </UiButton>
 
-      <button
-        :class="[
-          'inline-flex items-center gap-[7px] font-bold rounded-btn text-[13.5px] px-[22px] h-[42px] transition-all duration-150',
-          canProceed
-            ? 'bg-brand-primary text-white shadow-btn hover:bg-brand-primary-700 cursor-pointer'
-            : 'bg-[#e9ebee] text-gray-400 cursor-not-allowed',
-        ]"
-        :disabled="!canProceed || isSubmitting"
-        @click="onNext"
-      >
-        <svg v-if="isSubmitting" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+      <UiButton :disabled="!canProceed" :loading="isSubmitting" @click="onNext">
         {{ currentStep < 4 ? 'Siguiente' : 'Guardar Taller' }}
-      </button>
+      </UiButton>
     </div>
   </div>
 </template>

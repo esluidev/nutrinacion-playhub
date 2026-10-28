@@ -1,106 +1,59 @@
 <template>
   <div>
-    <!-- Toggle de modo -->
-    <div class="flex items-center bg-white border border-gray-200 rounded-[11px] p-[3px] gap-0.5 w-fit mb-[18px]">
-      <button
-        :class="[
-          'h-[34px] px-4 rounded-[8px] text-[12.5px] font-bold transition-colors',
-          mode === 'individual' ? 'bg-brand-primary text-white' : 'text-gray-500 hover:text-gray-800',
-        ]"
-        @click="mode = 'individual'"
-      >
-        Educadores
-      </button>
-      <button
-        :class="[
-          'h-[34px] px-4 rounded-[8px] text-[12.5px] font-bold transition-colors',
-          mode === 'group' ? 'bg-brand-primary text-white' : 'text-gray-500 hover:text-gray-800',
-        ]"
-        @click="mode = 'group'"
-      >
-        Grupos
-      </button>
-    </div>
+    <!-- Modo: selector de vista (educadores o grupos) -->
+    <UiTabs v-model="modeModel" :items="modeTabs" fit class="mb-5" />
 
-    <!-- MODO INDIVIDUAL -->
+    <!-- MODO INDIVIDUAL: la selección en cielo (borde, marca y fondo); cada persona con su avatar -->
     <template v-if="mode === 'individual'">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div class="grid grid-cols-1 gap-3.5 md:grid-cols-2">
         <button
           v-for="edu in activeEducators"
           :key="edu.id"
-          :class="[
-            'flex items-center gap-3 rounded-[14px] px-4 py-3.5 border-[1.5px] text-left transition-all duration-150',
-            isEducatorSelected(edu.id)
-              ? 'bg-brand-primary-50 border-brand-primary'
-              : 'bg-white border-gray-200 hover:border-brand-primary-200',
-          ]"
+          type="button"
+          data-tone="sky"
+          class="select-card flex-row justify-start gap-3 px-4 py-3.5 pr-10 text-left"
+          :aria-pressed="isEducatorSelected(edu.id)"
           @click="toggleEducator(edu.id)"
         >
-          <div :class="['w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold shrink-0', edu.avatarBg]">
-            {{ edu.initials }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-[13.5px] font-extrabold text-gray-800 truncate">{{ edu.nombre }}</p>
-            <p class="text-[12px] font-semibold text-gray-500 mt-px">{{ edu.profesion }} · {{ edu.grupo }}</p>
-          </div>
-          <!-- Checkbox -->
-          <div
-            :class="[
-              'w-5 h-5 rounded-[6px] flex items-center justify-center shrink-0 transition-all',
-              isEducatorSelected(edu.id) ? 'bg-brand-primary' : 'border-2 border-[#dfe3e0]',
-            ]"
-          >
-            <svg v-if="isEducatorSelected(edu.id)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          </div>
+          <span class="selected-mark"><UiIcon name="check" /></span>
+          <UiAvatar :name="edu.nombre" :initials="edu.initials" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-body font-extrabold text-ink">{{ edu.nombre }}</span>
+            <span class="ui-caption mt-px block">{{ [edu.profesion, edu.grupo].filter(Boolean).join(' · ') }}</span>
+          </span>
         </button>
       </div>
     </template>
 
-    <!-- MODO GRUPO -->
+    <!-- MODO GRUPO: un grupo no tiene significado propio, tono estable por nombre -->
     <template v-if="mode === 'group'">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div class="grid grid-cols-1 gap-3.5 md:grid-cols-2">
         <button
           v-for="grupo in activeGroups"
           :key="grupo.id"
-          :class="[
-            'flex items-center gap-3 rounded-[14px] px-4 py-3.5 border-[1.5px] text-left transition-all duration-150',
-            isGroupSelected(grupo.id)
-              ? 'bg-brand-primary-50 border-brand-primary'
-              : 'bg-white border-gray-200 hover:border-brand-primary-200',
-          ]"
+          type="button"
+          data-tone="sky"
+          class="select-card flex-row justify-start gap-3 px-4 py-3.5 pr-10 text-left"
+          :aria-pressed="isGroupSelected(grupo.id)"
           @click="toggleGroup(grupo.id)"
         >
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-800 flex items-center justify-center shrink-0">
-            <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-            </svg>
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-[13.5px] font-extrabold text-gray-800 truncate">{{ grupo.nombre }}</p>
-            <p class="text-[12px] font-semibold text-gray-500 mt-px">{{ grupo.miembros }} educadores</p>
-          </div>
-          <!-- Checkbox -->
-          <div
-            :class="[
-              'w-5 h-5 rounded-[6px] flex items-center justify-center shrink-0 transition-all',
-              isGroupSelected(grupo.id) ? 'bg-brand-primary' : 'border-2 border-[#dfe3e0]',
-            ]"
-          >
-            <svg v-if="isGroupSelected(grupo.id)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          </div>
+          <span class="selected-mark"><UiIcon name="check" /></span>
+          <UiSymbol icon="users" size="md" :tone="uiToneFor(grupo.nombre)" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-body font-extrabold text-ink">{{ grupo.nombre }}</span>
+            <span class="ui-caption mt-px block">{{ grupo.miembros }} educadores</span>
+          </span>
         </button>
       </div>
 
-      <p class="text-[12px] text-gray-400 font-semibold mt-3">Al asignar un grupo se crea una asignación por cada educador del grupo.</p>
+      <p class="ui-caption mt-3">Al asignar un grupo se crea una asignación por cada educador del grupo.</p>
 
-      <div v-if="activeGroups.length === 0" class="text-center py-12">
-        <p class="text-sm font-bold text-gray-600">No hay grupos activos</p>
-        <p class="text-xs text-gray-400 mt-1">Crea grupos en la sección de Educadores</p>
-      </div>
+      <UiEmptyState
+        v-if="activeGroups.length === 0"
+        icon="users"
+        title="No hay grupos activos"
+        text="Crea grupos en la sección de Educadores"
+      />
     </template>
   </div>
 </template>
@@ -110,6 +63,16 @@ const { activeEducators, activeGroups } = useEducators()
 const { state, toggleEducator, toggleGroup } = useWorkshopWizard()
 
 const mode = ref<'individual' | 'group'>(state.value.educatorMode || 'individual')
+
+// Puente tipado: UiTabs habla en string; el modo es una unión cerrada.
+const modeModel = computed({
+  get: () => mode.value as string,
+  set: v => (mode.value = v as 'individual' | 'group'),
+})
+const modeTabs = [
+  { value: 'individual', label: 'Educadores' },
+  { value: 'group', label: 'Grupos' },
+]
 
 const isEducatorSelected = (id: number) => state.value.educatorIds.includes(id)
 const isGroupSelected = (id: number) => state.value.groupIds.includes(id)

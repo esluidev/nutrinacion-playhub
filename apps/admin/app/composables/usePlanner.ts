@@ -1,4 +1,7 @@
-export type PlannerStatus = 'programado' | 'completado' | 'borrador'
+import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
+
+// «borrador» agrupa lo que aún no ven los educadores (borrador y en revisión).
+export type PlannerStatus = 'programado' | 'completado' | 'sin_realizar' | 'borrador'
 
 export interface PlannerWorkshop {
   id: number
@@ -6,7 +9,7 @@ export interface PlannerWorkshop {
   time: string
   educator: string
   location: string
-  accentColor: string
+  tone: UiTone // tono de la sesión (useWorkshops)
   fecha: string // 'YYYY-MM-DD'
   storyboard: string
   status?: PlannerStatus // sin status = programado
@@ -37,21 +40,21 @@ export function usePlanner() {
   const activeView = useState<'kanban' | 'calendar'>('planner-activeView', () => 'kanban')
   const statusFilter = useState<'todos' | PlannerStatus>('planner-statusFilter', () => 'todos')
 
-  // El planner es otra VISTA de los talleres reales (los cancelados no se planifican).
+  // El planner es otra VISTA de los talleres reales (los cancelados y los archivados no se planifican).
   const { workshops: talleres, updateFecha } = useWorkshops()
   const workshops = computed<PlannerWorkshop[]>(() =>
     talleres.value
-      .filter(w => w.status !== 'cancelado')
+      .filter(w => w.status !== 'cancelado' && w.status !== 'archivado')
       .map(w => ({
         id: w.id,
         title: w.title,
         time: w.time,
         educator: w.educator,
         location: w.location,
-        accentColor: w.accentColor,
+        tone: w.tone,
         fecha: w.date,
         storyboard: w.storyboard,
-        status: w.status === 'programado' ? undefined : (w.status as PlannerStatus),
+        status: w.status === 'programado' ? undefined : w.status === 'revision' ? 'borrador' : (w.status as PlannerStatus),
       })))
 
   const today = new Date()

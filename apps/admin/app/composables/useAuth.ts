@@ -1,5 +1,13 @@
 import type { AuthUser, ComunidadConOrg, InvitacionInfo, Organizacion, Perfil } from '~/utils/types'
 
+// Los rechazos de Supabase Auth al fijar una contraseña, en el idioma de la interfaz.
+function errorDePassword(error: { code?: string, message: string }) {
+  const { t } = useT()
+  if (error.code === 'same_password') return t('perfil.pwSame')
+  if (error.code === 'weak_password') return t('auth.invite.pwShort')
+  return error.message
+}
+
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState('auth-loading', () => true)
@@ -36,27 +44,31 @@ export function useAuth() {
       // Idioma de UI = idioma del perfil (es/en).
       useLocale().value = perfil.idioma === 'en' ? 'en' : 'es'
 
-      // Superficie de acceso. Las comunidades las filtra el RLS (0002): devuelve las de las orgs
-      // que administro + aquellas donde soy colaborador activo. Traemos la org embebida porque el
+      // Superficie de acceso: las comunidades de las orgs que administro + aquellas donde soy
+      // colaborador activo. El RLS ya lo filtra así, salvo al superadmin, que las lee todas: su
+      // contexto solo baja a lo suyo (debajo de Platform no hay acceso por ser superadmin). Traemos la org embebida porque el
       // switcher agrupa por organización, y de una donde solo colaboro no sabríamos el nombre.
       // `colaboradores` se consulta aparte para distinguir CÓMO llego a cada comunidad: por
       // administrar su organización o por estar asignado a ella.
       const [{ data: adminRows }, { data: comunidades }, { data: colabRows }] = await Promise.all([
         supabase.from('organizacion_administradores').select('titular, organizaciones(*)').eq('perfil_id', perfil.id),
         supabase.from('comunidades').select('*, organizaciones ( id, nombre )'),
-        supabase.from('colaboradores').select('comunidad_id').eq('perfil_id', perfil.id).eq('activo', true),
+        supabase.from('comunidad_colaboradores').select('comunidad_id').eq('perfil_id', perfil.id).eq('activo', true),
       ])
 
       const admin = ((adminRows as { titular: boolean, organizaciones: Organizacion }[] | null) ?? [])
         .filter(r => r.organizaciones)
+      const orgsAdministradas = new Set(admin.map(r => r.organizaciones.id))
+      const colaboraEn = ((colabRows as { comunidad_id: number }[] | null) ?? []).map(r => r.comunidad_id)
 
       user.value = {
         id: authUser.id,
         email: authUser.email!,
         perfil,
         organizaciones: admin.map(r => r.organizaciones),
-        comunidades: (comunidades as unknown as ComunidadConOrg[]) ?? [],
-        colaboraEn: ((colabRows as { comunidad_id: number }[] | null) ?? []).map(r => r.comunidad_id),
+        comunidades: ((comunidades as unknown as ComunidadConOrg[]) ?? [])
+          .filter(c => orgsAdministradas.has(c.organizacion_id) || colaboraEn.includes(c.id)),
+        colaboraEn,
         titularDe: admin.filter(r => r.titular).map(r => r.organizaciones.id),
       }
     }
@@ -120,5 +132,46 @@ export function useAuth() {
     return { error: signInError ? signInError.message : null }
   }
 
-  return { user, loading, fetchUser, signIn, signOut, validateInvitation, redeemInvitation }
+  // ── Mi cuenta ────────────────────────────────────────────────────────────────
+  // El perfil propio: la base solo deja cambiar nombre, apellido, avatar e idioma (grant por columna).
+  async function actualizarPerfil(datos: { nombre: string, apellido: string, idioma: 'es' | 'en' }) {
+    if (!user.value) return { error: 'Sin sesión' }
+    const { error } = await useSupabaseClient().from('perfiles').update({
+      nombre: datos.nombre.trim() || null,
+      apellido: datos.apellido.trim() || null,
+      idioma: datos.idioma,
+    }).eq('id', user.value.perfil.id)
+    if (!error) await fetchUser()
+    return { error: error?.message ?? null }
+  }
+
+  // Cambiar la contraseña pide la actual: se comprueba entrando con ella antes de cambiarla.
+  async function cambiarPassword(actual: string, nueva: string): Promise<{ error: 'actual' | string | null }> {
+    if (!user.value) return { error: 'Sin sesión' }
+    const supabase = useSupabaseClient()
+    const { error: e1 } = await supabase.auth.signInWithPassword({ email: user.value.email, password: actual })
+    if (e1) return { error: 'actual' }
+    const { error } = await supabase.auth.updateUser({ password: nueva })
+    return { error: error ? errorDePassword(error) : null }
+  }
+
+  // «¿La olvidaste?»: Supabase manda un enlace que abre /restablecer con una sesión de
+  // recuperación. La respuesta es la misma exista o no la cuenta.
+  async function recuperarPassword(email: string) {
+    const { error } = await useSupabaseClient().auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/restablecer`,
+    })
+    return { error: error?.message ?? null }
+  }
+
+  // Con la sesión de recuperación del enlace, la nueva contraseña.
+  async function restablecerPassword(nueva: string) {
+    const { error } = await useSupabaseClient().auth.updateUser({ password: nueva })
+    return { error: error ? errorDePassword(error) : null }
+  }
+
+  return {
+    user, loading, fetchUser, signIn, signOut, validateInvitation, redeemInvitation,
+    actualizarPerfil, cambiarPassword, recuperarPassword, restablecerPassword,
+  }
 }

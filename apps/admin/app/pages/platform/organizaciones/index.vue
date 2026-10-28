@@ -2,20 +2,9 @@
   <div>
     <UiPageHeader :title="t('platform.orgs.title')" :description="t('platform.orgs.desc')">
       <template #actions>
-        <UiButton @click="navigateTo('/platform/organizaciones/nueva')">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {{ t('platform.orgs.new') }}
-        </UiButton>
+        <UiButton icon="plus" to="/platform/organizaciones/nueva">{{ t('platform.orgs.new') }}</UiButton>
       </template>
     </UiPageHeader>
-
-    <div class="flex items-center gap-2.5 mb-[22px] flex-wrap">
-      <UiSearchInput v-model="q" :placeholder="t('platform.orgs.searchPh')" max-width="xs" class="!w-[280px]" />
-      <UiSelect v-model="tipoFiltro" variant="toolbar" :prefix="t('platform.orgs.colType')" :options="tipoOpciones" />
-      <UiSelect v-model="adminsFiltro" variant="toolbar" :prefix="t('platform.orgs.colAdmins')" :options="adminsOpciones" />
-    </div>
 
     <UiDataTable
       :columns="columns"
@@ -30,73 +19,126 @@
       @row-click="(o) => navigateTo(`/platform/organizaciones/${o.id}`)"
       @update:page="page = $event"
     >
+      <!-- Búsqueda y filtros en servidor: viven en la barra integrada de la tabla -->
+      <template #toolbar>
+        <UiSearchInput v-model="q" :placeholder="t('platform.orgs.searchPh')" max-width="xs" />
+        <UiSelect v-model="tipoFiltro" variant="toolbar" :prefix="t('platform.orgs.colType')" :options="tipoOpciones" />
+        <UiSelect v-model="adminsFiltro" variant="toolbar" :prefix="t('platform.orgs.colAdmins')" :options="adminsOpciones" />
+      </template>
+
       <template #cell-nombre="{ row }">
         <div class="flex items-center gap-3">
-          <div class="w-[38px] h-[38px] rounded-[11px] bg-brand-primary-50 text-brand-primary-700 flex items-center justify-center shrink-0 font-extrabold text-sm">
+          <!-- La organización no significa nada por sí misma: tono estable según su nombre -->
+          <UiSymbol size="md" :tone="uiToneFor(row.nombre)" class="font-black text-(--tone-strong)">
             {{ row.nombre.charAt(0).toUpperCase() }}
-          </div>
+          </UiSymbol>
           <div class="min-w-0">
-            <p class="font-extrabold text-gray-800">{{ row.nombre }}</p>
-            <p v-if="row.correo || row.telefono" class="text-[12.5px] text-gray-500 truncate">{{ [row.correo, row.telefono].filter(Boolean).join('  ·  ') }}</p>
+            <p class="truncate font-extrabold text-ink">{{ row.nombre }}</p>
+            <p v-if="row.correo || row.telefono" class="ui-caption truncate">{{ [row.correo, row.telefono].filter(Boolean).join('  ·  ') }}</p>
           </div>
         </div>
       </template>
       <template #cell-tipo="{ row }">
-        <span class="inline-flex items-center text-[11.5px] font-bold px-[11px] py-1 rounded-full bg-gray-100 text-gray-600">{{ row.tipo?.nombre?.es ?? '—' }}</span>
+        <UiBadge tone="neutral">{{ row.tipo?.nombre?.es ?? '—' }}</UiBadge>
       </template>
       <template #cell-admins="{ row }">
         <!-- con titular: su nombre (+N co-admins) · sin titular pero con admins: el conteo -->
-        <span v-if="titularNombre(row)" class="text-[13px] text-gray-600 font-semibold">
-          {{ titularNombre(row) }}<span v-if="coadmins(row)" class="text-xs text-gray-400"> +{{ coadmins(row) }}</span>
+        <span v-if="titularNombre(row)" class="font-semibold text-muted">
+          {{ titularNombre(row) }}<span v-if="coadmins(row)" class="text-caption text-subtle"> +{{ coadmins(row) }}</span>
         </span>
-        <span v-else-if="admins(row).length" class="text-[13px] text-gray-600 font-semibold">
+        <span v-else-if="admins(row).length" class="font-semibold text-muted">
           {{ admins(row).length === 1 ? t('platform.orgs.adminsCountOne') : t('platform.orgs.adminsCount', { n: admins(row).length }) }}
         </span>
-        <span v-else class="text-xs text-amber-600 font-bold">{{ t('platform.orgs.noAdmins') }}</span>
+        <!-- Sin administradores: pendiente de invitar (sol), igual que en el resumen de Platform -->
+        <UiBadge v-else tone="sun" dot>{{ t('platform.orgs.noAdmins') }}</UiBadge>
       </template>
       <template #cell-licencia="{ row }">
-        <div v-if="row.lic" class="flex items-center gap-2">
-          <UiBadge :variant="licenciaVariant(row.lic.estado)" dot>{{ t('state.' + row.lic.estado) }}</UiBadge>
-          <span v-if="row.lic.fecha_fin" class="text-xs text-gray-400">{{ t('platform.orgs.expires', { fecha: fechaCorta(row.lic.fecha_fin) }) }}</span>
+        <div v-if="row.lic" class="flex flex-wrap items-center gap-2">
+          <UiBadge :tone="licenciaTone(row.lic.estado)" dot>{{ t('state.' + row.lic.estado) }}</UiBadge>
+          <span
+            v-if="row.lic.fecha_fin"
+            :data-tone="finLicenciaTone(row.lic)"
+            :class="['text-caption', finLicenciaTone(row.lic) ? 'font-extrabold text-(--tone-strong)' : 'font-semibold text-subtle']"
+          >
+            {{ t('platform.orgs.expires', { fecha: fechaCorta(row.lic.fecha_fin, locale) }) }}
+          </span>
         </div>
-        <UiBadge v-else variant="amber" dot>{{ t('platform.orgs.noLicense') }}</UiBadge>
+        <!-- Sin licencia: le falta lo necesario para operar (coral) -->
+        <UiBadge v-else tone="coral" dot>{{ t('platform.orgs.noLicense') }}</UiBadge>
       </template>
       <template #cell-comunidades="{ row }">
-        <span class="text-gray-800 font-extrabold">{{ row.comunidades[0]?.count ?? 0 }}</span>
+        <span class="font-extrabold tabular-nums text-ink">{{ row.comunidades }}</span>
       </template>
       <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <button
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+        <!-- Acciones de tabla: neutras; el borrado se confirma en coral (UiConfirmDialog) -->
+        <div class="flex items-center justify-end gap-2">
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="pencil"
+            icon-only
+            :label="t('common.edit')"
             :title="t('common.edit')"
             @click.stop="navigateTo(`/platform/organizaciones/${row.id}/editar`)"
-          >
-            <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-            </svg>
-          </button>
-          <button
-            class="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+          />
+          <UiButton
+            tone="neutral"
+            size="sm"
+            icon="trash"
+            icon-only
+            :label="t('common.delete')"
             :title="t('common.delete')"
-            @click.stop="eliminar(row)"
-          >
-            <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
+            @click.stop="pedirEliminar(row)"
+          />
         </div>
       </template>
     </UiDataTable>
+
+    <!-- Dar de baja es PERMANENTE y se lleva todo: dice qué (conteos reales) y exige el nombre.
+         Con storyboards personalizados la base lo impide: se explica y no se confirma. -->
+    <UiConfirmDialog
+      :open="!!borrando"
+      :title="t('platform.orgs.deleteTitle')"
+      :confirm-label="t('platform.orgs.deleteConfirm')"
+      :require-text="bloqueada ? undefined : borrando?.nombre"
+      :require-label="t('platform.orgs.deleteTypeName')"
+      :disabled="!resumen || bloqueada"
+      :loading="eliminando"
+      @update:open="(v) => { if (!v) borrando = null }"
+      @confirm="confirmarEliminar"
+    >
+      <p v-if="!resumen" class="text-subtle">{{ t('common.loading') }}</p>
+      <template v-else-if="bloqueada">
+        <p>{{ t('platform.orgs.deleteBlocked', { nombre: borrando?.nombre ?? '' }) }}</p>
+        <ul class="mt-3 space-y-1 font-semibold text-muted">
+          <li v-for="linea in lineasBloqueo" :key="linea" class="flex items-center gap-2">
+            <!-- Lo que lo impide: coral -->
+            <span class="size-1.5 shrink-0 rounded-full bg-(--tone-fill)" data-tone="coral" />{{ linea }}
+          </li>
+        </ul>
+        <p class="mt-3">{{ t('platform.orgs.deleteBlockedHow') }}</p>
+      </template>
+      <template v-else>
+        <p>{{ t('platform.orgs.deleteWarn', { nombre: borrando?.nombre ?? '' }) }}</p>
+        <ul v-if="lineasResumen.length" class="mt-3 space-y-1 font-semibold text-muted">
+          <li v-for="linea in lineasResumen" :key="linea" class="flex items-center gap-2">
+            <!-- Lo que se pierde: coral -->
+            <span class="size-1.5 shrink-0 rounded-full bg-(--tone-fill)" data-tone="coral" />{{ linea }}
+          </li>
+        </ul>
+        <p v-else class="mt-3 text-subtle">{{ t('platform.orgs.deleteNoData') }}</p>
+      </template>
+    </UiConfirmDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { PAGE_SIZE } from '~/composables/usePlatform'
+import { PAGE_SIZE } from '~/utils/paginacion'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.orgs.title', descKey: 'platform.orgs.desc' })
 
 const { t, locale } = useT()
-const { listOrganizaciones, listTiposOrganizacion, deleteOrganizacion } = usePlatform()
+const { listOrganizaciones, listTiposOrganizacion, deleteOrganizacion, resumenBorradoOrganizacion } = usePlatform()
 const { toast } = useToast()
 
 const orgs = ref<any[]>([])
@@ -168,16 +210,57 @@ onMounted(async () => {
   await load()
 })
 
-// Las FK restrict protegen: si la org tiene comunidades/licencias/admins, Postgres
-// rechaza el borrado y el error se muestra tal cual.
-async function eliminar(row: any) {
-  if (!window.confirm(t('platform.orgs.confirmDelete'))) return
-  const { error } = await deleteOrganizacion(row.id)
+// ── Eliminar ─────────────────────────────────────────────────────────────────
+// Se va entera: sus comunidades con toda su operación, licencias, administradores, educadores,
+// jornadas y temarios. Solo la impiden sus storyboards personalizados (se resuelven en Player).
+const borrando = ref<{ id: number, nombre: string } | null>(null)
+const resumen = ref<Awaited<ReturnType<typeof resumenBorradoOrganizacion>> | null>(null)
+const eliminando = ref(false)
+const bloqueada = computed(() => !!resumen.value && resumen.value.personalizados > 0)
+
+const lineas = (pares: [number, string][]) => pares.filter(([n]) => n > 0).map(([n, k]) => tCount(t, k, n))
+const lineasBloqueo = computed(() => {
+  const r = resumen.value
+  return r ? lineas([[r.personalizados, 'platform.orgs.personalizadosCount']]) : []
+})
+const lineasResumen = computed(() => {
+  const r = resumen.value
+  return r
+    ? lineas([
+        [r.comunidades, 'platform.orgs.comunidadesCount'],
+        [r.talleres, 'orgHome.talleresCount'],
+        [r.participantes, 'coms.participantesCount'],
+        [r.educadores, 'orgHome.educadoresCount'],
+        [r.jornadas, 'platform.orgs.jornadasCount'],
+        [r.temarios, 'platform.orgs.temariosCount'],
+        [r.licencias, 'platform.orgs.licenciasCount'],
+        [r.administradores, 'platform.orgs.adminsLostCount'],
+      ])
+    : []
+})
+
+function pedirEliminar(row: { id: number, nombre: string }) {
+  borrando.value = { id: row.id, nombre: row.nombre }
+  resumen.value = null
+  resumenBorradoOrganizacion(row.id).then((r) => { resumen.value = r })
+}
+
+async function confirmarEliminar() {
+  if (!borrando.value) return
+  eliminando.value = true
+  const { error, bloqueada: rechazada } = await deleteOrganizacion(borrando.value.id)
+  eliminando.value = false
+  if (rechazada) {
+    // Algo cambió desde que se abrió (p. ej., se le asignó un storyboard): se vuelve a contar.
+    resumen.value = await resumenBorradoOrganizacion(borrando.value.id)
+    return
+  }
   if (error) {
     toast.error(error)
     return
   }
   toast.success(t('platform.orgs.deleted'))
+  borrando.value = null
   await load()
 }
 
@@ -195,14 +278,4 @@ watch(q, () => {
   searchTimer = setTimeout(resetYCargar, 300)
 })
 
-function licenciaVariant(estado?: string): 'green' | 'blue' | 'red' | 'gray' {
-  const map: Record<string, 'green' | 'blue' | 'red' | 'gray'> = {
-    ACTIVA: 'green', TRIAL: 'blue', VENCIDA: 'red', SUSPENDIDA: 'gray',
-  }
-  return map[estado ?? ''] ?? 'gray'
-}
-
-function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
-}
 </script>
