@@ -1,0 +1,22 @@
+{
+  "name": "nutrinacion-playhub",
+  "private": true,
+  "description": "PlayHub (Nutrinación): Admin, Player y Educators con el UI Kit compartido",
+  "workspaces": [
+    "apps/admin",
+    "apps/player",
+    "apps/educators",
+    "packages/ui"
+  ],
+  "scripts": {
+    "verify": "./scripts/verify.sh",
+    "lab": "npm --workspace @playhub/ui run lab",
+    "db:types": "echo '// Generado con `npm run db:types` (Supabase local levantado). No editar a mano.' > supabase/database.types.ts && supabase gen types typescript --local --schema public >> supabase/database.types.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "vue-router": "^5.4.0"
+  }
+}

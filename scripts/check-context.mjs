@@ -9,14 +9,10 @@ const required = [
   'AGENTS.md',
   'CLAUDE.md',
   'docs/README.md',
-  'docs/testing/strategy.md',
-  'apps/admin/README.md',
   'apps/admin/AGENTS.md',
   'apps/admin/CLAUDE.md',
-  'apps/studio/README.md',
-  'apps/studio/AGENTS.md',
-  'apps/studio/CLAUDE.md',
-  'apps/educators/README.md',
+  'apps/player/AGENTS.md',
+  'apps/player/CLAUDE.md',
   'apps/educators/AGENTS.md',
   'apps/educators/CLAUDE.md',
 ]
@@ -24,7 +20,7 @@ const required = [
 const failures = []
 
 if (existsSync(join(root, 'qa'))) {
-  failures.push('qa/ no debe existir: estrategia en docs/testing y ejecución en la tarea activa')
+  failures.push('qa/ no debe existir: la ejecución y evidencia de QA viven en la tarea')
 }
 
 for (const relative of required) {
@@ -34,7 +30,7 @@ for (const relative of required) {
 const expectedLinks = new Map([
   ['CLAUDE.md', 'AGENTS.md'],
   ['apps/admin/CLAUDE.md', 'AGENTS.md'],
-  ['apps/studio/CLAUDE.md', 'AGENTS.md'],
+  ['apps/player/CLAUDE.md', 'AGENTS.md'],
   ['apps/educators/CLAUDE.md', 'AGENTS.md'],
 ])
 
@@ -60,13 +56,17 @@ function markdownFiles(relative) {
 const markdownRoots = [
   'README.md',
   'AGENTS.md',
+  '.harness',
+  'tasks',
+  'skills/README.md',
+  'packages/ui/README.md',
+  'packages/ui/TOKENS.md',
+  'packages/ui/DESIGN.md',
+  'packages/ui/PLAYER-DESIGN.md',
   'docs',
-  'apps/admin/README.md',
   'apps/admin/AGENTS.md',
-  'apps/studio/README.md',
-  'apps/studio/AGENTS.md',
-  'apps/studio/scripts/README.md',
-  'apps/educators/README.md',
+  'apps/player/AGENTS.md',
+  'apps/player/scripts/README.md',
   'apps/educators/AGENTS.md',
 ]
 

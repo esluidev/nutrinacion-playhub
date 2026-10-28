@@ -4,20 +4,54 @@
     {
       "name": "admin",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "apps/admin", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "apps/admin",
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "admin-demo",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "apps/admin", "run", "dev:demo"],
+      "runtimeArgs": [
+        "--prefix",
+        "apps/admin",
+        "run",
+        "dev:demo"
+      ],
       "port": 3100
     },
     {
-      "name": "studio",
+      "name": "player",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "apps/studio", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "apps/player",
+        "run",
+        "dev"
+      ],
       "port": 3001
+    },
+    {
+      "name": "educators",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "apps/educators",
+        "run",
+        "dev"
+      ],
+      "port": 3002
+    },
+    {
+      "name": "ui-kit",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "packages/ui/lab/server.mjs"
+      ],
+      "port": 4178
     }
   ]
 }

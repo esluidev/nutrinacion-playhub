@@ -1,79 +1,76 @@
 #!/usr/bin/env bash
 #
-# Verifica que el proyecto esté sano en las tres apps.
+# Verifica que el monorepo esté sano: contexto y las tres apps.
 # Obligatorio antes de marcar una tarea como lista para revisión.
 #
-# Uso: ./scripts/verify.sh
+# Uso: ./scripts/verify.sh    (desde la raíz; las dependencias se instalan con `npm install`)
 #
 # Códigos de salida:
 #   0 = todo OK
 #   ≠0 = al menos un chequeo falló (ver salida)
 #
-# Cobertura actual:
-#  - admin y studio: contexto + typecheck + Vitest + build mediante npm.
-#  - educators: Flutter, todavía fuera de este script; se verifica de forma focal.
-#  - Supabase/RLS, cloud y navegador requieren las capas descritas en docs/testing/strategy.md.
+# Cobertura:
+#  - contexto: archivos, symlinks y enlaces locales (check-context.mjs).
+#  - UI Kit: las vistas no escriben paleta, hex, sombras, anillos, tamaños sueltos ni SVG (check-ui.mjs).
+#  - admin, player y educators: typecheck + Vitest + build (las tres extienden @playhub/ui,
+#    así que esto también verifica el UI Kit compartido).
+#  - Supabase local: si está levantado (`supabase start`), las pruebas pgTAP de supabase/tests
+#    (RLS por identidad y acceso de educadores) con `supabase test db`. Si no, se avisa como
+#    «no ejecutado»: no cuenta como aprobado.
+#  - Cloud y navegador: ver docs/backend.md y el plan de cada tarea.
 
 set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PKG_MANAGER="npm run"   # las apps Nuxt usan npm (lockfile package-lock.json)
 
 echo "→ Contexto y documentación"
 node "$ROOT/scripts/check-context.mjs"
 
-run_node_app() {
+echo ""
+echo "→ UI Kit en las vistas"
+node "$ROOT/scripts/check-ui.mjs"
+
+if [ ! -d "$ROOT/node_modules" ]; then
+  echo "✗ Faltan dependencias: ejecuta npm install en la raíz del monorepo."
+  exit 1
+fi
+
+run_app() {
   local app="$1"; shift
-  local app_path="$ROOT/apps/$app"
-  if [ ! -f "$app_path/package.json" ]; then
-    echo "✗ apps/$app sin package.json, omitido"
-    return 0
-  fi
   echo ""
   echo "═══════════════════════════════════════════════════════"
-  echo "  apps/$app (Nuxt)"
+  echo "  apps/$app"
   echo "═══════════════════════════════════════════════════════"
-  cd "$app_path"
   for step in "$@"; do
     echo ""
-    echo "→ apps/$app: $PKG_MANAGER $step"
-    $PKG_MANAGER "$step"
+    echo "→ apps/$app: npm run $step"
+    npm --prefix "$ROOT/apps/$app" run "$step"
   done
-  cd "$ROOT"
 }
 
-run_flutter_app() {
-  local app="$1"
-  local app_path="$ROOT/apps/$app"
-  if [ ! -f "$app_path/pubspec.yaml" ]; then
-    echo "✗ apps/$app sin pubspec.yaml, omitido"
-    return 0
-  fi
-  echo ""
-  echo "═══════════════════════════════════════════════════════"
-  echo "  apps/$app (Flutter)"
-  echo "═══════════════════════════════════════════════════════"
-  cd "$app_path"
-  echo "→ apps/$app: flutter analyze"
-  flutter analyze
-  echo "→ apps/$app: flutter test"
-  flutter test
-  cd "$ROOT"
-}
-
-# admin (Nuxt) — typecheck + tests (vitest) + build
-run_node_app admin typecheck test build
-
-# studio (Nuxt) — typecheck + tests (vitest) + build
-run_node_app studio typecheck test build
-
-# educators (Flutter) — aún se verifica de forma focal; ver apps/educators/README.md
-# run_flutter_app educators
-
-# Las apps sin bloque activo todavía no tienen sus chequeos listos. Las tareas
-# que toquen una app van a activar su bloque acá como parte de su plan.
+run_app admin typecheck test build
+run_app player typecheck test build
+run_app educators typecheck test build
 
 echo ""
 echo "═══════════════════════════════════════════════════════"
-echo "  ✓ verify OK"
+echo "  supabase (local)"
+echo "═══════════════════════════════════════════════════════"
+SUPABASE_PENDIENTE=""
+if command -v supabase >/dev/null 2>&1 && (cd "$ROOT" && supabase status >/dev/null 2>&1); then
+  echo ""
+  echo "→ supabase test db"
+  (cd "$ROOT" && supabase test db)
+else
+  SUPABASE_PENDIENTE="1"
+  echo "! Supabase local no está levantado: pruebas de base de datos NO EJECUTADAS (supabase start)."
+fi
+
+echo ""
+echo "═══════════════════════════════════════════════════════"
+if [ -n "$SUPABASE_PENDIENTE" ]; then
+  echo "  ✓ verify OK, sin las pruebas de base de datos (no ejecutadas)"
+else
+  echo "  ✓ verify OK"
+fi
 echo "═══════════════════════════════════════════════════════"

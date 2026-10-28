@@ -9,6 +9,8 @@ build/
 .output/
 .nitro/
 .cache/
+# Almacén local de Nitro en desarrollo (useStorage('data')); se crea solo al arrancar `nuxt dev`
+.data/
 
 # Environment
 .env
@@ -34,26 +36,6 @@ pnpm-debug.log*
 supabase/.branches
 supabase/.temp
 supabase/.env
-
-# Flutter / Dart
-**/build/
-**/.dart_tool/
-**/.flutter-plugins
-**/.flutter-plugins-dependencies
-**/pubspec.lock
-**/.packages
-**/.pub-cache/
-**/.pub/
-**/ios/Pods/
-**/android/.gradle/
-**/android/app/build/
-**/android/build/
-**/.idea/
-**/*.iml
-
-# Obsidian symlink — apunta al vault local, no debe ir al repo
-obsidian
-tasks
 
 # Test outputs
 coverage/
