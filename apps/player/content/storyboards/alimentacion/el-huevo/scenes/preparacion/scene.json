@@ -1,0 +1,17 @@
+{
+  "id": "preparacion",
+  "family": "ordenar",
+  "template": "colocar",
+  "affirmations": ["A5"],
+  "meta": {
+    "instruction": { "es": "Pon los cuidados en orden" },
+    "completionFeedback": { "es": "Primero se conserva frío. Después se cocina hasta que la clara y la yema estén firmes." }
+  },
+  "strings": {
+    "completeTitle": { "es": "Frío y bien cocido" },
+    "hint": { "es": "Primero se conserva frío; después se cocina" },
+    "retry": { "es": "Ese orden no es. Prueba otra vez" }
+  },
+  "library": { "rive": [], "svg": ["huevo-gallina"], "sfx": [] },
+  "defaults": { "items": ["frio", "cocido"], "pointsOnComplete": 10 }
+}

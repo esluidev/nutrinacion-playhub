@@ -1,0 +1,13 @@
+{
+  "id": "descubrimiento",
+  "family": "revelar",
+  "template": "destapar",
+  "affirmations": ["A1"],
+  "meta": {
+    "instruction": { "es": "Toca un huevo y descubre su ave" },
+    "completionFeedback": { "es": "Se comen huevos de gallina, codorniz y pato." }
+  },
+  "strings": {},
+  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "huevo-codorniz", "huevo-pato", "nido"], "sfx": [] },
+  "defaults": { "items": ["gallina", "codorniz", "pato"], "pointsOnComplete": 10 }
+}

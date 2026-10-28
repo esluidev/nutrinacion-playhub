@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512" fill="none" role="group" aria-labelledby="huevo-title huevo-desc">
+  <title id="huevo-title">Huevo entero</title>
+  <desc id="huevo-desc">Huevo de cáscara naranja, sombra cálida a la derecha y en la base, cinco motitas y un único reflejo grande. Conserva las piezas internas y las dos mitades de la cáscara como geometría editable.</desc>
+  <defs>
+    <linearGradient id="huevo-cascara-color" x1="36" y1="30" x2="127" y2="162" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBAD6D" />
+      <stop offset="0.53" stop-color="#F8A264" />
+      <stop offset="1" stop-color="#F29457" />
+    </linearGradient>
+    <linearGradient id="huevo-sombra-color" x1="117" y1="38" x2="101" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EE8C4E" />
+      <stop offset="1" stop-color="#E98146" />
+    </linearGradient>
+    <linearGradient id="huevo-brillo-color" x1="65" y1="35" x2="39" y2="87" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFCB95" />
+      <stop offset="1" stop-color="#FFCA94" />
+    </linearGradient>
+    <g id="huevo-superficie">
+      <path id="huevo-silueta" fill="url(#huevo-cascara-color)" d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" />
+      <path id="huevo-sombra" fill="url(#huevo-sombra-color)" d="M109.2373 27.5965 C128.3480 44.5750 143.7200 77.6500 144.0000 109.5000 C144.2 148 122 176 77.5 176 C54.7300 176.0000 38.3995 168.6492 28.3080 156.1530 C40 163 52 165 62 165 C96 165 119 146 126 116 C134 88 124 46 109.2373 27.5965Z" />
+      <path id="huevo-brillo" fill="url(#huevo-brillo-color)" d="M69 35 C59 30 44 43 37 59 C30 74 34 87.5 42 87.5 C54 87.5 69 65 72.5 49 C74 42 73.5 37 69 35Z" />
+      <g id="huevo-matices" fill="#E98443" opacity="0.52">
+        <circle id="huevo-matiz-1" cx="109.3" cy="58.6" r="2" />
+        <circle id="huevo-matiz-2" cx="116.1" cy="76.3" r="2.6" />
+        <circle id="huevo-matiz-3" cx="36.1" cy="127.4" r="2.4" />
+        <ellipse id="huevo-matiz-4" cx="51" cy="140.8" rx="2.7" ry="3" transform="rotate(-20 51 140.8)" />
+        <circle id="huevo-matiz-5" cx="92.2" cy="147.8" r="1.9" />
+      </g>
+    </g>
+    <clipPath id="corte-superior">
+      <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99 L180 99 V0 H0 V98 Z" transform="translate(0 .45)" />
+    </clipPath>
+    <clipPath id="corte-inferior">
+      <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99 L180 99 V200 H0 V98 Z" />
+    </clipPath>
+    <radialGradient id="clara-color" cx="45%" cy="32%" r="75%">
+      <stop stop-color="#FFF9D9" stop-opacity="0.72" />
+      <stop offset="0.7" stop-color="#EDEECF" stop-opacity="0.62" />
+      <stop offset="1" stop-color="#D5DEBD" stop-opacity="0.78" />
+    </radialGradient>
+    <radialGradient id="yema-color" cx="35%" cy="28%" r="76%">
+      <stop stop-color="#FFD657" />
+      <stop offset="0.55" stop-color="#FFBF26" />
+      <stop offset="0.86" stop-color="#F9A619" />
+      <stop offset="1" stop-color="#EC8F13" />
+    </radialGradient>
+    <radialGradient id="yema-contacto-color" cx="50%" cy="50%" r="50%">
+      <stop stop-color="#BE8E20" stop-opacity=".25" />
+      <stop offset="1" stop-color="#D4AC43" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="limite-foco-yema">
+      <rect x="276" y="113" width="88" height="67" />
+    </clipPath>
+    <clipPath id="limite-foco-clara">
+      <rect x="164" y="248" width="304" height="128" />
+    </clipPath>
+    <clipPath id="limite-foco-cascara-izquierda">
+      <rect x="8" y="4" width="144" height="184" />
+    </clipPath>
+    <clipPath id="limite-foco-cascara-derecha">
+      <rect x="8" y="4" width="144" height="184" />
+    </clipPath>
+  </defs>
+  <g id="encuadre" transform="matrix(2.5 0 0 2.5 56 16)">
+    <g id="huevo">
+      <g id="pose-clara" clip-path="url(#limite-foco-clara)" transform="matrix(.53 0 0 .44 -89.6 -2.16)">
+        <g id="clara" opacity="0">
+          <path id="clara-contorno" fill="url(#clara-color)" stroke="#BFCDA9" stroke-opacity="0.66" stroke-width="1.4" d="M185 295 C195 277 218 279 238 268 C263 253 295 255 321 259 C347 250 375 256 392 269 C408 280 441 276 453 296 C470 322 444 343 417 347 C397 350 385 366 357 366 C329 364 317 372 291 367 C266 361 247 368 227 355 C210 344 181 345 174 326 C168 311 174 302 185 295Z" />
+          <path id="clara-densa" fill="#FFF8D9" fill-opacity="0.30" stroke="#FFFDF1" stroke-opacity="0.7" stroke-width="1.5" d="M234 296 C251 272 295 276 323 273 C358 270 398 284 404 305 C411 329 372 346 336 346 C298 351 251 340 238 325 C229 315 228 305 234 296Z" />
+          <path id="clara-reflejo" d="M190 315 C191 301 210 298 225 296 M249 351 C264 357 280 353 291 356 M409 332 C424 330 439 324 439 314" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="4" stroke-linecap="round" />
+          <g id="seleccion-clara" opacity="0" pointer-events="none">
+            <path d="M185 295 C195 277 218 279 238 268 C263 253 295 255 321 259 C347 250 375 256 392 269 C408 280 441 276 453 296 C470 322 444 343 417 347 C397 350 385 366 357 366 C329 364 317 372 291 367 C266 361 247 368 227 355 C210 344 181 345 174 326 C168 311 174 302 185 295Z" fill="#E6ECCF" opacity=".10" />
+            <path d="M185 295 C195 277 218 279 238 268 C263 253 295 255 321 259 C347 250 375 256 392 269 C408 280 441 276 453 296 C470 322 444 343 417 347 C397 350 385 366 357 366 C329 364 317 372 291 367 C266 361 247 368 227 355 C210 344 181 345 174 326 C168 311 174 302 185 295Z" fill="none" stroke="#E6ECCF" stroke-width="6.0" stroke-opacity="0.6" stroke-linejoin="round" />
+            <path d="M185 295 C195 277 218 279 238 268 C263 253 295 255 321 259 C347 250 375 256 392 269 C408 280 441 276 453 296 C470 322 444 343 417 347 C397 350 385 366 357 366 C329 364 317 372 291 367 C266 361 247 368 227 355 C210 344 181 345 174 326 C168 311 174 302 185 295Z" fill="none" stroke="#9CAE7E" stroke-width="1.8" stroke-opacity="0.85" stroke-linejoin="round" />
+          </g>
+          <rect x="160" y="244" width="312" height="136" fill="none" pointer-events="none" />
+        </g>
+      </g>
+      <g id="pose-yema" transform="matrix(.8 0 0 .8 -176 10.8)" clip-path="url(#limite-foco-yema)">
+        <g id="yema" opacity="1">
+          <ellipse id="yema-sombra" cx="320" cy="165" rx="43" ry="10" fill="url(#yema-contacto-color)" />
+          <path id="yema-cuerpo" d="M281 149 C283 132 296 118 319 118 C341 118 357 131 360 148 C363 159 345 166 321 166 C297 166 278 159 281 149Z" fill="url(#yema-color)" />
+          <path id="yema-volumen-inferior" d="M281 149 C291 158 345 160 360 148 C363 159 345 166 321 166 C297 166 278 159 281 149Z" fill="#E88E0B" opacity=".10" />
+          <path id="yema-brillo" d="M297 131 C303 126 315 124 321 127 C327 131 315 133 306 135 C297 138 291 136 297 131Z" fill="#FFECA1" opacity=".85" />
+          <ellipse id="disco-germinal" cx="334" cy="139" rx="4" ry="2" fill="#FFF1BC" opacity=".62" />
+          <path id="yema-contacto-clara" d="M283 158 C293 171 350 172 359 156" stroke="#FFF9DF" stroke-opacity=".48" stroke-width="1.4" stroke-linecap="round" />
+          <g id="seleccion-yema" opacity="0" pointer-events="none">
+            <path d="M281 149 C283 132 296 118 319 118 C341 118 357 131 360 148 C363 159 345 166 321 166 C297 166 278 159 281 149Z" fill="#FFE7A0" opacity=".10" />
+            <path d="M281 149 C283 132 296 118 319 118 C341 118 357 131 360 148 C363 159 345 166 321 166 C297 166 278 159 281 149Z" fill="none" stroke="#FFE7A0" stroke-width="4.4" stroke-opacity="0.6" stroke-linejoin="round" />
+            <path d="M281 149 C283 132 296 118 319 118 C341 118 357 131 360 148 C363 159 345 166 321 166 C297 166 278 159 281 149Z" fill="none" stroke="#D9951B" stroke-width="1.15" stroke-opacity="0.85" stroke-linejoin="round" />
+          </g>
+          <rect x="273" y="110" width="94" height="73" fill="none" pointer-events="none" />
+        </g>
+      </g>
+      <g id="huevo-cascara">
+        <g>
+          <g id="pose-cascara-izquierda" clip-path="url(#limite-foco-cascara-izquierda)">
+            <g id="cascara-izquierda">
+              <g clip-path="url(#corte-superior)">
+                <use href="#huevo-superficie" xlink:href="#huevo-superficie" />
+              </g>
+              <path id="grieta-izquierda" d="M80 97 L65 101 L56 94 L42 100 L34 95 L20 98 M80 97 L91 103 L102 96 L113 100 L126 95 L141 99" stroke="#B16A35" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="74" stroke-dashoffset="74" />
+              <g id="seleccion-cascara-izquierda" opacity="0" pointer-events="none">
+                <g clip-path="url(#corte-superior)">
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="#FFE1B6" opacity=".16" />
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="none" stroke="#FFE1B6" stroke-width="6.2" stroke-opacity="0.5" stroke-linejoin="round" />
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="none" stroke="#D58849" stroke-width="1.7" stroke-opacity="0.78" stroke-linejoin="round" />
+                </g>
+                <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99" fill="none" stroke="#FFE1B6" stroke-width="6.2" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99" fill="none" stroke="#D58849" stroke-width="1.7" stroke-opacity="0.78" stroke-linecap="round" stroke-linejoin="round" />
+              </g>
+              <rect x="4" y="0" width="152" height="192" fill="none" pointer-events="none" />
+            </g>
+          </g>
+          <g id="pose-cascara-derecha" clip-path="url(#limite-foco-cascara-derecha)">
+            <g id="cascara-derecha">
+              <g clip-path="url(#corte-inferior)">
+                <use href="#huevo-superficie" xlink:href="#huevo-superficie" />
+              </g>
+              <path id="grieta-derecha" d="M80 97 L65 101 L56 94 L42 100 L34 95 L20 98 M80 97 L91 103 L102 96 L113 100 L126 95 L141 99" stroke="#B16A35" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="74" stroke-dashoffset="74" />
+              <path id="grieta-descendente" d="M80 97 L77.5 104 L81 110 L78.5 117" stroke="#B16A35" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="26" stroke-dashoffset="26" pointer-events="none" />
+              <g id="seleccion-cascara-derecha" opacity="0" pointer-events="none">
+                <g clip-path="url(#corte-inferior)">
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="#FFE1B6" opacity=".16" />
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="none" stroke="#FFE1B6" stroke-width="6.2" stroke-opacity="0.5" stroke-linejoin="round" />
+                  <path d="M83.5 16 C56.5 16 27.2 51.8 18.9 91.3 C8.1 139.7 26.9 176 77.5 176 C122 176 144.2 148 144 109.5 C143.6 64 112.4 16 83.5 16Z" fill="none" stroke="#D58849" stroke-width="1.7" stroke-opacity="0.78" stroke-linejoin="round" />
+                </g>
+                <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99" fill="none" stroke="#FFE1B6" stroke-width="6.2" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20 98 L34 95 L42 100 L56 94 L65 101 L80 97 L91 103 L102 96 L113 100 L126 95 L141 99" fill="none" stroke="#D58849" stroke-width="1.7" stroke-opacity="0.78" stroke-linecap="round" stroke-linejoin="round" />
+              </g>
+              <rect x="4" y="0" width="152" height="192" fill="none" pointer-events="none" />
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

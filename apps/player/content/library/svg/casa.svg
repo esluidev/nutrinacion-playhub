@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="520" viewBox="0 0 580 520" role="img" aria-labelledby="title desc">
+  <title id="title">Casa</title>
+  <desc id="desc">Casa de formas suaves, techo coral, fachada crema, ventanas azules y puerta de madera. Ilustración vectorial con fondo transparente.</desc>
+  <defs>
+    <linearGradient id="wall-front" x1="135" y1="210" x2="395" y2="478" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF1CE"/><stop offset=".58" stop-color="#FFE4AD"/><stop offset="1" stop-color="#F5CC87"/>
+    </linearGradient>
+    <linearGradient id="wall-side" x1="419" y1="311" x2="511" y2="344" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8B66E"/><stop offset="1" stop-color="#F5CD8A"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="336" y1="88" x2="454" y2="249" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7E65"/><stop offset=".5" stop-color="#F45448"/><stop offset="1" stop-color="#D9363D"/>
+    </linearGradient>
+    <linearGradient id="roof-edge" x1="132" y1="142" x2="332" y2="274" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8C70"/><stop offset=".45" stop-color="#F85C50"/><stop offset="1" stop-color="#E44143"/>
+    </linearGradient>
+    <linearGradient id="chimney-color" x1="416" y1="69" x2="461" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFAE7D"/><stop offset="1" stop-color="#EA7951"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2=".85" y2="1">
+      <stop stop-color="#91E2FC"/><stop offset=".48" stop-color="#53C5F4"/><stop offset="1" stop-color="#279BDD"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="228" y1="355" x2="306" y2="466" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EDA15F"/><stop offset=".5" stop-color="#DD8B46"/><stop offset="1" stop-color="#C77436"/>
+    </linearGradient>
+    <linearGradient id="step" x1="263" y1="472" x2="263" y2="496" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7B782"/><stop offset="1" stop-color="#CC955F"/>
+    </linearGradient>
+    <radialGradient id="knob" cx=".32" cy=".27" r=".76">
+      <stop stop-color="#FFF5B0"/><stop offset=".48" stop-color="#FFCF58"/><stop offset="1" stop-color="#EAA02A"/>
+    </radialGradient>
+  </defs>
+
+  <g id="casa">
+    <g id="chimenea">
+      <path d="M414 75 Q414 69 420 69 H455 Q460 69 460 75 V176 L414 151Z" fill="url(#chimney-color)"/>
+      <path d="M447 71 H460 V176 L447 169Z" fill="#C76142" opacity=".48"/>
+      <path d="M424 84 V126" fill="none" stroke="#FFD0A1" stroke-width="7" stroke-linecap="round" opacity=".65"/>
+      <path d="M409 67 Q409 61 415 61 H460 Q466 61 466 67 V76 Q466 81 461 81 H415 Q409 81 409 76Z" fill="#EF8B60"/>
+      <rect x="411" y="61" width="53" height="10" rx="5" fill="#FFB88A"/>
+    </g>
+
+    <g id="pared-lateral">
+      <path d="M417 241 L507 207 V436 Q507 447 495 451 L417 478Z" fill="url(#wall-side)"/>
+      <path d="M417 241 L507 207 V231 L417 266Z" fill="#C08345" opacity=".28"/>
+      <path d="M418 460 L503 431 V443 Q501 449 494 452 L418 478Z" fill="#CF985C"/>
+    </g>
+
+    <g id="fachada">
+      <path d="M95 242 L261 100 L427 243 V464 Q427 479 412 479 H111 Q95 479 95 463Z" fill="url(#wall-front)"/>
+      <path d="M95 242 L261 100 L427 243 V263 L261 127 L95 264Z" fill="#C88A50" opacity=".2"/>
+      <path d="M105 278 V449" fill="none" stroke="#FFF6DB" stroke-width="7" stroke-linecap="round" opacity=".62"/>
+      <path d="M95 456 H427 V464 Q427 479 412 479 H111 Q95 479 95 463Z" fill="#E9BC7C"/>
+      <path d="M111 456 H411" fill="none" stroke="#F8D598" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <g id="ventana-lateral">
+      <path d="M452 292 L482 282 Q489 280 489 287 V347 Q489 354 483 357 L453 367 Q447 369 447 362 V301 Q447 294 452 292Z" fill="#CD9659"/>
+      <path d="M454 291 L482 282 Q487 280 487 287 V344 Q487 350 482 352 L454 362 Q449 364 449 357 V298 Q449 293 454 291Z" fill="#FFF0CF"/>
+      <path d="M456 298 L480 290 V344 L456 353Z" fill="#39AADA"/>
+      <path d="M457 299 L478 292 L457 329Z" fill="#B8EAF5" opacity=".46"/>
+      <path d="M468 295 V347 M454 326 L482 316" fill="none" stroke="#FFEAC7" stroke-width="5"/>
+      <path d="M447 363 L489 349 V356 Q489 360 485 361 L451 373 Q447 374 447 370Z" fill="#BE8C55"/>
+      <path d="M446 360 L488 346 Q492 345 492 349 Q492 352 488 353 L449 367 Q445 368 445 364 Q445 361 446 360Z" fill="#FFF0D1"/>
+    </g>
+
+    <g id="techo">
+      <path d="M259 88 L337 59 Q345 56 352 62 L537 220 Q547 229 535 235 L447 267Z" fill="#BC3436"/>
+      <path d="M259 80 L337 53 Q345 50 353 57 L540 216 Q548 223 537 228 L447 258Z" fill="url(#roof)"/>
+      <path d="M279 82 L339 62 Q344 60 349 65 L524 212" fill="none" stroke="#FFA28A" stroke-width="7" stroke-linecap="round" opacity=".65"/>
+      <path d="M315 126 L392 101 M364 168 L439 142 M413 211 L488 185" fill="none" stroke="#BF3338" stroke-opacity=".18" stroke-width="5" stroke-linecap="round"/>
+      <path d="M64 239 L250 76 Q261 66 273 76 L454 239 Q464 249 454 260 Q447 267 436 260 L261 107 L82 263 Q72 271 63 260 Q55 250 64 239Z" fill="#BD3838"/>
+      <path d="M64 231 L250 68 Q261 58 273 68 L454 231 Q464 241 454 252 Q447 259 436 252 L261 99 L82 255 Q72 263 63 252 Q55 242 64 231Z" fill="url(#roof-edge)"/>
+      <path d="M73 237 L254 78 Q261 72 268 79 L442 234" fill="none" stroke="#FFB29A" stroke-width="7" stroke-linecap="round" opacity=".65"/>
+    </g>
+
+    <g id="ventana-superior">
+      <circle cx="262" cy="226" r="38" fill="#DDA663"/>
+      <circle cx="261" cy="222" r="37" fill="#FFFAE8"/>
+      <circle cx="261" cy="222" r="28" fill="url(#glass)"/>
+      <path d="M241 218 Q243 204 258 200" fill="none" stroke="#D0F4FC" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+      <path d="M261 194 V250 M233 222 H289" stroke="#FFFAE8" stroke-width="6"/>
+    </g>
+
+    <g id="ventana-izquierda">
+      <rect x="122" y="303" width="80" height="84" rx="13" fill="#D6A568"/>
+      <rect x="120" y="298" width="80" height="84" rx="12" fill="#FFFAE8"/>
+      <rect x="128" y="306" width="64" height="67" rx="7" fill="url(#glass)"/>
+      <path d="M135 308 H156 L130 343 V317 Q130 308 135 308Z M166 308 H177 L130 369 V354Z" fill="#D9F7FF" opacity=".4"/>
+      <path d="M160 304 V375 M126 340 H194" fill="none" stroke="#FFFAE8" stroke-width="6"/>
+      <rect x="115" y="376" width="91" height="13" rx="6.5" fill="#D7A569"/>
+      <rect x="114" y="373" width="92" height="10" rx="5" fill="#FFF5DD"/>
+    </g>
+
+    <g id="ventana-derecha">
+      <rect x="324" y="303" width="80" height="84" rx="13" fill="#D6A568"/>
+      <rect x="322" y="298" width="80" height="84" rx="12" fill="#FFFAE8"/>
+      <rect x="330" y="306" width="64" height="67" rx="7" fill="url(#glass)"/>
+      <path d="M337 308 H358 L332 343 V317 Q332 308 337 308Z M368 308 H379 L332 369 V354Z" fill="#D9F7FF" opacity=".4"/>
+      <path d="M362 304 V375 M328 340 H396" fill="none" stroke="#FFFAE8" stroke-width="6"/>
+      <rect x="317" y="376" width="91" height="13" rx="6.5" fill="#D7A569"/>
+      <rect x="316" y="373" width="92" height="10" rx="5" fill="#FFF5DD"/>
+    </g>
+
+    <g id="puerta">
+      <path d="M217 476 V354 Q217 327 244 327 H280 Q307 327 307 354 V476Z" fill="#D2A065"/>
+      <path d="M214 475 V352 Q214 323 244 323 H278 Q308 323 308 352 V475Z" fill="#FFF2D5"/>
+      <path d="M223 475 V352 Q223 332 244 332 H278 Q299 332 299 352 V475Z" fill="#AE642F"/>
+      <path d="M228 475 V352 Q228 336 244 336 H278 Q295 336 295 352 V475Z" fill="url(#wood)"/>
+      <path d="M236 365 V353 Q236 344 245 344 H276" fill="none" stroke="#FFC187" stroke-width="5" stroke-linecap="round" opacity=".68"/>
+      <path d="M244 380 V453 M278 351 V453" fill="none" stroke="#A95D2D" stroke-width="3" stroke-linecap="round" opacity=".24"/>
+      <path d="M248 382 V452" fill="none" stroke="#FFC185" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+      <ellipse cx="282" cy="410" rx="8" ry="9" fill="#A8602D" opacity=".5"/>
+      <circle cx="281" cy="407" r="7.5" fill="url(#knob)"/>
+      <circle cx="279" cy="404" r="2.2" fill="#FFF7C9"/>
+    </g>
+
+    <g id="escalon">
+      <path d="M216 469 H308 L320 479 V488 Q320 493 314 493 H208 Q202 493 202 488 V479Z" fill="url(#step)"/>
+      <path d="M216 469 H308 L319 479 Q321 482 316 482 H207 Q201 482 204 479Z" fill="#FFE3B5"/>
+      <path d="M210 483 H312" fill="none" stroke="#F4CD98" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

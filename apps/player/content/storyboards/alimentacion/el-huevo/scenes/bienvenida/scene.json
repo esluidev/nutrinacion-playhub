@@ -1,0 +1,15 @@
+{
+  "id": "bienvenida",
+  "family": "anuncio",
+  "template": "anuncio",
+  "affirmations": [],
+  "meta": {
+    "instruction": { "es": "Hoy vamos a conocer el huevo." },
+    "completionFeedback": null
+  },
+  "strings": {
+    "title": { "es": "Hoy vamos a conocer {{el huevo}}" }
+  },
+  "library": { "rive": [], "svg": ["huevo"], "sfx": [] },
+  "defaults": { "pointsOnComplete": 0 }
+}

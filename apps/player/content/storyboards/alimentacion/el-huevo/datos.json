@@ -1,0 +1,68 @@
+{
+  "items": [
+    {
+      "id": "gallina",
+      "name": { "es": "Gallina" },
+      "tone": "grape",
+      "svg": "huevo-gallina",
+      "sizeScale": 0.68,
+      "description": { "es": "Un huevo" },
+      "fact": { "es": "Este huevo es de gallina" },
+      "character": { "rive": "aves", "enum": { "ave": "gallina" } }
+    },
+    {
+      "id": "codorniz",
+      "name": { "es": "Codorniz" },
+      "tone": "sky",
+      "svg": "huevo-codorniz",
+      "sizeScale": 0.49,
+      "description": { "es": "Un huevo pequeño" },
+      "fact": { "es": "Este huevo es de codorniz" },
+      "character": { "rive": "aves", "enum": { "ave": "codorniz" } }
+    },
+    {
+      "id": "pato",
+      "name": { "es": "Pato" },
+      "tone": "coral",
+      "svg": "huevo-pato",
+      "sizeScale": 0.8,
+      "description": { "es": "Un huevo grande" },
+      "fact": { "es": "Este huevo es de pato" },
+      "character": { "rive": "aves", "enum": { "ave": "pata" } }
+    },
+    {
+      "id": "granja",
+      "name": { "es": "Granja" },
+      "tone": "grape",
+      "svg": "huevo-gallina",
+      "sizeScale": 0.68,
+      "nest": true
+    },
+    {
+      "id": "tienda",
+      "name": { "es": "Tienda" },
+      "tone": "rose",
+      "svg": "tienda"
+    },
+    {
+      "id": "casa",
+      "name": { "es": "Casa" },
+      "tone": "sky",
+      "svg": "casa"
+    },
+    {
+      "id": "frio",
+      "name": { "es": "Frío" },
+      "tone": "sky",
+      "svg": "huevo-gallina",
+      "icon": "snowflake"
+    },
+    {
+      "id": "cocido",
+      "name": { "es": "Bien cocido" },
+      "tone": "grape",
+      "svg": "huevo-gallina",
+      "icon": "flame-solid"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "key": "6f375f8d-0467-4dd2-958a-91d6d6d1c060",
+  "slug": "el-huevo",
+  "version": "0.1.0",
+  "title": { "es": "El huevo" },
+  "type": "ALIMENTACION",
+  "category": "NUTRIENTES",
+  "audience": "KIDS",
+  "healthFocus": ["DESNUTRICION"],
+  "languages": ["es"],
+  "defaultLanguage": "es",
+  "estimatedDuration": 30,
+  "scenes": [
+    { "folder": "bienvenida", "title": { "es": "Bienvenida" } },
+    { "folder": "origen", "title": { "es": "Origen" } },
+    { "folder": "descubrimiento", "title": { "es": "Descubrimiento" } },
+    { "folder": "preparacion", "title": { "es": "Preparación" } }
+  ]
+}

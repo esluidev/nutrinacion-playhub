@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="600" height="330" viewBox="170 180 1200 660" role="img" aria-labelledby="asset-title asset-description">
+  <title id="asset-title">Nido de PlayHub</title>
+  <desc id="asset-description">Nido vacío de paja dorada, ancho y redondeado, con cavidad cálida y fibras curvas superpuestas. Basado en reference/nido.png, sin las ramas marrones. SVG editable con fondo transparente.</desc>
+  <metadata>Fuente maestra: nido.svg. Referencia visual: reference/nido.png. Coordenadas conservadas respecto a la referencia; encuadre ajustado al nido sin ramas. Diseño estático. Capas editables: base y borde posterior, interior, paja lateral y borde anterior.</metadata>
+  <defs>
+    <linearGradient id="nido-base-color" gradientUnits="userSpaceOnUse" x1="694" y1="407" x2="759" y2="805">
+      <stop offset="0" stop-color="#F8BE43" />
+      <stop offset=".54" stop-color="#EFAA35" />
+      <stop offset="1" stop-color="#DE902B" />
+    </linearGradient>
+    <linearGradient id="nido-borde-color" gradientUnits="userSpaceOnUse" x1="726" y1="211" x2="787" y2="469">
+      <stop offset="0" stop-color="#FFD355" />
+      <stop offset=".53" stop-color="#FFC247" />
+      <stop offset="1" stop-color="#F5AF35" />
+    </linearGradient>
+    <radialGradient id="nido-interior-color" gradientUnits="userSpaceOnUse" cx="705" cy="354" r="387" gradientTransform="translate(0 88.5) scale(1 .75)">
+      <stop offset="0" stop-color="#EAA03A" />
+      <stop offset=".6" stop-color="#DF942F" />
+      <stop offset="1" stop-color="#CC842B" />
+    </radialGradient>
+    <linearGradient id="nido-fondo-color" gradientUnits="userSpaceOnUse" x1="764" y1="446" x2="774" y2="591">
+      <stop offset="0" stop-color="#C9812B" />
+      <stop offset="1" stop-color="#D9922F" />
+    </linearGradient>
+    <linearGradient id="nido-paja-color" x1=".25" y1="0" x2=".67" y2="1">
+      <stop offset="0" stop-color="#FFD15A" />
+      <stop offset=".6" stop-color="#FFC346" />
+      <stop offset="1" stop-color="#FFB731" />
+    </linearGradient>
+    <linearGradient id="nido-paja-clara" x1=".28" y1="0" x2=".62" y2="1">
+      <stop offset="0" stop-color="#FFDC72" />
+      <stop offset=".6" stop-color="#FFD361" />
+      <stop offset="1" stop-color="#FFC248" />
+    </linearGradient>
+    <linearGradient id="nido-paja-media" x1=".18" y1="0" x2=".75" y2="1">
+      <stop offset="0" stop-color="#FAC344" />
+      <stop offset="1" stop-color="#E9A02D" />
+    </linearGradient>
+    <linearGradient id="nido-frente-color" gradientUnits="userSpaceOnUse" x1="676" y1="488" x2="737" y2="727">
+      <stop offset="0" stop-color="#FFCA4C" />
+      <stop offset=".55" stop-color="#FFBE3B" />
+      <stop offset="1" stop-color="#F7AF30" />
+    </linearGradient>
+    <linearGradient id="nido-frente-luz" gradientUnits="userSpaceOnUse" x1="868" y1="609" x2="812" y2="753">
+      <stop offset="0" stop-color="#FFDC71" />
+      <stop offset="1" stop-color="#FFD25F" />
+    </linearGradient>
+  </defs>
+  <g id="nido" inkscape:label="Nido dorado sin ramas">
+    <g id="nido-base" inkscape:label="Cuerpo de paja y borde posterior">
+      <path d="M264 423 C366 341 566 319 793 343 C1007 319 1184 378 1262 477 C1311 518 1310 584 1261 637 C1268 669 1244 696 1228 711 C1211 740 1184 741 1151 722 C1119 758 1061 779 1018 776 C991 787 966 779 954 774 C904 806 835 814 792 783 C776 810 748 822 731 789 C661 812 595 790 549 766 C499 801 451 802 453 771 C422 790 391 777 383 741 C352 737 331 717 326 686 C299 710 275 696 264 671 C254 650 263 622 268 603 C233 602 214 577 222 545 C216 501 234 452 264 423Z" fill="url(#nido-base-color)" />
+      <path d="M274 373 C285 357 302 342 316 332 C291 334 283 317 303 304 C326 287 365 280 413 283 C389 271 382 253 405 241 C428 229 478 234 532 241 C516 227 523 211 549 213 C578 215 607 230 629 245 C612 223 644 216 676 222 C707 225 733 235 755 248 C796 222 839 208 887 210 C931 208 948 241 911 260 C948 257 989 262 1025 276 C1088 250 1168 245 1200 267 C1222 285 1210 298 1179 297 C1159 295 1158 302 1187 309 C1215 317 1254 313 1278 324 C1302 333 1312 356 1304 368 C1299 378 1284 375 1275 374 C1308 388 1326 417 1326 440 C1329 464 1311 486 1285 500 C1210 524 1151 510 1101 478 C1037 438 972 377 879 343 C825 325 782 343 739 340 C677 322 627 324 568 347 C490 373 434 430 388 459 C335 470 270 435 274 373Z" fill="url(#nido-borde-color)" />
+      <path d="M405 241 C439 226 500 237 543 253 C574 264 589 281 572 285 C550 290 532 281 506 282 C466 282 439 286 414 282 C391 272 381 253 405 241Z" fill="url(#nido-paja-clara)" />
+      <path d="M547 213 C579 215 608 232 633 248 C688 257 715 273 752 288 C804 278 837 245 895 247 L929 247 C875 241 839 257 798 279 C782 286 767 290 752 288 C721 278 698 263 668 260 C623 254 589 261 563 270 C554 254 539 241 529 230 C519 217 530 211 547 213Z" fill="url(#nido-paja-color)" />
+      <path d="M1040 269 C1062 247 1111 240 1147 242 C1183 243 1203 252 1211 268 C1221 286 1198 297 1177 295 C1126 289 1087 298 1048 305 C1029 310 1013 307 1014 296 C1015 287 1026 278 1040 269Z" fill="url(#nido-paja-clara)" />
+      <path d="M1211 340 C1258 354 1259 383 1256 410 C1253 437 1234 456 1247 461 C1261 452 1275 429 1289 432 C1304 435 1301 462 1288 477 C1265 500 1233 506 1206 494 C1232 455 1229 399 1211 340Z" fill="url(#nido-paja-media)" />
+      <path d="M334 426 C364 406 383 374 396 336 C400 315 411 325 416 344 C425 374 425 400 412 427 C387 453 357 460 334 450Z" fill="url(#nido-paja-color)" />
+    </g>
+    <g id="nido-interior" inkscape:label="Cavidad y fondo del nido">
+      <path d="M415 420 C449 374 511 340 568 319 C607 305 633 299 659 307 C703 301 727 331 754 331 C782 332 804 302 845 307 L866 309 C845 292 864 286 889 297 C934 312 980 324 1017 353 C998 326 1013 323 1035 339 C1082 365 1115 401 1107 440 C1114 470 1088 496 1045 520 C958 567 846 600 731 586 C621 580 480 531 435 479 C423 465 416 442 415 420Z" fill="url(#nido-interior-color)" />
+      <path d="M417 418 C430 391 439 348 459 327 C471 316 493 306 500 315 C507 323 489 344 486 354 C447 371 428 400 417 418Z" fill="url(#nido-paja-media)" />
+      <path d="M443 410 C458 389 485 370 488 394 C487 420 471 447 455 466 C468 444 513 380 535 371 C552 362 565 374 556 393 C544 419 520 447 526 483 C500 493 469 469 443 445Z" fill="#C78129" opacity=".42" />
+      <path d="M577 451 C558 442 574 420 595 405 C619 388 646 377 665 378 C685 377 683 394 669 400 C638 410 610 425 591 449 C587 454 582 454 577 451Z" fill="#CA822A" opacity=".59" />
+      <path d="M864 350 C890 342 945 364 978 385 C996 396 1019 413 1012 418 C1005 427 984 406 956 395 C925 382 892 377 873 372 C857 368 853 356 864 350Z" fill="#C98129" opacity=".57" />
+      <path d="M974 488 C950 458 967 438 996 463 L1019 478 C1014 446 1027 412 1044 421 C1067 432 1071 467 1062 488 C1032 513 1002 519 974 488Z" fill="#C88028" opacity=".6" />
+      <path d="M544 529 C567 486 670 454 784 446 C884 436 981 464 1042 505 C1026 557 929 589 775 588 C675 588 586 573 544 529Z" fill="url(#nido-fondo-color)" />
+    </g>
+    <g id="nido-paja-lateral" inkscape:label="Fibras laterales curvas">
+      <path d="M1086 336 C1102 324 1116 352 1130 371 C1156 405 1142 445 1135 474 L1083 493 C1114 452 1097 412 1081 386 C1074 366 1075 345 1086 336Z" fill="url(#nido-paja-media)" />
+      <path d="M1123 312 C1152 315 1200 350 1222 390 C1241 421 1241 446 1219 469 C1207 480 1194 471 1201 455 C1209 435 1191 398 1175 392 C1157 384 1154 414 1144 427 C1148 389 1125 367 1107 340 C1094 320 1106 309 1123 312Z" fill="url(#nido-paja-clara)" />
+      <path d="M1216 452 C1227 469 1235 480 1235 493 C1281 499 1321 527 1335 551 C1349 578 1330 581 1309 566 C1281 551 1253 544 1225 549 C1209 532 1204 489 1216 452Z" fill="url(#nido-paja-color)" />
+      <path d="M288 416 C269 446 259 477 287 496 C311 512 342 510 368 511 C350 532 350 557 367 575 C333 595 294 597 274 576 C253 556 258 524 271 508 C247 505 228 494 229 475 C232 448 255 429 288 416Z" fill="url(#nido-paja-color)" />
+      <path d="M479 481 C475 431 441 387 396 370 C349 347 284 366 238 393 C218 405 196 429 206 440 C219 457 249 432 278 424 C291 420 306 416 320 417 C295 431 270 451 274 474 C278 502 317 510 355 511 C405 515 457 507 500 499Z" fill="url(#nido-paja-clara)" />
+      <path d="M340 538 C304 532 272 550 242 580 C220 601 203 622 219 642 C232 659 252 643 281 630 C309 618 334 601 353 580 C367 564 360 545 340 538Z" fill="url(#nido-paja-media)" />
+      <path d="M1160 612 C1202 598 1244 596 1268 588 C1284 608 1279 634 1257 651 C1237 667 1206 671 1179 661 C1191 688 1176 710 1151 722 C1118 748 1058 767 1018 752 C1068 721 1110 666 1160 612Z" fill="url(#nido-paja-media)" />
+    </g>
+    <g id="nido-frente" inkscape:label="Borde anterior y paja superpuesta">
+      <path d="M360 574 C339 604 310 652 294 681 C282 708 293 716 314 701 C344 678 377 658 403 658 C391 688 383 730 387 760 C391 791 412 790 429 770 C452 744 479 724 506 709 C518 730 516 752 497 776 C530 770 557 749 567 724 C590 677 552 625 499 598 C455 574 400 562 360 574Z" fill="url(#nido-paja-color)" />
+      <path d="M576 632 C562 655 548 697 541 727 C530 757 552 774 574 777 C582 738 610 711 625 693 C644 668 622 642 576 632Z" fill="url(#nido-paja-media)" />
+      <path d="M737 682 C724 714 716 760 731 791 C742 818 762 811 777 796 C804 767 813 739 805 713 C784 690 762 682 737 682Z" fill="url(#nido-paja-media)" />
+      <path d="M804 668 C824 706 827 755 844 790 C855 817 876 806 884 786 C898 749 881 706 859 680Z" fill="url(#nido-paja-media)" />
+      <path d="M942 650 C978 674 1016 702 1046 726 C1068 744 1081 755 1084 774 C1081 781 1064 773 1041 757 C1002 729 963 727 941 709 C926 696 920 671 942 650Z" fill="url(#nido-paja-media)" />
+      <path d="M432 470 C455 474 482 490 500 500 C485 470 488 445 506 453 C536 466 564 489 589 509 C630 515 670 532 704 547 C746 527 804 499 837 491 C859 482 869 504 853 516 C828 526 783 539 750 562 C794 564 822 573 852 574 C904 558 949 533 981 516 C1034 491 1095 475 1147 481 C1195 482 1234 517 1264 547 C1289 575 1270 594 1247 584 C1221 572 1194 566 1166 568 C1181 594 1196 619 1181 627 C1165 634 1138 617 1119 612 C1098 636 1094 659 1107 677 C1119 699 1074 688 1055 680 C1068 710 1086 743 1096 766 C1105 787 1083 789 1070 775 C1035 744 993 718 961 695 C933 677 910 665 888 660 C887 692 899 721 892 741 C882 759 852 733 836 720 C821 708 804 696 789 690 C804 713 827 742 827 752 C828 773 803 768 790 759 C758 737 747 713 727 700 C702 725 668 749 642 759 C615 771 590 760 605 736 C616 719 643 714 650 685 C655 668 648 652 642 643 C619 665 601 679 581 684 C551 692 562 657 570 637 C577 619 572 605 556 602 C532 603 505 619 480 627 C453 643 455 609 466 587 C455 578 443 591 429 602 C410 619 391 643 382 619 C375 604 388 579 401 560 C377 554 355 539 356 518 C356 501 371 489 393 482 C385 463 399 455 412 464Z" fill="url(#nido-frente-color)" />
+      <path d="M370 546 C395 530 424 521 442 532 C465 543 424 575 397 596 C373 615 350 636 334 652 C314 676 294 665 298 640 C303 598 336 567 370 546Z" fill="url(#nido-paja-clara)" />
+      <path d="M459 588 C481 557 508 536 539 536 C567 535 591 550 607 568 C584 579 562 597 537 603 C509 608 485 618 477 628 C460 641 454 615 459 588Z" fill="url(#nido-paja-clara)" />
+      <path d="M607 568 C628 562 646 580 637 596 C615 620 597 650 582 684 C572 708 558 715 541 703 C516 688 535 649 549 623 C565 595 586 574 607 568Z" fill="url(#nido-paja-clara)" />
+      <path d="M645 596 C666 601 686 613 690 626 C686 645 671 670 655 677 C641 681 634 659 634 640 C633 621 637 606 645 596Z" fill="url(#nido-paja-color)" />
+      <path d="M780 562 C829 541 872 526 904 530 C931 528 944 543 937 561 C933 575 921 576 904 573 C865 566 820 572 780 562Z" fill="url(#nido-paja-clara)" />
+      <path d="M989 515 C1021 483 1069 457 1110 455 C1141 454 1166 464 1167 478 C1169 491 1155 495 1138 497 C1085 503 1034 523 993 542 C970 554 971 534 989 515Z" fill="url(#nido-paja-clara)" />
+      <path d="M1118 529 C1154 510 1205 517 1244 536 C1273 548 1299 571 1307 596 C1315 622 1296 623 1275 612 C1233 587 1184 568 1148 561 C1123 556 1093 548 1118 529Z" fill="url(#nido-paja-clara)" />
+      <path d="M934 575 C967 564 1008 568 1033 571 C1024 584 1045 589 1061 591 C1091 597 1127 611 1147 626 C1159 637 1147 644 1135 642 C1102 636 1071 621 1049 610 C1056 630 1057 654 1040 662 C1026 674 998 656 980 649 C948 636 924 628 894 619 C928 614 951 611 970 604 C957 591 944 581 934 575Z" fill="url(#nido-paja-color)" />
+      <path d="M767 609 C790 597 825 607 860 626 C904 650 939 684 947 719 C954 745 936 765 912 748 C874 721 835 694 806 668 C785 649 768 638 749 625 C734 617 743 611 767 609Z" fill="url(#nido-frente-luz)" />
+      <path d="M704 547 C736 539 764 529 787 530 C773 542 759 552 750 562 C733 562 720 555 704 547Z" fill="#EDAA33" opacity=".36" />
+    </g>
+  </g>
+</svg>

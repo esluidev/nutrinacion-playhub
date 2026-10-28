@@ -1,0 +1,2 @@
+/* Player · única raíz de CSS: el UI Kit compartido. El runner añade runner.css. */
+@import "@playhub/ui/css/index.css";

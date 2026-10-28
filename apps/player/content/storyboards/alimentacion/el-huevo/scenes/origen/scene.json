@@ -1,0 +1,17 @@
+{
+  "id": "origen",
+  "family": "recorrido",
+  "template": "colocar",
+  "affirmations": ["A0"],
+  "meta": {
+    "instruction": { "es": "Arma un recorrido posible del huevo" },
+    "completionFeedback": { "es": "Los huevos que conoceremos los ponen aves. En este ejemplo, antes de la tienda estaban en una granja." }
+  },
+  "strings": {
+    "completeTitle": { "es": "Un recorrido posible" },
+    "hint": { "es": "¿Dónde estaban antes de llegar a la tienda?" },
+    "retry": { "es": "Ese orden no es. Prueba otra vez" }
+  },
+  "library": { "rive": [], "svg": ["huevo-gallina", "nido", "tienda", "casa"], "sfx": [] },
+  "defaults": { "items": ["granja", "tienda", "casa"], "pointsOnComplete": 10 }
+}

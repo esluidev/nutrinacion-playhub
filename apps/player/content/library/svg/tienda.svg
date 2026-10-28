@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="500" viewBox="0 0 580 500" role="img" aria-labelledby="title desc">
+  <title id="title">Tienda</title>
+  <desc id="desc">Tienda de barrio con toldo verde menta y crema, fachada durazno suave, letrero turquesa, escaparate de alimentos y puerta acristalada. Vector editable con fondo transparente.</desc>
+  <defs>
+    <linearGradient id="pared" x1="112" y1="173" x2="411" y2="453" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9DABC"/><stop offset=".58" stop-color="#F0C79F"/><stop offset="1" stop-color="#E3AF83"/>
+    </linearGradient>
+    <linearGradient id="lateral" x1="430" y1="283" x2="512" y2="315" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#CE986E"/><stop offset="1" stop-color="#E4B58B"/>
+    </linearGradient>
+    <linearGradient id="coral" x1="0" y1="0" x2=".2" y2="1">
+      <stop stop-color="#69C5AE"/><stop offset=".52" stop-color="#59B89F"/><stop offset="1" stop-color="#4CAE93"/>
+    </linearGradient>
+    <linearGradient id="lona-clara" x1="0" y1="0" x2=".1" y2="1">
+      <stop stop-color="#FFF8E7"/><stop offset="1" stop-color="#F2E6CB"/>
+    </linearGradient>
+    <linearGradient id="turquesa" x1="0" y1="0" x2=".7" y2="1">
+      <stop stop-color="#56CCCE"/><stop offset=".5" stop-color="#2BB5BC"/><stop offset="1" stop-color="#15999F"/>
+    </linearGradient>
+    <linearGradient id="cristal" x1="0" y1="0" x2=".7" y2="1">
+      <stop stop-color="#9FE8FB"/><stop offset=".55" stop-color="#5DCCF3"/><stop offset="1" stop-color="#31ACE4"/>
+    </linearGradient>
+    <linearGradient id="pan" x1="0" y1="0" x2=".9" y2="1">
+      <stop stop-color="#FFD48B"/><stop offset="1" stop-color="#E99846"/>
+    </linearGradient>
+    <linearGradient id="manzana" x1="0" y1="0" x2=".8" y2="1">
+      <stop stop-color="#FF8271"/><stop offset="1" stop-color="#E73E40"/>
+    </linearGradient>
+  </defs>
+
+  <g id="tienda">
+    <g id="edificio">
+      <path d="M425 136 L508 109 V415 Q508 428 496 432 L425 457Z" fill="url(#lateral)"/>
+      <path d="M427 433 L508 406 V418 Q507 428 496 432 L427 457Z" fill="#C18E69"/>
+      <path d="M88 150 Q88 137 101 137 H417 Q432 137 432 152 V442 Q432 457 417 457 H103 Q88 457 88 442Z" fill="url(#pared)"/>
+      <path d="M88 434 H432 V442 Q432 457 417 457 H103 Q88 457 88 442Z" fill="#D6A279"/>
+      <path d="M99 286 V424" fill="none" stroke="#FFF7DE" stroke-width="6" stroke-linecap="round" opacity=".65"/>
+      <path d="M88 250 H432 V276 Q414 276 408 266 Q408 276 379 276 Q350 276 350 266 Q350 276 321 276 Q292 276 292 266 Q292 276 263 276 Q234 276 234 266 Q234 276 205 276 Q176 276 176 266 Q176 276 147 276 Q118 276 118 266 Q118 276 88 276Z" fill="#B9814B" opacity=".19"/>
+      <path d="M432 243 L508 218 V240 L432 272Z" fill="#B9814B" opacity=".23"/>
+    </g>
+
+    <g id="cornisa">
+      <path d="M82 135 L165 107 Q170 105 178 105 H507 Q515 105 515 113 V126 L433 155 H82Z" fill="#24979E"/>
+      <path d="M82 134 L168 106 H507 L431 134Z" fill="#7EDADB"/>
+      <rect x="78" y="131" width="361" height="25" rx="9" fill="url(#turquesa)"/>
+      <path d="M91 137 H425" stroke="#96E5DF" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+    </g>
+
+    <g id="letrero">
+      <path d="M176 112 V153 M350 112 V153" stroke="#B8824B" stroke-width="12" stroke-linecap="round"/>
+      <rect x="136" y="58" width="252" height="80" rx="20" fill="#16888E"/>
+      <rect x="133" y="51" width="252" height="80" rx="20" fill="url(#turquesa)"/>
+      <path d="M146 77 Q146 62 161 62 H362" fill="none" stroke="#9EE9E0" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+      <!-- Letras trazadas: el letrero no depende de fuentes instaladas. -->
+      <path d="M167 82 H187 M177 82 V107 M201 82 V107 M216 107 V82 H233 M216 94 H230 M216 107 H233 M247 107 V82 L265 107 V82 M280 107 V82 H287 Q301 82 301 94.5 Q301 107 287 107Z M314 107 L324 82 L334 107 M318 98 H330" fill="none" stroke="#FFF9DF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="escaparate">
+      <rect x="112" y="291" width="191" height="130" rx="15" fill="#D6A568"/>
+      <rect x="109" y="285" width="191" height="130" rx="14" fill="#FFFAE8"/>
+      <rect x="118" y="294" width="173" height="110" rx="8" fill="url(#cristal)"/>
+      <path d="M128 296 H163 L120 357 V311 Q120 297 128 296Z M177 296 H192 L121 397 V374Z" fill="#E5FAFF" opacity=".38"/>
+      <path d="M120 389 H289 V401 Q289 404 285 404 H124 Q120 404 120 400Z" fill="#319CB4" opacity=".45"/>
+      <g id="productos">
+        <path d="M143 384 L156 334 Q159 321 169 324 Q179 327 175 339 L163 386Z" fill="url(#pan)"/>
+        <path d="M157 338 L167 344 M153 352 L163 358 M150 366 L159 372" stroke="#FFF0BE" stroke-width="4" stroke-linecap="round"/>
+        <path d="M203 345 V332 Q203 329 207 329 H217 Q221 329 221 332 V345 L227 355 V386 Q227 391 222 391 H202 Q197 391 197 386 V355Z" fill="#58B779"/>
+        <rect x="202" y="327" width="20" height="9" rx="3" fill="#22966B"/>
+        <rect x="201" y="361" width="22" height="18" rx="4" fill="#FFF0CB"/>
+        <path d="M205 348 L202 356 V382" stroke="#A3E5AC" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>
+        <path d="M253 364 Q244 357 238 367 Q232 377 240 387 Q246 395 253 390 Q261 395 267 386 Q275 373 267 366 Q261 360 253 364Z" fill="url(#manzana)"/>
+        <path d="M253 365 L251 357" stroke="#8C613D" stroke-width="3" stroke-linecap="round"/>
+        <path d="M253 360 Q255 350 266 351 Q265 361 253 360Z" fill="#54AD54"/>
+        <path d="M243 370 L242 374" stroke="#FFB1A0" stroke-width="4" stroke-linecap="round"/>
+        <path d="M137 384 H176 L172 396 H143Z" fill="#D79951"/>
+        <path d="M139 384 H174" stroke="#F7CB82" stroke-width="5" stroke-linecap="round"/>
+      </g>
+      <path d="M184 292 V405" stroke="#FFFAE8" stroke-width="7"/>
+      <rect x="103" y="410" width="204" height="13" rx="6.5" fill="#CF9D63"/>
+      <rect x="102" y="406" width="204" height="10" rx="5" fill="#FFF5DD"/>
+    </g>
+
+    <g id="puerta">
+      <path d="M320 451 V293 Q320 280 333 280 H397 Q410 280 410 293 V451Z" fill="#C9985D"/>
+      <path d="M317 451 V289 Q317 276 331 276 H393 Q407 276 407 289 V451Z" fill="#FFF4D9"/>
+      <path d="M326 451 V291 Q326 285 332 285 H391 Q397 285 397 291 V451Z" fill="#198F98"/>
+      <path d="M332 449 V293 Q332 290 335 290 H388 Q392 290 392 294 V449Z" fill="url(#turquesa)"/>
+      <rect x="339" y="299" width="46" height="111" rx="5" fill="url(#cristal)"/>
+      <path d="M344 301 H365 L341 336 V308 Q341 302 344 301Z M376 301 H382 L341 360 V345Z" fill="#E5FAFF" opacity=".4"/>
+      <path d="M343 422 H381" stroke="#77D6CE" stroke-width="4" stroke-linecap="round"/>
+      <rect x="378" y="365" width="7" height="28" rx="3.5" fill="#137C87"/>
+      <rect x="376" y="362" width="7" height="28" rx="3.5" fill="#FFE4A0"/>
+    </g>
+
+    <g id="ventana-lateral">
+      <path d="M456 286 L482 277 Q488 275 488 282 V351 Q488 357 483 359 L456 368 Q450 370 450 363 V295 Q450 288 456 286Z" fill="#C79356"/>
+      <path d="M455 282 L481 273 Q487 271 487 278 V347 Q487 353 482 355 L455 364 Q449 366 449 359 V291 Q449 284 455 282Z" fill="#FFF0D1"/>
+      <path d="M456 290 L480 282 V347 L456 355Z" fill="#38ADDD"/>
+      <path d="M458 291 L478 284 L458 318Z" fill="#C5F1FC" opacity=".5"/>
+      <path d="M453 326 L483 316" stroke="#FFEAC7" stroke-width="5"/>
+    </g>
+
+    <g id="toldo">
+      <path d="M430 163 L506 137 L540 215 Q542 220 537 222 L466 248Z" fill="#328D78"/>
+      <path d="M430 163 L506 137 L538 212 L466 239Z" fill="url(#coral)"/>
+      <path d="M465 161 L480 156 L511 223 L495 229Z" fill="#E4DCC2"/>
+      <path d="M94 163 H430 L466 239 H60Z" fill="url(#lona-clara)"/>
+      <path d="M94 163 H142 L118 239 H60Z M190 163 H238 L234 239 H176Z M286 163 H334 L350 239 H292Z M382 163 H430 L466 239 H408Z" fill="url(#coral)"/>
+      <path d="M60 239 H118 V253 Q118 263 89 263 Q60 263 60 253Z" fill="#3A9C83"/>
+      <path d="M118 239 H176 V253 Q176 263 147 263 Q118 263 118 253Z" fill="#EADFC3"/>
+      <path d="M176 239 H234 V253 Q234 263 205 263 Q176 263 176 253Z" fill="#3A9C83"/>
+      <path d="M234 239 H292 V253 Q292 263 263 263 Q234 263 234 253Z" fill="#EADFC3"/>
+      <path d="M292 239 H350 V253 Q350 263 321 263 Q292 263 292 253Z" fill="#3A9C83"/>
+      <path d="M350 239 H408 V253 Q408 263 379 263 Q350 263 350 253Z" fill="#EADFC3"/>
+      <path d="M408 239 H466 V253 Q466 263 437 263 Q408 263 408 253Z" fill="#3A9C83"/>
+    </g>
+
+    <g id="escalon">
+      <path d="M319 448 H405 L416 457 V466 Q416 471 410 471 H313 Q307 471 307 466 V457Z" fill="#D4A16A"/>
+      <path d="M319 448 H405 L415 457 Q418 460 412 460 H311 Q305 460 309 457Z" fill="#FFE3B5"/>
+      <path d="M315 461 H409" stroke="#F3CD98" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
