@@ -9,6 +9,7 @@
 //
 // Acciones (POST JSON):
 //   { action: 'validar',  token }                                    → { ok, invitacion } | { ok:false, error }
+//     (la invitación trae a quién se invita —nombre, apellido— y si será el titular)
 //   { action: 'canjear',  token, email, password, nombre, apellido } → { ok } | { ok:false, error }   (sin sesión)
 //   { action: 'aceptar',  token }                                    → { ok } | { ok:false, error }   (CON sesión)
 //   { action: 'rechazar', token }                                    → { ok } | { ok:false, error }   (CON sesión)
@@ -39,7 +40,7 @@ async function cargarInvitacion(admin: ReturnType<typeof createClient>, token: s
 
   const { data: inv, error } = await admin
     .from('invitaciones')
-    .select('id, role, email, estado, expira_en, organizacion_id, comunidad_id, idioma')
+    .select('id, role, email, nombre, apellido, titular, estado, expira_en, organizacion_id, comunidad_id, idioma')
     .eq('token', token)
     .maybeSingle()
 
@@ -84,13 +85,23 @@ async function enlazar(
         { organizacion_id: inv.organizacion_id, perfil_id: perfilId },
         { onConflict: 'organizacion_id,perfil_id', ignoreDuplicates: true },
       )
-    return error ? 'No se pudo enlazar a la organización.' : null
+    if (error) return 'No se pudo enlazar a la organización.'
+    // Invitación de titular: lo pasa a esta persona (un titular por organización; el anterior
+    // sigue como administrador).
+    if (inv.titular) {
+      const { error: e1 } = await admin.from('organizacion_administradores')
+        .update({ titular: false }).eq('organizacion_id', inv.organizacion_id).eq('titular', true)
+      const { error: e2 } = await admin.from('organizacion_administradores')
+        .update({ titular: true }).eq('organizacion_id', inv.organizacion_id).eq('perfil_id', perfilId)
+      if (e1 || e2) return 'No se pudo marcar como titular.'
+    }
+    return null
   }
 
   if (inv.role === 'COLABORADOR') {
     if (!inv.comunidad_id) return 'La invitación no trae comunidad.'
     const { error } = await admin
-      .from('colaboradores')
+      .from('comunidad_colaboradores')
       .upsert(
         { comunidad_id: inv.comunidad_id, perfil_id: perfilId, activo: true },
         { onConflict: 'comunidad_id,perfil_id', ignoreDuplicates: true },
@@ -143,6 +154,9 @@ Deno.serve(async (req: Request) => {
       invitacion: {
         role: inv.role,
         email: inv.email,
+        nombre: inv.nombre ?? '',
+        apellido: inv.apellido ?? '',
+        titular: inv.titular === true,
         organizacion: org?.nombre ?? '',
         comunidad: comunidadNombre,
         // si ya hay cuenta, la página no debe ofrecer "crear cuenta" sino "inicia sesión"
@@ -180,7 +194,9 @@ Deno.serve(async (req: Request) => {
     }
 
     // Crear el usuario (email ya confirmado: registro cerrado por invitación). El trigger
-    // on_auth_user_created crea el perfil y lo enlaza según el rol, en la misma transacción.
+    // on_auth_user_created crea el perfil. El enlace (y el titular) se hace aquí después, con
+    // `enlazar`: Auth guarda el app_metadata DESPUÉS de insertar al usuario, así que el trigger no
+    // lo ve al crearlo. El app_metadata solo lo escribe el servidor (nunca user_metadata).
     const { data: created, error: userErr } = await admin.auth.admin.createUser({
       email,
       password,
@@ -188,10 +204,13 @@ Deno.serve(async (req: Request) => {
       user_metadata: {
         nombre,
         apellido,
-        role: inv.role,
         idioma: (inv.idioma as string) || 'es',
+      },
+      app_metadata: {
+        role: inv.role,
         organizacion_id: inv.organizacion_id,
         comunidad_id: inv.comunidad_id,
+        titular: inv.titular === true,
       },
     })
     if (userErr || !created?.user) {
@@ -200,9 +219,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: perfil } = await admin
       .from('perfiles').select('id').eq('usuario_id', created.user.id).maybeSingle()
+    if (!perfil) return json({ ok: false, error: 'No se pudo crear el perfil.' })
+
+    const errEnlace = await enlazar(admin, inv as Record<string, unknown>, perfil.id as number)
+    if (errEnlace) return json({ ok: false, error: errEnlace })
+
     await admin
       .from('invitaciones')
-      .update({ estado: 'USADA', usada_por: perfil?.id })
+      .update({ estado: 'USADA', usada_por: perfil.id })
       .eq('id', inv.id)
 
     return json({ ok: true })
