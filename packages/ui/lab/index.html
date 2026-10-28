@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content=""><!-- app.js fills it from --color-night-900 -->
+  <meta name="description" content="PlayHub UI Kit. Tokens reutilizables y biblioteca interactiva de botones, tarjetas, contadores, progreso, ventanas y formularios para PlayHub.">
+  <title>PlayHub UI Kit</title>
+  <link rel="icon" href="./assets/nutrinacion-isotipo.png" type="image/png">
+  <link rel="preload" href="./assets/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./styles.css?v=0.3.5">
+  <script src="./icons.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a href="#biblioteca" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:p-3 focus:font-bold focus:text-white">Saltar a los componentes</a>
+  <aside class="sidebar" aria-label="Biblioteca de interfaz">
+    <a href="#" aria-label="PlayHub UI Kit, inicio" class="mb-8 block"><img src="./assets/nutrinacion.png" alt="Nutrinación" width="900" height="353" class="h-auto w-40"><span class="eyebrow mt-3 block px-1">PlayHub UI Kit</span></a>
+    <a class="ui-button ui-button-sm mb-6" href="./player.html"><span data-icon="play"></span>Probar el recorrido</a>
+    <p class="eyebrow mb-3 px-3">Sistema de interfaz</p>
+    <nav class="space-y-1" aria-label="Familias de componentes">
+      <a class="sidebar-link" href="#biblioteca" aria-current="location"><span data-icon="grid"></span>Vista general</a>
+      <a class="sidebar-link" href="#botones"><span data-icon="pointer"></span>Botones</a>
+      <a class="sidebar-link" href="#contadores"><span data-icon="star"></span>Contadores</a>
+      <a class="sidebar-link" href="#navegacion"><span data-icon="compass"></span>Navegación</a>
+      <a class="sidebar-link" href="#progreso"><span data-icon="chart"></span>Progreso</a>
+      <a class="sidebar-link" href="#tarjetas"><span data-icon="cards"></span>Tarjetas y títulos</a>
+      <a class="sidebar-link" href="#ventanas"><span data-icon="window"></span>Pop-ups</a>
+      <a class="sidebar-link" href="#formularios"><span data-icon="sliders"></span>Formularios</a>
+      <a class="sidebar-link" href="#avisos"><span data-icon="bell"></span>Avisos y estados</a>
+      <a class="sidebar-link" href="#gestion"><span data-icon="calendar"></span>Gestión</a>
+      <a class="sidebar-link" href="#tokens"><span data-icon="sliders"></span>Tokens</a>
+      <a class="sidebar-link" href="#fundamentos"><span data-icon="palette"></span>Fundamentos</a>
+    </nav>
+    <div class="mt-auto border-t border-line pt-5">
+      <div class="flex items-center gap-2 px-3 text-xs font-extrabold"><span class="size-2 rounded-full bg-lime"></span>Un lenguaje para jugar</div>
+      <p class="mt-2 px-3 text-[10px] leading-relaxed text-muted">PlayHub UI Kit · @playhub/ui<br>Versión 0.3.0 / Octubre 2026</p>
+    </div>
+  </aside>
+
+  <main class="min-h-screen lg:ml-56">
+    <header class="flex min-h-20 items-center justify-between gap-4 border-b border-line bg-surface/65 px-5 sm:px-9 xl:px-12">
+      <div class="flex items-center gap-3"><img src="./assets/nutrinacion.png" alt="Nutrinación" width="900" height="353" class="w-28 lg:hidden"><span class="hidden text-xs font-bold text-muted lg:inline">PlayHub</span><span class="hidden text-line lg:inline">/</span><span class="text-xs font-extrabold">UI Kit</span><span class="badge" data-tone="lime">v0.3.0</span></div>
+      <div class="flex items-center gap-3"><span class="hidden text-xs font-bold text-muted sm:inline">Táctil</span><button class="ui-switch" role="switch" aria-checked="false" aria-label="Densidad táctil" id="density-switch"></button><span class="mx-1 hidden h-5 w-px bg-line sm:block"></span><span class="hidden text-xs font-bold text-muted sm:inline" id="motion-label">Movimiento</span><button class="ui-switch" role="switch" aria-checked="true" aria-label="Animaciones de la demo" id="motion-switch"></button><span class="mx-1 hidden h-5 w-px bg-line sm:block"></span><a href="#fundamentos" class="ui-quiet hidden sm:flex">Ver fundamentos<span data-icon="arrow-down"></span></a></div>
+    </header>
+
+    <div class="mx-auto max-w-[1440px] px-5 py-8 sm:px-9 xl:px-12">
+      <section class="mb-9 flex flex-col justify-between gap-6 sm:flex-row sm:items-center" aria-labelledby="page-title">
+        <div><p class="eyebrow mb-3 flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-lime"></span>La personalidad está en los detalles</p><h1 id="page-title" class="text-3xl font-black leading-tight tracking-tight sm:text-[36px]">Una interfaz con mucho juego<span class="text-lime-600">.</span></h1><p class="mt-3 max-w-lg text-sm font-semibold leading-relaxed text-muted">Formas amables, colores vivos y pequeñas respuestas.<br class="hidden sm:block">Una misma familia para todas las interfaces de PlayHub.</p></div>
+        <div class="flex shrink-0 flex-col items-start gap-4 sm:items-end"><div class="flex -space-x-2" aria-label="Paleta de marca"><span class="size-9 rounded-full border-[3px] border-canvas bg-ink"></span><span class="size-9 rounded-full border-[3px] border-canvas bg-lime"></span><span class="size-9 rounded-full border-[3px] border-canvas bg-sun"></span><span class="size-9 rounded-full border-[3px] border-canvas bg-coral"></span></div><a class="ui-button ui-button-sm" href="./player.html"><span data-icon="play"></span>Probar el recorrido</a></div>
+      </section>
+
+      <div id="biblioteca" class="mb-6 flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
+        <div class="flex gap-1 overflow-x-auto rounded-2xl bg-sunken p-1" aria-label="Filtrar componentes" id="filters">
+          <button class="filter" data-filter="all" aria-pressed="true">Todos</button><button class="filter" data-filter="acciones" aria-pressed="false">Acciones</button><button class="filter" data-filter="informacion" aria-pressed="false">Información</button><button class="filter" data-filter="superficies" aria-pressed="false">Superficies</button><button class="filter" data-filter="formularios" aria-pressed="false">Formularios</button>
+        </div>
+        <label class="search-box xl:w-64"><span data-icon="search"></span><input type="search" id="component-search" placeholder="Buscar componente…" aria-label="Buscar componente"><kbd class="keyboard-key">/</kbd></label>
+      </div>
+      <p id="empty-results" hidden class="rounded-panel border border-line bg-white p-10 text-center font-bold text-muted" role="status">No encontramos ese componente. Prueba con “botones”, “vidas” o “inputs”.</p>
+
+      <div class="grid grid-cols-1 items-start gap-6 xl:grid-cols-12" id="component-grid">
+        <section id="botones" class="section-card xl:col-span-7" data-category="acciones" data-search="botones accion control circular icono primario secundario deshabilitado">
+          <div class="section-heading"><div><h2 class="section-title">Botones que invitan a tocar</h2><p class="section-caption">Una superficie suave. Una respuesta inmediata.</p></div><span class="section-number">01</span></div>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
+            <div><button class="ui-button w-full" data-toast="¡Seguimos! Acción principal activada.">Continuar<span data-icon="arrow-right"></span></button><span class="spec-label">PRINCIPAL</span></div>
+            <div><button class="ui-button w-full" data-tone="sun" data-toast="Todo listo para volver a intentar."><span data-icon="retry"></span>Reintentar</button><span class="spec-label">ACENTO</span></div>
+            <div><button class="ui-button w-full" data-tone="neutral" data-open-dialog="info-dialog">Ver detalles</button><span class="spec-label">SECUNDARIO</span></div>
+            <div><button class="ui-button w-full" data-tone="night" data-toast="¡Comenzamos! Ejemplo de botón con icono."><span data-icon="play"></span>Comenzar</button><span class="spec-label">CONTRASTE</span></div>
+            <div><button class="ui-button w-full" data-tone="coral" data-open-dialog="exit-dialog"><span data-icon="exit"></span>Salir</button><span class="spec-label">CONFIRMACIÓN</span></div>
+            <div><button class="ui-button w-full" disabled><span data-icon="lock"></span>No disponible</button><span class="spec-label">DESHABILITADO</span></div>
+          </div>
+          <div class="mt-7 flex flex-wrap items-center justify-between gap-5 border-t border-line pt-6">
+            <div class="flex gap-3"><button class="ui-button ui-icon-button" data-tone="night" aria-label="Volver, ejemplo" data-toast="Volver a la pantalla anterior."><span data-icon="arrow-left"></span></button><button class="ui-button ui-icon-button" data-tone="neutral" aria-label="Ajustes" data-open-dialog="settings-dialog"><span data-icon="settings"></span></button><button class="ui-button ui-icon-button" data-tone="sky" aria-label="Sonido" aria-pressed="true" id="sound-button"><span data-icon="sound"></span></button><button class="ui-button ui-icon-button" data-tone="sun" aria-label="Pausar" data-open-dialog="pause-dialog"><span data-icon="pause"></span></button></div>
+            <span class="text-[10px] font-bold text-muted">Prueba a mantenerlos pulsados<span class="ml-1">↙</span></span>
+          </div>
+        </section>
+
+        <section id="contadores" class="section-card xl:col-span-5" data-category="informacion" data-search="contador puntos rubi gema vidas corazon recursos tiempo cronometro hud barra juego">
+          <div class="section-heading"><div><h2 class="section-title">Cada poquito cuenta</h2><p class="section-caption">Icono + valor. El dato, de un vistazo.</p></div><span class="section-number">02</span></div>
+          <div class="component-stage space-y-3">
+            <div class="counter"><span class="counter-art"><span data-icon="ruby-solid"></span></span><div><p class="counter-label">Puntos</p><p class="counter-value"><output id="points-value" aria-live="polite">1.250</output></p></div><button class="mini-action" data-tone="sun" id="add-points" aria-label="Sumar 50 puntos"><span data-icon="plus"></span></button></div>
+            <div class="counter"><span class="counter-art"><span data-icon="heart-solid"></span></span><div><p class="counter-label">Vidas</p><p class="counter-value"><output id="lives-value" aria-live="polite">3</output><span class="counter-suffix"> / 5</span></p></div><div class="ml-auto flex gap-1"><button class="mini-action" id="remove-life" aria-label="Restar una vida"><span data-icon="minus"></span></button><button class="mini-action" data-tone="rose" id="add-life" aria-label="Sumar una vida"><span data-icon="plus"></span></button></div></div>
+            <div class="counter"><span class="counter-art"><span data-icon="clock-solid"></span></span><div><p class="counter-label">Tiempo</p><p class="counter-value"><output id="timer-value">02:30</output></p></div><button class="mini-action" data-tone="sky" id="timer-toggle" aria-label="Iniciar temporizador" aria-pressed="false"><span data-icon="play"></span></button><button class="mini-action" id="timer-reset" aria-label="Reiniciar temporizador"><span data-icon="retry"></span></button></div>
+          </div>
+          <p class="eyebrow mt-6 mb-3">Variante compacta · 48 px</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="counter counter-compact"><span class="counter-art"><span data-icon="clock-solid"></span></span><div><p class="counter-label">Tiempo</p><p class="counter-value">02:30</p></div></div>
+            <div class="counter counter-compact"><span class="counter-art"><span data-icon="ruby-solid"></span></span><div><p class="counter-label">Puntos</p><p class="counter-value">250</p></div></div>
+          </div>
+        </section>
+
+        <section id="navegacion" class="section-card xl:col-span-5" data-category="acciones" data-search="navegacion tabs pestañas menu inicio ajustes ayuda paginacion">
+          <div class="section-heading"><div><h2 class="section-title">Un lugar para cada cosa</h2><p class="section-caption">Pestañas, menús y controles de navegación.</p></div><span class="section-number">03</span></div>
+          <div class="ui-tabs" role="tablist" aria-label="Vista de la biblioteca">
+            <button class="ui-tab" role="tab" id="tab-all" aria-controls="panel-all" aria-selected="true" tabindex="0"><span data-icon="grid"></span>Todos</button><button class="ui-tab" role="tab" id="tab-fav" aria-controls="panel-fav" aria-selected="false" tabindex="-1"><span data-icon="heart"></span>Favoritos</button><button class="ui-tab" role="tab" id="tab-recent" aria-controls="panel-recent" aria-selected="false" tabindex="-1"><span data-icon="clock"></span>Recientes</button>
+          </div>
+          <div class="mt-4 min-h-12 rounded-xl border border-dashed border-line px-4 py-3 text-center text-xs font-bold text-muted"><p role="tabpanel" id="panel-all" aria-labelledby="tab-all">Todos tus elementos, en un mismo lugar.</p><p role="tabpanel" id="panel-fav" aria-labelledby="tab-fav" hidden>Aquí encontrarás tus elementos favoritos.</p><p role="tabpanel" id="panel-recent" aria-labelledby="tab-recent" hidden>Lo último que visitaste, siempre a mano.</p></div>
+          <div class="component-stage mt-5">
+            <nav class="ui-navbar" aria-label="Ejemplo de menú principal"><button aria-pressed="true" data-menu="Inicio"><span data-icon="home"></span>Inicio</button><button aria-pressed="false" data-menu="Colección"><span data-icon="cards"></span>Colección</button><button aria-pressed="false" data-menu="Logros"><span data-icon="medal"></span>Logros</button><button data-open-dialog="settings-dialog"><span data-icon="settings"></span>Ajustes</button></nav>
+          </div>
+          <div class="mt-5 flex items-center justify-center gap-4"><button class="ui-button ui-button-sm ui-icon-button" data-tone="neutral" id="previous-page" aria-label="Página anterior" disabled><span data-icon="chevron-left"></span></button><span class="text-xs font-black tabular-nums" id="page-indicator" aria-live="polite">1 <span class="text-muted">de 4</span></span><button class="ui-button ui-button-sm ui-icon-button" data-tone="neutral" id="next-page" aria-label="Página siguiente"><span data-icon="chevron-right"></span></button></div>
+        </section>
+
+        <section id="progreso" class="section-card xl:col-span-7" data-category="informacion" data-search="progreso barra aro carga pasos indicador loading spinner">
+          <div class="section-heading"><div><h2 class="section-title">Se siente el avance</h2><p class="section-caption">Barras, segmentos y aros que acompañan.</p></div><span class="section-number">04</span></div>
+          <div class="flex flex-col gap-7 sm:flex-row sm:items-center">
+            <div class="min-w-0 flex-1 space-y-6">
+              <div><div class="mb-2 flex justify-between text-xs font-extrabold"><span>Tu progreso</span><output id="progress-label" class="text-lime-800">65 %</output></div><div class="progress-track" role="progressbar" aria-label="Tu progreso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65" id="linear-progress"><div class="progress-fill" style="width:65%"></div></div></div>
+              <div><div class="mb-2 flex justify-between text-xs font-extrabold"><span>Paso a paso</span><span class="text-sun-800" id="step-label">5 de 8</span></div><div class="progress-segments" role="progressbar" aria-label="Pasos completados" aria-valuemin="0" aria-valuemax="8" aria-valuenow="5" id="segmented-progress"><span class="is-filled"></span><span class="is-filled"></span><span class="is-filled"></span><span class="is-filled"></span><span class="is-filled"></span><span></span><span></span><span></span></div></div>
+              <div><p class="mb-2 text-xs font-extrabold">Barra amplia · 24 px</p><div class="progress-track progress-track-lg" role="progressbar" aria-label="Ejemplo de barra amplia" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65"><div class="progress-fill" style="width:65%"></div></div></div>
+              <label class="block"><span class="mb-3 block text-[10px] font-bold text-muted">Mueve el control para probar el progreso</span><input type="range" class="ui-range" min="0" max="100" value="65" id="progress-control" aria-label="Cambiar progreso"></label>
+            </div>
+            <div class="flex items-center justify-center gap-6 sm:flex-col sm:gap-4"><div class="progress-ring" role="progressbar" aria-label="Progreso circular" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65" id="ring-progress"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" class="ring-track"/><circle cx="50" cy="50" r="40" class="ring-fill" stroke-dasharray="251.327" stroke-dashoffset="87.964"/></svg><div class="text-center"><strong class="text-2xl font-black" id="ring-label">65<span class="text-xs">%</span></strong><span class="block text-[9px] font-bold text-muted">COMPLETADO</span></div></div><span class="text-[10px] font-bold text-muted">Progreso circular</span></div>
+          </div>
+          <div class="mt-6 flex items-center gap-3 rounded-xl bg-canvas px-4 py-3"><span class="spinner" aria-hidden="true"></span><div><p class="text-xs font-extrabold">Preparando todo…</p><p class="text-[10px] font-semibold text-muted">Carga sin porcentaje</p></div><span class="badge ml-auto hidden sm:inline-flex" data-tone="neutral">INDETERMINADO</span></div>
+        </section>
+
+        <section id="tarjetas" class="section-card xl:col-span-12" data-category="superficies" data-search="tarjetas titulos cintas panel seleccion seleccionado etiquetas banner">
+          <div class="section-heading"><div><h2 class="section-title">Pequeños contenedores, mucha personalidad</h2><p class="section-caption">Tarjetas seleccionables, paneles y títulos con un toque de celebración.</p></div><span class="section-number">05</span></div>
+          <div class="grid gap-7 md:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1fr]">
+            <div><div class="grid grid-cols-2 gap-4" role="group" aria-label="Seleccionar tarjeta de ejemplo"><button class="select-card" aria-pressed="true" data-card="Mi colección"><span class="selected-mark" data-icon="check"></span><span class="card-art" data-tone="lime"><span data-icon="cards"></span></span><span class="text-sm font-black">Mi colección</span><span class="text-[10px] font-semibold text-muted">12 elementos</span></button><button class="select-card" aria-pressed="false" data-card="Mis favoritos"><span class="selected-mark" data-icon="check"></span><span class="card-art" data-tone="sun"><span data-icon="star-solid"></span></span><span class="text-sm font-black">Mis favoritos</span><span class="text-[10px] font-semibold text-muted">4 elementos</span></button></div><span class="spec-label">SELECCIÓN ÚNICA</span></div>
+            <div><div class="ui-card h-[190px]"><span class="badge" data-tone="grape">NOVEDAD</span><h3 class="mt-4 text-xl font-black">Todo a tu ritmo</h3><p class="mt-2 max-w-52 text-xs font-semibold leading-relaxed text-muted">Un panel para dar contexto y dejar espacio a lo importante.</p></div><span class="spec-label">TARJETA INFORMATIVA</span></div>
+            <div class="md:col-span-2 xl:col-span-1"><div class="flex h-[190px] flex-col items-center justify-center gap-6 rounded-card bg-sun-50"><div class="ribbon"><span class="ribbon-tail ribbon-tail-left" aria-hidden="true"></span><span class="ribbon-tail ribbon-tail-right" aria-hidden="true"></span><div class="ribbon-face"><span data-icon="sparkles"></span><span>¡Bien hecho!</span><span data-icon="sparkles"></span></div></div><div class="flex gap-2"><span class="badge" data-tone="lime">COMPLETADO<span data-icon="check"></span></span><span class="badge" data-tone="sun">+ 50 puntos</span></div></div><span class="spec-label">TÍTULO ESPECIAL + ETIQUETAS</span></div>
+          </div>
+        </section>
+
+        <section id="ventanas" class="section-card xl:col-span-7" data-category="superficies" data-search="popups popup pop-up modal ventana pausa dialogo ajustes confirmacion">
+          <div class="section-heading"><div><h2 class="section-title">Una pausa con espacio</h2><p class="section-caption">Un mensaje claro y una siguiente acción evidente.</p></div><span class="section-number">06</span></div>
+          <div class="rounded-card bg-sunken px-4 py-7 sm:px-8">
+            <div class="window-preview"><button class="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-canvas text-muted" aria-label="Abrir ejemplo de ventana" data-open-dialog="pause-dialog"><span data-icon="expand"></span></button><span class="ui-symbol mx-auto mb-4" data-tone="sun"><span data-icon="pause" class="icon-lg"></span></span><h3 class="text-2xl font-black">Un pequeño descanso</h3><p class="mx-auto mt-2 max-w-60 text-xs font-semibold leading-relaxed text-muted">Todo está donde lo dejaste.<br>Seguimos cuando quieras.</p><button class="ui-button mt-5 w-full" data-open-dialog="pause-dialog"><span data-icon="play"></span>Continuar</button><button class="ui-quiet mt-2 text-xs" data-open-dialog="exit-dialog">Volver al inicio</button></div>
+          </div>
+          <div class="mt-5 flex flex-wrap justify-center gap-2"><button class="ui-quiet text-xs" data-open-dialog="info-dialog"><span data-icon="info"></span>Información</button><button class="ui-quiet text-xs" data-open-dialog="exit-dialog"><span data-icon="exit"></span>Confirmación</button><button class="ui-quiet text-xs" data-open-dialog="settings-dialog"><span data-icon="settings"></span>Ajustes</button></div>
+        </section>
+
+        <section id="formularios" class="section-card xl:col-span-5" data-category="formularios" data-search="formularios inputs campo texto numero selector select radio checkbox interruptor switch volumen">
+          <div class="section-heading"><div><h2 class="section-title">También lo práctico es bonito</h2><p class="section-caption">Controles sencillos, cómodos y reconocibles.</p></div><span class="section-number">07</span></div>
+          <form id="demo-form" novalidate class="space-y-4">
+            <div><label for="display-name" class="field-label">Nombre para mostrar</label><div class="field-with-icon"><span data-icon="user"></span><input class="field" id="display-name" name="display-name" autocomplete="off" placeholder="Escribe tu nombre" maxlength="40" required aria-describedby="name-help"></div><p id="name-help" class="field-help">Solo un ejemplo. No se guarda ningún dato.</p></div>
+            <div class="grid grid-cols-[1fr_100px] gap-3"><div><label for="language" class="field-label">Idioma</label><select class="field" id="language"><option value="es">Español</option><option value="en">English</option><option value="pt">Português</option></select></div><div><label for="quantity" class="field-label">Cantidad</label><input class="field" type="number" id="quantity" value="3" min="1" max="20" required aria-describedby="quantity-help"></div></div>
+            <p id="quantity-help" class="field-help" hidden>Elige una cantidad entre 1 y 20.</p>
+            <div class="flex items-center justify-between border-y border-line py-3"><span class="flex items-center gap-2 text-xs font-extrabold"><span data-icon="sound"></span>Efectos de sonido</span><button type="button" class="ui-switch" role="switch" aria-checked="true" aria-label="Efectos de sonido" data-sound-switch></button></div>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-3"><label class="flex items-center gap-2 text-xs font-bold"><input class="check-control" type="checkbox" checked>Mostrar consejos</label><fieldset class="flex gap-3"><legend class="sr-only">Tamaño de interfaz</legend><label class="flex items-center gap-1.5 text-xs font-bold"><input class="check-control" type="radio" name="size" value="normal" checked>Normal</label><label class="flex items-center gap-1.5 text-xs font-bold"><input class="check-control" type="radio" name="size" value="large">Grande</label></fieldset></div>
+            <button class="ui-button w-full" type="submit">Guardar preferencias<span data-icon="check"></span></button>
+          </form>
+        </section>
+
+        <section id="avisos" class="section-card xl:col-span-12" data-category="informacion" data-search="avisos estados alerta error exito informacion aviso notificacion badge toast">
+          <div class="section-heading"><div><h2 class="section-title">La respuesta también tiene tono</h2><p class="section-caption">Color, icono y palabras. Siempre juntos.</p></div><span class="section-number">08</span></div>
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><div class="alert" data-tone="success"><span data-icon="check-circle"></span><div><strong class="block font-black">¡Todo listo!</strong>Tus cambios se han guardado.</div></div><div class="alert" data-tone="info"><span data-icon="info"></span><div><strong class="block font-black">Un pequeño consejo</strong>Puedes ajustar el sonido.</div></div><div class="alert" data-tone="warning"><span data-icon="warning"></span><div><strong class="block font-black">Un momento…</strong>Estamos recuperando la conexión.</div></div><div class="alert" data-tone="danger"><span data-icon="warning"></span><div><strong class="block font-black">No se pudo guardar</strong>Inténtalo de nuevo.</div></div></div>
+          <div class="mt-7 border-t border-line pt-6"><p class="eyebrow mb-4">Feedback de actividad · integrado junto a las acciones</p><div class="grid gap-5 md:grid-cols-3">
+            <div class="ui-feedback" data-kind="selection"><span class="ui-feedback-symbol"><span data-icon="info"></span></span><div><strong>Seleccionaste un huevo</strong><p>Llévalo al nido que le corresponde.</p></div></div>
+            <div class="ui-feedback" data-kind="success"><span class="ui-feedback-symbol"><span data-icon="check"></span></span><div><strong>¡Bien hecho! Ese es su nido</strong><p>Este huevo es de la gallina.</p></div></div>
+            <div class="ui-feedback" data-kind="retry"><span class="ui-feedback-symbol"><span data-icon="retry"></span></span><div><strong>Probemos con otro nido</strong><p>Fíjate en su tamaño y color.</p></div></div>
+          </div></div>
+          <div class="mt-5 flex flex-wrap items-center justify-between gap-4"><div class="flex flex-wrap items-center gap-3"><span class="badge" data-tone="lime"><span class="badge-dot"></span>Disponible</span><span class="badge" data-tone="sun">Nuevo</span><span class="badge" data-tone="neutral"><span data-icon="lock"></span>Bloqueado</span><span class="ui-dot" data-tone="coral" aria-label="3 notificaciones">3</span></div><button class="ui-quiet text-xs" data-toast="¡Listo! Así se ve una notificación breve.">Probar aviso flotante<span data-icon="arrow-right"></span></button></div>
+        </section>
+
+        <section id="gestion" class="section-card xl:col-span-12" data-category="superficies" data-search="gestion planner calendario bandeja hueco agregar dia hoy hora grupo fechas navegacion lateral avatar cifra kpi filtros">
+          <div class="section-heading"><div><h2 class="section-title">Para organizar el trabajo</h2><p class="section-caption">Las piezas de Admin y Educators, con el mismo relieve y el mismo color con significado.</p></div><span class="section-number">09</span></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="ui-group"><button type="button" class="ui-group-item" aria-label="Anterior"><span data-icon="chevron-left"></span></button><span class="ui-group-label">12 – 18 oct 2026</span><button type="button" class="ui-group-item" aria-label="Siguiente"><span data-icon="chevron-right"></span></button></div>
+            <button type="button" class="ui-button" data-tone="neutral">Hoy</button>
+            <div class="flex gap-1.5" role="group" aria-label="Filtro de ejemplo"><button type="button" class="filter" aria-pressed="true">Todos <span class="filter-count">4</span></button><button type="button" class="filter" aria-pressed="false">Programados</button><button type="button" class="filter" aria-pressed="false">Completados</button></div>
+            <div class="ui-tabs ui-tabs-fit" role="tablist" aria-label="Vista de ejemplo"><button type="button" role="tab" class="ui-tab" aria-selected="true">Semana</button><button type="button" role="tab" class="ui-tab" aria-selected="false">Mes</button></div>
+            <button type="button" class="ui-button"><span data-icon="plus"></span>Nuevo taller</button>
+          </div>
+          <span class="spec-label">BARRA · TODO MIDE LO MISMO Y COMPARTE LA BASE</span>
+          <div class="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <div>
+              <div class="grid grid-cols-3 gap-3">
+                <div><div class="mb-2.5 flex items-center gap-2 px-1"><span class="ui-day">13</span><span class="eyebrow">Mar</span></div><div class="ui-tray min-h-48"><button type="button" class="ui-slot"><span data-icon="plus"></span>Agregar</button></div></div>
+                <div><div class="mb-2.5 flex items-center gap-2 px-1"><span class="ui-day" aria-current="date">14</span><span class="eyebrow">Mié</span><span class="badge ml-auto" data-tone="sun">Hoy</span></div><div class="ui-tray min-h-48" data-tone="sun"><article class="ui-panel relative overflow-hidden rounded-control py-3 pl-4 pr-3" data-tone="sun"><span class="absolute inset-y-0 left-0 w-1 bg-(--tone-fill)"></span><p class="text-body font-extrabold text-ink">El huevo</p><p class="mt-1 text-caption font-extrabold text-(--tone-strong)">09:00 – 10:30</p></article><button type="button" class="ui-slot"><span data-icon="plus"></span>Agregar</button></div></div>
+                <div><div class="mb-2.5 flex items-center gap-2 px-1"><span class="ui-day">15</span><span class="eyebrow">Jue</span></div><div class="ui-tray min-h-48"><article class="ui-panel relative overflow-hidden rounded-control py-3 pl-4 pr-3" data-tone="sky"><span class="absolute inset-y-0 left-0 w-1 bg-(--tone-fill)"></span><p class="text-body font-extrabold text-ink">Piernas fuertes</p><p class="mt-1 text-caption font-extrabold text-(--tone-strong)">10:00 – 11:30</p></article><button type="button" class="ui-slot"><span data-icon="plus"></span>Agregar</button></div></div>
+              </div>
+              <span class="spec-label">BANDEJAS · HOY EN SOL SUAVE · HUECO GRIS DISCONTINUO</span>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center gap-3"><span class="ui-time" data-tone="sun"><strong>12:00</strong><span>12:30</span></span><span class="ui-time" data-tone="sky"><strong>09:00</strong><span>09:30</span></span><span class="ui-avatar" data-tone="sky">ML</span><span class="ui-avatar" data-tone="grape">CR</span><span class="ui-avatar ui-avatar-lg" data-tone="rose">AT</span></div>
+              <nav class="space-y-1 rounded-panel border border-line bg-surface p-2" aria-label="Navegación de ejemplo"><a class="ui-nav-item" aria-current="page" href="#gestion"><span data-icon="calendar"></span>Planificador</a><a class="ui-nav-item" href="#gestion"><span data-icon="users"></span>Educadores</a></nav>
+              <div class="ui-panel ui-stat"><span class="ui-symbol ui-symbol-md" data-tone="sun"><span data-icon="calendar"></span></span><div><p class="ui-stat-value">3</p><p class="ui-stat-label">Talleres hoy</p></div></div>
+              <span class="spec-label">HORA, AVATAR, NAVEGACIÓN (EL ACTUAL HUNDIDO, NO LIMA) Y CIFRA</span>
+            </div>
+          </div>
+        </section>
+        <section id="tokens" class="section-card xl:col-span-12" data-category="fundamentos" data-search="tokens paleta escala roles tonos variables css tailwind data-tone">
+          <div class="section-heading"><div><h2 class="section-title">Tokens que se reutilizan</h2><p class="section-caption">Paleta → roles → tonos → escala. Los componentes solo leen tokens; un color nuevo empieza en tokens.css.</p></div><span class="section-number">10</span></div>
+          <p class="eyebrow mb-3">Paleta · --color-{tono}-{paso}</p>
+          <div id="palette-grid" class="space-y-2"></div>
+          <div class="mt-7 border-t border-line pt-6"><p class="eyebrow mb-3">Roles · para qué sirve cada color</p><div id="role-grid" class="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8"></div></div>
+          <div class="mt-7 border-t border-line pt-6"><p class="eyebrow mb-3">Tonos · un mismo contrato para todos los componentes</p><div id="tone-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
+            <div class="mt-4 flex flex-wrap gap-2" id="status-grid"></div>
+            <pre class="mt-5 overflow-x-auto rounded-xl bg-sunken p-4 text-[11px] font-bold leading-relaxed text-muted"><code>&lt;button class="ui-button" data-tone="sky"&gt;…&lt;/button&gt;   &lt;span class="badge" data-tone="sky"&gt;…&lt;/span&gt;   &lt;div class="ribbon" data-tone="sky"&gt;…&lt;/div&gt;
+&lt;div class="ui-feedback" data-kind="selection | success | retry | complete"&gt;…&lt;/div&gt;</code></pre></div>
+        </section>
+
+        <section id="fundamentos" class="section-card xl:col-span-12" data-category="fundamentos" data-search="fundamentos colores tipografia nunito iconos tamaños estados">
+          <div class="section-heading"><div><h2 class="section-title">El ADN de la familia</h2><p class="section-caption">Una paleta reconocible y una tipografía con carácter.</p></div><span class="section-number">11</span></div>
+          <div class="grid gap-8 md:grid-cols-[1.2fr_1fr]">
+            <div><div class="grid grid-cols-4 gap-3"><div><div class="swatch bg-ink"></div><p class="mt-2 text-xs font-black">Noche</p><p class="mt-1 text-[10px] text-muted">#102342</p></div><div><div class="swatch bg-lime"></div><p class="mt-2 text-xs font-black">Lima</p><p class="mt-1 text-[10px] text-muted">#B5DC18</p></div><div><div class="swatch bg-sun"></div><p class="mt-2 text-xs font-black">Sol</p><p class="mt-1 text-[10px] text-muted">#FFC629</p></div><div><div class="swatch bg-coral"></div><p class="mt-2 text-xs font-black">Coral</p><p class="mt-1 text-[10px] text-muted">#FF8055</p></div></div><p class="mt-4 text-[11px] font-semibold leading-relaxed text-muted">Azul para dar estructura. Lima para actuar. Amarillo y coral para los acentos. Neutros claros para respirar.</p></div>
+            <div class="flex items-center gap-6 rounded-2xl bg-canvas px-6 py-4"><span class="text-6xl font-black tracking-tighter text-ink">Aa<span class="text-lime">.</span></span><div><h3 class="text-xl font-black">Nunito</h3><p class="mt-1 text-xs font-semibold text-muted">Amable, redonda y muy legible.</p><p class="mt-3 text-[11px] font-semibold text-muted"><span class="font-semibold">Semibold</span><span class="mx-2">/</span><span class="font-extrabold">Extrabold</span><span class="mx-2">/</span><span class="font-black">Black</span></p><p class="mt-1 text-xs font-bold tracking-wide">Aa Bb Cc Ññ · 0123456789</p></div></div>
+          </div>
+          <div class="mt-7 border-t border-line pt-6"><p class="eyebrow mb-4">Iconos de interfaz</p><div class="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:grid-cols-12" id="icon-gallery"></div></div>
+          <div class="mt-7 border-t border-line pt-6"><p class="eyebrow mb-4">La misma pieza, diferentes estados</p><div class="grid grid-cols-2 gap-5 sm:grid-cols-4"><div><button class="ui-button w-full" data-toast="Estado normal.">Continuar</button><span class="spec-label">NORMAL</span></div><div><span class="ui-button is-pressed w-full" aria-hidden="true">Continuar</span><span class="spec-label">PULSADO · MUESTRA</span></div><div><span class="ui-button is-focused w-full" aria-hidden="true">Continuar</span><span class="spec-label">FOCO · MUESTRA</span></div><div><button class="ui-button w-full" disabled>Continuar</button><span class="spec-label">DESHABILITADO</span></div></div></div>
+        </section>
+      </div>
+
+      <footer class="mt-9 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[10px] font-bold text-muted"><p>PlayHub UI Kit · con Nutrinación. Pensado para sentirse parte de lo mismo.</p><p>PlayHub UI Kit · v0.2.1 <span class="mx-2 text-subtle">/</span>Con cariño, hasta el último píxel.</p></footer>
+    </div>
+  </main>
+
+  <dialog id="pause-dialog" class="dialog" aria-labelledby="pause-title" aria-describedby="pause-description"><button class="ui-button ui-icon-button ui-button-sm dialog-close" data-tone="neutral" aria-label="Cerrar pausa" data-close-dialog><span data-icon="close"></span></button><div class="dialog-center pt-4"><span class="ui-symbol ui-symbol-lg" data-tone="sun"><span data-icon="pause" class="size-9"></span></span><h2 id="pause-title" class="ui-heading">Un pequeño descanso</h2><p id="pause-description" class="ui-text dialog-body">Todo está donde lo dejaste.<br>Seguimos cuando quieras.</p><button class="ui-button mt-7 w-full" data-close-dialog data-toast="¡Seguimos! La pausa ha terminado."><span data-icon="play"></span>Continuar</button><button class="ui-quiet mt-3" data-open-dialog="exit-dialog">Volver al inicio</button></div></dialog>
+  <dialog id="info-dialog" class="dialog" aria-labelledby="info-title"><button class="ui-button ui-icon-button ui-button-sm dialog-close" data-tone="neutral" aria-label="Cerrar información" data-close-dialog><span data-icon="close"></span></button><div class="dialog-center pt-4"><span class="ui-symbol" data-tone="sky"><span data-icon="info" class="size-8"></span></span><h2 id="info-title" class="ui-heading">Cada detalle cuenta</h2><p class="ui-text dialog-body">Este es un ejemplo de ventana informativa. Un título, una explicación breve y una acción para continuar.</p><button class="ui-button mt-6 w-full" data-close-dialog>Entendido<span data-icon="check"></span></button></div></dialog>
+  <dialog id="exit-dialog" class="dialog" aria-labelledby="exit-title" aria-describedby="exit-description"><div class="dialog-center pt-2"><span class="ui-symbol" data-tone="coral"><span data-icon="exit" class="size-8"></span></span><h2 id="exit-title" class="ui-heading">¿Volvemos al inicio?</h2><p id="exit-description" class="ui-text dialog-body">Esta es una confirmación de ejemplo.<br>Puedes quedarte o cerrar la ventana.</p><div class="dialog-actions dialog-actions-split"><button class="ui-button" data-tone="neutral" data-close-dialog autofocus>Quedarme</button><button class="ui-button" data-tone="coral" data-close-dialog data-toast="Salida confirmada. Sigues en la biblioteca de componentes.">Sí, salir</button></div></div></dialog>
+  <dialog id="settings-dialog" class="dialog" aria-labelledby="settings-title"><button class="ui-button ui-icon-button ui-button-sm dialog-close" data-tone="neutral" aria-label="Cerrar ajustes" data-close-dialog><span data-icon="close"></span></button><h2 id="settings-title" class="ui-heading pr-12">A tu manera</h2><p class="ui-caption mt-1">Prueba los controles de preferencias.</p><div class="my-6 space-y-6"><div class="flex items-center justify-between"><span class="flex items-center gap-2 text-sm font-bold"><span data-icon="sound"></span>Efectos de sonido</span><button class="ui-switch" role="switch" aria-checked="true" aria-label="Efectos de sonido" data-sound-switch></button></div><label class="block"><span class="mb-4 flex justify-between text-sm font-bold">Volumen<output id="volume-label">70 %</output></span><input class="ui-range" id="volume-control" type="range" min="0" max="100" value="70" aria-label="Volumen de ejemplo"></label><label class="flex items-center gap-3 text-sm font-bold"><input class="check-control" type="checkbox" checked>Mostrar consejos</label></div><button class="ui-button w-full" data-close-dialog data-toast="Preferencias aplicadas a esta demo.">Listo<span data-icon="check"></span></button></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden><span data-icon="check-circle"></span><span id="toast-message"></span><button id="dismiss-toast" aria-label="Cerrar aviso" class="ml-2 flex size-7 items-center justify-center rounded-lg hover:bg-white/15"><span data-icon="close"></span></button></div>
+</body>
+</html>

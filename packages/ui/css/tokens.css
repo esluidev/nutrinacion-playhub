@@ -1,0 +1,355 @@
+/* ==========================================================================
+   PlayHub UI Kit · Tokens v0.3 · @playhub/ui
+   --------------------------------------------------------------------------
+   One source for every PlayHub web app (Admin, Player, Educators) and the
+   lab. Four layers. Each layer may only read from the layer above it.
+
+   1. Palette      Raw colour scales. Never used directly by components.
+   2. Roles        What a colour is FOR: canvas, surface, text, line, status.
+   3. Tones        One contract (--tone-*) that every coloured component
+                   reads. Set with data-tone="lime|sun|coral|sky|grape|rose|
+                   night|neutral|success|info|warning|danger".
+   4. Scale        Sizes, type, depth, shape and motion, in two densities set
+                   with data-density on any container: compact (default; the
+                   management apps, with a mouse) and touch (the player and
+                   Educators, on phones and tablets). Components add sm/md/lg
+                   variants on top of the density for hierarchy.
+
+   Everything declared in @theme also becomes a Tailwind utility
+   (bg-surface, text-muted, rounded-control, text-body, bg-sky-100…).
+   The default Tailwind colour palette is removed on purpose: if a colour
+   is not a token, it cannot be written as a utility.
+   ========================================================================== */
+
+@theme static {
+  /* ---- 1 · Palette ------------------------------------------------------ */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Night · structure, text and neutral surfaces. 900 is the brand navy. */
+  --color-night-0: #ffffff;
+  --color-night-25: #f3f7fc;    /* the brand navy hue (oklch 260°) at night-25's lightness; was #f5f6fa, a lavender cast */
+  --color-night-50: #eef1f6;
+  --color-night-100: #e8ebf2;
+  --color-night-150: #dfe4ee;
+  --color-night-200: #cdd5e1;
+  --color-night-300: #b3bdcc;
+  --color-night-400: #8691a4;
+  --color-night-500: #6c7890;
+  --color-night-600: #5a6780;
+  --color-night-700: #52607a;
+  --color-night-800: #314967;
+  --color-night-850: #233956;
+  --color-night-900: #102342;
+  --color-night-950: #0c1c34;
+
+  /* Lime · primary action. 400 is the brand lime. */
+  --color-lime-50: #f8fce9;
+  --color-lime-100: #edf5d9;
+  --color-lime-150: #e4f0bf;
+  --color-lime-200: #d8eaae;
+  --color-lime-300: #c3e940;
+  --color-lime-400: #b5dc18;
+  --color-lime-500: #9dc210;
+  --color-lime-600: #86a510;
+  --color-lime-700: #6c8410;
+  --color-lime-800: #4d6a0e;
+  --color-lime-900: #263909;
+
+  /* Sun · accent, celebration, gentle retry. */
+  --color-sun-50: #fffaf0;
+  --color-sun-100: #fff1c2;
+  --color-sun-200: #ffe1a0;
+  --color-sun-300: #ffd34b;
+  --color-sun-400: #ffc629;
+  --color-sun-500: #f2ad16;
+  --color-sun-600: #dba316;
+  --color-sun-700: #a67a0a;
+  --color-sun-800: #7d5800;
+  --color-sun-900: #674500;
+
+  /* Coral · confirmation of leaving / consequential actions. */
+  --color-coral-50: #fff0e8;
+  --color-coral-100: #ffdccb;
+  --color-coral-200: #ffbfa3;
+  --color-coral-300: #ff956a;
+  --color-coral-400: #ff8055;
+  --color-coral-500: #f26b43;
+  --color-coral-600: #d75938;
+  --color-coral-700: #b24a2c;
+  --color-coral-800: #82320f;
+  --color-coral-900: #5a1f0c;
+
+  /* Sky · information, selection, time. */
+  --color-sky-50: #eaf5fc;
+  --color-sky-100: #dcecf8;
+  --color-sky-200: #b6e1f4;
+  --color-sky-300: #73d8f7;
+  --color-sky-400: #46c6f2;
+  --color-sky-500: #3fb2de;
+  --color-sky-600: #279bc3;
+  --color-sky-700: #2f7aa0;
+  --color-sky-800: #195e7a;
+  --color-sky-900: #0b3d52;
+
+  /* Grape · secondary accent, novelty. */
+  --color-grape-50: #f5f0fd;
+  --color-grape-100: #e8defa;
+  --color-grape-200: #d7c5f8;
+  --color-grape-300: #c8acf6;
+  --color-grape-400: #b894ef;
+  --color-grape-500: #a585e6;
+  --color-grape-600: #9470cd;
+  --color-grape-700: #75519e;
+  --color-grape-800: #5b3c8c;
+  --color-grape-900: #382262;
+
+  /* Rose · hearts and care. Never used for errors. */
+  --color-rose-50: #ffebef;
+  --color-rose-100: #ffd6de;
+  --color-rose-200: #ffb3c0;
+  --color-rose-300: #ff8a9d;
+  --color-rose-400: #ff7088;
+  --color-rose-500: #f7687f;
+  --color-rose-600: #e35470;
+  --color-rose-700: #b3405b;
+  --color-rose-800: #8f2d45;
+  --color-rose-900: #561427;
+
+  /* Mint · reserved for future content accents. */
+  --color-mint-50: #e6faf3;
+  --color-mint-100: #c9f3e4;
+  --color-mint-300: #6fe3bf;
+  --color-mint-400: #26d6a2;
+  --color-mint-600: #16a57c;
+  --color-mint-800: #0e6a51;
+
+  /* Short aliases: bg-lime == bg-lime-400, and so on. */
+  --color-night: var(--color-night-900);
+  --color-lime: var(--color-lime-400);
+  --color-sun: var(--color-sun-400);
+  --color-coral: var(--color-coral-400);
+  --color-sky: var(--color-sky-400);
+  --color-grape: var(--color-grape-400);
+  --color-rose: var(--color-rose-400);
+  --color-mint: var(--color-mint-400);
+
+  /* ---- 2 · Roles --------------------------------------------------------- */
+  --color-canvas: var(--color-night-25);        /* page and player background */
+  --color-surface: var(--color-night-0);        /* cards, dialogs, controls */
+  --color-sunken: var(--color-night-50);        /* inset stages, tab rails */
+  --color-line: var(--color-night-100);         /* hairlines and dividers */
+  --color-line-strong: var(--color-night-200);  /* hover borders, switch track, scrollbars (not bases) */
+  --color-depth: var(--color-night-100);        /* THE base and outline of every white raised piece: cards, panels, buttons, filters, groups, tabs */
+  --color-depth-strong: var(--color-night-150); /* base under trays, dialogs and selected tabs */
+
+  --color-ink: var(--color-night-900);          /* primary text */
+  --color-muted: var(--color-night-600);        /* secondary text (≥ 4.5:1 on canvas) */
+  --color-subtle: var(--color-night-400);       /* placeholders, separators in text */
+  --color-disabled: var(--color-night-500);
+  --color-inverse: var(--color-night-0);
+
+  --color-focus: var(--color-night-700);
+  --color-highlight: var(--color-lime-200);     /* ::selection */
+  --color-shade: color-mix(in srgb, var(--color-night-900) 7%, transparent);
+  --color-shade-soft: color-mix(in srgb, var(--color-night-900) 4%, transparent);
+  --color-shade-strong: color-mix(in srgb, var(--color-night-900) 22%, transparent);
+  --color-scrim: color-mix(in srgb, var(--color-night-900) 53%, transparent);
+
+  /* Status. Separate from brand colours so "error" never reads as "coral". */
+  --color-success: #187954;
+  --color-success-bg: #eaf8f0;
+  --color-success-line: #d3eede;
+  --color-info: #226298;
+  --color-info-bg: #edf6fc;
+  --color-info-line: #d8eaf7;
+  --color-warning: #815300;
+  --color-warning-bg: #fff7df;
+  --color-warning-line: #f4e6b6;
+  --color-danger: #ad3446;
+  --color-danger-bg: #fff0f2;
+  --color-danger-line: #f7d8dd;
+  --color-danger-strong: #db7080;
+  --color-danger-wash: #fff9fa;
+
+  /* ---- 4 · Scale (static parts) ----------------------------------------- */
+  --font-sans: "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-weight-body: 600;
+  --font-weight-label: 800;
+  --font-weight-title: 900;
+
+  /* Radii: ONE shape for the whole product, in every app and density (the density changes
+     sizes, never the shape). Controls are rounded rectangles; nothing you press is a capsule. */
+  --radius-chip: 0.5rem;        /* 8  · badges, keys, small inner pieces */
+  --radius-control-sm: 0.75rem; /* 12 · buttons, fields, filters, tabs (--ph-radius) */
+  --radius-control: 0.875rem;   /* 14 · counters, alerts, toasts, time tiles */
+  --radius-card: 1rem;          /* 16 · symbols, tiles */
+  --radius-panel: 1rem;         /* 16 · cards, panels, tables, trays */
+  --radius-dialog: 1.25rem;     /* 20 · dialogs, board pieces */
+  --radius-pill: 999px;         /* only what is round by nature: dots, switches, progress, count bubbles */
+
+  /* Depth language: what stands up has one base, --ph-depth (3 compact · 4 touch),
+     under controls and surfaces alike. Fields are flat; menus and toasts float. */
+  --shadow-panel: 0 var(--ph-depth) 0 var(--color-depth);
+  --shadow-raised: 0 var(--ph-depth) 0 var(--color-depth);
+  --shadow-dialog: 0 8px 0 var(--color-depth-strong), 0 24px 100px var(--color-shade-strong);
+  --shadow-float: 0 8px 30px var(--color-shade-strong);
+
+  --ease-playful: cubic-bezier(.2, .8, .25, 1);
+
+  --text-micro: 0.625rem;
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+  --text-action: 0.875rem;
+  --text-action-sm: 0.75rem;
+  --text-action-lg: 1rem;
+  --text-subtitle: 1rem;        /* 16 · card titles, emphasised body */
+  --text-lead: 1.125rem;
+  --text-title: 1.25rem;
+  --text-heading: 1.5rem;
+  --text-display: 2.25rem;
+  /* Player stage: read from across the room on a projector or TV. */
+  --text-counter: 1rem;         /* 16 · value in a compact counter */
+  --text-headline: 1.75rem;     /* 28 · stage lead line */
+  --text-headline-lg: 2rem;     /* 32 · group question */
+  --text-figure: 2.75rem;       /* 44 · join code */
+  --text-figure-lg: 3rem;       /* 48 · point totals */
+  --text-hero: 5.5rem;          /* 88 · topic of the day */
+}
+
+/* ---- 4 · Scale ----------------------------------------------------------
+   Density is inherited: set data-density on <html> or on any container.
+   compact (default) · desktop management with a mouse.
+   touch             · the player and Educators: 48 is the touch target.
+   Only sizes change between them: the shape (radii) is the same everywhere. */
+:root, [data-density=compact] {
+  --ph-control: 40px;       /* main control height */
+  --ph-control-sm: 32px;
+  --ph-control-lg: 48px;
+  --ph-icon: 18px;          /* functional icon in controls */
+  --ph-icon-lg: 24px;       /* counter symbols */
+  --ph-depth: 3px;          /* the one base under everything raised: controls and surfaces */
+  --ph-depth-pressed: 1px;
+  --ph-press-offset: 2px;
+  --ph-gap: 12px;           /* space between sibling controls */
+  --ph-progress: 10px;      /* progress bar: a slim meter in management */
+  --ph-radius: var(--radius-control-sm); /* buttons, fields, tabs, filters: the same in every density */
+  --ph-duration: 160ms;
+  --ph-duration-slow: 350ms;
+  /* Recomputed per density container so a nested density gets its own base. */
+  --shadow-panel: 0 var(--ph-depth) 0 var(--color-depth);
+  --shadow-raised: 0 var(--ph-depth) 0 var(--color-depth);
+}
+[data-density=touch] {
+  --ph-control: 48px;       /* minimum touch target and main button height */
+  --ph-control-sm: 40px;
+  --ph-control-lg: 56px;
+  --ph-icon: 20px;
+  --ph-icon-lg: 28px;
+  --ph-depth: 4px;
+  --ph-press-offset: 3px;
+  --ph-gap: 16px;
+  --ph-progress: 16px;
+  --shadow-panel: 0 var(--ph-depth) 0 var(--color-depth);
+  --shadow-raised: 0 var(--ph-depth) 0 var(--color-depth);
+}
+
+/* Tones live in the base layer so component states (e.g. :disabled) can
+   override them without fighting specificity. */
+@layer base {
+/* ---- 3 · Tones --------------------------------------------------------------
+   Every coloured component reads only these variables:
+   --tone-fill                flat face of a solid control, meter or ribbon (no gradients)
+   --tone-top                 a lighter step of the tone (ribbon icon; kept for the prototypes)
+   --tone-edge                raised base under a solid control
+   --tone-on                  text/icon on the solid face
+   --tone-focus               focus marker above a solid control
+   --tone-mid                 secondary fill (ribbon tails, sparks)
+   --tone-wash                faintest background (selected card)
+   --tone-tint / -tint-edge   soft background and its base
+   --tone-strong              text on tint
+   --tone-icon                icon on tint
+   Educational areas map to a tone with data-area: alimentacion → sun,
+   actividad-fisica → sky, cuidado-personal → grape, salud-emocional → rose.
+   Components that need a default other than lime are listed next to the
+   tone they default to (e.g. .ribbon defaults to sun, .badge to neutral). */
+:root,
+[data-tone=lime], [data-kind=success], [data-kind=complete],
+.ui-button:not([data-tone]), .progress-track:not([data-tone]) {
+  --tone-top: var(--color-lime-300); --tone-fill: var(--color-lime-400); --tone-edge: var(--color-lime-600);
+  --tone-on: var(--color-lime-900); --tone-focus: var(--color-lime-800); --tone-mid: var(--color-lime-500);
+  --tone-wash: var(--color-lime-50); --tone-tint: var(--color-lime-100); --tone-tint-edge: var(--color-lime-200);
+  --tone-strong: var(--color-lime-800); --tone-icon: var(--color-lime-700);
+}
+/* Current place in any navigation: a clear tint of the tone it sits in (lime by default). */
+:root, [data-tone] { --nav-current: color-mix(in srgb, var(--tone-tint) 50%, var(--tone-tint-edge)); }
+[data-tone=sun], [data-kind=retry], [data-area=alimentacion],
+.ribbon:not([data-tone]), .progress-segments:not([data-tone]) {
+  --tone-top: var(--color-sun-300); --tone-fill: var(--color-sun-400); --tone-edge: var(--color-sun-600);
+  --tone-on: var(--color-sun-900); --tone-focus: var(--color-sun-800); --tone-mid: var(--color-sun-500);
+  --tone-wash: var(--color-sun-50); --tone-tint: var(--color-sun-100); --tone-tint-edge: var(--color-sun-200);
+  --tone-strong: var(--color-sun-800); --tone-icon: var(--color-sun-700);
+}
+[data-tone=coral] {
+  --tone-top: var(--color-coral-300); --tone-fill: var(--color-coral-400); --tone-edge: var(--color-coral-600);
+  --tone-on: var(--color-coral-900); --tone-focus: var(--color-coral-800); --tone-mid: var(--color-coral-500);
+  --tone-wash: var(--color-coral-50); --tone-tint: var(--color-coral-50); --tone-tint-edge: var(--color-coral-100);
+  --tone-strong: var(--color-coral-800); --tone-icon: var(--color-coral-700);
+}
+[data-tone=sky], [data-kind=selection], [data-area=actividad-fisica] {
+  --tone-top: var(--color-sky-300); --tone-fill: var(--color-sky-400); --tone-edge: var(--color-sky-600);
+  --tone-on: var(--color-sky-900); --tone-focus: var(--color-sky-800); --tone-mid: var(--color-sky-500);
+  --tone-wash: var(--color-sky-50); --tone-tint: var(--color-sky-100); --tone-tint-edge: var(--color-sky-200);
+  --tone-strong: var(--color-sky-800); --tone-icon: var(--color-sky-700);
+}
+[data-tone=grape], [data-area=cuidado-personal] {
+  --tone-top: var(--color-grape-300); --tone-fill: var(--color-grape-400); --tone-edge: var(--color-grape-600);
+  --tone-on: var(--color-grape-900); --tone-focus: var(--color-grape-800); --tone-mid: var(--color-grape-500);
+  --tone-wash: var(--color-grape-50); --tone-tint: var(--color-grape-100); --tone-tint-edge: var(--color-grape-200);
+  --tone-strong: var(--color-grape-800); --tone-icon: var(--color-grape-700);
+}
+[data-tone=rose], [data-area=salud-emocional] {
+  --tone-top: var(--color-rose-300); --tone-fill: var(--color-rose-400); --tone-edge: var(--color-rose-600);
+  --tone-on: var(--color-rose-900); --tone-focus: var(--color-rose-800); --tone-mid: var(--color-rose-500);
+  --tone-wash: var(--color-rose-50); --tone-tint: var(--color-rose-50); --tone-tint-edge: var(--color-rose-100);
+  --tone-strong: var(--color-rose-800); --tone-icon: var(--color-rose-700);
+}
+[data-tone=night] {
+  --tone-top: var(--color-night-800); --tone-fill: var(--color-night-850); --tone-edge: var(--color-night-950);
+  --tone-on: var(--color-night-0); --tone-focus: var(--color-night-500); --tone-mid: var(--color-night-700);
+  --tone-wash: var(--color-night-25); --tone-tint: var(--color-night-100); --tone-tint-edge: var(--color-night-150);
+  --tone-strong: var(--color-night-900); --tone-icon: var(--color-night-800);
+}
+[data-tone=neutral],
+.badge:not([data-tone]):not([data-area]), .mini-action:not([data-tone]) {
+  --tone-top: var(--color-night-0); --tone-fill: var(--color-night-0); --tone-edge: var(--color-depth);
+  --tone-on: var(--color-night-700); --tone-focus: var(--color-night-700); --tone-mid: var(--color-night-300);
+  --tone-wash: var(--color-night-25); --tone-tint: var(--color-night-50); --tone-tint-edge: var(--color-night-100);
+  --tone-strong: var(--color-night-600); --tone-icon: var(--color-night-600);
+}
+[data-tone=success] {
+  --tone-top: var(--color-success); --tone-fill: var(--color-success); --tone-edge: var(--color-success);
+  --tone-on: var(--color-white); --tone-focus: var(--color-success); --tone-mid: var(--color-success-line);
+  --tone-wash: var(--color-success-bg); --tone-tint: var(--color-success-bg); --tone-tint-edge: var(--color-success-line);
+  --tone-strong: var(--color-success); --tone-icon: var(--color-success);
+}
+[data-tone=info] {
+  --tone-top: var(--color-info); --tone-fill: var(--color-info); --tone-edge: var(--color-info);
+  --tone-on: var(--color-white); --tone-focus: var(--color-info); --tone-mid: var(--color-info-line);
+  --tone-wash: var(--color-info-bg); --tone-tint: var(--color-info-bg); --tone-tint-edge: var(--color-info-line);
+  --tone-strong: var(--color-info); --tone-icon: var(--color-info);
+}
+[data-tone=warning] {
+  --tone-top: var(--color-warning); --tone-fill: var(--color-warning); --tone-edge: var(--color-warning);
+  --tone-on: var(--color-white); --tone-focus: var(--color-warning); --tone-mid: var(--color-warning-line);
+  --tone-wash: var(--color-warning-bg); --tone-tint: var(--color-warning-bg); --tone-tint-edge: var(--color-warning-line);
+  --tone-strong: var(--color-warning); --tone-icon: var(--color-warning);
+}
+[data-tone=danger] {
+  --tone-top: var(--color-danger); --tone-fill: var(--color-danger); --tone-edge: var(--color-danger);
+  --tone-on: var(--color-white); --tone-focus: var(--color-danger); --tone-mid: var(--color-danger-line);
+  --tone-wash: var(--color-danger-wash); --tone-tint: var(--color-danger-bg); --tone-tint-edge: var(--color-danger-line);
+  --tone-strong: var(--color-danger); --tone-icon: var(--color-danger);
+}
+}

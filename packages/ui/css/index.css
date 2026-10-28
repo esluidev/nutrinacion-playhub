@@ -1,0 +1,8 @@
+/* @playhub/ui · entrada para las apps Nuxt. Cada app la importa al inicio de su única raíz
+   de CSS (`@import "@playhub/ui/css/index.css";`); otros archivos de estilo la referencian
+   con `@reference "@playhub/ui/css/index.css";`. */
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";
+@source "../app";

@@ -1,0 +1,15 @@
+/* Laboratorio del kit: la lámina de componentes (index.html) y el player de prototipo
+   (player.html). Usa los mismos tokens y componentes que las apps (../css). */
+@import "tailwindcss" source(none);
+@import "../css/tokens.css";
+@import "../css/base.css";
+@import "../css/components.css";
+@import "./src/chrome.css";
+@import "./src/player.css";
+@import "./src/plantillas.css";
+@source "./index.html";
+@source "./app.js";
+@source "./player.html";
+@source "./player.js";
+@source "./plantillas.js";
+@source "./src/icons-runtime.js";

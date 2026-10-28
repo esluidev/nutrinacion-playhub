@@ -1,0 +1,25 @@
+{
+  "name": "@playhub/ui",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "PlayHub UI Kit: tokens, componentes y laboratorio compartidos por las apps web (capa de Nuxt)",
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "lab": "node lab/server.mjs",
+    "lab:build": "node lab/scripts/assets.mjs && tailwindcss -i ./lab/lab.css -o ./lab/styles.css --minify",
+    "lab:watch": "tailwindcss -i ./lab/lab.css -o ./lab/styles.css --watch"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.4.0",
+    "vue": "^3.5.0"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@rive-app/webgl2": "2.42.2",
+    "@tailwindcss/cli": "4.3.3"
+  }
+}

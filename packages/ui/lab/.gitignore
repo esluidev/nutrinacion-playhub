@@ -1,0 +1,4 @@
+# Generados por `npm run lab:build` (scripts/assets.mjs y Tailwind).
+assets/
+icons.js
+styles.css

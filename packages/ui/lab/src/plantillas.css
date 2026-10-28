@@ -1,0 +1,61 @@
+/* PlayHub · las piezas de juego de las plantillas (plantillas.js).
+   Cada plantilla dibuja su tablero de 1280 × 600 solo con estas piezas, los tokens del kit y sus objetos o personajes
+   de Rive. El marco (consigna, barra, pie, feedback) es de src/player.css. Ninguna pieza de juego usa lima ni night como
+   color propio: son del UI. */
+@layer components {
+  /* ---- Tablero: 1280 × 600, sin fondo, centrado entre la barra y el pie, a la escala del UI ------ */
+  .tb-scene { @apply absolute; inset: var(--scene-top) 0 auto; height: var(--scene-h, 600px); }
+  .tb-board { position: absolute; left: 50%; top: 50%; width: 1280px; height: 600px; transform: translate(-50%, -50%) scale(var(--scene-fit, 1)); touch-action: none; }
+  .tb-board[data-blocked] { pointer-events: none; }
+  .tb-board img { display: block; pointer-events: none; -webkit-user-drag: none; }
+  .tb-ave, .tb-nido, .tb-huevo { position: absolute; pointer-events: none; }
+
+  /* Soft faces of the reusable palette: face 200, raised base 300, text 800. */
+  .tb-pieza[data-tone=sun] { --pz-face: var(--color-sun-200); --pz-edge: var(--color-sun-300); --pz-ink: var(--color-sun-800); }
+  .tb-pieza[data-tone=coral] { --pz-face: var(--color-coral-200); --pz-edge: var(--color-coral-300); --pz-ink: var(--color-coral-800); }
+  .tb-pieza[data-tone=sky] { --pz-face: var(--color-sky-200); --pz-edge: var(--color-sky-300); --pz-ink: var(--color-sky-800); }
+  .tb-pieza[data-tone=grape] { --pz-face: var(--color-grape-200); --pz-edge: var(--color-grape-300); --pz-ink: var(--color-grape-800); }
+  .tb-pieza[data-tone=rose] { --pz-face: var(--color-rose-200); --pz-edge: var(--color-rose-300); --pz-ink: var(--color-rose-800); }
+  .tb-pieza { -webkit-tap-highlight-color: transparent; }
+  .tb-pieza:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+
+  /* Text inside the board scales with it (to about 0.35 on the smallest phone): nothing under 28 board px.
+     Name of a piece: a white chip in the piece's ink (preadolescencia and adolescencia). */
+  .tb-etiqueta { @apply absolute rounded-control px-5 py-2 font-black whitespace-nowrap; left: 50%; translate: -50% -50%; font-size: var(--text-headline-lg); line-height: 1.2; color: var(--pz-ink, var(--color-ink)); background: var(--color-surface); box-shadow: 0 3px 0 var(--pz-edge, var(--color-depth-strong)); }
+
+  /* ---- Destapar: what is seen stays in view; what is discovered waits under its cover ------------- */
+  .tb-carta { @apply absolute overflow-hidden p-0; border: 0; appearance: none; cursor: pointer; border-radius: var(--radius-dialog); background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-line), 0 6px 0 var(--color-depth-strong); transition: translate 160ms var(--ease-playful), box-shadow 160ms ease, background 200ms ease; }
+  .tb-carta[data-state=tapada]:hover { translate: 0 -3px; }
+  .tb-carta[data-state=tapada]:active { translate: 0 4px; box-shadow: inset 0 0 0 3px var(--color-line), 0 2px 0 var(--color-depth-strong); }
+  .tb-carta[data-state=abierta] { background: var(--pz-face); box-shadow: inset 0 0 0 3px var(--pz-edge), 0 6px 0 var(--pz-edge); }
+  .tb-carta.is-nudging { animation: tb-nudge 900ms ease-in-out; }
+  .tb-tapa { @apply absolute grid place-items-center; border-radius: var(--radius-panel); background: var(--color-sunken); box-shadow: inset 0 0 0 3px var(--color-line-strong); transition: opacity 300ms ease, translate 300ms var(--ease-playful); }
+  .tb-tapa.is-opening { opacity: 0; translate: 0 -28px; }
+  .tb-marca { @apply font-black; font-size: 112px; line-height: 1; color: var(--color-night-200); }
+  .tb-carta .tb-ave { animation: arrive 280ms ease-out; }
+
+  /* ---- Colocar: destinations above, each with its number over it; pieces below -------------------- */
+  .tb-numero { @apply absolute flex items-center justify-center font-black; font-size: var(--text-headline-lg); line-height: 1; color: var(--color-muted); }
+  .tb-ranura { position: absolute; border-radius: var(--radius-dialog); background: var(--color-sunken); box-shadow: inset 0 0 0 3px var(--color-line-strong); transition: background 160ms ease, box-shadow 160ms ease; }
+  .tb-ranura.is-next { background: var(--color-sky-50); box-shadow: none; outline: 4px dashed var(--color-sky-400); outline-offset: -4px; }
+  .tb-ranura.is-over { background: var(--color-sky-50); box-shadow: inset 0 0 0 4px var(--color-sky-400); outline: none; }
+  .tb-ranura.is-wrong { animation: tb-wiggle 460ms ease; }
+  .tb-flecha { @apply absolute grid place-items-center; color: var(--color-night-300); }
+  .tb-flecha .icon { width: 40px; height: 40px; stroke-width: 3; }
+  .tb-pozo { position: absolute; border-radius: var(--radius-dialog); background: var(--color-sunken); }
+  .tb-ficha { @apply absolute z-[2] flex flex-col items-center justify-center gap-1.5 p-0; border: 0; appearance: none; cursor: grab; touch-action: none; border-radius: var(--radius-dialog); background: var(--pz-face); box-shadow: inset 0 0 0 3px var(--pz-edge), 0 6px 0 var(--pz-edge); transition: left 340ms var(--ease-playful), top 340ms var(--ease-playful), translate 120ms ease; }
+  .tb-ficha:active:not(:disabled) { box-shadow: inset 0 0 0 3px var(--pz-edge), 0 3px 0 var(--pz-edge); }
+  .tb-ficha.is-dragging { z-index: 20; cursor: grabbing; transition: none; filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
+  .tb-ficha[data-state=colocada] { z-index: 3; }
+  .tb-ficha:disabled { cursor: default; }
+  .tb-ficha.is-celebrating { animation: tb-lift 620ms var(--ease-playful) var(--delay, 0ms); }
+  .tb-ficha-arte { @apply relative block; width: 140px; height: 120px; }
+  .tb-ficha-img { position: absolute; inset: 0; margin: auto; width: auto; height: auto; max-width: 100%; max-height: 100%; }
+  .tb-insignia { @apply absolute grid place-items-center rounded-full; right: -12px; top: -8px; width: 60px; height: 60px; background: var(--color-surface); color: var(--pz-ink); box-shadow: inset 0 0 0 3px var(--pz-edge), 0 3px 0 var(--pz-edge); }
+  .tb-insignia .icon { width: 34px; height: 34px; stroke-width: 2.4; }
+  .tb-ficha-etiqueta { @apply font-black whitespace-nowrap; font-size: var(--text-headline); line-height: 1.1; color: var(--pz-ink, var(--color-ink)); }
+}
+
+@keyframes tb-nudge { 0%, 50%, 100% { translate: 0 0; } 25% { translate: 0 -14px; } 70% { translate: 0 -6px; } }
+@keyframes tb-wiggle { 20% { translate: -12px 0; } 45% { translate: 10px 0; } 70% { translate: -5px 0; } }
+@keyframes tb-lift { 40% { translate: 0 -16px; } }

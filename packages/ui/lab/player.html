@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es" data-density="touch">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content=""><!-- player.js fills it from --color-canvas -->
+  <meta name="description" content="PlayHub player · el taller en tres modos y tres ediciones: plantillas de juego con PlayHub UI Kit.">
+  <title>PlayHub player</title>
+  <link rel="icon" href="./assets/nutrinacion-isotipo.png" type="image/png">
+  <link rel="preload" href="./assets/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./styles.css?v=1.0">
+  <script src="./icons.js?v=1.0" defer></script>
+  <script src="./assets/rive-2.42.2/rive.js" defer></script>
+  <script src="./datos-huevo.js?v=1.0" defer></script>
+  <script src="./plantillas.js?v=1.0" defer></script>
+  <script src="./player.js?v=1.0" defer></script>
+</head>
+<body class="player-page">
+  <!-- 1280×800 design space, zoomed to the screen by player.js.
+       ?mode=educator|device|home fixes the frame; every frame piece says in which modes it exists (data-modes).
+       The scene itself (welcome or template board) is the same in every mode.
+       The console lives in the bar and the footer. Above the board, its consigna: what to do, fixed for the scene.
+       The game never speaks to the educator (that is the guide's job): the only thing that changes with each action
+       is the feedback, which rises over the footer with its own listen and close buttons. -->
+  <main class="player-frame" id="player" data-mode="educator" data-feedback="none" aria-label="Taller">
+
+    <header class="player-bar" aria-label="Barra del taller">
+      <div class="bar-start">
+        <button id="exit" class="ui-button ui-icon-button" data-tone="neutral" data-modes="educator home" aria-label="Salir del taller" title="Salir del taller"><span data-icon="close"></span></button>
+        <!-- Where the workshop is: this scene of the total, with a small ring of the workshop's progress. -->
+        <div id="scene-chip" class="counter counter-compact hud-chip" data-modes="educator home" role="progressbar" aria-label="Progreso del taller" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="counter-art"><span data-icon="clapperboard"></span></span>
+          <span class="counter-value" id="scene-count">1/1</span>
+          <svg class="scene-ring" viewBox="0 0 24 24" aria-hidden="true"><circle class="ring-track" cx="12" cy="12" r="9"/><circle class="ring-fill" id="scene-ring" cx="12" cy="12" r="9" pathLength="100"/></svg>
+        </div>
+        <!-- Device: the participant's icon is its only identity; it does not survive the session. -->
+        <div class="participant" id="participant" data-modes="device">
+          <span class="ui-symbol" id="participant-symbol" data-tone="coral"><span data-icon="user"></span></span>
+          <span class="participant-name" id="participant-name"></span>
+        </div>
+        <span class="badge ready-badge" id="ready-badge" data-tone="lime" data-modes="device" hidden><span data-icon="check"></span>Listo</span>
+      </div>
+      <div class="bar-end">
+        <!-- The whole timer pauses and resumes the scene; the whole points chip opens the points. -->
+        <button id="time-counter" class="counter counter-compact hud-chip" data-modes="educator" aria-pressed="false" aria-label="Pausar escena" title="Pausar (P)">
+          <span class="counter-art" id="time-art"><span data-icon="clock-solid"></span></span>
+          <span class="counter-value"><output id="elapsed" aria-live="off">00:00</output></span>
+        </button>
+        <button id="points-counter" class="counter counter-compact hud-chip" aria-label="Ver puntos: 0" title="Ver puntos">
+          <span class="counter-art"><span data-icon="ruby-solid"></span></span>
+          <span class="counter-value" id="points">0</span>
+        </button>
+        <button id="settings-button" class="ui-button ui-icon-button" data-tone="sky" data-modes="educator" aria-expanded="false" aria-controls="quick-rail" aria-label="Ajustes rápidos" title="Ajustes rápidos"><span data-icon="settings"></span></button>
+      </div>
+    </header>
+
+    <div class="player-stage" id="stage" tabindex="-1">
+      <!-- Consigna: the header of the board. What to do in this scene, with the kit's small listen action. -->
+      <div class="consigna" id="consigna" data-empty="true">
+        <button id="consigna-listen" class="mini-action" data-tone="sky" aria-label="Escuchar la consigna" title="Escuchar"><span data-icon="sound"></span></button>
+        <p class="consigna-text" id="consigna-text" aria-live="polite"></p>
+      </div>
+
+      <!-- Plantilla Anuncio (Situar): drawn from data. -->
+      <section class="welcome" id="welcome" hidden aria-labelledby="welcome-topic">
+        <div class="welcome-text">
+          <p class="welcome-kicker"><span id="welcome-area" class="badge"></span><span id="welcome-edition" class="badge"></span></p>
+          <p class="welcome-lead">Hoy vamos a conocer</p>
+          <h2 class="welcome-topic" id="welcome-topic" tabindex="-1"></h2>
+        </div>
+        <div class="welcome-art" id="welcome-art" aria-hidden="true"><img id="welcome-image" alt=""></div>
+      </section>
+
+      <!-- Template boards (tb-scene) are inserted here by player.js. -->
+
+
+      <aside class="side-panel guide" data-side="left" id="guide" aria-labelledby="guide-title" hidden>
+        <div class="panel-head">
+          <div>
+            <p class="guide-meta"><span class="badge" id="guide-area"></span><span class="badge" id="guide-verb"></span><span class="panel-caption" id="guide-scene"></span></p>
+            <h2 id="guide-title" class="ui-heading"></h2>
+          </div>
+          <button id="guide-close" class="ui-button ui-icon-button ui-button-sm" data-tone="neutral" aria-label="Cerrar guía (G)"><span data-icon="close"></span></button>
+        </div>
+        <p class="guide-subtitle" id="guide-subtitle"></p>
+        <div class="ui-tabs guide-tabs" id="guide-tabs" role="tablist" aria-label="Guía de la escena">
+          <button class="ui-tab" role="tab" id="guide-tab-escena" data-section="escena" aria-selected="true" aria-controls="guide-body"><span data-icon="compass"></span>Escena</button>
+          <button class="ui-tab" role="tab" id="guide-tab-conducir" data-section="conducir" aria-selected="false" aria-controls="guide-body" tabindex="-1"><span data-icon="book"></span>Conducir</button>
+          <button class="ui-tab" role="tab" id="guide-tab-preguntas" data-section="preguntas" aria-selected="false" aria-controls="guide-body" tabindex="-1"><span data-icon="chat"></span>Preguntas</button>
+          <button class="ui-tab" role="tab" id="guide-tab-consejos" data-section="consejos" aria-selected="false" aria-controls="guide-body" tabindex="-1"><span data-icon="sparkles"></span>Consejos</button>
+        </div>
+        <div class="panel-scroll guide-body" id="guide-body" role="tabpanel" tabindex="0"></div>
+      </aside>
+
+      <div class="quick-rail" id="quick-rail" role="toolbar" aria-orientation="vertical" aria-label="Ajustes rápidos" hidden>
+        <button id="sound-button" class="ui-button ui-icon-button" data-tone="neutral" aria-pressed="false" aria-label="Silenciar (M)" title="Silenciar (M)"><span data-icon="sound"></span></button>
+        <button id="fullscreen-button" class="ui-button ui-icon-button" data-tone="neutral" aria-pressed="false" aria-label="Pantalla completa (F)" title="Pantalla completa (F)"><span data-icon="expand"></span></button>
+        <button id="devices-button" class="ui-button ui-icon-button rail-button-count" data-tone="neutral" aria-expanded="false" aria-controls="devices-panel" aria-label="Dispositivos conectados: 0" title="Dispositivos"><span data-icon="devices"></span><span class="ui-dot" data-tone="sky" id="devices-dot" hidden>0</span></button>
+      </div>
+
+      <!-- The educator sees who is connected and in which scene, and can pause, restart or remove one device.
+           Never what a device answered or whether it finished. -->
+      <aside class="side-panel" data-side="right" id="devices-panel" aria-labelledby="devices-title" hidden>
+        <div class="panel-head">
+          <div><p class="panel-caption">Taller · demostración</p><h2 id="devices-title" class="ui-heading">Dispositivos</h2></div>
+          <button id="devices-close" class="ui-button ui-icon-button ui-button-sm" data-tone="neutral" aria-label="Cerrar dispositivos"><span data-icon="close"></span></button>
+        </div>
+        <div class="join-box">
+          <p class="panel-label">Código para unirse</p>
+          <p class="join-code">PH · 4821</p>
+          <p class="ui-caption">En esta demostración, abre player.html?mode=device en otra pestaña de este navegador.</p>
+        </div>
+        <div class="panel-row"><p class="panel-label">Conectados</p><span class="badge" data-tone="sky"><span id="devices-count">0</span></span></div>
+        <ul class="panel-scroll device-list" id="device-list" aria-label="Dispositivos conectados"></ul>
+        <div class="device-card" id="device-card" data-selected="false">
+          <div class="device-card-head"><span class="ui-symbol ui-symbol-sm" id="device-card-symbol" data-tone="neutral"><span data-icon="user"></span></span><div><p class="device-card-name" id="device-card-name">Ningún dispositivo</p><p class="ui-caption" id="device-card-status" aria-live="polite">Todavía no se ha unido nadie</p></div></div>
+          <div class="device-actions">
+            <button id="device-pause" class="ui-button ui-button-sm" data-tone="neutral" disabled></button>
+            <button id="device-restart" class="ui-button ui-button-sm" data-tone="neutral" disabled><span data-icon="retry"></span><span>Reiniciar</span></button>
+            <button id="device-remove" class="ui-button ui-button-sm" data-tone="coral" disabled><span data-icon="close"></span><span>Quitar</span></button>
+          </div>
+        </div>
+        <p class="device-hint ui-caption"><span data-icon="info"></span>Lo que cada persona hace se queda en su dispositivo.</p>
+      </aside>
+    </div>
+
+    <footer class="player-footer" id="footer">
+      <div class="footer-start" data-modes="educator">
+        <button id="guide-button" class="ui-button" data-tone="sky" aria-expanded="false" aria-controls="guide" title="Guía (G)"><span data-icon="book"></span><span>Guía</span></button>
+      </div>
+      <div class="feedback-slot">
+        <!-- Feedback sheet: rises behind the whole footer; the controls step aside until it is closed. -->
+        <div id="feedback" class="ui-feedback" data-tone="lime" data-visible="false" role="status" aria-live="polite">
+          <span id="feedback-icon" class="ui-feedback-symbol" aria-hidden="true"></span>
+          <div class="ui-feedback-body">
+            <strong id="feedback-title"></strong>
+            <p class="sheet-text" id="feedback-text" hidden></p>
+          </div>
+          <div class="feedback-actions">
+            <span id="feedback-reward" class="badge feedback-reward" data-tone="lime" hidden></span>
+            <button id="feedback-listen" class="ui-button ui-icon-button" data-tone="neutral" aria-label="Escuchar" title="Escuchar"><span data-icon="sound"></span></button>
+            <button id="feedback-close" class="ui-button ui-icon-button" data-tone="lime" aria-label="Cerrar (Esc)" title="Cerrar (Esc)"><span data-icon="close"></span></button>
+          </div>
+        </div>
+      </div>
+      <div class="footer-end" data-modes="educator home">
+        <!-- Scene actions as one block (src/plantillas.css · hud-group). -->
+        <div class="hud-group" role="group" aria-label="Escena">
+          <button id="previous-button" class="ui-button ui-icon-button" data-tone="neutral" data-modes="educator" aria-label="Anterior" title="Anterior (←)"><span data-icon="arrow-left"></span></button>
+          <button id="restart-button" class="ui-button ui-icon-button" data-tone="neutral" aria-label="Reiniciar escena" title="Reiniciar escena"><span data-icon="retry"></span></button>
+        </div>
+        <button id="next-button" class="ui-button next-button" title="Siguiente (→)"><span id="next-label">Siguiente</span></button>
+      </div>
+    </footer>
+
+  <!-- Window over the whole frame, like the dialogs: the pause (educator) and, on a device, the session's states. -->
+    <div class="scene-overlay" id="scene-overlay" hidden>
+      <section class="panel-window" aria-labelledby="overlay-title" aria-describedby="overlay-description">
+        <div class="panel-head">
+          <span id="overlay-icon" class="ui-symbol window-symbol" data-tone="sky" aria-hidden="true"></span>
+          <div class="window-titles"><p class="panel-caption" id="overlay-caption"></p><h2 id="overlay-title" class="ui-heading"></h2></div>
+          <button id="overlay-close" class="ui-button ui-icon-button ui-button-sm" data-tone="neutral" aria-label="Continuar (P)" title="Continuar (P)" hidden><span data-icon="close"></span></button>
+        </div>
+        <p id="overlay-description" class="window-text"></p>
+        <div class="window-stats" id="pause-stats" hidden><div class="window-box"><p class="panel-label">Tiempo de la escena</p><p class="window-figure" id="pause-scene-time">00:00</p></div></div>
+        <div class="window-actions" id="overlay-actions" hidden><button id="overlay-action" class="ui-button"><span data-icon="play"></span>Continuar</button></div>
+      </section>
+    </div>
+
+    <p id="status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+  </main>
+
+  <!-- Windows: the side panels' anatomy (src/plantillas.css · Windows), centred over a scrim. -->
+  <dialog id="points-dialog" class="panel-window" aria-labelledby="points-title">
+    <div class="panel-head">
+      <span class="ui-symbol window-symbol" data-tone="rose" aria-hidden="true"><span data-icon="ruby-solid"></span></span>
+      <div class="window-titles"><p class="panel-caption">Para todo el grupo</p><h2 id="points-title" class="ui-heading">Puntos del taller</h2></div>
+      <button class="ui-button ui-icon-button ui-button-sm" data-tone="neutral" data-dismiss aria-label="Cerrar"><span data-icon="close"></span></button>
+    </div>
+    <div class="window-stats"><div class="window-box"><p class="panel-label">Total</p><p class="window-figure"><span id="points-total">0</span> <span class="window-figure-of" id="points-possible"></span></p></div></div>
+    <p class="window-hint ui-caption"><span data-icon="info"></span>Cada juego completado suma 10. Sin competir ni perder puntos; repetir una escena no vuelve a sumarlos.</p>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="panel-window" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+    <div class="panel-head">
+      <span class="ui-symbol window-symbol" id="confirm-icon" aria-hidden="true"></span>
+      <div class="window-titles"><p class="panel-caption" id="confirm-caption"></p><h2 id="confirm-title" class="ui-heading"></h2></div>
+      <button class="ui-button ui-icon-button ui-button-sm" data-tone="neutral" data-dismiss aria-label="Cancelar"><span data-icon="close"></span></button>
+    </div>
+    <p id="confirm-description" class="window-text"></p>
+    <div class="window-stats" id="confirm-stats" hidden></div>
+    <div class="window-actions"><button class="ui-button" data-tone="neutral" data-dismiss>Cancelar</button><button id="confirm-action" class="ui-button"></button></div>
+  </dialog>
+
+  <noscript><p class="p-8">Activa JavaScript para abrir el taller.</p></noscript>
+</body>
+</html>

@@ -1,0 +1,272 @@
+/* PlayHub player: the workshop's frame in its three modes (educator, device, home).
+   Design space: 1280 × 800, zoomed to the screen. player.js measures the screen and its safe area (notch, rounded
+   corners, home bar) with .safe-probe and sets --player-scale, --frame-w/-h (the whole screen) and --safe-t/r/b/l,
+   all in design pixels. The frame covers the whole screen, so colours reach the edges. --safe-* is only the part of
+   an inset that goes beyond the margins (--edge, --gutter): an inset replaces the margin instead of adding to it.
+   White bar and footer hold the console; between them the stage, in --color-canvas, with the consigna and the board
+   (src/plantillas.css: 1280 × 600, scaled by --scene-fit to the room left). No box, no border. */
+@layer components {
+  /* The page is the player, not a document. Pan only (the guide scrolls): no pinch or double-tap zoom.
+     Pull-to-refresh and the rubber band live on the root, so the root gets overscroll-behavior too. */
+  html:has(> body.player-page) { overscroll-behavior: none; }
+  .player-page { @apply m-0 overflow-hidden bg-surface; overscroll-behavior: none; touch-action: pan-x pan-y; }
+  /* Touch blockers on the whole player, dialogs included: no text selection or loupe on a long press,
+     no press-and-hold callout, no tap flash, no image ghost when dragging. The rest is in player.js. */
+  .player-page, .player-page * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  .player-page img { -webkit-user-drag: none; }
+  /* Measures the screen and its safe-area insets in the same units CSS uses (read by player.js). */
+  .safe-probe { position: fixed; inset: 0; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .player-frame {
+    /* --edge: distance from the screen edge (inside the safe area) to the bar's controls and, the same, to the bottom
+       of the footer's controls including their raised base (player.js: 20; 12 on phones). */
+    --gutter: 32px; --edge: 20px; --footer-gap: 24px;
+    /* HUD: one size on every screen and pointer, 44, the touch minimum, and one shape, round: icon buttons are circles;
+       buttons with text, chips and the scene block are capsules. Phones draw the UI at 44/48 of its design size
+       (player.js), so there the control is 48 to stay at 44 real px. Only the bar, the footer and the rail: the board
+       and the panels keep the kit's scale. player.js uses the same sizes. */
+    --hud-control: 44px;
+    --hud-base: 0 var(--ph-depth) 0 var(--color-depth);   /* the kit's one base, the cards' colour */
+    /* The bands hug the controls with one rule in every mode: --edge plus the control and its base; the footer keeps
+       --footer-gap above them for the feedback (bar 68, footer 92). The board gains the rest. */
+    --bar-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth));
+    --footer-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth) + var(--footer-gap));
+    /* The footer keeps more air above its controls than the bar keeps below its own; the scene starts that much lower,
+       so it sits centred between them (player.js adds the consigna's row). */
+    --scene-top: calc(var(--footer-h) - var(--bar-h));
+    --rail-gap: 4px;
+    @apply fixed left-0 top-0 grid overflow-hidden bg-surface;
+    width: var(--frame-w, 100vw); height: var(--frame-h, 100vh);
+    padding: var(--safe-t, 0px) var(--safe-r, 0px) var(--safe-b, 0px) var(--safe-l, 0px);
+    grid-template-rows: var(--bar-h) minmax(0, 1fr) var(--footer-h);
+    grid-template-columns: minmax(0, 1fr);
+    zoom: var(--player-scale, 1);
+  }
+  .player-frame :is(.player-bar, .player-footer, .quick-rail) { --ph-control: var(--hud-control); }
+  /* Native dialogs live in the top layer, outside the frame: give them the same zoom. */
+  .player-page dialog { zoom: var(--player-scale, 1); max-height: calc(var(--frame-h, 100vh) - var(--safe-t, 0px) - var(--safe-b, 0px) - 32px); overflow-y: auto; }
+
+  /* ---- Modes: every piece of the frame says in which modes it exists (data-modes) ---------------- */
+  .player-frame[data-mode=educator] [data-modes]:not([data-modes~=educator]),
+  .player-frame[data-mode=device] [data-modes]:not([data-modes~=device]),
+  .player-frame[data-mode=home] [data-modes]:not([data-modes~=home]) { display: none !important; }
+
+  /* ---- Bar: Salir and the scene on the left; Tiempo, Puntos and Ajustes on the right ----------------
+     A white band: its controls sit centred in it, the same air above and below their base. */
+  .player-bar { @apply grid items-center gap-6; grid-template-columns: max-content minmax(0, 1fr) max-content; padding: calc((var(--bar-h) - var(--ph-control) - var(--ph-depth)) / 2) var(--gutter) calc((var(--bar-h) - var(--ph-control) + var(--ph-depth)) / 2); }
+  .bar-start, .bar-end { @apply flex items-center gap-3; }
+  .bar-end { grid-column: 3; }
+  #points-counter.is-rewarded { animation: reward-pulse 450ms ease-out; }
+  /* Flat chip symbols: no drop shadow under the clapperboard, the clock and the gem. */
+  .player-bar .counter-art .icon { filter: none; }
+
+  /* Every piece of the HUD is raised, white, with its 4 px base. The status pieces (the scene, Tiempo, Puntos, the
+     participant) share the neutral buttons' 1 px outline. Built like the button (background = edge, white face inset),
+     so the line never snaps under the player's zoom. */
+  .player-frame :is(.player-bar .counter-compact, .participant) { --chip-depth: var(--ph-depth); position: relative; isolation: isolate; border: 0; background: var(--color-depth); box-shadow: 0 var(--chip-depth) 0 var(--color-depth); }
+  .player-frame :is(.player-bar .counter-compact, .participant)::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
+  /* Bar chips: symbol and value, no inner action. Tiempo and Puntos are buttons as a whole: they lift on hover and sit
+     down when pressed, like the buttons. */
+  .player-frame .hud-chip { @apply justify-center; min-width: 88px; gap: 8px; padding: 0 16px 0 10px; font: inherit; color: var(--color-ink); appearance: none; }
+  .player-frame button.hud-chip { cursor: pointer; transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
+  .player-frame button.hud-chip:hover:not(:disabled) { transform: translateY(-1px); }
+  .player-frame button.hud-chip:active:not(:disabled) { --chip-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  .player-frame button.hud-chip:disabled { cursor: default; }
+  .player-frame button.hud-chip:focus-visible { outline: none; }
+  .player-frame button.hud-chip:focus-visible::after { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px; border-radius: var(--radius-pill); background: var(--color-focus); transform: translateX(-50%); }
+  .player-frame .hud-chip .counter-value { @apply tabular-nums; }
+  /* A paused timer shows the pause sign instead of the clock. */
+  #time-counter[aria-pressed=true] .counter-art { color: var(--color-sky-600); }
+  /* Scene chip: Lucide's clapperboard (icons.js), the icon family of the kit's functional icons, in sky-700: the
+     console's own hue (Guía, Ajustes, the clock), no new colour in the HUD, 4.8:1 on white; this scene of the total; and
+     a 22 px ring of the workshop's progress in mint-600: a clear, light green (lime-700 read almost black at this size)
+     that still keeps 3:1 on white (3.1), as WCAG asks of a graphic; the scene count beside it carries the same data. */
+  #scene-chip { padding: 0 10px 0 12px; }
+  #scene-chip :is(.counter-art, .counter-art .icon) { width: 24px; height: 24px; }
+  #scene-chip .counter-art .icon { stroke-width: 2.2; color: var(--color-sky-700); }
+  .scene-ring { @apply shrink-0; width: 22px; height: 22px; transform: rotate(-90deg); }
+  .scene-ring circle { fill: none; stroke-width: 4; }
+  .scene-ring .ring-track { stroke: var(--color-line); }
+  .scene-ring .ring-fill { stroke: var(--color-mint-600); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 400ms var(--ease-playful); }
+  /* Device: the participant's icon, the only identity it has. "Listo" is local and never sent. */
+  .participant { @apply flex items-center gap-2; height: var(--ph-control); padding: 0 18px 0 6px; border-radius: var(--ph-radius); }
+  .participant .ui-symbol { @apply m-0; width: calc(var(--ph-control) - 12px); height: calc(var(--ph-control) - 12px); border-radius: var(--radius-chip); }
+  .participant .ui-symbol > .icon { width: 20px; height: 20px; }
+  .participant-name { @apply font-black; font-size: var(--text-counter); color: var(--color-ink); }
+  .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
+  /* Active (Guía, Ajustes or Dispositivos open; the timer paused): the piece keeps its whole base, because a round piece
+     left without it reads dented. Only the press sinks it. It turns sky instead, the console's tone, in the kit's
+     selected language (select-card): sky-50 face, the same 1 px outline and 4 px base of a white piece, in sky-400. */
+  .player-frame .ui-button[aria-expanded=true] { --tone-fill: var(--color-sky-50); --tone-edge: var(--color-sky-400); --tone-on: var(--color-sky-900); }
+  .player-frame .ui-button[aria-expanded=true]:not([data-tone=neutral]) { isolation: isolate; background: var(--tone-edge); }
+  .player-frame .ui-button[aria-expanded=true]:not([data-tone=neutral])::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--button-radius) - 1px); background: var(--tone-fill); pointer-events: none; }
+  .player-frame button.hud-chip[aria-pressed=true] { background: var(--color-sky-400); box-shadow: 0 var(--chip-depth) 0 var(--color-sky-400); }
+  .player-frame button.hud-chip[aria-pressed=true]::before { background: var(--color-sky-50); }
+
+  /* ---- Stage: the canvas, the kit's player background, at the lightness of a plain light grey but on the brand's
+     navy axis like every other neutral, so the slots (sunken) still read on it and the white cards lift off it. It runs
+     under the side safe areas. Visible overflow so floating panels cast their full shadow onto the footer. ---- */
+  .player-stage { @apply relative min-h-0 overflow-visible; }
+  .player-stage::before { content: ''; position: absolute; z-index: -1; inset: 0 calc(-1 * var(--safe-r, 0px)) 0 calc(-1 * var(--safe-l, 0px)); background: var(--color-canvas); pointer-events: none; }
+  #stage:focus { outline: none; }
+  /* On the canvas a neutral badge (sunken tint) would vanish: on the stage it takes the white surface. */
+  .player-stage .badge:not([data-tone]):not([data-area]) { background: var(--color-surface); }
+
+  /* ---- Consigna: the header of the board. What to do in this scene, fixed: it does not change with each action
+     (the feedback does). Text with the kit's small listen action, never an HUD button. The scene starts under it. ---- */
+  .consigna { @apply absolute inset-x-0 z-[5] flex items-center justify-center gap-3; top: var(--consigna-top, 0px); height: var(--consigna-h, 56px); padding: 0 var(--gutter); }
+  .consigna[data-empty=true] { visibility: hidden; }
+  .consigna .mini-action { @apply m-0; width: 36px; height: 36px; }
+  .consigna .mini-action > .icon { width: 18px; height: 18px; }
+  .consigna-text { @apply m-0 min-w-0 truncate; font-weight: var(--font-weight-label); font-size: var(--text-title); line-height: 1.2; color: var(--color-ink); }
+
+  /* ---- Anuncio (Situar): the welcome, drawn from data ------------------------------------------- */
+  .welcome { @apply absolute inset-x-0 bottom-0 mx-auto grid items-center; top: var(--scene-top); max-width: 1280px; grid-template-columns: minmax(0, 1fr) 460px; gap: 48px; padding: 0 88px 0 104px; }
+  .welcome-text { @apply flex flex-col items-start; }
+  .welcome-kicker { @apply mb-6 flex flex-wrap gap-2; }
+  .welcome-kicker .badge { font-size: var(--text-caption); @apply px-3 py-1.5; }
+  .welcome-lead { @apply font-extrabold text-muted; font-size: var(--text-headline); line-height: 1.2; }
+  .welcome-topic { @apply m-0 font-black; font-size: var(--text-hero); line-height: 1; letter-spacing: -.045em; color: var(--color-ink); text-wrap: balance; }
+  .welcome-topic:focus { outline: none; }
+  .welcome-art { @apply relative grid aspect-square w-full place-items-center rounded-full; background: var(--tone-tint); }
+  .welcome-art::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 17%; height: 5%; border-radius: 50%; background: var(--color-shade); }
+  .welcome-art img { @apply relative z-10 block object-contain; width: 64%; height: 64%; filter: drop-shadow(0 10px 0 var(--color-shade-soft)); }
+
+  /* ---- Side panels: guide (left, next to its button) and devices (right, next to the rail).
+     No scrim: the panels float over the scene with the kit's float shadow; the scene pauses. ---- */
+  .side-panel { @apply absolute z-30 flex flex-col overflow-hidden bg-surface; top: 16px; bottom: 16px; width: 480px; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
+  .side-panel[data-side=left] { left: var(--gutter); }
+  .side-panel[data-side=right] { right: calc(var(--gutter) + var(--ph-control) + 20px); }
+  .panel-head { @apply flex items-start justify-between gap-4; }
+  .panel-caption { @apply font-extrabold text-muted; font-size: var(--text-caption); }
+  .panel-head .ui-heading { @apply mt-0.5; }
+  .panel-row { @apply mt-5 flex items-center justify-between gap-3; }
+  .panel-label { @apply font-black uppercase tracking-[.12em] text-muted; font-size: var(--text-micro); }
+  /* Scroll without a visible bar; a fade at the bottom says there is more. */
+  .panel-scroll { @apply min-h-0 overflow-y-auto; scrollbar-width: none; }
+  .panel-scroll::-webkit-scrollbar { display: none; }
+  .panel-scroll[data-more=true] { mask-image: linear-gradient(to bottom, var(--color-black) calc(100% - 40px), transparent); }
+
+  /* Guide of the current scene. It takes the tone of the storyboard's area (data-area): sun, sky, grape or rose. */
+  .guide-meta { @apply mb-1.5 flex flex-wrap items-center gap-2; }
+  .guide-subtitle { @apply mt-1 font-bold text-muted; font-size: var(--text-body); }
+  .guide-tabs { @apply mt-4; }
+  .guide-tabs .ui-tab .icon { width: 16px; height: 16px; }
+  .guide-body { @apply mt-4 flex-1 space-y-3 pr-1; }
+  .guide-label { @apply flex items-center gap-1.5 font-black uppercase tracking-[.12em]; font-size: var(--text-micro); color: var(--tone-strong); }
+  .guide-label .icon { width: 14px; height: 14px; color: var(--tone-icon); }
+  .guide-block p { @apply mt-1 font-semibold leading-relaxed; font-size: var(--text-body); color: var(--color-ink); text-wrap: pretty; }
+  .guide-block p.is-pending { @apply italic text-muted; }
+  .guide-callout { @apply rounded-control px-4 py-3; background: var(--tone-wash); box-shadow: inset 0 0 0 2px var(--tone-tint); }
+  .guide-questions { @apply m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0; }
+  .guide-questions li { @apply rounded-control px-3 py-1.5 font-bold; font-size: var(--text-body); background: var(--tone-tint); color: var(--color-ink); }
+
+  /* Devices */
+  .join-box { @apply mt-4 rounded-control bg-canvas px-4 py-3; }
+  .join-code { @apply my-1 font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
+  .device-list { @apply m-0 mt-2 grid list-none grid-cols-7 content-start gap-1.5 p-1.5; max-height: 120px; }
+  .device-avatar { @apply relative block rounded-control; }
+  .device-avatar .ui-symbol { width: var(--ph-control); height: var(--ph-control); border-radius: var(--radius-control); }
+  .device-avatar .ui-symbol > .icon { width: var(--ph-icon); height: var(--ph-icon); }
+  .device-avatar[aria-pressed=true] .ui-symbol { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--tone-icon); }
+  .device-avatar > .ui-dot { @apply absolute; right: -4px; top: -4px; }
+  .device-avatar > .ui-dot .icon { @apply size-3; }
+  .device-hint { @apply mt-auto flex items-center gap-2; }
+  .device-hint .icon { width: 16px; height: 16px; }
+  .device-card { @apply mt-3 rounded-control bg-canvas p-3; }
+  .device-card[data-selected=false] .device-card-name { color: var(--color-muted); }
+  .device-card-head { @apply flex items-center gap-3; }
+  .device-card-head .ui-symbol { @apply m-0; width: 40px; height: 40px; }
+  .device-card-name { @apply font-black; font-size: var(--text-body); }
+  .device-actions { @apply mt-3 grid grid-cols-3 gap-2; }
+
+  /* ---- Quick settings rail: it hangs from the gear, 4 px under its base, over the stage's edge. A capsule around its
+     round buttons (its ends concentric with them: 22 + 8); 8 px of air between the buttons (12 minus their 4 px base)
+     and the same 8 all round, 12 below for the base. ---- */
+  .quick-rail { @apply absolute z-40 flex flex-col bg-surface; gap: 12px; padding: 8px 8px 12px; top: calc(var(--rail-gap) - (var(--bar-h) - var(--hud-control) - var(--ph-depth)) / 2); right: calc(var(--gutter) - 8px); border-radius: calc(var(--ph-radius) + 8px); box-shadow: var(--shadow-float); animation: arrive 160ms ease-out; }
+  .rail-button-count > .ui-dot { position: absolute; top: -6px; right: -6px; }
+
+  /* ---- Windows: what interrupts the workshop (the pause, the points, the confirmations) takes the side panels'
+     anatomy: panel-head (a tinted symbol, caption and title, close), a short text, canvas boxes with a micro label
+     and a figure, a hint with its icon and the actions at the bottom. The panels' surface, corner and float shadow,
+     centred over a scrim. ---- */
+  .panel-window { @apply relative flex flex-col bg-surface text-left text-ink; width: calc(100% - 32px); max-width: 480px; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
+  dialog.panel-window { margin: auto; overflow-y: auto; }
+  dialog.panel-window:not([open]) { display: none; }
+  dialog.panel-window::backdrop { background: var(--color-scrim); backdrop-filter: blur(5px); }
+  dialog.panel-window[open], .scene-overlay .panel-window { animation: arrive 180ms ease-out; }
+  .panel-window .panel-head { @apply items-center; }
+  .window-symbol { @apply m-0; width: 48px; height: 48px; border-radius: var(--radius-control); }
+  .window-symbol .icon { width: 26px; height: 26px; }
+  .window-titles { @apply min-w-0 flex-1; }
+  .window-text { @apply mt-4 font-semibold leading-relaxed; font-size: var(--text-body); color: var(--color-ink); text-wrap: pretty; }
+  .window-stats { @apply mt-4 grid gap-3; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .window-box { @apply rounded-control bg-canvas px-4 py-3; }
+  .window-figure { @apply mt-1 font-black tabular-nums; font-size: var(--text-headline); line-height: 1.15; }
+  .window-figure-of { @apply font-extrabold text-muted; font-size: var(--text-body); }
+  .window-hint { @apply mt-5 flex items-center gap-2; }
+  .window-hint .icon { @apply shrink-0; width: 16px; height: 16px; }
+  .window-actions { @apply mt-6 grid gap-3; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+  /* The pause window and a device's states cover the whole frame, over the same scrim as the dialogs. */
+  .scene-overlay { @apply absolute inset-0 flex items-center justify-center; z-index: 50; padding: 16px; background: var(--color-scrim); backdrop-filter: blur(5px); }
+  .scene-overlay .panel-window { max-height: 100%; overflow-y: auto; }
+
+  /* ---- Footer: Guía on the left; Anterior · Reiniciar and Siguiente on the right. A white band, its controls centred
+     in it. The feedback sheet rises over it with listen and close, and the controls step aside until it is closed.
+     Flat: the sheet casts no shadow. Its tint follows the kit's alerts: success → lime · info → sky · warning → sun ·
+     danger → danger. ---- */
+  .player-footer { @apply relative grid items-center gap-6; grid-template-columns: 200px minmax(0, 1fr) auto; padding: calc((var(--footer-h) - var(--ph-control) - var(--ph-depth)) / 2) var(--gutter) calc((var(--footer-h) - var(--ph-control) + var(--ph-depth)) / 2); }
+  .footer-end { @apply flex items-center gap-3; grid-column: 3; justify-self: end; } /* stays in its column; the feedback floats over the footer */
+  .next-button { min-width: 168px; }
+  /* Panel swap: one leaves, then the other enters. Opening: controls go down, then the sheet rises.
+     Closing: the sheet goes down, then the controls rise. The sheet reaches the screen edges, under the home bar and
+     beside the notch. */
+  .player-footer::before { content: ''; position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px)) calc(-1 * var(--safe-l, 0px)); background: var(--feedback-sheet, var(--color-canvas)); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); }
+  .player-frame:not([data-feedback=none]) .player-footer::before { transform: none; transition: transform 300ms var(--ease-playful) 140ms; }
+  .player-frame[data-feedback=success] { --feedback-sheet: var(--color-lime-100); }
+  .player-frame[data-feedback=info] { --feedback-sheet: var(--color-sky-100); }
+  .player-frame[data-feedback=warning] { --feedback-sheet: var(--color-sun-100); }
+  .player-frame[data-feedback=danger] { --feedback-sheet: var(--color-danger-bg); }
+  .footer-start, .footer-end { @apply relative; transition: transform 300ms var(--ease-playful) 180ms, opacity 200ms ease 180ms, visibility 0s linear 180ms; }
+  .player-frame:not([data-feedback=none]) :is(.footer-start, .footer-end) { transform: translateY(120%); opacity: 0; visibility: hidden; transition: transform 180ms cubic-bezier(.4, 0, 1, 1), opacity 160ms ease, visibility 0s linear 180ms; }
+  .feedback-slot { @apply pointer-events-none absolute inset-0 z-10 flex items-center; padding: 0 var(--gutter); }
+  .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 300ms var(--ease-playful) 160ms, visibility 0s linear 0s; }
+  .feedback-slot .ui-feedback[data-visible=false] { opacity: 1; visibility: hidden; transform: translateY(130%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1), visibility 0s linear 220ms; }
+  /* Symbol and text keep the kit's feedback sizes (symbol 64, title text-title, description text-body). */
+  .feedback-slot .ui-feedback-symbol { width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); box-shadow: none; }
+  .feedback-slot .ui-feedback-symbol > .icon { width: 32px; height: 32px; stroke-width: 2.6; }
+  .feedback-slot .ui-feedback strong { font-size: var(--text-title); color: var(--tone-strong); letter-spacing: 0; }
+  .feedback-slot .ui-feedback .sheet-text { @apply mt-0.5 font-semibold text-muted; font-size: var(--text-body); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .feedback-actions { @apply ml-auto flex items-center gap-3; }
+  .feedback-actions .feedback-reward { @apply shrink-0; }
+
+  /* Scene actions (Anterior · Reiniciar) as one block, raised like the buttons, with their 1 px outline. The segments are
+     white and fill it; the hairline between them is the block's own line colour showing through a 1 px gap, so a hidden
+     segment (Anterior at home) leaves no stray divider. The outline is painted over the segments, so a hover or press
+     tint never covers it. The segments never lift or sink: only their tint changes. */
+  .hud-group { @apply relative flex shrink-0; gap: 1px; height: var(--ph-control); overflow: hidden; border-radius: var(--ph-radius); background: var(--color-line); box-shadow: var(--hud-base); }
+  .hud-group::after { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 var(--color-depth), inset 1px 0 0 var(--color-depth), inset -1px 0 0 var(--color-depth); pointer-events: none; }
+  .player-frame .hud-group > .ui-button { height: 100%; min-height: 0; border-radius: 0; background: var(--color-surface); box-shadow: none; transform: none; filter: none; transition: background-color var(--ph-duration); }
+  .player-frame .hud-group > .ui-button::before { display: none; }
+  .player-frame .hud-group > .ui-button:hover:not(:disabled) { background: var(--color-sunken); transform: none; filter: none; }
+  .player-frame .hud-group > .ui-button:active:not(:disabled) { background: var(--color-line); transform: none; }
+  .player-frame .hud-group > .ui-button:disabled { background: var(--color-surface); color: var(--color-subtle); }
+  /* The kit's focus tick sits inside the block, which clips its edges. */
+  .player-frame .hud-group > .ui-button:focus-visible::after { top: 4px; }
+
+  /* ---- Compact (touch screens, small windows): same pieces and sizes, less air around them ---- */
+  /* Phones: the HUD is drawn at 48 to stay at 44 real px (player.js), and the footer keeps less air above it. */
+  .player-page[data-phone] .player-frame { --hud-control: var(--ph-control); --footer-gap: 16px; }
+  /* Touch screens: nothing tappable under 44 real px (the minimum touch target). Small buttons take
+     the standard size, tabs the control height, and mini-actions keep their small face with a halo
+     of 44 real px whatever the zoom. */
+  @media (pointer: coarse) {
+    .player-page .ui-button-sm { min-height: var(--ph-control); }
+    .player-page .ui-button-sm.ui-icon-button { width: var(--ph-control); height: var(--ph-control); }
+    .player-page .ui-tab { min-height: var(--ph-control); }
+    .player-page .mini-action::before { inset: min(-6px, calc(50% - 22px / var(--player-scale, 1))); }
+  }
+  /* The welcome is laid out at 1280×600, like a game, scaled to the stage and centred the same way.
+     zoom also scales its own offsets, so the top offset is divided back by the zoom. */
+  .player-frame[data-compact] .welcome { inset: calc(var(--scene-top) / var(--scene-fit, 1)) 0 0; margin: auto; width: 1280px; height: 600px; max-width: none; zoom: var(--scene-fit, 1); }
+  .player-frame[data-compact] .side-panel { top: 8px; bottom: 8px; }
+}

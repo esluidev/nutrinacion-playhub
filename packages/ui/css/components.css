@@ -1,0 +1,400 @@
+/* PlayHub UI Kit · components. Rule: components read tokens only. No hex,
+   no rgb, no raw Tailwind colour steps inside a component. A new colour
+   starts in tokens.css. Sizes come from --ph-control (density) and the
+   sm/lg variants. */
+
+@layer components {
+  /* ---- Icons ------------------------------------------------------------- */
+  .icon { @apply inline-block shrink-0 align-middle; width: var(--ph-icon); height: var(--ph-icon); fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-lg { width: var(--ph-icon-lg); height: var(--ph-icon-lg); }
+
+  /* ---- Eyebrow, filters and search --------------------------------- */
+  .eyebrow { font-size: var(--text-micro); @apply font-black uppercase tracking-[.17em] text-muted; }
+
+  /* ---- Button ----------------------------------------------------------- */
+  .ui-button {
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2 leading-tight whitespace-nowrap;
+    min-height: var(--ph-control);
+    border-radius: var(--button-radius);
+    font-size: var(--text-action);
+    font-weight: var(--font-weight-title);
+    --button-depth: var(--ph-depth);
+    --button-radius: var(--ph-radius);   /* a rounded rectangle in every density (a rounded square with only an icon) */
+    --button-halo: 0 0 0 0 transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    border: 0;
+    color: var(--tone-on);
+    /* Solid face: the raised base under it reads clean; a gradient over it looked muddy. */
+    background: var(--tone-fill);
+    box-shadow: 0 var(--button-depth) 0 var(--tone-edge), var(--button-halo);   /* one base, like every raised piece */
+    transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration), filter var(--ph-duration);
+  }
+  .ui-button:hover:not(:disabled) { filter: brightness(1.035); transform: translateY(-1px); }
+  .ui-button:active:not(:disabled), .ui-button.is-pressed { --button-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  .ui-button:focus-visible, .ui-button.is-focused {
+    outline: none;
+    --button-halo: 0 3px 14px 4px color-mix(in srgb, var(--tone-fill) 32%, transparent);
+  }
+  .ui-button:focus-visible::after, .ui-button.is-focused::after {
+    content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px;
+    border-radius: var(--radius-pill); background: var(--tone-focus); transform: translateX(-50%); pointer-events: none;
+  }
+  /* Neutral: a continuous 1 px outline under a white face, sharing one 4 px base (the counters' line weight). */
+  .ui-button[data-tone=neutral] { isolation: isolate; background: var(--tone-edge); }
+  .ui-button[data-tone=neutral]::before {
+    content: ''; position: absolute; z-index: -1; inset: 1px 1px 0;
+    border-radius: calc(var(--button-radius) - 1px);
+    background: var(--tone-fill); pointer-events: none;
+  }
+  .ui-button:disabled {
+    --tone-top: var(--color-night-50); --tone-fill: var(--color-night-100); --tone-edge: var(--color-line-strong); --tone-on: var(--color-disabled);
+    box-shadow: 0 var(--ph-depth) 0 var(--tone-edge);
+  }
+  .ui-button-sm { @apply px-4 py-1; min-height: var(--ph-control-sm); font-size: var(--text-action-sm); }
+  .ui-button-lg { @apply px-7; min-height: var(--ph-control-lg); font-size: var(--text-action-lg); }
+  .ui-icon-button { @apply shrink-0 p-0; width: var(--ph-control); height: var(--ph-control); min-height: var(--ph-control); }
+  .ui-button-sm.ui-icon-button { width: var(--ph-control-sm); height: var(--ph-control-sm); min-height: var(--ph-control-sm); }
+  .ui-button-lg.ui-icon-button { width: var(--ph-control-lg); height: var(--ph-control-lg); min-height: var(--ph-control-lg); }
+  .ui-button-block { @apply w-full; }
+  /* Spinner inside a button while it works. */
+  .ui-button .spinner { @apply size-4 border-2; border-color: color-mix(in srgb, currentColor 25%, transparent); border-top-color: currentColor; }
+  .ui-quiet { @apply inline-flex items-center justify-center gap-2 px-3 font-extrabold text-muted transition-colors hover:bg-canvas hover:text-ink; min-height: calc(var(--ph-control) - 4px); font-size: var(--text-body); border-radius: var(--ph-radius); }
+
+  /* Filter: a toggle with the neutral button's outline and base; pressed, it turns night. */
+  .filter {
+    @apply inline-flex shrink-0 items-center justify-center gap-2 bg-surface px-4 font-extrabold text-muted hover:text-ink;
+    min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--ph-radius);
+    box-shadow: inset 0 0 0 1px var(--color-depth), 0 var(--ph-depth) 0 var(--color-depth);
+    transition: color var(--ph-duration), transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration);
+  }
+  .filter:active { transform: translateY(var(--ph-press-offset)); box-shadow: inset 0 0 0 1px var(--color-depth), 0 var(--ph-depth-pressed) 0 var(--color-depth); }
+  .filter[aria-pressed=true] { background: var(--color-night-850); color: var(--color-inverse); box-shadow: 0 var(--ph-depth) 0 var(--color-night-950); }
+  .filter-sm { @apply px-3; min-height: var(--ph-control-sm); }
+  .filter-count { @apply rounded-pill px-1.5 py-0.5 leading-none tabular-nums; font-size: var(--text-micro); background: var(--color-sunken); color: var(--color-muted); }
+  .filter[aria-pressed=true] .filter-count { background: color-mix(in srgb, var(--color-inverse) 22%, transparent); color: inherit; }
+  .search-box { @apply flex min-w-0 items-center gap-2 rounded-control-sm border-2 border-line bg-surface px-3 text-muted; height: var(--ph-control); }
+  .search-box:focus-within { border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
+  .search-box input { @apply min-w-0 flex-1 bg-transparent font-bold text-ink outline-none; font-size: var(--text-body); }
+  .search-box input::placeholder { color: var(--color-disabled); }
+
+  /* ---- Badge, dot, symbol ------------------------------------------------ */
+  .badge { @apply inline-flex items-center gap-1.5 px-2.5 py-1 font-black tracking-wide; border-radius: var(--radius-chip); font-size: var(--text-micro); background: var(--tone-tint); color: var(--tone-strong); }
+  .badge > .icon { width: 12px; height: 12px; }
+  .badge-dot { @apply size-1.5 rounded-full; background: var(--tone-icon); }
+  .ui-dot { @apply flex size-6 items-center justify-center rounded-full font-black; font-size: var(--text-micro); background: var(--tone-fill); color: var(--tone-on); }
+  /* A tinted square that holds a pictogram: dialogs, cards, guide steps. */
+  .ui-symbol { @apply flex shrink-0 items-center justify-center; width: 64px; height: 64px; border-radius: var(--radius-card); background: var(--tone-tint); color: var(--tone-icon); }
+  .ui-symbol > .icon { width: 32px; height: 32px; }
+  .ui-symbol-sm { width: 28px; height: 28px; border-radius: var(--radius-chip); font-size: var(--text-micro); font-weight: var(--font-weight-title); color: var(--tone-strong); }
+  .ui-symbol-sm > .icon { width: 16px; height: 16px; }
+  .ui-symbol-md { width: 40px; height: 40px; border-radius: var(--radius-control-sm); }
+  .ui-symbol-md > .icon { width: 20px; height: 20px; }
+  .ui-symbol-lg { width: 80px; height: 80px; border-radius: var(--radius-panel); }
+  .ui-symbol-lg > .icon { width: 36px; height: 36px; }
+
+  /* ---- Tabs and navigation --------------------------------------------- */
+  /* Tabs and segmented controls: a sunken rail that stands like a button (control height and the
+     shared base, the cards' colour), so it lines up with the buttons beside it. The tabs inside are
+     flat: the selected one is just the white face. */
+  .ui-tabs { @apply flex gap-1 p-1; height: var(--ph-control); background: var(--color-sunken); border-radius: calc(var(--ph-radius) + 4px); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
+  .ui-tabs-fit { @apply inline-flex; }
+  .ui-tabs-fit .ui-tab { @apply flex-none px-4; }
+  .ui-tab { @apply flex min-w-0 flex-1 items-center justify-center gap-2 px-3 font-extrabold text-muted transition-all hover:text-ink; height: calc(var(--ph-control) - 8px); font-size: var(--text-caption); border-radius: var(--ph-radius); }
+  .ui-tab[aria-selected=true], .ui-tab[aria-pressed=true] { @apply bg-surface text-ink; }
+  .ui-tab[aria-selected=true] .icon, .ui-tab[aria-pressed=true] .icon { color: var(--tone-icon); }
+  .ui-navbar { @apply flex items-center justify-between gap-1 bg-surface p-2 shadow-panel; border-radius: calc(var(--ph-radius) + 8px); }   /* radius + padding keeps the items concentric */
+  .ui-navbar button { @apply flex min-w-12 flex-1 flex-col items-center justify-center gap-1 font-extrabold text-muted; border-radius: var(--ph-radius); min-height: calc(var(--ph-control) + 8px); font-size: var(--text-micro); }
+  .ui-navbar button[aria-pressed=true], .ui-navbar button[aria-current=page] { background: var(--tone-wash); color: var(--color-ink); }
+  .ui-navbar button[aria-pressed=true] .icon, .ui-navbar button[aria-current=page] .icon { color: var(--tone-icon); }
+
+  /* ---- Counter ---------------------------------------------------------- */
+  .counter { @apply relative flex min-w-0 items-center gap-3 border border-line bg-surface px-3 py-2; min-height: calc(var(--ph-control) + 8px); border-radius: var(--radius-control); box-shadow: var(--shadow-panel); }
+  .counter-art { @apply flex shrink-0 items-center justify-center; width: calc(var(--ph-icon-lg) + 16px); height: calc(var(--ph-icon-lg) + 16px); }
+  .counter-art .icon { width: calc(var(--ph-icon-lg) + 12px); height: calc(var(--ph-icon-lg) + 12px); stroke-width: 1.3; filter: drop-shadow(0 3px 0 var(--color-shade)); }
+  .counter-value { @apply font-black tabular-nums tracking-tight; font-size: var(--text-lead); }
+  .counter-suffix { color: var(--color-muted); }
+  .counter-label { @apply font-extrabold uppercase tracking-wider text-muted; font-size: calc(var(--text-micro) * .9); }
+  .counter-compact { @apply gap-2 py-0; height: var(--ph-control); min-height: var(--ph-control); border-radius: var(--ph-radius); }   /* sits beside the buttons, so it takes their shape */
+  .counter-compact .counter-art, .counter-compact .counter-art .icon { width: var(--ph-icon-lg); height: var(--ph-icon-lg); }
+  .counter-compact .counter-label { @apply sr-only; }
+  .counter-compact .counter-value { @apply leading-none; font-size: var(--text-counter); }
+  .counter-compact .mini-action { width: calc(var(--ph-control) - 20px); height: calc(var(--ph-control) - 20px); }
+  .counter-compact .mini-action .icon { @apply size-4; }
+  .mini-action { @apply relative ml-auto flex shrink-0 items-center justify-center rounded-chip transition-colors; width: calc(var(--ph-control) - 16px); height: calc(var(--ph-control) - 16px); background: var(--tone-tint); color: var(--tone-strong); }
+  .mini-action:hover:not(:disabled) { background: var(--tone-tint-edge); }
+  .mini-action:disabled { @apply opacity-40; }
+  /* Small visual, full touch target. */
+  .mini-action::before { content: ''; position: absolute; inset: max(-6px, calc((var(--ph-control) - 16px - 44px) / 2)); }
+
+  /* ---- Progress --------------------------------------------------------- */
+  .progress-track { @apply overflow-hidden rounded-full; height: var(--ph-progress); background: var(--color-line); box-shadow: inset 0 2px 1px var(--color-shade-soft); }
+  .progress-track-lg { height: calc(var(--ph-progress) * 1.5); }
+  /* Flat colour, like the buttons: no gradient and no white shine. */
+  .progress-fill { @apply relative h-full rounded-full; background: var(--tone-fill); transition: width var(--ph-duration-slow) var(--ease-playful); }
+  .progress-segments { @apply grid grid-cols-8 gap-1.5; }
+  .progress-segments span { @apply h-4 rounded-[calc(var(--radius-control-sm)/2)]; background: var(--color-line); }
+  .progress-segments span.is-filled { background: var(--tone-fill); box-shadow: 0 2px 0 var(--tone-edge); }
+  .progress-ring { @apply relative grid size-28 shrink-0 place-items-center; }
+  .progress-ring svg { @apply absolute inset-0 size-full -rotate-90; }
+  .progress-ring circle { fill: none; stroke-width: 9; }
+  .progress-ring .ring-track { stroke: var(--color-line); }
+  .progress-ring .ring-fill { stroke: var(--tone-fill); stroke-linecap: round; transition: stroke-dashoffset var(--ph-duration-slow) var(--ease-playful); }
+  .spinner { @apply size-8 rounded-full border-[4px]; border-color: var(--color-line); border-top-color: var(--tone-icon); animation: spin 900ms linear infinite; }
+
+  /* Runner incrustado (UiRunner): el iframe llena su caja; la carga y el error lo tapan en el
+     color del player hasta que el runner dice «listo». */
+  .ui-runner { @apply relative size-full overflow-hidden bg-canvas; }
+  .ui-runner-frame { @apply absolute inset-0 size-full border-0; }
+  .ui-runner-cover { @apply absolute inset-0 grid place-items-center bg-canvas; }
+
+  /* ---- Cards ------------------------------------------------------------ */
+  .ui-card { @apply border border-line p-5; border-radius: var(--radius-panel); background: color-mix(in srgb, var(--color-canvas) 70%, transparent); }
+  .select-card { @apply relative flex w-full flex-col items-center justify-center gap-3 border-2 border-line bg-surface px-4 py-6 text-center; border-radius: var(--radius-panel); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); transition: border-color var(--ph-duration), background var(--ph-duration), transform var(--ph-duration); }
+  .select-card:hover:not(:disabled) { transform: translateY(-2px); }
+  .select-card[aria-pressed=true] { border-color: var(--tone-fill); background: var(--tone-wash); box-shadow: 0 var(--ph-depth) 0 var(--tone-edge); }
+  .select-card:disabled { @apply bg-canvas text-muted; }
+  .card-art { @apply flex items-center justify-center; width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: var(--radius-card); background: var(--tone-tint); color: var(--tone-icon); }
+  .card-art .icon { @apply size-9; stroke-width: 2; }
+  .selected-mark { @apply absolute right-3 top-3 flex size-5 items-center justify-center rounded-full; background: var(--tone-fill); color: var(--tone-on); }
+  .selected-mark .icon { @apply size-3; }
+  .select-card:not([aria-pressed=true]) .selected-mark { display: none; }
+
+  /* ---- Ribbon · any tone ------------------------------------------------ */
+  .ribbon { @apply relative isolate mx-auto w-fit; }
+  .ribbon-face { @apply relative z-10 flex min-h-12 min-w-44 items-center justify-center gap-3 rounded-control-sm px-5 py-2.5 text-center font-black; font-size: var(--text-lead); color: var(--tone-on); background: var(--tone-fill); box-shadow: 0 3px 0 var(--tone-edge); }
+  .ribbon-face > .icon { @apply size-4; color: color-mix(in srgb, var(--color-white) 70%, var(--tone-top)); }
+  .ribbon-tail { position: absolute; z-index: 0; top: 14px; width: 32px; height: calc(100% - 4px); background: var(--tone-mid); }
+  .ribbon-tail-left { left: -22px; border-radius: 3px 0 0 3px; clip-path: polygon(0 0,100% 4%,100% 100%,0 94%,23% 50%); }
+  .ribbon-tail-right { right: -22px; border-radius: 0 3px 3px 0; clip-path: polygon(0 4%,100% 0,77% 50%,100% 94%,0 100%); }
+  .ribbon-face::before, .ribbon-face::after { content: ''; position: absolute; top: calc(100% + 3px); width: 10px; height: 7px; background: var(--tone-icon); }
+  .ribbon-face::before { left: 0; clip-path: polygon(0 0,100% 0,100% 100%); }
+  .ribbon-face::after { right: 0; clip-path: polygon(0 0,100% 0,0 100%); }
+  /* Neutral title: the default for headings. The ribbon is reserved for special moments. */
+  /* ---- Text roles: use these instead of raw Tailwind sizes ------------- */
+  .ui-display { @apply font-black leading-tight tracking-tight; font-size: var(--text-display); color: var(--color-ink); text-wrap: balance; }
+  .ui-heading { @apply font-black leading-tight tracking-tight; font-size: var(--text-heading); color: var(--color-ink); text-wrap: balance; }
+  .ui-title { @apply font-black leading-tight; font-size: var(--text-title); color: var(--color-ink); }
+  .ui-text { @apply font-semibold leading-relaxed; font-size: var(--text-body); color: var(--color-muted); text-wrap: pretty; }
+  .ui-caption { @apply font-semibold leading-relaxed; font-size: var(--text-caption); color: var(--color-muted); }
+
+  /* ---- Window / dialog -------------------------------------------------- */
+  .dialog { @apply w-[calc(100%-2rem)] max-w-[440px] overflow-visible border-4 border-surface bg-surface p-7 text-ink; border-radius: var(--radius-dialog); box-shadow: var(--shadow-dialog); }
+  .dialog::backdrop { background: var(--color-scrim); backdrop-filter: blur(5px); }
+  .dialog[open] { animation: arrive 180ms ease-out; }
+  /* Dialog anatomy: header (title + close) · symbol · body · actions. */
+  .dialog-header { @apply flex items-start justify-between gap-4; }
+  .dialog-close { position: absolute; top: 16px; right: 16px; }
+  .dialog-center { @apply text-center; }
+  .dialog-center .ui-symbol { @apply mx-auto mb-5; }
+  .dialog-body { @apply mt-3; }
+  .dialog-actions { @apply mt-6 grid gap-3; }
+  /* Two actions side by side; they stack when the labels need room. */
+  .dialog-actions-split { grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+  .toast { @apply fixed bottom-6 left-1/2 z-50 flex w-max max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-control px-5 py-4 font-bold; font-size: var(--text-body); background: var(--color-ink); color: var(--color-inverse); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
+
+  /* ---- Fields ----------------------------------------------------------- */
+  .field-label { @apply mb-2 block font-extrabold; font-size: var(--text-caption); }
+  /* Every single-line form control (input, select, search, button) is exactly --ph-control tall:
+     the height is fixed, not a minimum padded past. Only textareas grow. */
+  .field { @apply w-full rounded-control-sm border-2 border-line bg-surface px-4 py-0 font-bold text-ink; height: var(--ph-control); font-size: var(--text-body); transition: border-color var(--ph-duration); }
+  .field:is(p, div, span) { @apply flex items-center; }   /* a read-only value shown as a field */
+  .field::placeholder { color: var(--color-disabled); }
+  .field:focus { @apply outline-none; border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
+  .field[aria-invalid=true] { border-color: var(--color-danger-strong); background: var(--color-danger-wash); }
+  .field:disabled { @apply bg-canvas text-muted; }
+  .field-sm { @apply px-3; height: var(--ph-control-sm); font-size: var(--text-caption); }
+  .field-lg { @apply px-5; height: var(--ph-control-lg); font-size: var(--text-lead); }
+  textarea.field { @apply py-3 leading-relaxed; height: auto; min-height: calc(var(--ph-control) * 2.5); resize: vertical; }
+  .field-error { @apply mt-1.5 font-bold; font-size: var(--text-caption); color: var(--color-danger); }
+  .field-help { @apply mt-1.5 font-semibold text-muted; font-size: var(--text-micro); }
+  .field-with-icon { @apply relative; }
+  .field-with-icon > .icon { @apply pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted; }
+  .field-with-icon .field { @apply pl-12; }
+
+  /* ---- Preferences ------------------------------------------------------ */
+  .ui-switch { @apply relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1; background: var(--color-line-strong); transition: background var(--ph-duration); }
+  .ui-switch::after { content: ''; @apply size-5 rounded-full; background: var(--color-surface); box-shadow: 0 2px 2px var(--color-shade); transition: transform var(--ph-duration); }
+  .ui-switch[aria-checked=true] { background: var(--tone-fill); }
+  .ui-switch[aria-checked=true]::after { transform: translateX(20px); }
+  .check-control { @apply size-5 shrink-0; accent-color: var(--tone-icon); }
+  .ui-range { @apply h-2 w-full appearance-none rounded-full; background: var(--color-line); accent-color: var(--tone-edge); }
+  .ui-range::-webkit-slider-thumb { @apply size-5 appearance-none rounded-full border-[3px]; border-color: var(--color-surface); background: var(--tone-fill); box-shadow: 0 2px 0 var(--tone-icon), 0 0 0 1px var(--tone-tint-edge); }
+  .ui-range::-moz-range-thumb { @apply size-4 rounded-full border-[3px]; border-color: var(--color-surface); background: var(--tone-fill); box-shadow: 0 2px 0 var(--tone-icon); }
+
+  /* ---- Alerts (status tones) ------------------------------------------- */
+  .alert { @apply flex items-start gap-3 rounded-control border px-4 py-3 font-semibold leading-relaxed; font-size: var(--text-caption); color: var(--tone-strong); background: var(--tone-tint); border-color: var(--tone-tint-edge); }
+  .alert .icon { @apply mt-0.5 size-5; }
+
+  /* ---- Activity feedback ----------------------------------------------
+     data-kind="selection|success|retry|complete" maps to sky, lime, sun, lime. */
+  .ui-feedback { @apply flex min-w-0 items-center gap-5; transition: opacity var(--ph-duration) ease; }
+  .ui-feedback[data-visible=false] { opacity: 0; visibility: hidden; }
+  .ui-feedback-art { @apply relative shrink-0; }
+  .ui-feedback-symbol { @apply relative flex shrink-0 items-center justify-center; width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); box-shadow: 0 var(--ph-depth) 0 color-mix(in srgb, var(--tone-tint-edge) 60%, var(--tone-mid)); }
+  .ui-feedback-symbol > .icon { @apply size-9; }
+  .ui-feedback-symbol > img { @apply size-14 object-contain; }
+  .ui-feedback-check { @apply absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full; background: var(--tone-icon); color: var(--color-inverse); border: 3px solid var(--activity-surface, var(--tone-tint)); }
+  .ui-feedback-check > .icon { @apply size-4; }
+  .ui-feedback-body { @apply min-w-0; }
+  .ui-feedback strong { @apply block font-black leading-tight; font-size: var(--text-title); color: var(--tone-strong); }
+  .ui-feedback p { @apply mt-1 font-semibold text-muted; font-size: var(--text-body); }
+  .ui-feedback-meta { @apply mt-2 flex flex-wrap items-center gap-3; }
+  .feedback-reward { @apply px-3 py-1.5; font-size: var(--text-body); background: color-mix(in srgb, var(--color-surface) 80%, transparent); color: var(--tone-strong); }
+  /* The reward symbol (the points symbol) at the text's size, with the thin outline of the counter symbols. */
+  .feedback-reward > .icon { width: 16px; height: 16px; stroke-width: 1.3; }
+  .feedback-spark { @apply pointer-events-none absolute size-2 rounded-[calc(var(--radius-chip)/2)]; background: var(--tone-mid); opacity: 0; }
+  .feedback-spark-one { left: -8px; top: 4px; --spark-x: -13px; --spark-y: -13px; }
+  .feedback-spark-two { right: -8px; top: -5px; --spark-x: 12px; --spark-y: -14px; }
+  .feedback-spark-three { right: -9px; bottom: 3px; --spark-x: 17px; --spark-y: 8px; }
+  .ui-feedback.is-entering .ui-feedback-symbol { animation: feedback-pop 420ms cubic-bezier(.2,.7,.2,1); }
+  .ui-feedback.is-entering[data-kind=success] .feedback-spark,
+  .ui-feedback.is-entering[data-kind=complete] .feedback-spark { animation: feedback-spark 650ms ease-out both; }
+  .ui-feedback.is-entering[data-kind=retry] .ui-feedback-symbol > .icon { animation: feedback-turn 420ms ease-out; }
+  .is-rewarded { animation: reward-pulse 450ms ease-out; }
+
+
+  /* ---- Links ------------------------------------------------------------ */
+  .ui-link { @apply inline-flex items-center gap-1 font-extrabold underline-offset-4 hover:underline; color: var(--tone-strong); }
+
+  /* ---- Listbox (custom select menu) ------------------------------------ */
+  .ui-listbox { @apply absolute z-40 mt-1.5 max-h-72 overflow-y-auto border border-line bg-surface p-1.5; border-radius: var(--radius-control); box-shadow: var(--shadow-float); }
+  /* Inside a positioned popover (Reka, a portal): the popover places it, so it stays in flow. */
+  .ui-listbox-floating { @apply relative z-50 mt-0; }
+  .ui-option { @apply flex w-full items-center justify-between gap-2 px-3 text-left font-bold text-ink transition-colors; min-height: var(--ph-control-sm); border-radius: var(--radius-control-sm); font-size: var(--text-body); }
+  .ui-option:hover, .ui-option[data-active=true] { background: var(--color-sunken); }
+  .ui-option[aria-selected=true] { background: var(--tone-wash); color: var(--tone-strong); }
+  /* Picker: a selector that shows a symbol and two lines (context, organisation). One step taller
+     than a field (--ph-control-lg). 10 px on the left puts the symbol in the column of the
+     ui-nav-item icons below it (12 px from the edge, border included) and leaves it the same space
+     above and below; the chevron mirrors it on the right. */
+  .ui-picker { @apply flex w-full items-center gap-2.5 rounded-control-sm border-2 border-line bg-surface text-left transition-colors; height: var(--ph-control-lg); padding-inline: 10px 12px; }
+  .ui-picker:not(:disabled):hover { border-color: var(--color-line-strong); }
+  .ui-picker[aria-expanded=true] { border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
+  .ui-picker:disabled { @apply cursor-default border-transparent bg-canvas; }   /* only one destination: a plain label */
+  .ui-picker > .icon { @apply size-4 shrink-0 text-muted; }
+  .field-trigger { @apply flex items-center justify-between gap-2 text-left; }
+  .field-trigger > .icon { @apply size-4 shrink-0 text-muted transition-transform; }
+  .field-trigger[aria-expanded=true] > .icon { @apply rotate-180; }
+
+  /* ---- Table ------------------------------------------------------------ */
+  .ui-table-wrap { @apply overflow-hidden border border-line bg-surface; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); }
+  .ui-table { @apply w-full table-fixed border-collapse text-left; font-size: var(--text-body); }
+  .ui-table th { @apply px-5 py-3 font-black uppercase tracking-wider text-muted; font-size: var(--text-micro); border-bottom: 1px solid var(--color-line); }
+  .ui-table td { @apply px-5 py-3.5 font-semibold text-ink; border-bottom: 1px solid var(--color-line); }
+  .ui-table tbody tr:last-child td { border-bottom: 0; }
+  .ui-table tbody tr[data-clickable=true] { @apply cursor-pointer transition-colors; }
+  .ui-table tbody tr[data-clickable=true]:hover { background: var(--color-canvas); }
+  .ui-table-empty { @apply px-5 py-14 text-center font-semibold text-muted; }
+  .ui-table-footer { @apply px-5 py-3; border-top: 1px solid var(--color-line); }
+
+  /* ---- Pagination ------------------------------------------------------- */
+  .ui-pagination { @apply flex items-center gap-1; }
+  .ui-page { @apply flex items-center justify-center px-2 font-extrabold tabular-nums text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-35 disabled:hover:bg-transparent; min-width: var(--ph-control-sm); height: var(--ph-control-sm); font-size: var(--text-caption); border-radius: var(--ph-radius); }
+  .ui-page[aria-current=page] { background: var(--color-night-850); color: var(--color-inverse); box-shadow: 0 var(--ph-depth) 0 var(--color-night-950); }
+
+  /* ---- Page header ------------------------------------------------------ */
+  .ui-page-header { @apply mb-7 flex flex-wrap items-end justify-between gap-4; }
+  .ui-page-header-actions { @apply flex shrink-0 items-center; gap: calc(var(--ph-gap) * .75); }
+
+  /* ---- Panel (a card that holds content) ------------------------------- */
+  .ui-panel { @apply min-w-0 border border-line bg-surface; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); }
+  .ui-panel-interactive { @apply cursor-pointer transition-transform; }
+  .ui-panel-interactive:hover { transform: translateY(-2px); }
+  .ui-panel-header { @apply flex items-center justify-between gap-4 px-6 py-4; border-bottom: 1px solid var(--color-line); }
+  .ui-panel-body { @apply p-6; }
+  .ui-panel-footer { @apply px-6 py-4; border-top: 1px solid var(--color-line); background: var(--color-canvas); border-radius: 0 0 var(--radius-panel) var(--radius-panel); }
+
+  /* ---- Group (stepper, joined controls) -------------------------------- */
+  /* Joined controls that act as one: date stepper, zoom… Raised like a neutral button. */
+  .ui-group {
+    @apply inline-flex shrink-0 items-stretch overflow-hidden bg-surface;
+    min-height: var(--ph-control); border-radius: var(--ph-radius);
+    box-shadow: inset 0 0 0 1px var(--color-depth), 0 var(--ph-depth) 0 var(--color-depth);
+  }
+  .ui-group > * + * { box-shadow: inset 1px 0 0 var(--color-line); }
+  .ui-group-item { @apply flex items-center justify-center text-muted transition-colors hover:bg-canvas hover:text-ink; min-width: var(--ph-control); }
+  .ui-group-label { @apply flex items-center whitespace-nowrap px-3 font-extrabold tabular-nums text-ink; font-size: var(--text-body); }
+
+  /* ---- Tray (a column that holds cards: planner days, boards) ---------- */
+  .ui-tray { @apply flex flex-col p-2.5; gap: calc(var(--ph-gap) * .75); background: var(--color-sunken); border-radius: var(--radius-panel); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
+  /* A toned tray (today) stays in the trays' grey family with a warm hint: an accent, not a highlight. */
+  .ui-tray[data-tone] {
+    background: color-mix(in srgb, var(--tone-wash) 60%, var(--color-sunken));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-sunken)), 0 var(--ph-depth) 0 color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-depth-strong));
+  }
+  .ui-tray.is-target { box-shadow: inset 0 0 0 2px var(--color-line-strong), 0 var(--ph-depth) 0 var(--color-depth); }
+  /* Slot: an empty place to add something. Dashed, grey, one step darker than its tray. */
+  .ui-slot { @apply flex w-full items-center justify-center gap-1.5 border-2 border-dashed px-3 font-extrabold text-muted transition-colors; min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--radius-control-sm); border-color: var(--color-night-300); }
+  .ui-slot:hover { border-color: var(--color-night-500); background: var(--color-surface); color: var(--color-ink); }
+  .ui-slot > .icon { @apply size-4; }
+
+  /* Cover: a large area tinted by its tone or area (storyboard cards). Softer than a tint: big
+     surfaces carry colour as a hint, never a highlight. */
+  .ui-cover { background: color-mix(in srgb, var(--tone-tint) 55%, var(--tone-wash)); }
+
+  /* ---- Calendar day and time ------------------------------------------- */
+  /* The day number. Today wears the sun, the same as the «Hoy» badge. */
+  .ui-day { @apply inline-flex shrink-0 items-center justify-center font-black tabular-nums; min-width: var(--ph-control-sm); height: var(--ph-control-sm); padding-inline: 4px; font-size: var(--text-body); border-radius: var(--radius-control-sm); color: var(--color-ink); }
+  .ui-day[aria-current=date] { background: var(--color-sun-400); color: var(--color-sun-900); box-shadow: 0 2px 0 var(--color-sun-600); }
+  .ui-day[aria-pressed=true] { box-shadow: inset 0 0 0 2px var(--color-sky-400); }   /* the chosen day (date picker): selection is sky */
+  .ui-day-sm { min-width: 24px; height: 24px; font-size: var(--text-caption); border-radius: var(--radius-chip); }
+  .ui-day.is-outside { color: var(--color-disabled); }
+  /* The time of a session, tinted with the tone of its area (data-area) or its state. */
+  .ui-time { @apply flex shrink-0 flex-col items-center justify-center px-3 py-2 leading-tight; border-radius: var(--radius-control); background: var(--tone-tint); color: var(--tone-strong); }
+  .ui-time strong { @apply font-black tabular-nums; font-size: var(--text-title); }
+  .ui-time span { @apply font-semibold tabular-nums; font-size: var(--text-caption); }
+  .ui-time-sm { @apply px-2 py-1; border-radius: var(--radius-control-sm); }
+  .ui-time-sm strong { font-size: var(--text-body); }
+
+  /* ---- Navigation item (sidebars, top tabs) ---------------------------- */
+  /* The current place: a clear tint of the default tone (between tint and tint-edge), ink text and
+     a toned icon. Lively enough to find at a glance; a tint, never the solid action fill. */
+  .ui-nav-item { @apply flex items-center gap-3 px-3 font-bold text-muted transition-colors hover:bg-canvas hover:text-ink; min-height: var(--ph-control); font-size: var(--text-body); border-radius: var(--ph-radius); }
+  .ui-nav-item > .icon { color: var(--color-subtle); }
+  .ui-nav-item:hover > .icon { color: var(--color-muted); }
+  .ui-nav-item[aria-current=page] { @apply font-extrabold; background: var(--nav-current); color: var(--color-ink); }
+  .ui-nav-item[aria-current=page] > .icon { color: var(--tone-icon); }
+
+  /* ---- Avatar (initials) ------------------------------------------------ */
+  .ui-avatar { @apply inline-flex shrink-0 items-center justify-center font-black uppercase leading-none; width: var(--ph-control-sm); height: var(--ph-control-sm); font-size: var(--text-micro); border-radius: var(--radius-control-sm); background: var(--tone-tint-edge); color: var(--tone-strong); }
+  .ui-avatar-sm { width: 24px; height: 24px; border-radius: var(--radius-chip); }
+  .ui-avatar-lg { width: var(--ph-control-lg); height: var(--ph-control-lg); font-size: var(--text-body); border-radius: var(--radius-control); }
+
+  /* ---- Stat (a figure on a panel) -------------------------------------- */
+  .ui-stat { @apply flex items-center gap-4 p-5; }
+  .ui-stat-value { @apply font-black leading-none tabular-nums tracking-tight; font-size: var(--text-heading); color: var(--color-ink); }
+  .ui-stat-label { @apply mt-1.5 font-bold; font-size: var(--text-caption); color: var(--color-muted); }
+
+  /* ---- App bar (the main header of each app) -------------------------- */
+  /* The header is a flat band with its own bottom border: inside it, controls are flat too (just
+     their outline, no base) and don't move when pressed. Everywhere else they keep their base. */
+  .ui-appbar .ui-button,
+  .ui-appbar .ui-button:active:not(:disabled),
+  .ui-appbar .ui-button.is-pressed { --button-depth: 0px; transform: none; }
+  .ui-appbar .ui-button:hover:not(:disabled) { transform: none; }
+  .ui-appbar .ui-button[data-tone=neutral]::before { inset: 1px; }
+  .ui-appbar :is(.filter, .ui-group, .ui-tabs) { box-shadow: inset 0 0 0 1px var(--color-depth); }
+
+  /* ---- Toasts stack ----------------------------------------------------- */
+  .toast-stack { @apply pointer-events-none fixed left-1/2 top-4 z-[100] flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2; }
+  .toast-stack .toast { @apply pointer-events-auto static w-full translate-x-0; }
+  .toast-symbol { @apply flex size-8 shrink-0 items-center justify-center rounded-control-sm; background: var(--tone-fill); color: var(--tone-on); }
+  .toast-symbol > .icon { @apply size-4; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes arrive { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+[data-motion=off] *, [data-motion=off] *::before, [data-motion=off] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+@media (forced-colors: active) {
+  .ui-button:focus-visible, .ui-button.is-focused { outline: 2px solid Highlight; outline-offset: 3px; }
+  .ui-button:focus-visible::after, .ui-button.is-focused::after { background: Highlight; }
+}
+
+@keyframes feedback-pop { 0% { transform: scale(.7); opacity: .5; } 60% { transform: scale(1.09); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes feedback-spark { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--spark-x),var(--spark-y)) rotate(65deg) scale(.5); } }
+@keyframes feedback-turn { from { transform: rotate(-55deg); } to { transform: rotate(0); } }
+@keyframes reward-pulse { 50% { transform: scale(1.055); } }
