@@ -1,0 +1,349 @@
+{
+  "_origen": "Modo demo de Educators (sin NUXT_PUBLIC_SUPABASE_URL ni _ANON_KEY): la forma de educador_sesion y educador_workshops (supabase/migrations/0006), con diaRelativo en lugar de fecha (relativa a hoy).",
+  "educador": {
+    "nombre": "María",
+    "apellido": "López",
+    "correo": "maria@ejemplo.test",
+    "idioma": "es",
+    "organizaciones": [
+      {
+        "id": 1,
+        "nombre": "Fundación Centro",
+        "comunidades": [
+          {
+            "id": 1,
+            "nombre": "Comunidad Centro"
+          },
+          {
+            "id": 2,
+            "nombre": "Comunidad Sur"
+          }
+        ]
+      }
+    ]
+  },
+  "talleres": [
+    {
+      "id": "t-101",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 0,
+      "horaInicio": "10:00",
+      "horaFin": "10:30",
+      "lugar": "Aula 3A",
+      "grupo": "2.º B",
+      "asistentesEstimados": 24,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-102",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 0,
+      "horaInicio": "12:00",
+      "horaFin": "12:30",
+      "lugar": "Salón de usos múltiples",
+      "grupo": "1.º A",
+      "asistentesEstimados": 20,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-100",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": -1,
+      "horaInicio": "09:00",
+      "horaFin": "09:30",
+      "lugar": "Aula 1C",
+      "grupo": "1.º C",
+      "asistentesEstimados": 22,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "finalizado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-103",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 2,
+      "horaInicio": "09:00",
+      "horaFin": "09:30",
+      "lugar": "Centro comunitario",
+      "grupo": "Grupo de la tarde",
+      "asistentesEstimados": 15,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-104",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 1,
+      "horaInicio": "11:00",
+      "horaFin": "11:30",
+      "lugar": "Biblioteca",
+      "grupo": "3.º B",
+      "asistentesEstimados": 25,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-105",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 4,
+      "horaInicio": "10:00",
+      "horaFin": "10:30",
+      "lugar": "Aula 2A",
+      "grupo": "2.º A",
+      "asistentesEstimados": 23,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-108",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 5,
+      "horaInicio": "11:00",
+      "horaFin": "11:30",
+      "lugar": "Aula 2C",
+      "grupo": "2.º C",
+      "asistentesEstimados": 22,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "cancelado",
+      "motivoCancelacion": "Feriado escolar",
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-106",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 9,
+      "horaInicio": "09:30",
+      "horaFin": "10:00",
+      "lugar": "Patio cubierto",
+      "grupo": "4.º A",
+      "asistentesEstimados": 28,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-107",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": 16,
+      "horaInicio": "12:00",
+      "horaFin": "12:30",
+      "lugar": "Centro comunitario",
+      "grupo": "Grupo de la mañana",
+      "asistentesEstimados": 18,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "publicado",
+      "motivoCancelacion": null,
+      "estado": "pendiente",
+      "cierre": null
+    },
+    {
+      "id": "t-099",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": -3,
+      "horaInicio": "10:00",
+      "horaFin": "10:30",
+      "lugar": "Aula 2B",
+      "grupo": "3.º A",
+      "asistentesEstimados": 26,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "finalizado",
+      "motivoCancelacion": null,
+      "estado": "completado",
+      "cierre": {
+        "calificacion": 4,
+        "asistentes": 23,
+        "participacion": "alta",
+        "claridad": "clara",
+        "costo": "Ordenar el recorrido en el primer intento.",
+        "faltoMaterial": ""
+      }
+    },
+    {
+      "id": "t-098",
+      "storyboard": {
+        "titulo": "El huevo",
+        "eje": "alimentacion",
+        "slug": "el-huevo",
+        "edicion": "KIDS",
+        "escenas": 4,
+        "duracion": 30,
+        "categoria": "ALIMENTACION"
+      },
+      "comunidad": {
+        "id": 1,
+        "nombre": "Comunidad Centro"
+      },
+      "diaRelativo": -8,
+      "horaInicio": "11:00",
+      "horaFin": "11:30",
+      "lugar": "Aula 1A",
+      "grupo": "1.º A",
+      "asistentesEstimados": 21,
+      "idioma": "es",
+      "modalidad": "presencial",
+      "estadoWorkshop": "finalizado",
+      "motivoCancelacion": null,
+      "estado": "completado",
+      "cierre": {
+        "calificacion": 5,
+        "asistentes": 21,
+        "participacion": "alta",
+        "claridad": "muy_clara",
+        "costo": "",
+        "faltoMaterial": ""
+      }
+    }
+  ]
+}

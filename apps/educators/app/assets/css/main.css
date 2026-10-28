@@ -1,0 +1,24 @@
+/* Educators · única raíz de CSS: el UI Kit compartido en densidad táctil (data-density en
+   <html>) y el control táctil de la app. */
+@import "@playhub/ui/css/index.css";
+
+@layer base {
+  /* Sin zoom por doble toque en ningún sitio (el pellizco sigue disponible para quien lo
+     necesite), sin rebote que recargue la página y sin destello al tocar. */
+  html { touch-action: manipulation; overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
+  body { min-height: 100dvh; }
+}
+
+@layer components {
+  /* Zonas seguras: la app llega a los bordes (viewport-fit=cover) y sus barras se apartan del
+     notch, las esquinas redondeadas y la barra de inicio. */
+  .app-topbar { padding-top: max(env(safe-area-inset-top), 0px); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .app-main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+
+  /* El taller a pantalla completa. Dentro de un iframe las zonas seguras valen 0: las aparta
+     Educators, en el color del player. */
+  .taller-runner {
+    @apply fixed inset-0 bg-canvas;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
