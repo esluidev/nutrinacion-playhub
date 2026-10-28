@@ -100,7 +100,7 @@ temarios ── temario_storyboards
 
 | Superficie | Acceso |
 |---|---|
-| Admin | Supabase Auth con correo y contraseña. Alta cerrada (registro desactivado): las cuentas las crea `canjear-invitacion` |
+| Admin | Supabase Auth con correo y contraseña. Alta cerrada (registro desactivado): las cuentas las crea `canjear-invitacion`. **Sin correos** ([decisión 009](decisions/009-acceso-admin-sin-correo.md)): la invitación se comparte con su enlace y, si alguien olvida la contraseña, el titular o soporte le genera un enlace de recuperación (`enlace-recuperacion`) |
 | Educators | Correo y PIN de 6 dígitos que elige el educador la primera vez, con el código de activación que genera Admin, **sin Supabase Auth**. Usa la anon key y las funciones `educador_*` con un token. No lee tablas |
 | App del hogar (por crear) | Cuenta del adulto con correo y PIN propio, **sin Supabase Auth**. Usa la anon key y las funciones `hogar_*`. Sin cuenta funciona, pero no guarda nada |
 | Player, gestión | Supabase Auth con las cuentas de Admin, **solo superadmin**. Registra (`sincronizar_storyboard`) y publica (`publicar_storyboard`) el catálogo |
@@ -122,7 +122,7 @@ temarios ── temario_storyboards
 - `workshop_feedback`: Admin solo lo lee; lo escribe el educador con `educador_guardar_feedback`.
 - El trigger de alta lee el rol de `raw_app_meta_data`, nunca de `raw_user_meta_data`.
 
-Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de administrador, si será el titular (`titular`): solo el superadmin invita titulares, y quien la canjea o la acepta pasa a serlo (el anterior sigue como administrador). Las Edge Functions `canjear-invitacion` y `enviar-invitacion` son la frontera de las invitaciones. Al canjear, `canjear-invitacion` enlaza la cuenta explícitamente: Auth guarda el `app_metadata` después de insertar al usuario, así que el trigger de alta solo crea el perfil. Un cambio en ellas revisa a la vez la función, las políticas y el trigger.
+Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de administrador, si será el titular (`titular`): solo el superadmin invita titulares, y quien la canjea o la acepta pasa a serlo (el anterior sigue como administrador). La Edge Function `canjear-invitacion` es la frontera de las invitaciones; `enviar-invitacion` (correo por Resend) se conserva sin desplegar ni disparar ([decisión 009](decisions/009-acceso-admin-sin-correo.md)). Al canjear, `canjear-invitacion` enlaza la cuenta explícitamente: Auth guarda el `app_metadata` después de insertar al usuario, así que el trigger de alta solo crea el perfil. Un cambio en ellas revisa a la vez la función, las políticas y el trigger.
 
 ## Funciones
 
@@ -136,6 +136,7 @@ Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de admi
 | `comunidad_generar_codigo_acceso` | Quien opera la comunidad | El código de acceso para unirse (único en la plataforma); el anterior deja de admitir altas |
 | `platform_uso`, `platform_comunidades`, `platform_administradores` | Superadmin | Cifras por organización (uso de la licencia, lo que se perdería al darla de baja y, para el soporte, educadores sin acceso, talleres próximos y última actividad), sus comunidades con sus cifras y sus administradores con su último acceso; nunca el detalle de la operación |
 | `platform_eliminar_organizacion` | Superadmin | La baja entera: sus comunidades con su operación y lo demás en cascada. La impiden sus storyboards personalizados |
+| `recuperacion_autorizar(email)` | Superadmin o titular (Edge Function `enlace-recuperacion`) | Si quien lo pide puede generar el enlace de recuperación de esa cuenta; devuelve su correo. El superadmin, para cualquiera; el titular, solo para cuentas que no llegan a otra organización (ni por invitación pendiente); nadie, para la suya |
 | `organizacion_actualizar_perfil_publico` | Admin de la organización | Mostrarla o no en «Unirme», con su descripción y su logo (no se tocan otras columnas de la organización) |
 | `hogar_crear_cuenta`, `hogar_entrar`, `hogar_sesion`, `hogar_salir`, `hogar_actualizar_cuenta`, `hogar_cambiar_pin`, `hogar_borrar_cuenta` | App del hogar (anon) | La cuenta del adulto; el correo no puede estar en uso; el PIN lo elige él |
 | `hogar_guardar_perfil`, `hogar_borrar_perfil`, `hogar_unirse`, `hogar_salir_de_comunidad` | App del hogar (anon) | Perfiles (nombre, género, edad e intereses) y unirse con el código; 5 códigos equivocados bloquean 15 minutos |
@@ -158,6 +159,7 @@ Las `educador_*` y `hogar_*` reciben el token, son `SECURITY DEFINER` y devuelve
 | `0008_storage` | Bucket `narracion` |
 | `0009_hogar` | Temarios, publicaciones, cuenta del hogar, perfiles, participantes y avance, con su RLS y las funciones `hogar_*` |
 | `0010_tareas` | pg_cron: finalizar workshops cada hora |
+| `0011_recuperacion` | `recuperacion_autorizar`: quién genera el enlace para recuperar el acceso a Admin |
 
 Qué se ejecuta en producción (y qué no), los pasos posteriores y la tabla de usuarios de prueba: [supabase/README.md](../supabase/README.md).
 
@@ -181,7 +183,7 @@ npm run db:types        # regenera supabase/database.types.ts, que tipan Admin y
 python3 scripts/generar-seed.py   # regenera supabase/seed.sql; después, supabase db reset
 ```
 
-Con Supabase local levantado: API en `http://127.0.0.1:54321`, Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (ahí llega el enlace de «¿La olvidaste?» de Admin, que vuelve a `/restablecer`; en la nube, esa URL de cada entorno va en las URLs de redirección de Auth). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Las pruebas cuentan con el seed tal cual: después de probar a mano, `supabase db reset`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
+Con Supabase local levantado: API en `http://127.0.0.1:54321`, Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (Admin no envía correos: la recuperación va por un enlace que se comparte a mano). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Las pruebas cuentan con el seed tal cual: después de probar a mano, `supabase db reset`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
 
 Pruebas en `supabase/tests/database/`:
 - `01_rls.test.sql`: lo que ve y escribe cada identidad (superadmin, admin, colaborador, organización ajena y anon), también en las tablas del hogar; las funciones `platform_*` y la baja de una organización.
@@ -189,6 +191,7 @@ Pruebas en `supabase/tests/database/`:
 - `03_catalogo_y_jornadas.test.sql`: registrar y publicar desde Player, taxonomía, países e idiomas en uso, jornadas.
 - `04_workshops.test.sql`: el ciclo del workshop, editar uno publicado (no se queda sin fecha, hora ni educador), cambiar de educador, reprogramar, la tarea horaria y qué se programa por país e idioma.
 - `05_hogar.test.sql`: cuenta, perfiles, unirse con código, lo que ve cada perfil, licencia vencida, borrar la cuenta, el perfil público y que las funciones con sesión no sean `STABLE`.
+- `06_recuperacion.test.sql`: quién genera el enlace de recuperación. No usa el seed (crea sus datos): también corre contra la base sin seed.
 
 ## Cambiar esquema, triggers o RLS
 

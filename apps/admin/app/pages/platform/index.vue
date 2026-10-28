@@ -4,7 +4,12 @@
        actividad de las organizaciones y las invitaciones de administrador. La operación de cada
        organización (comunidades, educadores, talleres) es asunto suyo, no de Platform. -->
   <div>
-    <UiPageHeader title="Platform" :description="t('platformHome.desc')" />
+    <UiPageHeader title="Platform" :description="t('platformHome.desc')">
+      <template #actions>
+        <!-- Soporte: alguien que olvidó su contraseña, también un colaborador que Platform no ve -->
+        <UiButton tone="neutral" icon="key" @click="restableciendo = true">{{ t('auth.recovery.action') }}</UiButton>
+      </template>
+    </UiPageHeader>
 
     <div v-if="loading" class="ui-panel p-10 text-center text-body font-semibold text-subtle">{{ t('common.loading') }}</div>
 
@@ -135,6 +140,8 @@
         </div>
       </div>
     </template>
+
+    <EnlaceRecuperacion v-model:open="restableciendo" />
   </div>
 </template>
 
@@ -152,6 +159,7 @@ const platform = isSupabaseConfigured() ? usePlatform() : null
 
 const resumen = ref<ResumenPlatform | null>(null)
 const loading = ref(true)
+const restableciendo = ref(false)
 
 const DEMO_RESUMEN: ResumenPlatform = {
   organizaciones: { total: 3, nuevas: 1, operando: 1, enAlta: 1, sinLicencia: 1 },

@@ -808,7 +808,7 @@ Siguiente paso: QA manual de Luis, feature por feature, con Supabase local (Admi
 
 Pendientes anotados:
 - **`estructura.md`** (skill `playhub-storyboard-games`, fuera de este repositorio) no documenta `healthFocus`.
-- **Recuperar el PIN de una cuenta del hogar:** por correo, con una Edge Function que envíe el código (la de invitaciones aún no tiene su webhook).
+- **Recuperar el PIN de una cuenta del hogar:** por correo, con una Edge Function que envíe el código. Necesita un SMTP; Admin no envía correos ([decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md)), así que es ahí donde se configura por primera vez.
 - **Afirmaciones y fuentes:** sin sitio en la base; por confirmar si van en la guía.
 - **Cupo de educadores:** `organizacion_licencias.max_educadores` no se hace cumplir (sí el de comunidades).
 - **Personalizados por licencia:** tampoco se hace cumplir `max_personalizados`.
@@ -1004,3 +1004,23 @@ Contexto ya decidido en tareas anteriores:
   - Mientras dure el QA, las pruebas pgTAP no aplican: necesitan el seed.
   - Resend: `enviar-invitacion` necesita `RESEND_API_KEY` y el dominio `nutrinacion.com` verificado. Nada la dispara todavía: falta el webhook al insertar en `invitaciones`.
   - Commits por área, sin push: repo, UI Kit, Supabase, Player, Admin, Educators y documentación.
+- 2026-10-28 — Análisis con Luis: ¿hace falta Resend? Las invitaciones no lo necesitan (el enlace se copia). Un código por correo para Admin haría el SMTP obligatorio en cada entrada desde un dispositivo nuevo. En la nube, el correo de Supabase solo manda a su equipo, así que «¿La olvidaste?» no habría funcionado en producción. Luis elige contraseña y recuperación por soporte: [decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md).
+  - `0011_recuperacion`: `recuperacion_autorizar(email)` decide quién genera el enlace. El superadmin, para cualquiera; el titular, para cuentas que solo llegan a organizaciones suyas (ni por una invitación pendiente de otra); nadie, para la suya. Aplicada en local con `supabase migration up`, sin reset.
+  - Edge Function `enlace-recuperacion`: consulta la regla con la sesión de quien lo pide y, con service role, `generateLink` de tipo `recovery`, que no envía correo. `config.toml`: `otp_expiry` de 24 h.
+  - Admin:
+    - `EnlaceRecuperacion` en Platform (por correo, para soporte), Administradores y Colaboradores; sustituye el «enviar enlace» de Platform;
+    - el login dice a quién pedir el enlace;
+    - `/restablecer` canjea `token_hash` con `verifyOtp` al guardar, no al abrir.
+  - Verificación:
+    - pgTAP `06_recuperacion`: 22 pruebas, **aprobado**. Crea sus propios datos, así que corre contra la base sin seed sin tocarla.
+    - Typecheck de Admin y Player, 52 tests de Admin, check-ui y check-context: **aprobado**.
+    - Edge Function con curl, con datos temporales: genera para el titular; rechaza su propia cuenta, una inexistente, a la colaboradora y a anon. El token sirve una vez y uno nuevo anula el anterior.
+    - Navegador (Admin de Luis en :3000):
+      - el login sin formulario de correo;
+      - `/restablecer` con el token → contraseña nueva → entra a su comunidad; la anterior ya no vale;
+      - el titular genera el enlace desde Colaboradores;
+      - soporte, desde Platform: «No hay ninguna cuenta de Admin con ese correo» y el enlace.
+    - Datos temporales borrados: la base volvió a quedar vacía.
+    - Build de Admin: **aprobado**.
+    - **No ejecutado:** `verify.sh` completo: su pgTAP `01`–`05` necesita el seed.
+

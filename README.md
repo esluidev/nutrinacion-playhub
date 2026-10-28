@@ -38,7 +38,7 @@ Con las apps y Supabase local en marcha, cualquier equipo de tu tailnet las abre
 - la capa `@playhub/ui` deja entrar a Vite los nombres `*.ts.net` (si no, responde 403);
 - `urlEnEsteEquipo` (`packages/ui/app/utils/equipo-local.ts`) cambia `localhost` y `127.0.0.1` de Supabase y de Player por el nombre con que se abrió la app;
 - Player acepta que lo incrusten Admin y Educators abiertos por la tailnet;
-- Auth local admite volver a `*.ts.net:3000` (recuperar contraseña).
+- Auth local admite volver a `*.ts.net:3000`.
 
 Es http: los botones de copiar usan un método alternativo, porque el portapapeles moderno exige HTTPS. Para HTTPS, `tailscale serve`. Si cambias la capa o `supabase/config.toml`, reinicia las apps o Supabase.
 

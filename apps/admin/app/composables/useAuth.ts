@@ -155,16 +155,26 @@ export function useAuth() {
     return { error: error ? errorDePassword(error) : null }
   }
 
-  // «¿La olvidaste?»: Supabase manda un enlace que abre /restablecer con una sesión de
-  // recuperación. La respuesta es la misma exista o no la cuenta.
-  async function recuperarPassword(email: string) {
-    const { error } = await useSupabaseClient().auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/restablecer`,
+  // Admin no envía correos (decisión 009): el titular o soporte genera el enlace para elegir otra
+  // contraseña y lo comparte. Quién puede lo decide la base (`recuperacion_autorizar`, 0011).
+  async function generarEnlaceRecuperacion(email: string): Promise<{ enlace: string | null, error: string | null }> {
+    if (!isSupabaseConfigured()) return { enlace: `${window.location.origin}/restablecer?token_hash=demo`, error: null }
+    const { data, error } = await useSupabaseClient().functions.invoke('enlace-recuperacion', {
+      body: { email: email.trim() },
     })
+    if (error) return { enlace: null, error: 'No se pudo generar el enlace. Intenta de nuevo.' }
+    if (!data?.ok) return { enlace: null, error: data?.error || 'No se pudo generar el enlace.' }
+    return { enlace: `${window.location.origin}/restablecer?token_hash=${encodeURIComponent(data.token_hash)}`, error: null }
+  }
+
+  // /restablecer canjea el token del enlace al guardar, no al abrirlo: abre la sesión de esa cuenta
+  // (sustituye la que hubiera en el navegador). Sirve una vez; vencido o usado, falla.
+  async function canjearEnlaceRecuperacion(tokenHash: string): Promise<{ error: string | null }> {
+    const { error } = await useSupabaseClient().auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
     return { error: error?.message ?? null }
   }
 
-  // Con la sesión de recuperación del enlace, la nueva contraseña.
+  // Con la sesión del enlace ya canjeado, la nueva contraseña.
   async function restablecerPassword(nueva: string) {
     const { error } = await useSupabaseClient().auth.updateUser({ password: nueva })
     return { error: error ? errorDePassword(error) : null }
@@ -172,6 +182,6 @@ export function useAuth() {
 
   return {
     user, loading, fetchUser, signIn, signOut, validateInvitation, redeemInvitation,
-    actualizarPerfil, cambiarPassword, recuperarPassword, restablecerPassword,
+    actualizarPerfil, cambiarPassword, generarEnlaceRecuperacion, canjearEnlaceRecuperacion, restablecerPassword,
   }
 }

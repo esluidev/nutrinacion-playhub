@@ -38,7 +38,18 @@
       </template>
       <template #cell-acciones="{ row }">
         <!-- Acciones de tabla: neutras, como en el kit -->
-        <div v-if="puedeInvitar" class="flex items-center justify-end">
+        <div v-if="puedeInvitar" class="flex items-center justify-end gap-2">
+          <!-- Olvidó su contraseña: el titular o soporte le genera un enlace (decisión 009) -->
+          <UiButton
+            v-if="puedeRestablecer && row.email && row.email !== miCorreo"
+            tone="neutral"
+            size="sm"
+            icon="key"
+            icon-only
+            :label="t('auth.recovery.action')"
+            :title="t('auth.recovery.action')"
+            @click.stop="restableciendo = row"
+          />
           <UiButton v-if="row.activo" variant="outline" size="sm" @click.stop="cambiarActivo(row, false)">
             Desactivar
           </UiButton>
@@ -63,6 +74,13 @@
         </div>
       </div>
     </section>
+
+    <EnlaceRecuperacion
+      :open="!!restableciendo"
+      :email="restableciendo?.email"
+      :nombre="restableciendo?.nombre"
+      @update:open="(v) => { if (!v) restableciendo = null }"
+    />
   </div>
 </template>
 
@@ -72,10 +90,15 @@ import type { ColaboradorFila, InvitacionColabPendiente } from '~/composables/us
 definePageMeta({ layout: 'dashboard' })
 
 const { colaboradores, loading, setActivo, listInvitacionesPendientes } = useColaboradores()
-const { administraOrgActiva, esSuperadmin } = useContexto()
+const { administraOrgActiva, esTitularOrgActiva, esSuperadmin } = useContexto()
 const { toast } = useToast()
+const { t } = useT()
 
 const puedeInvitar = computed(() => administraOrgActiva.value || esSuperadmin.value)
+// El enlace para elegir otra contraseña es del titular o de soporte; la base lo vuelve a comprobar.
+const puedeRestablecer = computed(() => esTitularOrgActiva.value || esSuperadmin.value)
+const miCorreo = computed(() => useAuth().user.value?.email ?? '')
+const restableciendo = ref<ColaboradorFila | null>(null)
 
 const columns = [
   { key: 'nombre', label: 'Colaborador', grow: true },

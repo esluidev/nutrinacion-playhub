@@ -1,18 +1,14 @@
 <template>
-  <!-- ¿La olvidaste?: el correo recibe un enlace a /restablecer -->
+  <!-- ¿La olvidaste?: Admin no envía correos (decisión 009). El enlace para elegir otra lo genera
+       el titular de su organización o soporte. -->
   <div v-if="recuperando">
     <h2 class="ui-title mb-1.5">{{ t('auth.forgot.title') }}</h2>
     <p class="ui-text mb-7">{{ t('auth.forgot.subtitle') }}</p>
 
-    <UiAlert v-if="enviado" tone="info">{{ t('auth.forgot.sent', { email }) }}</UiAlert>
-    <form v-else class="space-y-5" @submit.prevent="enviarEnlace">
-      <UiInput id="email-recuperar" v-model="email" type="email" :label="t('auth.login.email')" placeholder="tu@correo.com" required />
-      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
-      <UiButton type="submit" size="lg" block :loading="isLoading">{{ t('auth.forgot.submit') }}</UiButton>
-    </form>
+    <UiAlert tone="info">{{ t('auth.forgot.ask') }}</UiAlert>
 
     <p class="ui-text mt-6 text-center">
-      <button type="button" data-tone="sky" class="ui-link" @click="recuperando = false; enviado = false; error = ''">{{ t('auth.forgot.back') }}</button>
+      <button type="button" data-tone="sky" class="ui-link" @click="recuperando = false">{{ t('auth.forgot.back') }}</button>
     </p>
   </div>
 
@@ -72,17 +68,6 @@ const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
 const recuperando = ref(false)
-const enviado = ref(false)
-
-async function enviarEnlace() {
-  if (!isSupabaseConfigured()) { enviado.value = true; return }
-  isLoading.value = true
-  error.value = ''
-  const { error: e } = await useAuth().recuperarPassword(email.value)
-  isLoading.value = false
-  if (e) { error.value = e; return }
-  enviado.value = true
-}
 
 async function handleLogin() {
   isLoading.value = true

@@ -3,9 +3,7 @@
     <h2 class="ui-title mb-1.5">{{ t('auth.reset.title') }}</h2>
     <p class="ui-text mb-7">{{ t('auth.reset.subtitle') }}</p>
 
-    <p v-if="comprobando" class="ui-text">{{ t('common.loading') }}</p>
-
-    <template v-else-if="!conSesion">
+    <template v-if="vencido">
       <UiAlert tone="danger">{{ t('auth.reset.expired') }}</UiAlert>
       <UiButton variant="outline" block class="mt-6" @click="navigateTo('/login')">{{ t('auth.forgot.back') }}</UiButton>
     </template>
@@ -20,30 +18,22 @@
 </template>
 
 <script setup lang="ts">
-// Llega desde el enlace de recuperación (Supabase Auth): el cliente toma la sesión de la URL y
-// con ella se fija la nueva contraseña. Sin sesión, el enlace venció o ya se usó.
+// Llega desde el enlace que generó el titular o soporte (decisión 009): `?token_hash=`. El token
+// se canjea al guardar, no al abrir la página, para que la vista previa de un chat no lo gaste.
+// Sin token, o vencido o ya usado, se pide otro.
 definePageMeta({ layout: 'auth' })
 
 const { t } = useT()
 const { toast } = useToast()
+const route = useRoute()
 
-const comprobando = ref(true)
-const conSesion = ref(false)
+const tokenHash = computed(() => (typeof route.query.token_hash === 'string' ? route.query.token_hash : ''))
+const vencido = ref(isSupabaseConfigured() && !tokenHash.value)
+const canjeado = ref(false)
 const nueva = ref('')
 const confirmar = ref('')
 const error = ref('')
 const guardando = ref(false)
-
-onMounted(async () => {
-  if (!isSupabaseConfigured()) {
-    conSesion.value = true
-    comprobando.value = false
-    return
-  }
-  const { data } = await useSupabaseClient().auth.getSession()
-  conSesion.value = !!data.session
-  comprobando.value = false
-})
 
 async function guardar() {
   error.value = ''
@@ -51,6 +41,16 @@ async function guardar() {
   if (nueva.value !== confirmar.value) { error.value = t('auth.invite.pwMismatch'); return }
   if (!isSupabaseConfigured()) { navigateTo('/login'); return }
   guardando.value = true
+  // Si el cambio falla después de canjear el token, el reintento usa la sesión ya abierta.
+  if (!canjeado.value) {
+    const { error: e } = await useAuth().canjearEnlaceRecuperacion(tokenHash.value)
+    if (e) {
+      guardando.value = false
+      vencido.value = true
+      return
+    }
+    canjeado.value = true
+  }
   const { error: e } = await useAuth().restablecerPassword(nueva.value)
   if (e) {
     guardando.value = false

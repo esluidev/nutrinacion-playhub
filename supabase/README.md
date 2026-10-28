@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 10 migraciones de `migrations/`, en orden:**
+**Solo las 11 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -18,12 +18,13 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0008_storage.sql` | Bucket de audios de narración |
 | `0009_hogar.sql` | Temarios, publicaciones y la app del hogar |
 | `0010_tareas.sql` | Tarea horaria que finaliza los workshops vencidos (pg_cron) |
+| `0011_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0010
+supabase db push --dry-run   # debe listar 0001 a 0011
 supabase db push
 ```
 
@@ -36,11 +37,11 @@ supabase db push
 
 ### Después de las migraciones
 
-1. **Edge Functions:** `supabase functions deploy canjear-invitacion enviar-invitacion` y su único secret, `supabase secrets set RESEND_API_KEY=<clave>`. El remitente es `hello@nutrinacion.com`: el dominio tiene que estar verificado en Resend. **Pendiente:** nada llama todavía a `enviar-invitacion` (espera un webhook al insertar en `invitaciones` que no existe); hasta entonces el enlace se comparte con «Copiar enlace».
-2. **Auth → URL Configuration:**
-   - *Site URL* = la URL de Admin.
-   - En *Redirect URLs*, `https://<admin>/restablecer` (recuperar contraseña). Las invitaciones no lo necesitan: su enlace sale de `admin_url`.
-3. **Configuración:** `update configuracion set valor = 'https://<admin>' where clave = 'admin_url';` y lo mismo con `player_url`.
+1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion`. No necesitan secretos. `enviar-invitacion` no se despliega: Admin no envía correos ([decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md)).
+2. **Auth:**
+   - *URL Configuration → Site URL* = la URL de Admin. La recuperación no necesita *Redirect URLs*: el enlace va directo a `/restablecer` de Admin.
+   - *Email → Email OTP Expiration* = `86400`: lo que dura el enlace de recuperación (24 h), como en `config.toml`.
+3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `admin_url` solo la usa `enviar-invitacion`.
 4. **El primer superadmin:**
    - Crea el usuario en *Authentication → Users*. Un trigger le crea su perfil.
    - Después: `update perfiles set superadmin = true where email = '<tu correo>';`.
@@ -61,13 +62,15 @@ supabase db reset --no-seed
 
 Después, los pasos de [Después de las migraciones](#después-de-las-migraciones) en su versión local:
 
-1. **Edge Functions:** `supabase start` ya las sirve. El secret va en `supabase/functions/.env` (`RESEND_API_KEY=<clave>`, ignorado por Git) y se toma al reiniciar con `supabase stop && supabase start`.
-2. **Auth:** `config.toml` ya apunta a `localhost:3000` (Site URL y `/restablecer`). Los correos de Auth (recuperar contraseña) llegan a `http://127.0.0.1:54324`, salvo que se active `[auth.email.smtp]` con el SMTP de Resend.
-3. **Configuración**, en el editor SQL de Studio (`http://127.0.0.1:54323`): `update configuracion set valor = 'http://localhost:3000' where clave = 'admin_url';` y `'http://localhost:3001'` para `player_url`.
+1. **Edge Functions:** `supabase start` ya las sirve. Una función nueva o un cambio de `config.toml` se toman al reiniciar con `supabase stop && supabase start`, que conserva los datos.
+2. **Auth:** `config.toml` ya tiene la URL de Admin (`localhost:3000`) y el enlace de recuperación de 24 h.
+3. **Configuración**, en el editor SQL de Studio (`http://127.0.0.1:54323`): `update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';`.
 4. **El primer superadmin:** en Studio, *Authentication → Add user* con correo, contraseña y *Auto Confirm User*; después, `update perfiles set superadmin = true where email = '<correo>';`.
 5. **pg_cron:** ya está activo en local.
 
-Las pruebas pgTAP (`supabase test db`, también dentro de `verify.sh`) cuentan con el seed tal cual: contra esta base fallan. Volver a correrlas exige `supabase db reset`, que borra lo creado a mano.
+Una migración nueva se aplica sin borrar nada con `supabase migration up`.
+
+Las pruebas pgTAP `01`–`05` (`supabase test db`, también dentro de `verify.sh`) cuentan con el seed tal cual: contra esta base fallan, y volver a correrlas exige `supabase db reset`, que borra lo creado a mano. `06_recuperacion` crea sus propios datos y sí corre: `supabase test db supabase/tests/database/06_recuperacion.test.sql`.
 
 ## Datos de prueba (solo local)
 
@@ -96,6 +99,6 @@ Las pruebas pgTAP (`supabase test db`, también dentro de `verify.sh`) cuentan c
 |---|---|---|
 | `familia@ejemplo.test` | `240218` | Juan Pérez (Guatemala). Perfiles: Pepito, 6, participante de Comunidad Centro; Ana, 10 |
 
-Código de acceso de Comunidad Centro: `482913`. Correos de prueba (invitaciones, recuperar contraseña): `http://127.0.0.1:54324`.
+Código de acceso de Comunidad Centro: `482913`.
 
 Estas credenciales salen de `scripts/generar-seed.py`. Si cambias el generador, actualiza también esta tabla.

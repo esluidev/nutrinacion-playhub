@@ -159,13 +159,13 @@
                   {{ t('platform.orgDetail.setTitular') }}
                 </UiButton>
                 <UiButton
-                  v-if="a.perfil?.email"
+                  v-if="a.perfil?.email && a.perfil?.id !== miPerfilId"
                   tone="neutral"
                   size="sm"
                   icon="key"
                   icon-only
-                  :label="t('platform.orgDetail.sendReset')"
-                  :title="t('platform.orgDetail.sendReset')"
+                  :label="t('auth.recovery.action')"
+                  :title="t('auth.recovery.action')"
                   @click="restableciendo = a"
                 />
                 <UiButton
@@ -321,18 +321,13 @@
       </div>
     </template>
 
-    <!-- Soporte: enlace para restablecer la contraseña de un administrador -->
-    <UiConfirmDialog
+    <!-- Soporte: enlace para que un administrador elija otra contraseña (decisión 009) -->
+    <EnlaceRecuperacion
       :open="!!restableciendo"
-      tone="lime"
-      :title="t('platform.orgDetail.resetTitle')"
-      :confirm-label="t('platform.orgDetail.resetConfirm')"
-      :loading="enCurso"
+      :email="restableciendo?.perfil?.email"
+      :nombre="restableciendo ? nombreAdmin(restableciendo) : null"
       @update:open="(v) => { if (!v) restableciendo = null }"
-      @confirm="enviarRestablecer"
-    >
-      <p>{{ t('platform.orgDetail.resetWarn', { email: restableciendo?.perfil?.email ?? '' }) }}</p>
-    </UiConfirmDialog>
+    />
 
     <!-- Unirse como administrador (o titular): queda a la vista de sus administradores -->
     <UiConfirmDialog
@@ -523,20 +518,6 @@ function resumenComunidad(c: { pais: string | null, educadores: number, talleres
 const restableciendo = ref<AdminPlatform | null>(null)
 const quitando = ref<AdminPlatform | null>(null)
 const enCurso = ref(false)
-
-async function enviarRestablecer() {
-  const email = restableciendo.value?.perfil?.email
-  if (!email) return
-  enCurso.value = true
-  const { error } = await useAuth().recuperarPassword(email)
-  enCurso.value = false
-  if (error) {
-    toast.error(error)
-    return
-  }
-  restableciendo.value = null
-  toast.success(t('platform.orgDetail.resetSent', { email }))
-}
 
 async function confirmarQuitar() {
   if (!quitando.value) return

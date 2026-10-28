@@ -44,4 +44,4 @@ Luis, 2026-10-15:
 - El token viaja como argumento de la función (en el cuerpo de la petición, nunca en la URL) y Educators lo guarda en el dispositivo.
 - Un correo puede estar en varias comunidades. El código es único entre los educadores con el mismo correo, así que correo y código identifican a uno.
 - Admin y la Edge Function `canjear-invitacion` deben adaptarse al esquema nuevo (tarea 006, entrega 2). La función ya pasa el rol en `app_metadata`.
-- En el proyecto nuevo de la nube hay que repetir la configuración de `supabase/config.toml` (registro cerrado y URL de Admin) y el webhook de `enviar-invitacion`.
+- En el proyecto nuevo de la nube hay que repetir la configuración de `supabase/config.toml` (registro cerrado y URL de Admin) y el webhook de `enviar-invitacion`. *El webhook lo sustituye la [decisión 009](009-acceso-admin-sin-correo.md): Admin no envía correos.*

@@ -903,6 +903,9 @@ isOneToOne: false
 "puedo_editar_temario":
 { Args: { "p_comunidad_id": number,"p_organizacion_id": number }; Returns: boolean
                            },
+"recuperacion_autorizar":
+{ Args: { "p_email": string }; Returns: string
+                           },
 "sincronizar_storyboard":
 { Args: { "p_metadata": Json }; Returns: Json
                            },

@@ -13,7 +13,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isSuper = u?.perfil.superadmin === true
 
   // Rutas publicas: inicio, login, invitacion (registro por token, sin sesion) y restablecer
-  // (llega con la sesion de recuperacion del enlace; si ya no vale, la pagina lo dice).
+  // (llega con el token del enlace de recuperacion; si ya no vale, la pagina lo dice).
   const isPublicRoute
     = to.path === '/'
     || to.path === '/login'

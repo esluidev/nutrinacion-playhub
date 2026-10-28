@@ -50,6 +50,17 @@
             :title="t('common.edit')"
             @click.stop="navigateTo(`/organizacion/administradores/${row.id}/editar`)"
           />
+          <!-- Olvidó su contraseña: enlace para elegir otra (decisión 009); la base decide si se puede -->
+          <UiButton
+            v-if="row.correo && row.perfil?.id !== miPerfilId"
+            tone="neutral"
+            size="sm"
+            icon="key"
+            icon-only
+            :label="t('auth.recovery.action')"
+            :title="t('auth.recovery.action')"
+            @click.stop="restableciendo = row"
+          />
           <!-- Al titular no se le quita el acceso desde aquí: primero se designa otro en Platform -->
           <UiButton
             v-if="!row.titular"
@@ -90,6 +101,13 @@
     >
       <p>{{ t('admins.removeWarn', { nombre: quitando?.nombreCompleto ?? '', org: orgActiva?.nombre ?? '' }) }}</p>
     </UiConfirmDialog>
+
+    <EnlaceRecuperacion
+      :open="!!restableciendo"
+      :email="restableciendo?.correo"
+      :nombre="restableciendo?.nombreCompleto"
+      @update:open="(v) => { if (!v) restableciendo = null }"
+    />
   </div>
 </template>
 
@@ -109,6 +127,7 @@ const loading = ref(true)
 
 // Gestionar admins (editar/quitar) es del titular o del superadmin; el co-admin solo ve.
 const puedeGestionar = computed(() => esSuperadmin.value || esTitularOrgActiva.value)
+const miPerfilId = computed(() => useAuth().user.value?.perfil.id ?? null)
 
 // Filas aplanadas: la búsqueda del componente opera sobre campos planos.
 type FilaAdmin = AdminDeOrg & { nombreCompleto: string, correo: string }
@@ -151,6 +170,7 @@ function venceLabel(inv: InvitacionAdminPendiente) {
 
 // Quitar acceso (nunca al titular: el botón ni se muestra en esa fila).
 const quitando = ref<FilaAdmin | null>(null)
+const restableciendo = ref<FilaAdmin | null>(null)
 const quitandoEnCurso = ref(false)
 
 function pedirQuitar(a: FilaAdmin) {
