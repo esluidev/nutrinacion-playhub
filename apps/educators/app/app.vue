@@ -16,5 +16,5 @@ provideUiLabels(() => (locale.value === 'en'
     }
   : {}))
 
-useHead({ htmlAttrs: { lang: locale }, titleTemplate: title => (title ? `${title} · PlayHub` : `PlayHub ${t('app.name')}`) })
+useHead({ htmlAttrs: { lang: locale }, titleTemplate: title => (title ? `${title} · ${t('app.name')}` : `PlayHub ${t('app.name')}`) })
 </script>

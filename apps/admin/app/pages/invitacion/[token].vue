@@ -12,9 +12,9 @@
     <!-- Inválida, vencida o revocada: coral (lo que ya no vale) -->
     <template v-else-if="estado === 'invalida'">
       <UiSymbol icon="warning" tone="coral" class="mx-auto mb-4" />
-      <h2 class="ui-title mb-2 text-center">
+      <h1 class="ui-title mb-2 text-center">
         {{ t('auth.invite.invalidTitle') }}
-      </h2>
+      </h1>
       <p class="ui-text mb-6 text-center">
         {{ error }}
       </p>
@@ -26,9 +26,9 @@
     <!-- Ya tiene cuenta: no hay nada que crear, la acepta dentro de la app. Información: cielo -->
     <template v-else-if="estado === 'existente'">
       <UiSymbol icon="user" tone="sky" class="mx-auto mb-4" />
-      <h2 class="ui-title mb-2 text-center">
+      <h1 class="ui-title mb-2 text-center">
         {{ t('auth.invite.hasAccountTitle') }}
-      </h2>
+      </h1>
       <p class="ui-text mb-6 text-center">
         {{ t('auth.invite.hasAccountText', { email: info?.email ?? '' }) }}
       </p>
@@ -38,9 +38,9 @@
     </template>
 
     <template v-else>
-      <h2 class="ui-title mb-1.5">
+      <h1 class="ui-title mb-1.5">
         {{ t('auth.invite.createTitle') }}
-      </h2>
+      </h1>
       <p class="ui-text mb-6">{{ t('auth.invite.subtitle') }}</p>
 
       <!-- Banner de invitación: una invitación es novedad, uva -->
@@ -66,6 +66,7 @@
           placeholder="tu@correo.com"
           :disabled="emailLocked"
           required
+         
         />
 
         <UiInput
@@ -75,6 +76,7 @@
           :label="t('auth.invite.password')"
           placeholder="Mínimo 6 caracteres"
           required
+         
         />
 
         <UiInput
@@ -84,6 +86,7 @@
           :label="t('auth.invite.confirm')"
           placeholder="••••••••"
           required
+         
         />
 
         <UiAlert v-if="error" tone="danger">
@@ -91,7 +94,7 @@
         </UiAlert>
 
         <!-- La única acción principal de la vista: lima -->
-        <UiButton type="submit" size="lg" block class="mt-6" :loading="submitting">
+        <UiButton type="submit" block class="mt-6" :loading="submitting">
           {{ t('auth.invite.submit') }}
         </UiButton>
       </form>

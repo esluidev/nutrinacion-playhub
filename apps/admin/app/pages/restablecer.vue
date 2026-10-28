@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h2 class="ui-title mb-1.5">{{ t('auth.reset.title') }}</h2>
-    <p class="ui-text mb-7">{{ t('auth.reset.subtitle') }}</p>
+    <h1 class="ui-title">{{ t('auth.reset.title') }}</h1>
+    <p class="ui-text mb-6 mt-1">{{ t('auth.reset.subtitle') }}</p>
 
     <template v-if="vencido">
       <UiAlert tone="danger">{{ t('auth.reset.expired') }}</UiAlert>
@@ -12,7 +12,7 @@
       <UiInput v-model="nueva" type="password" autocomplete="new-password" :label="t('perfil.pwNew')" :placeholder="t('perfil.pwMin')" required />
       <UiInput v-model="confirmar" type="password" autocomplete="new-password" :label="t('perfil.pwConfirm')" required />
       <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
-      <UiButton type="submit" size="lg" block :loading="guardando">{{ t('auth.reset.submit') }}</UiButton>
+      <UiButton type="submit" block :loading="guardando">{{ t('auth.reset.submit') }}</UiButton>
     </form>
   </div>
 </template>

@@ -82,13 +82,14 @@ export const messages: Record<Locale, Record<string, unknown>> = {
     },
     auth: {
       login: {
-        title: 'Iniciar sesión',
-        subtitle: 'Bienvenido de vuelta a tu comunidad',
+        title: 'Entra con tu correo',
+        subtitle: 'Escribe tu contraseña. Las cuentas se crean con una invitación.',
         email: 'Correo electrónico',
         password: 'Contraseña',
         forgot: '¿La olvidaste?',
-        submit: 'Iniciar Sesión',
-        inviteOnly: 'El acceso es solo por invitación. Si recibiste un enlace de invitación, ábrelo para crear tu cuenta.',
+        submit: 'Entrar',
+        missing: 'Escribe tu correo y tu contraseña.',
+        invalid: 'El correo o la contraseña no son correctos.',
       },
       forgot: {
         title: 'Recupera tu contraseña',
@@ -821,13 +822,14 @@ export const messages: Record<Locale, Record<string, unknown>> = {
     },
     auth: {
       login: {
-        title: 'Sign in',
-        subtitle: 'Welcome back to your community',
+        title: 'Sign in with your email',
+        subtitle: 'Enter your password. Accounts are created by invitation.',
         email: 'Email',
         password: 'Password',
         forgot: 'Forgot it?',
         submit: 'Sign In',
-        inviteOnly: 'Access is by invitation only. If you received an invitation link, open it to create your account.',
+        missing: 'Enter your email and password.',
+        invalid: 'The email or password is not correct.',
       },
       forgot: {
         title: 'Recover your password',

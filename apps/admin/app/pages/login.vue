@@ -2,31 +2,19 @@
   <!-- ¿La olvidaste?: Admin no envía correos (decisión 009). El enlace para elegir otra lo genera
        el titular de su organización o soporte. -->
   <div v-if="recuperando">
-    <h2 class="ui-title mb-1.5">{{ t('auth.forgot.title') }}</h2>
-    <p class="ui-text mb-7">{{ t('auth.forgot.subtitle') }}</p>
-
-    <UiAlert tone="info">{{ t('auth.forgot.ask') }}</UiAlert>
-
-    <p class="ui-text mt-6 text-center">
-      <button type="button" data-tone="sky" class="ui-link" @click="recuperando = false">{{ t('auth.forgot.back') }}</button>
-    </p>
+    <h1 class="ui-title">{{ t('auth.forgot.title') }}</h1>
+    <p class="ui-text mt-1">{{ t('auth.forgot.subtitle') }}</p>
+    <UiAlert tone="info" class="mt-6">{{ t('auth.forgot.ask') }}</UiAlert>
+    <UiButton variant="ghost" block class="mt-5" @click="recuperando = false">{{ t('auth.forgot.back') }}</UiButton>
   </div>
 
+  <!-- La misma entrada que Player y Educators (UiAuthShell, DESIGN.md «Entrada») -->
   <div v-else>
-    <h2 class="ui-title mb-1.5">
-      {{ t('auth.login.title') }}
-    </h2>
-    <p class="ui-text mb-7">{{ t('auth.login.subtitle') }}</p>
+    <h1 class="ui-title">{{ t('auth.login.title') }}</h1>
+    <p class="ui-text mt-1">{{ t('auth.login.subtitle') }}</p>
 
-    <form class="space-y-5" @submit.prevent="handleLogin">
-      <UiInput
-        id="email"
-        v-model="email"
-        type="email"
-        :label="t('auth.login.email')"
-        placeholder="tu@correo.com"
-        required
-      />
+    <form class="mt-6 space-y-5" novalidate @submit.prevent="handleLogin">
+      <UiInput id="email" v-model="email" type="email" autocomplete="email" :label="t('auth.login.email')" />
 
       <div>
         <div class="mb-2 flex items-center justify-between">
@@ -34,28 +22,14 @@
           <!-- Enlace: cielo -->
           <button type="button" data-tone="sky" class="ui-link text-caption" @click="recuperando = true; error = ''">{{ t('auth.login.forgot') }}</button>
         </div>
-        <UiInput
-          id="password"
-          v-model="password"
-          type="password"
-          placeholder="••••••••"
-          required
-        />
+        <UiInput id="password" v-model="password" type="password" autocomplete="current-password" />
       </div>
 
-      <UiAlert v-if="error" tone="danger">
-        {{ error }}
-      </UiAlert>
+      <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
       <!-- La única acción principal de la vista: lima -->
-      <UiButton type="submit" size="lg" block class="mt-6" :loading="isLoading">
-        {{ t('auth.login.submit') }}
-      </UiButton>
+      <UiButton type="submit" block :loading="isLoading">{{ t('auth.login.submit') }}</UiButton>
     </form>
-
-    <p class="ui-text mt-6 text-center">
-      {{ t('auth.login.inviteOnly') }}
-    </p>
   </div>
 </template>
 
@@ -63,6 +37,7 @@
 definePageMeta({ layout: 'auth' })
 
 const { t } = useT()
+useHead({ title: computed(() => `${t('auth.login.submit')} · Admin`) })
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
@@ -70,26 +45,26 @@ const error = ref('')
 const recuperando = ref(false)
 
 async function handleLogin() {
-  isLoading.value = true
   error.value = ''
-
   if (!isSupabaseConfigured()) {
     navigateTo('/dashboard')
     return
   }
+  if (!email.value.trim() || !password.value) {
+    error.value = t('auth.login.missing')
+    return
+  }
 
-  const { signIn } = useAuth()
-  const { error: authError } = await signIn(email.value, password.value)
+  isLoading.value = true
+  const { error: authError } = await useAuth().signIn(email.value.trim(), password.value)
+  isLoading.value = false
 
   if (authError) {
-    error.value = authError.message
+    error.value = authError.code === 'invalid_credentials' ? t('auth.login.invalid') : authError.message
+    return
   }
-  else {
-    // El aterrizaje lo decide la superficie de acceso (admin → su organización,
-    // colaborador → su comunidad, etc.), no una ruta fija.
-    navigateTo(useContexto().rutaInicial())
-  }
-
-  isLoading.value = false
+  // El aterrizaje lo decide la superficie de acceso (admin → su organización,
+  // colaborador → su comunidad, etc.), no una ruta fija.
+  navigateTo(useContexto().rutaInicial())
 }
 </script>

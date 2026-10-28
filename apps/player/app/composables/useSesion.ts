@@ -44,7 +44,7 @@ export function useSesion() {
       return 'Player no tiene Supabase configurado (NUXT_PUBLIC_SUPABASE_URL y NUXT_PUBLIC_SUPABASE_ANON_KEY).'
     }
     const { error } = await useSupabaseClient().auth.signInWithPassword({ email: email.trim(), password })
-    if (error) return 'Correo o contraseña incorrectos.'
+    if (error) return 'El correo o la contraseña no son correctos.'
     cargada.value = false
     await cargar()
     return usuario.value ? null : 'Player es solo para el equipo de Nutrinación (superadmin).'

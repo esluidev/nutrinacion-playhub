@@ -122,3 +122,17 @@ Llevar el PlayHub UI Kit al repositorio como fuente única de estilos y componen
 - 2026-10-14 — `ui-appbar`: en la cabecera principal de cada app (una banda plana con borde inferior), los controles van sin ceja ni desplazamiento al pulsar; los neutros conservan su contorno.
   - Aplicado en Admin, Player y Educators.
   - Medido en Admin: los cuatro botones de la cabecera tienen la base a 0 px.
+- 2026-10-28 — Luis pide la misma entrada en las tres apps, que diga en cuál entras y con menos texto. Toma como modelo la de Educators.
+  - El kit suma `UiAuthShell`: logo con el nombre de la app y una tarjeta. Queda en `DESIGN.md` como familia «Entrada».
+  - Las tres apps:
+    - título «Entra con tu correo», una línea con lo propio de cada app, los campos sin marcadores ni asteriscos y «Entrar»;
+    - pestaña «Entrar · Admin|Player|Educadores»; las demás páginas de Educators terminan en «· Educadores».
+  - Se quitan la cabecera «PlayHub» y las notas al pie de Admin y Player, y la ayuda repetida bajo el PIN.
+  - Admin dice en español «El correo o la contraseña no son correctos» (antes, el mensaje de Supabase en inglés).
+  - Verificación:
+    - typecheck de las tres apps; tests: Admin 52, Player 32 y Educators 26; check-ui y check-context: **aprobado**;
+    - navegador: las tres entradas a escritorio y a 375 × 812, y en Admin los avisos con campos vacíos y con datos incorrectos.
+- 2026-10-28 — Luis nota que los campos de Educators son más grandes que los de Admin y Player.
+  - Medido: Admin y Player, campo de 40 y botón de 48 (`compact`, tamaño normal). Educators, 56 y 56 (`touch` y `size="lg"`).
+  - Luis elige que `UiAuthShell` vaya siempre en densidad `touch`, con campos y botón en `lg`, en las tres apps. También aplica a restablecer e invitación de Admin. Anotado en `DESIGN.md`.
+- 2026-10-28 — Luis: en `lg` los campos quedan grandes para sus etiquetas. La entrada sigue en `touch`, pero con campos y botón del tamaño normal (48) en las tres apps, incluidas restablecer e invitación de Admin.

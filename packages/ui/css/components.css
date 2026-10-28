@@ -297,6 +297,15 @@
   .ui-page-header { @apply mb-7 flex flex-wrap items-end justify-between gap-4; }
   .ui-page-header-actions { @apply flex shrink-0 items-center; gap: calc(var(--ph-gap) * .75); }
 
+  /* ---- Auth (UiAuthShell: the sign-in page of every app) --------------- */
+  /* Centered card on the canvas; away from the notch and rounded corners on phones. */
+  .ui-auth {
+    @apply grid min-h-dvh place-items-center bg-canvas py-10;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .ui-auth-box { @apply w-full; max-width: 420px; }
+
   /* ---- Panel (a card that holds content) ------------------------------- */
   .ui-panel { @apply min-w-0 border border-line bg-surface; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); }
   .ui-panel-interactive { @apply cursor-pointer transition-transform; }

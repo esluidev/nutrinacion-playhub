@@ -96,6 +96,7 @@ El color comunica. Una vista se entiende por sus colores sin leer: qué es la ac
 | Día y hora | `ui-day` (hoy con `aria-current="date"`, en sol) y `ui-time` (hora de una sesión con el tono de su área o estado). |
 | Navegación | `ui-nav-item` para barras laterales y pestañas superiores; el actual con `aria-current="page"`. |
 | Menú de la cuenta | `UiUserMenu`: el mismo en Admin, Player y Educators (botón de contorno con avatar, nombre y un dato; identidad, opciones de la app y «Cerrar sesión» en coral). |
+| Entrada | `UiAuthShell`: la misma en Admin, Player y Educators. El logo con el nombre de la app y una tarjeta: título «Entra con tu correo», una línea con lo propio de la app, los campos (sin marcadores de posición ni asteriscos) y «Entrar». Siempre en densidad `touch`, con campos y botón del tamaño normal (48; en `lg` los campos quedan grandes para sus etiquetas): mide igual en las tres, y sus enlaces (invitación, recuperación) se abren casi siempre en el teléfono. |
 | Selector con símbolo | `ui-picker`: símbolo y dos líneas (contexto, organización); un paso más alto que un campo, con el mismo espacio alrededor del símbolo. |
 | Portada | `ui-cover`: superficie grande teñida por su tono o área, más suave que un tinte. |
 | Avatar y cifra | `UiAvatar` (iniciales, tono estable) y `ui-stat` (cifra y etiqueta sobre un panel). |
@@ -115,7 +116,7 @@ Los ejemplos de foco y pulsación en Fundamentos son muestras no interactivas. L
 
 ## Dos densidades, tres audiencias
 
-El kit tiene dos densidades (ver `TOKENS.md`): `compact` para las apps de gestión, con ratón, y `touch` para el runner y Educators, en teléfonos y tabletas. Solo cambian medidas (alto de control, iconos, relieve, separaciones); la forma y el color son los mismos. No cambia por audiencia: lo que distingue a cada edición (voz, ejemplos, qué se celebra) vive en el storyboard, no en el kit.
+El kit tiene dos densidades (ver `TOKENS.md`): `compact` para las apps de gestión, con ratón, y `touch` para el runner, Educators y la entrada de las tres apps (`UiAuthShell`), en teléfonos y tabletas. Solo cambian medidas (alto de control, iconos, relieve, separaciones); la forma y el color son los mismos. No cambia por audiencia: lo que distingue a cada edición (voz, ejemplos, qué se celebra) vive en el storyboard, no en el kit.
 
 ## Responsive
 

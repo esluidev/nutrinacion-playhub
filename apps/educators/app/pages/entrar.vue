@@ -12,7 +12,7 @@
         inputmode="email"
         autocomplete="email"
         :error="error === 'correo' ? t('entrar.errorCorreo') : undefined"
-        size="lg"
+       
       />
       <UiInput
         v-model="pin"
@@ -20,12 +20,11 @@
         type="password"
         inputmode="numeric"
         autocomplete="current-password"
-        :hint="t('entrar.pinAyuda')"
         :error="error === 'pin' ? t('entrar.errorPin') : undefined"
-        size="lg"
+       
       />
       <UiAlert v-if="aviso" :tone="aviso.tono">{{ aviso.texto }}</UiAlert>
-      <UiButton type="submit" size="lg" block :loading="cargando">{{ t('entrar.boton') }}</UiButton>
+      <UiButton type="submit" block :loading="cargando">{{ t('entrar.boton') }}</UiButton>
     </form>
     <UiAlert v-if="demo" tone="info" class="mt-6">{{ t('entrar.prueba') }}</UiAlert>
   </div>
@@ -42,7 +41,7 @@
         autocomplete="new-password"
         :hint="t('pin.ayuda')"
         :error="error === 'pin_invalido' ? t('pin.errorInvalido') : undefined"
-        size="lg"
+       
       />
       <UiInput
         v-model="repetido"
@@ -51,10 +50,10 @@
         inputmode="numeric"
         autocomplete="new-password"
         :error="error === 'no_coinciden' ? t('pin.errorNoCoinciden') : undefined"
-        size="lg"
+       
       />
       <UiAlert v-if="aviso" :tone="aviso.tono">{{ aviso.texto }}</UiAlert>
-      <UiButton type="submit" size="lg" block :loading="cargando">{{ t('entrar.elegirBoton') }}</UiButton>
+      <UiButton type="submit" block :loading="cargando">{{ t('entrar.elegirBoton') }}</UiButton>
       <UiButton variant="ghost" block @click="volver">{{ t('entrar.otroCorreo') }}</UiButton>
     </form>
   </div>
@@ -115,5 +114,5 @@ function volver() {
   nuevo.value = repetido.value = ''
 }
 
-useHead({ title: computed(() => t(activacion.value ? 'entrar.elegirTitulo' : 'entrar.titulo')) })
+useHead({ title: computed(() => t(activacion.value ? 'entrar.elegirTitulo' : 'entrar.boton')) })
 </script>
