@@ -1,16 +1,17 @@
 -- 0005: RLS de las sesiones de Admin (Supabase Auth). RLS es la barrera; filtrar en un
 -- composable no es aislamiento.
 --
--- Quién ve qué:
+-- Quién ve qué (decisiones 008 y 011):
 --   · superadmin: administra organizaciones (altas, licencias, administradores, invitaciones de
 --     administrador) y el contenido (catálogo y guías), y es el único que los escribe. De la
---     operación de cada organización solo ve cifras y el nombre y país de sus comunidades (funciones
---     `platform_*`, al final); el detalle, solo si la administra o colabora en ella, como cualquiera;
---   · admin de una organización (el titular y los demás): su organización, su licencia, sus
---     educadores, sus jornadas y todas sus comunidades, en todos los niveles;
---   · colaborador: la operación de las comunidades donde colabora (activo);
+--     operación de cada organización solo ve cifras (funciones `platform_*`, al final); el detalle,
+--     solo si la administra o colabora en ella, como cualquiera;
+--   · admin de una organización (el titular y los demás): todo lo suyo: licencia, administradores,
+--     colaboradores, invitaciones y la operación;
+--   · colaborador (activo): la operación de la organización: educadores, grupos, jornadas,
+--     workshops y planificador. Lee la licencia, los administradores y los colaboradores; no los toca;
 --   · nadie más, y `anon` nada: no hay ninguna política para `anon`.
--- Los educadores no tienen sesión de Auth: usan las funciones de 0006. El hogar, las de 0009.
+-- Los educadores no tienen sesión de Auth: usan las funciones de 0006.
 --
 -- Las funciones auxiliares son SECURITY DEFINER para que la RLS no se llame a sí misma.
 
@@ -53,39 +54,53 @@ as $$
    where p.usuario_id = auth.uid() and oa.titular
 $$;
 
--- Las comunidades que opero: las de mis organizaciones y, salvo solo_administradas, aquellas
--- donde colaboro.
-create function mis_comunidades(solo_administradas boolean default false)
+-- Las organizaciones donde colaboro (activo).
+create function organizaciones_colaboro()
 returns setof bigint
 language sql stable security definer set search_path = public
 as $$
-  select c.id from comunidades c where c.organizacion_id in (select mis_organizaciones())
-  union
-  select co.comunidad_id
-    from comunidad_colaboradores co
-    join perfiles p on p.id = co.perfil_id
-   where p.usuario_id = auth.uid() and co.activo and not solo_administradas
+  select oc.organizacion_id
+    from organizacion_colaboradores oc
+    join perfiles p on p.id = oc.perfil_id
+   where p.usuario_id = auth.uid() and oc.activo
 $$;
 
--- Las organizaciones que veo: las que administro y las de las comunidades donde colaboro.
-create function organizaciones_visibles()
+-- Las organizaciones que opero: las que administro y aquellas donde colaboro.
+create function organizaciones_opero()
 returns setof bigint
 language sql stable security definer set search_path = public
 as $$
   select * from mis_organizaciones()
   union
-  select c.organizacion_id from comunidades c where c.id in (select mis_comunidades())
+  select * from organizaciones_colaboro()
 $$;
 
--- Los perfiles que veo: los admins de las organizaciones que veo y los colaboradores de mis
--- comunidades.
+-- Las organizaciones que veo: las mismas que opero.
+create function organizaciones_visibles()
+returns setof bigint
+language sql stable security definer set search_path = public
+as $$
+  select * from organizaciones_opero()
+$$;
+
+-- Los países de las organizaciones que opero: deciden qué estándar del catálogo veo.
+create function paises_opero()
+returns text[]
+language sql stable security definer set search_path = public
+as $$
+  select coalesce(array_agg(distinct p), '{}')
+    from organizaciones o, unnest(o.paises) p
+   where o.id in (select organizaciones_opero())
+$$;
+
+-- Los perfiles que veo: los administradores y los colaboradores de las organizaciones que opero.
 create function perfiles_visibles()
 returns setof bigint
 language sql stable security definer set search_path = public
 as $$
-  select oa.perfil_id from organizacion_administradores oa where oa.organizacion_id in (select organizaciones_visibles())
+  select oa.perfil_id from organizacion_administradores oa where oa.organizacion_id in (select organizaciones_opero())
   union
-  select co.perfil_id from comunidad_colaboradores co where co.comunidad_id in (select mis_comunidades())
+  select oc.perfil_id from organizacion_colaboradores oc where oc.organizacion_id in (select organizaciones_opero())
 $$;
 
 do $$
@@ -93,7 +108,8 @@ declare f text;
 begin
   foreach f in array array[
     'es_superadmin()', 'mi_perfil_id()', 'mis_organizaciones()', 'organizaciones_titular()',
-    'mis_comunidades(boolean)', 'organizaciones_visibles()', 'perfiles_visibles()'
+    'organizaciones_colaboro()', 'organizaciones_opero()', 'organizaciones_visibles()', 'paises_opero()',
+    'perfiles_visibles()'
   ] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
@@ -108,10 +124,10 @@ declare t text;
 begin
   foreach t in array array[
     'configuracion', 'paises', 'tipos_organizacion', 'plantillas_correo',
-    'organizaciones', 'organizacion_licencias', 'perfiles', 'organizacion_administradores', 'comunidades',
-    'comunidad_colaboradores', 'invitaciones',
+    'organizaciones', 'organizacion_licencias', 'perfiles', 'organizacion_administradores',
+    'organizacion_colaboradores', 'invitaciones',
     'storyboards', 'guias', 'guia_escenas',
-    'educadores', 'comunidad_educadores', 'educador_grupos', 'educador_grupo_miembros', 'jornadas', 'workshops',
+    'educadores', 'educador_grupos', 'educador_grupo_miembros', 'jornadas', 'workshops',
     'workshop_educadores', 'workshop_feedback'
   ] loop
     execute format('alter table %I enable row level security', t);
@@ -145,7 +161,7 @@ create policy organizaciones_superadmin on organizaciones for all to authenticat
   using ((select es_superadmin())) with check ((select es_superadmin()));
 
 create policy organizacion_licencias_lectura on organizacion_licencias for select to authenticated
-  using (organizacion_id in (select mis_organizaciones()));
+  using (organizacion_id in (select organizaciones_visibles()));
 create policy organizacion_licencias_superadmin on organizacion_licencias for all to authenticated
   using ((select es_superadmin())) with check ((select es_superadmin()));
 
@@ -170,17 +186,12 @@ create policy organizacion_administradores_superadmin on organizacion_administra
 create policy organizacion_administradores_baja on organizacion_administradores for delete to authenticated
   using (organizacion_id in (select organizaciones_titular()) and not titular);
 
-create policy comunidades_lectura on comunidades for select to authenticated
-  using (id in (select mis_comunidades()));
-create policy comunidades_gestion on comunidades for all to authenticated
+-- Colaboradores: los ven quienes ven la organización; los gestionan sus administradores.
+create policy organizacion_colaboradores_lectura on organizacion_colaboradores for select to authenticated
+  using (organizacion_id in (select organizaciones_visibles()) or perfil_id = (select mi_perfil_id()));
+create policy organizacion_colaboradores_gestion on organizacion_colaboradores for all to authenticated
   using (organizacion_id in (select mis_organizaciones()))
   with check (organizacion_id in (select mis_organizaciones()));
-
-create policy comunidad_colaboradores_lectura on comunidad_colaboradores for select to authenticated
-  using (comunidad_id in (select mis_comunidades()));
-create policy comunidad_colaboradores_gestion on comunidad_colaboradores for all to authenticated
-  using (comunidad_id in (select mis_comunidades(true)))
-  with check (comunidad_id in (select mis_comunidades(true)));
 
 -- Invitaciones: las ve quien la recibe (por su correo) y quien administra la organización. Un
 -- admin invita colaboradores; solo el titular invita administradores. El superadmin, solo las de
@@ -205,15 +216,17 @@ create policy invitaciones_gestion on invitaciones for all to authenticated
   );
 
 -- ═════════════════════════════════════════════════════════════════════════════
--- CONTENIDO: lo escribe el superadmin; las organizaciones ven lo publicado que les toca
+-- CONTENIDO: lo escribe el superadmin; las organizaciones ven lo que les toca
 -- ═════════════════════════════════════════════════════════════════════════════
--- Un estándar publicado lo ve cualquier sesión de Admin; un personalizado, solo su
--- organización. Lo archivado se sigue viendo, porque puede haber workshops que lo usan.
+-- Un estándar publicado lo ve quien opera una organización de alguno de sus países; un
+-- personalizado, solo quien opera su organización. Lo archivado se sigue viendo con la misma
+-- regla, porque puede haber workshops que lo usan.
 create policy storyboards_lectura on storyboards for select to authenticated
   using (
     (select es_superadmin())
     or (estado_publicacion in ('PUBLICADO', 'ARCHIVADO')
-        and (organizacion_id is null or organizacion_id in (select organizaciones_visibles())))
+        and ((organizacion_id is null and paises_disponibles && (select paises_opero()))
+             or organizacion_id in (select organizaciones_opero())))
   );
 create policy storyboards_superadmin on storyboards for all to authenticated
   using ((select es_superadmin())) with check ((select es_superadmin()));
@@ -230,29 +243,27 @@ create policy guia_escenas_superadmin on guia_escenas for all to authenticated
   using ((select es_superadmin())) with check ((select es_superadmin()));
 
 -- ═════════════════════════════════════════════════════════════════════════════
--- OPERACIÓN: por comunidad
+-- OPERACIÓN: de quienes operan la organización (administradores y colaboradores)
 -- ═════════════════════════════════════════════════════════════════════════════
 do $$
 declare t text;
 begin
-  foreach t in array array['comunidad_educadores', 'educador_grupos', 'educador_grupo_miembros', 'workshops', 'workshop_educadores'] loop
+  foreach t in array array['educador_grupos', 'educador_grupo_miembros', 'jornadas', 'workshops', 'workshop_educadores'] loop
     execute format(
-      'create policy %I on %I for all to authenticated using (comunidad_id in (select mis_comunidades())) with check (comunidad_id in (select mis_comunidades()))',
+      'create policy %I on %I for all to authenticated using (organizacion_id in (select organizaciones_opero())) with check (organizacion_id in (select organizaciones_opero()))',
       t || '_acceso', t);
   end loop;
 end $$;
 
--- Educadores: son de la organización. Los ven y dan de alta quienes ven la organización (un
--- colaborador da de alta a quien va a ligar a su comunidad); los editan sus admins y quienes operan
--- una comunidad donde está ligado.
+-- Educadores: los ven, dan de alta y editan quienes operan la organización; la baja (delete) es de
+-- sus administradores.
 create policy educadores_lectura on educadores for select to authenticated
   using (organizacion_id in (select organizaciones_visibles()));
 create policy educadores_alta on educadores for insert to authenticated
-  with check (organizacion_id in (select organizaciones_visibles()));
+  with check (organizacion_id in (select organizaciones_opero()));
 create policy educadores_edicion on educadores for update to authenticated
-  using (organizacion_id in (select mis_organizaciones())
-         or id in (select educador_id from comunidad_educadores where comunidad_id in (select mis_comunidades())))
-  with check (organizacion_id in (select organizaciones_visibles()));
+  using (organizacion_id in (select organizaciones_opero()))
+  with check (organizacion_id in (select organizaciones_opero()));
 create policy educadores_baja on educadores for delete to authenticated
   using (organizacion_id in (select mis_organizaciones()));
 
@@ -268,27 +279,18 @@ grant insert (nombre, apellido, correo, telefono, profesion, biografia, avatar, 
 grant update (nombre, apellido, correo, telefono, profesion, biografia, avatar, idioma, activo, deleted_at, pais)
   on educadores to authenticated;
 
--- Las jornadas son de la organización: las ven quienes la ven; las gestionan sus administradores.
-create policy jornadas_lectura on jornadas for select to authenticated
-  using (organizacion_id in (select organizaciones_visibles()));
-create policy jornadas_gestion on jornadas for all to authenticated
-  using (organizacion_id in (select mis_organizaciones()))
-  with check (organizacion_id in (select mis_organizaciones()));
-
--- El feedback lo escribe el educador (0006); Admin solo lo lee.
+-- El feedback lo escribe el educador (0006); Admin solo lo lee (la subconsulta aplica la RLS de
+-- las asignaciones: lo de las organizaciones que opero).
 create policy workshop_feedback_lectura on workshop_feedback for select to authenticated
   using (workshop_educador_id in (select id from workshop_educadores));
 
 -- ═════════════════════════════════════════════════════════════════════════════
 -- PLATFORM: lo que ve el superadmin de la operación de cada organización
 -- ═════════════════════════════════════════════════════════════════════════════
--- Cifras (el uso de la licencia, lo que se perdería al darla de baja y lo que sirve para dar
--- soporte), el nombre y país de sus comunidades y sus administradores con su último acceso; nunca
--- el detalle (educadores, talleres, feedback, participantes). plpgsql: las tablas de 0009 se
--- resuelven al llamarlas.
+-- Cifras (lo que se perdería al darla de baja y lo que sirve para dar soporte) y sus
+-- administradores con su último acceso; nunca el detalle (educadores, talleres, feedback).
 create function platform_uso(p_organizacion_id bigint default null)
-returns table (organizacion_id bigint, comunidades int, educadores int, personalizados int,
-               talleres int, participantes int, jornadas int, temarios int,
+returns table (organizacion_id bigint, educadores int, personalizados int, talleres int, jornadas int,
                educadores_sin_acceso int, talleres_proximos int, ultima_actividad timestamptz)
 language plpgsql stable security definer set search_path = public
 as $$
@@ -299,48 +301,24 @@ begin
   end if;
   return query
   select o.id,
-         (select count(*)::int from comunidades c where c.organizacion_id = o.id),
          (select count(*)::int from educadores e where e.organizacion_id = o.id and e.deleted_at is null),
          (select count(*)::int from storyboards s where s.organizacion_id = o.id),
-         (select count(*)::int from workshops w join comunidades c on c.id = w.comunidad_id where c.organizacion_id = o.id),
-         (select count(*)::int from comunidad_participantes cp join comunidades c on c.id = cp.comunidad_id
-           where c.organizacion_id = o.id),
+         (select count(*)::int from workshops w where w.organizacion_id = o.id),
          (select count(*)::int from jornadas j where j.organizacion_id = o.id),
-         (select count(*)::int from temarios t where t.organizacion_id = o.id),
          -- Soporte: educadores que aún no eligieron su PIN, lo programado y el último movimiento.
          (select count(*)::int from educadores e where e.organizacion_id = o.id and e.deleted_at is null and e.pin_hash is null),
-         (select count(*)::int from workshops w join comunidades c on c.id = w.comunidad_id
-           where c.organizacion_id = o.id and w.estado = 'PUBLICADO' and w.fecha >= current_date),
+         (select count(*)::int from workshops w where w.organizacion_id = o.id and w.estado = 'PUBLICADO' and w.fecha >= current_date),
          (select max(x) from (
-            select max(w.created_at) as x from workshops w join comunidades c on c.id = w.comunidad_id where c.organizacion_id = o.id
+            select max(w.created_at) as x from workshops w where w.organizacion_id = o.id
             union all
-            select max(we.iniciado_en) from workshop_educadores we join comunidades c on c.id = we.comunidad_id where c.organizacion_id = o.id
+            select max(we.iniciado_en) from workshop_educadores we where we.organizacion_id = o.id
             union all
-            select max(c.created_at) from comunidades c where c.organizacion_id = o.id
+            select max(j.created_at) from jornadas j where j.organizacion_id = o.id
+            union all
+            select max(e.created_at) from educadores e where e.organizacion_id = o.id
           ) u)
     from organizaciones o
    where p_organizacion_id is null or o.id = p_organizacion_id;
-end;
-$$;
-
-create function platform_comunidades(p_organizacion_id bigint)
-returns table (id bigint, nombre text, pais text, created_at timestamptz,
-               educadores int, colaboradores int, talleres_proximos int, participantes int)
-language plpgsql stable security definer set search_path = public
-as $$
-#variable_conflict use_column
-begin
-  if not es_superadmin() then
-    raise exception 'Solo el superadmin' using errcode = '42501';
-  end if;
-  return query
-  select c.id, c.nombre, c.pais, c.created_at,
-         (select count(*)::int from comunidad_educadores ce where ce.comunidad_id = c.id and ce.activo),
-         (select count(*)::int from comunidad_colaboradores co where co.comunidad_id = c.id and co.activo),
-         (select count(*)::int from workshops w where w.comunidad_id = c.id and w.estado = 'PUBLICADO' and w.fecha >= current_date),
-         (select count(*)::int from comunidad_participantes cp where cp.comunidad_id = c.id)
-    from comunidades c
-   where c.organizacion_id = p_organizacion_id order by c.nombre;
 end;
 $$;
 
@@ -365,9 +343,10 @@ begin
 end;
 $$;
 
--- Dar de baja una organización entera: sus comunidades con toda su operación y, en cascada, sus
--- licencias, administradores, educadores, jornadas y temarios. Sus storyboards personalizados lo
--- impiden: el catálogo se resuelve antes desde Player.
+-- Dar de baja una organización entera: la cascada se lleva sus educadores, licencias,
+-- administradores, colaboradores, invitaciones, jornadas y talleres. Los talleres van primero:
+-- así sus asignaciones caen con ellos y no con el educador (un publicado no se queda sin educador).
+-- Sus storyboards personalizados lo impiden: el catálogo se resuelve antes desde Player.
 create function platform_eliminar_organizacion(p_organizacion_id bigint)
 returns void
 language plpgsql security definer set search_path = public
@@ -379,7 +358,7 @@ begin
   if exists (select 1 from storyboards where organizacion_id = p_organizacion_id) then
     raise exception 'La organización tiene storyboards personalizados: pásalos a otra organización o a estándar desde Player';
   end if;
-  delete from comunidades where organizacion_id = p_organizacion_id;
+  delete from workshops where organizacion_id = p_organizacion_id;
   delete from organizaciones where id = p_organizacion_id;
 end;
 $$;
@@ -387,8 +366,7 @@ $$;
 do $$
 declare f text;
 begin
-  foreach f in array array['platform_uso(bigint)', 'platform_comunidades(bigint)', 'platform_administradores(bigint)',
-                           'platform_eliminar_organizacion(bigint)'] loop
+  foreach f in array array['platform_uso(bigint)', 'platform_administradores(bigint)', 'platform_eliminar_organizacion(bigint)'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;

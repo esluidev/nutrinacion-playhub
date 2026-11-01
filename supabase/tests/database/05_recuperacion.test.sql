@@ -1,6 +1,5 @@
--- Quién puede generar el enlace para recuperar el acceso a Admin (0011, decisión 009).
--- No usa el seed: crea sus propias organizaciones y cuentas, así corre también contra una base
--- sin seed (`supabase test db supabase/tests/database/06_recuperacion.test.sql`). Todo corre en
+-- Quién puede generar el enlace para recuperar el acceso a Admin (0010, decisión 009).
+-- No usa el seed: crea sus propias organizaciones y cuentas (prefijo «Rec», correos @rec.test) en
 -- una transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -24,11 +23,9 @@ begin
 end $$;
 
 -- ── Organizaciones: A y C con el mismo titular; B, ajena ─────────────────────
-insert into organizaciones (nombre) values ('Rec A'), ('Rec B'), ('Rec C');
-insert into organizacion_licencias (organizacion_id, max_comunidades, max_educadores, fecha_inicio, paises)
-select id, 3, 10, current_date, '{GT}' from organizaciones where nombre like 'Rec %';
-insert into comunidades (nombre, pais, organizacion_id)
-select 'Comunidad ' || nombre, 'GT', id from organizaciones where nombre like 'Rec %';
+insert into organizaciones (nombre, paises) values ('Rec A', '{GT}'), ('Rec B', '{GT}'), ('Rec C', '{GT}');
+insert into organizacion_licencias (organizacion_id, fecha_inicio)
+select id, current_date from organizaciones where nombre like 'Rec %';
 
 -- ── Cuentas (el trigger de alta crea cada perfil) ────────────────────────────
 --   s1, s2 superadmins · sa superadmin y admin de A · ta titular de A y C · tb titular de B
@@ -65,14 +62,14 @@ select o.id, p.id, v.titular
   join organizaciones o on o.nombre = v.org
   join perfiles p on p.email = v.email;
 
-insert into comunidad_colaboradores (comunidad_id, perfil_id, activo)
-select c.id, p.id, v.activo
+insert into organizacion_colaboradores (organizacion_id, perfil_id, activo)
+select o.id, p.id, v.activo
   from (values
-    ('Comunidad Rec A', 'ca@rec.test', true), ('Comunidad Rec A', 'ci@rec.test', false),
-    ('Comunidad Rec A', 'ac@rec.test', true), ('Comunidad Rec B', 'x@rec.test', true),
-    ('Comunidad Rec B', 'cb@rec.test', true), ('Comunidad Rec A', 'p@rec.test', true)
-  ) as v (comunidad, email, activo)
-  join comunidades c on c.nombre = v.comunidad
+    ('Rec A', 'ca@rec.test', true), ('Rec A', 'ci@rec.test', false),
+    ('Rec A', 'ac@rec.test', true), ('Rec B', 'x@rec.test', true),
+    ('Rec B', 'cb@rec.test', true), ('Rec A', 'p@rec.test', true)
+  ) as v (org, email, activo)
+  join organizaciones o on o.nombre = v.org
   join perfiles p on p.email = v.email;
 
 insert into invitaciones (role, email, estado, expira_en, organizacion_id)

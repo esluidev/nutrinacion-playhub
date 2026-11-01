@@ -1,4 +1,4 @@
--- 0011: recuperar el acceso a Admin sin enviar correos (decisión 009, Luis 2026-10-28).
+-- 0010: recuperar el acceso a Admin sin enviar correos (decisión 009, Luis 2026-10-28).
 --
 -- Admin no envía correos: las invitaciones se comparten con «Copiar enlace» y, si alguien olvida
 -- su contraseña, quien le dio acceso le genera un enlace para elegir otra. La Edge Function
@@ -8,9 +8,9 @@
 -- Quién puede:
 --   · el superadmin (soporte), para cualquier cuenta de Admin;
 --   · el titular de una organización, para una cuenta que solo llega a organizaciones de las que
---     es titular: la administra o colabora en una de sus comunidades (activa o no) y no tiene
---     invitaciones pendientes de otra. Si llegara a otra, el enlace le daría también esa: lo
---     genera soporte. Tampoco para un superadmin.
+--     es titular: la administra o colabora en ella (activo o no) y no tiene invitaciones
+--     pendientes de otra. Si llegara a otra, el enlace le daría también esa: lo genera soporte.
+--     Tampoco para un superadmin.
 --   · nadie, para su propia cuenta: la contraseña se cambia desde el perfil.
 -- Devuelve el correo de la cuenta (el de Auth) o falla con el motivo.
 
@@ -49,10 +49,8 @@ begin
     select 1 from organizacion_administradores oa join perfiles p on p.id = oa.perfil_id
      where p.usuario_id = v_usuario and oa.organizacion_id in (select organizaciones_titular())
     union all
-    select 1 from comunidad_colaboradores co
-      join perfiles p on p.id = co.perfil_id
-      join comunidades c on c.id = co.comunidad_id
-     where p.usuario_id = v_usuario and c.organizacion_id in (select organizaciones_titular())
+    select 1 from organizacion_colaboradores oc join perfiles p on p.id = oc.perfil_id
+     where p.usuario_id = v_usuario and oc.organizacion_id in (select organizaciones_titular())
   ) then
     raise exception 'Esa cuenta no está en tu organización' using errcode = '42501';
   end if;
@@ -65,9 +63,7 @@ begin
     select oa.organizacion_id from organizacion_administradores oa join perfiles p on p.id = oa.perfil_id
      where p.usuario_id = v_usuario
     union
-    select c.organizacion_id from comunidad_colaboradores co
-      join perfiles p on p.id = co.perfil_id
-      join comunidades c on c.id = co.comunidad_id
+    select oc.organizacion_id from organizacion_colaboradores oc join perfiles p on p.id = oc.perfil_id
      where p.usuario_id = v_usuario
     union
     select i.organizacion_id from invitaciones i

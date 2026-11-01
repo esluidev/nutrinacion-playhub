@@ -1,5 +1,5 @@
 {
-  "_origen": "Modo demo de Educators (sin NUXT_PUBLIC_SUPABASE_URL ni _ANON_KEY): la forma de educador_sesion y educador_workshops (supabase/migrations/0006), con diaRelativo en lugar de fecha (relativa a hoy).",
+  "_origen": "Modo demo de Educators (sin NUXT_PUBLIC_SUPABASE_URL ni _ANON_KEY): la forma de educador_sesion y educador_workshops (supabase/migrations/0006), con diaRelativo en lugar de fecha (relativa a hoy) y, en la jornada (con su lugar, que heredan sus talleres: su `lugar` es el detalle), diaInicioRelativo y diaFinRelativo en lugar de fecha_inicio y fecha_fin.",
   "educador": {
     "nombre": "María",
     "apellido": "López",
@@ -8,17 +8,7 @@
     "organizaciones": [
       {
         "id": 1,
-        "nombre": "Fundación Centro",
-        "comunidades": [
-          {
-            "id": 1,
-            "nombre": "Comunidad Centro"
-          },
-          {
-            "id": 2,
-            "nombre": "Comunidad Sur"
-          }
-        ]
+        "nombre": "Fundación Centro"
       }
     ]
   },
@@ -34,9 +24,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 0,
       "horaInicio": "10:00",
@@ -62,9 +59,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 0,
       "horaInicio": "12:00",
@@ -90,9 +94,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": -1,
       "horaInicio": "09:00",
@@ -118,9 +129,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 2,
       "horaInicio": "09:00",
@@ -146,9 +164,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 1,
       "horaInicio": "11:00",
@@ -174,9 +199,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 4,
       "horaInicio": "10:00",
@@ -202,9 +234,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 5,
       "horaInicio": "11:00",
@@ -230,9 +269,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 9,
       "horaInicio": "09:30",
@@ -258,9 +304,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": 16,
       "horaInicio": "12:00",
@@ -286,9 +339,16 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
+      },
+      "jornada": {
+        "id": 1,
+        "nombre": "Semana de la nutrición",
+        "ubicacion": "Sede central",
+        "diaInicioRelativo": -3,
+        "diaFinRelativo": 16
       },
       "diaRelativo": -3,
       "horaInicio": "10:00",
@@ -321,10 +381,11 @@
         "duracion": 30,
         "categoria": "ALIMENTACION"
       },
-      "comunidad": {
+      "organizacion": {
         "id": 1,
-        "nombre": "Comunidad Centro"
+        "nombre": "Fundación Centro"
       },
+      "jornada": null,
       "diaRelativo": -8,
       "horaInicio": "11:00",
       "horaFin": "11:30",

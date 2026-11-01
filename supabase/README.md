@@ -4,27 +4,26 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 11 migraciones de `migrations/`, en orden:**
+**Solo las 10 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
 | `0001_catalogos.sql` | Enums, configuración, países, tipos de organización y plantillas de correo |
-| `0002_organizaciones.sql` | Organizaciones, licencias, perfiles de Admin, administradores, comunidades, colaboradores e invitaciones |
-| `0003_contenido.sql` | Storyboards y guías |
-| `0004_operacion.sql` | Educadores, grupos, jornadas, workshops, asignaciones y feedback |
-| `0005_rls.sql` | Quién lee y escribe cada tabla |
+| `0002_organizaciones.sql` | Organizaciones (con sus países), licencias, perfiles de Admin, administradores, colaboradores e invitaciones |
+| `0003_contenido.sql` | Storyboards, guías y `disponible_para_organizacion` |
+| `0004_operacion.sql` | Educadores, grupos, jornadas (lugar y días; se borran al quedarse sin talleres), workshops, asignaciones y feedback |
+| `0005_rls.sql` | Quién lee y escribe cada tabla; las funciones `platform_*` |
 | `0006_acceso_educadores.sql` | Entrada a Educators con PIN y sus funciones |
 | `0007_catalogo_desde_player.sql` | Registrar y publicar storyboards desde Player |
 | `0008_storage.sql` | Bucket de audios de narración |
-| `0009_hogar.sql` | Temarios, publicaciones y la app del hogar |
-| `0010_tareas.sql` | Tarea horaria que finaliza los workshops vencidos (pg_cron) |
-| `0011_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
+| `0009_tareas.sql` | Tarea horaria que finaliza los workshops vencidos (pg_cron) |
+| `0010_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0011
+supabase db push --dry-run   # debe listar 0001 a 0010
 supabase db push
 ```
 
@@ -46,11 +45,11 @@ supabase db push
    - Crea el usuario en *Authentication → Users*. Un trigger le crea su perfil.
    - Después: `update perfiles set superadmin = true where email = '<tu correo>';`.
    - El resto de usuarios entra por invitación desde Admin.
-5. **pg_cron:** `0010` lo activa. Si el proyecto lo rechaza, actívalo en *Database → Extensions* y vuelve a correr `0010`.
+5. **pg_cron:** `0009` lo activa. Si el proyecto lo rechaza, actívalo en *Database → Extensions* y vuelve a correr `0009`.
 
 ## Las migraciones antiguas
 
-`0001_init.sql` … `0011_rls_operacion_por_comunidad.sql` eran del modelo anterior, que se rehízo entero (tarea 006). Se retiraron el 2026-10-28 y quedan en el historial de Git.
+`0001_init.sql` … `0011_rls_operacion_por_comunidad.sql` eran del modelo anterior, que se rehízo entero (tarea 006), y `0001`–`0012` del 2026-10-16 al 2026-10-28 tenían comunidades y el bloque del hogar, que salieron con la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md) (tarea 011). Todas quedan en el historial de Git.
 
 ## Base local como en producción (sin seed)
 
@@ -68,9 +67,11 @@ Después, los pasos de [Después de las migraciones](#después-de-las-migracione
 4. **El primer superadmin:** en Studio, *Authentication → Add user* con correo, contraseña y *Auto Confirm User*; después, `update perfiles set superadmin = true where email = '<correo>';`.
 5. **pg_cron:** ya está activo en local.
 
+Desde ahí, todo se hace en Admin con el superadmin: la organización (nombre y los países donde opera), su licencia, la invitación al titular (enlace copiado) y, ya como titular, colaboradores, educadores, grupos, jornadas y talleres. El catálogo se registra y publica desde Player.
+
 Una migración nueva se aplica sin borrar nada con `supabase migration up`.
 
-Las pruebas pgTAP `01`–`05` (`supabase test db`, también dentro de `verify.sh`) cuentan con el seed tal cual: contra esta base fallan, y volver a correrlas exige `supabase db reset`, que borra lo creado a mano. `06_recuperacion` crea sus propios datos y sí corre: `supabase test db supabase/tests/database/06_recuperacion.test.sql`.
+Las pruebas pgTAP (`supabase test db`, también dentro de `verify.sh`) crean sus propios datos y se deshacen al terminar: corren igual contra esta base sin seed que contra la del seed, y no borran lo creado a mano.
 
 ## Datos de prueba (solo local)
 
@@ -81,24 +82,18 @@ Las pruebas pgTAP `01`–`05` (`supabase test db`, también dentro de `verify.sh
 | Correo | Quién es | Qué ve |
 |---|---|---|
 | `superadmin@playhub.test` | Superadmin | Todo en Admin (Platform incluido). Es el único que gestiona el catálogo en Player |
-| `admin@centro.test` | Admin y titular de **Fundación Centro** | Su organización, Comunidad Centro y Comunidad Sur |
-| `colaborador@centro.test` | Colaborador de **Comunidad Centro** | Solo esa comunidad |
-| `admin@norte.test` | Admin y titular de **Colegio Norte** | Su organización y Comunidad Norte (la organización ajena de las pruebas) |
+| `admin@centro.test` | Admin y titular de **Fundación Centro** (Guatemala y El Salvador) | Su organización entera: licencia, administradores, colaboradores, educadores, grupo, jornada y talleres |
+| `colaborador@centro.test` | Colaborador de **Fundación Centro** | La operación de la organización (educadores, grupos, jornada, talleres, planificador); no gestiona licencia, administradores ni colaboradores |
+| `admin@norte.test` | Admin y titular de **Colegio Norte** (Guatemala; la organización ajena de las pruebas) | Su organización y su único taller |
 
 **Educators** (`localhost:3002`): correo y PIN.
 
-| Correo | PIN | Comunidades |
+| Correo | PIN | Organización |
 |---|---|---|
-| `maria@ejemplo.test` | `246810` | Comunidad Centro y Comunidad Sur |
-| `pedro@ejemplo.test` | `135790` | Comunidad Norte |
-| `lucia@ejemplo.test` | Aún no tiene: código de activación `112233` (con él elige su PIN) | Comunidad Centro |
+| `maria@ejemplo.test` | `246810` | Fundación Centro: 12 talleres (publicados, finalizados, uno cancelado y uno del grupo), la mayoría dentro de la jornada «Semana de la nutrición» |
+| `pedro@ejemplo.test` | `135790` | Colegio Norte: un taller hoy |
+| `lucia@ejemplo.test` | Aún no tiene: código de activación `112233` (con él elige su PIN) | Fundación Centro: el taller del grupo «Equipo de la mañana» |
 
-**App del hogar** (solo las funciones `hogar_*`; la app no existe todavía):
-
-| Correo | PIN | Cuenta |
-|---|---|---|
-| `familia@ejemplo.test` | `240218` | Juan Pérez (Guatemala). Perfiles: Pepito, 6, participante de Comunidad Centro; Ana, 10 |
-
-Código de acceso de Comunidad Centro: `482913`.
+El catálogo del seed: «El huevo» publicado en Guatemala (el único con JSON en el build de Player) y «La soda» solo registrada.
 
 Estas credenciales salen de `scripts/generar-seed.py`. Si cambias el generador, actualiza también esta tabla.

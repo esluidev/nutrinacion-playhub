@@ -1,11 +1,11 @@
 -- 0006: acceso de los educadores, sin Supabase Auth (decisión 005).
 --
--- El educador es de la organización y se liga a comunidades (0004). Admin le genera un código de
--- activación; la primera vez, el educador entra con su correo y ese código y elige su PIN de 6
--- dígitos (el que quiera). Desde entonces entra con correo y PIN y ve lo asignado en todas sus
--- comunidades. Si la misma persona trabaja en dos organizaciones y eligió el mismo PIN en ambas,
--- una sola sesión le muestra las dos. Todo lo demás lo pide a estas funciones con su token: no hay
--- roles ni políticas por tabla para educadores, y Educators nunca lee tablas.
+-- El educador es de la organización (0004). Admin le genera un código de activación; la primera
+-- vez, el educador entra con su correo y ese código y elige su PIN de 6 dígitos (el que quiera).
+-- Desde entonces entra con correo y PIN y ve lo que le asignaron. Si la misma persona trabaja en
+-- dos organizaciones y eligió el mismo PIN en ambas, una sola sesión le muestra las dos. Todo lo
+-- demás lo pide a estas funciones con su token: no hay roles ni políticas por tabla para
+-- educadores, y Educators nunca lee tablas.
 --
 --   educador_entrar(correo, pin)                 → { ok, token, expira_en, educador }
 --                                                  | { ok: false, error: credenciales | bloqueado | definir_pin }
@@ -18,6 +18,15 @@
 --   educador_iniciar / educador_terminar(token, workshop)
 --   educador_guardar_feedback(token, workshop, feedback)
 --   educador_generar_codigo(educador)            → solo Admin: el código de activación
+--
+-- La ficha (`educador` al entrar y educador_sesion), una por persona aunque tenga varios accesos:
+--   { nombre, apellido, correo, idioma, organizaciones: [{ id, nombre }] }
+-- Cada fila de educador_workshops (la forma de `Taller` en Educators):
+--   { id: "12", storyboard: { titulo, eje, categoria, slug, edicion, escenas, duracion },
+--     organizacion: { id, nombre }, jornada: { id, nombre, ubicacion, fecha_inicio, fecha_fin } | null,
+--     fecha, horaInicio, horaFin, lugar, grupo, asistentesEstimados, idioma, modalidad,
+--     estadoWorkshop, motivoCancelacion, estado, iniciadoEn, terminadoEn,
+--     cierre: { calificacion, asistentes, participacion, claridad, costo, faltoMaterial } | null }
 --
 -- Código, PIN y token se guardan con hash. Tras 5 fallos con un mismo correo, 15 minutos sin poder
 -- entrar. Una sesión dura 30 días; un código nuevo cierra las sesiones y obliga a elegir PIN otra vez.
@@ -56,8 +65,8 @@ as $$
          end
 $$;
 
--- Los educadores (uno por organización) de un token vigente; si no vale, error 28000
--- (Educators vuelve a «Entrar»).
+-- Los educadores (uno por organización) de un token vigente, activos y sin baja; si no vale,
+-- error 28000 (Educators vuelve a «Entrar»).
 create function educadores_de_sesion(p_token text)
 returns bigint[]
 language plpgsql security definer set search_path = public, extensions
@@ -83,7 +92,7 @@ begin
 end;
 $$;
 
--- Quién es y dónde trabaja: sus organizaciones y, en cada una, sus comunidades activas.
+-- Quién es y dónde trabaja: sus organizaciones.
 create function educador_ficha(p_ids bigint[])
 returns jsonb
 language sql stable security definer set search_path = public
@@ -94,14 +103,7 @@ as $$
            'correo', lower(e.correo),
            'idioma', e.idioma,
            'organizaciones', (
-             select jsonb_agg(jsonb_build_object(
-                      'id', o.id,
-                      'nombre', o.nombre,
-                      'comunidades', (
-                        select coalesce(jsonb_agg(jsonb_build_object('id', c.id, 'nombre', c.nombre) order by c.nombre), '[]'::jsonb)
-                          from comunidad_educadores ce join comunidades c on c.id = ce.comunidad_id
-                         where ce.educador_id = x.id and ce.activo))
-                    order by o.nombre)
+             select jsonb_agg(jsonb_build_object('id', o.id, 'nombre', o.nombre) order by o.nombre)
                from educadores x join organizaciones o on o.id = x.organizacion_id
               where x.id = any (p_ids)))
     from educadores e
@@ -175,7 +177,7 @@ $$;
 -- ═════════════════════════════════════════════════════════════════════════════
 -- ADMIN: EL CÓDIGO DE ACTIVACIÓN
 -- ═════════════════════════════════════════════════════════════════════════════
--- Lo genera un admin de su organización o quien opera una comunidad donde está ligado. Devuelve el
+-- Lo genera quien opera la organización del educador (administrador o colaborador). Devuelve el
 -- código una sola vez para compartirlo; después solo queda su hash. Borra el PIN y cierra las
 -- sesiones: sirve para dar el primer acceso y para restablecerlo si olvidó su PIN.
 create function educador_generar_codigo(p_educador_id bigint)
@@ -189,10 +191,7 @@ declare
 begin
   select organizacion_id into v_org from educadores where id = p_educador_id and deleted_at is null;
 
-  if v_org is null or not (
-       v_org in (select mis_organizaciones())
-       or exists (select 1 from comunidad_educadores
-                   where educador_id = p_educador_id and comunidad_id in (select mis_comunidades()))) then
+  if v_org is null or v_org not in (select organizaciones_opero()) then
     raise exception 'Sin permiso sobre el educador %', p_educador_id using errcode = '42501';
   end if;
 
@@ -326,10 +325,12 @@ $$;
 -- ═════════════════════════════════════════════════════════════════════════════
 -- EDUCATORS: WORKSHOPS, GUÍA Y FEEDBACK
 -- ═════════════════════════════════════════════════════════════════════════════
--- Sus workshops de todas sus comunidades: los publicados, los finalizados y los cancelados que ya
--- se le habían publicado (no los borradores, los que están en revisión ni los archivados). Con la
--- forma de `Taller` en Educators. El título va en el idioma del contenido; `eje` es la carpeta de
--- la categoría en el runner (/play/<eje>/<slug>).
+-- Sus workshops de todas sus organizaciones: los publicados, los finalizados y los cancelados que
+-- ya se le habían publicado (no los borradores, los que están en revisión ni los archivados). Con
+-- la forma de `Taller` en Educators (la forma exacta, en la cabecera). El título va en el idioma
+-- del contenido; `eje` es la carpeta de la categoría en el runner (/play/<eje>/<slug>); `jornada`
+-- dice de qué jornada es parte, si lo es, con su lugar. Dentro de una jornada, `lugar` es el detalle
+-- del workshop («Aula 3A»), o null; suelto, el lugar.
 create function educador_workshops(p_token text, p_desde date default null, p_hasta date default null)
 returns jsonb
 language plpgsql security definer set search_path = public
@@ -349,7 +350,9 @@ begin
                  'edicion', s.edicion,
                  'escenas', s.numero_escenas,
                  'duracion', s.duracion_min),
-               'comunidad', jsonb_build_object('id', c.id, 'nombre', c.nombre),
+               'organizacion', jsonb_build_object('id', o.id, 'nombre', o.nombre),
+               'jornada', case when j.id is null then null else jsonb_build_object(
+                 'id', j.id, 'nombre', j.nombre, 'ubicacion', j.ubicacion, 'fecha_inicio', j.fecha_inicio, 'fecha_fin', j.fecha_fin) end,
                'fecha', w.fecha,
                'horaInicio', to_char(w.hora_inicio, 'HH24:MI'),
                'horaFin', to_char(w.hora_fin, 'HH24:MI'),
@@ -376,8 +379,9 @@ begin
              order by w.fecha, w.hora_inicio)
       from workshop_educadores we
       join workshops w on w.id = we.workshop_id
-      join comunidades c on c.id = w.comunidad_id
+      join organizaciones o on o.id = w.organizacion_id
       join storyboards s on s.id = w.storyboard_id
+      left join jornadas j on j.id = w.jornada_id
      where we.educador_id = any (v_ids)
        and we.estado <> 'CANCELADO'
        and w.publicado_en is not null

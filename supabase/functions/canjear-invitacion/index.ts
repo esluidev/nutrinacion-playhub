@@ -40,7 +40,7 @@ async function cargarInvitacion(admin: ReturnType<typeof createClient>, token: s
 
   const { data: inv, error } = await admin
     .from('invitaciones')
-    .select('id, role, email, nombre, apellido, titular, estado, expira_en, organizacion_id, comunidad_id, idioma')
+    .select('id, role, email, nombre, apellido, titular, estado, expira_en, organizacion_id, idioma')
     .eq('token', token)
     .maybeSingle()
 
@@ -70,9 +70,10 @@ async function usuarioAutenticado(admin: ReturnType<typeof createClient>, req: R
   return data.user
 }
 
-// Enlaza un perfil según lo que diga la invitación. Es lo mismo que hace el trigger
-// handle_new_user al crear la cuenta, pero aquí a mano: el trigger solo dispara en INSERT de
-// auth.users, y en este camino el usuario YA existe.
+// Enlaza un perfil según lo que diga la invitación: ADMIN administra la organización; COLABORADOR
+// la opera (organizacion_colaboradores). Es lo mismo que hace el trigger handle_new_user al crear
+// la cuenta, pero aquí a mano: el trigger solo dispara en INSERT de auth.users, y en este camino
+// el usuario YA existe.
 async function enlazar(
   admin: ReturnType<typeof createClient>,
   inv: Record<string, unknown>,
@@ -99,14 +100,13 @@ async function enlazar(
   }
 
   if (inv.role === 'COLABORADOR') {
-    if (!inv.comunidad_id) return 'La invitación no trae comunidad.'
     const { error } = await admin
-      .from('comunidad_colaboradores')
+      .from('organizacion_colaboradores')
       .upsert(
-        { comunidad_id: inv.comunidad_id, perfil_id: perfilId, activo: true },
-        { onConflict: 'comunidad_id,perfil_id', ignoreDuplicates: true },
+        { organizacion_id: inv.organizacion_id, perfil_id: perfilId, activo: true },
+        { onConflict: 'organizacion_id,perfil_id', ignoreDuplicates: true },
       )
-    return error ? 'No se pudo enlazar a la comunidad.' : null
+    return error ? 'No se pudo enlazar a la organización.' : null
   }
 
   return 'Rol de invitación no soportado.'
@@ -142,13 +142,6 @@ Deno.serve(async (req: Request) => {
     const { data: org } = await admin
       .from('organizaciones').select('nombre').eq('id', inv.organizacion_id).maybeSingle()
 
-    let comunidadNombre: string | null = null
-    if (inv.comunidad_id) {
-      const { data: com } = await admin
-        .from('comunidades').select('nombre').eq('id', inv.comunidad_id).maybeSingle()
-      comunidadNombre = com?.nombre ?? null
-    }
-
     return json({
       ok: true,
       invitacion: {
@@ -158,7 +151,6 @@ Deno.serve(async (req: Request) => {
         apellido: inv.apellido ?? '',
         titular: inv.titular === true,
         organizacion: org?.nombre ?? '',
-        comunidad: comunidadNombre,
         // si ya hay cuenta, la página no debe ofrecer "crear cuenta" sino "inicia sesión"
         cuentaExiste: await tieneCuenta(admin, inv.email as string | null),
       },
@@ -209,7 +201,6 @@ Deno.serve(async (req: Request) => {
       app_metadata: {
         role: inv.role,
         organizacion_id: inv.organizacion_id,
-        comunidad_id: inv.comunidad_id,
         titular: inv.titular === true,
       },
     })

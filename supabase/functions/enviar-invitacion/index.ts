@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
   // función la llame cualquiera, solo envía a invitaciones reales y al correo guardado en la BD.
   const { data: inv } = await admin
     .from('invitaciones')
-    .select('role, email, idioma, token, estado, expira_en, organizacion_id, comunidad_id')
+    .select('role, email, idioma, token, estado, expira_en, organizacion_id')
     .eq('id', record.id)
     .maybeSingle()
   if (!inv) return ok('invitacion no encontrada')
@@ -105,16 +105,13 @@ Deno.serve(async (req: Request) => {
   const claveBase = CLAVE_POR_ROL[role]
   if (!claveBase) return ok('rol sin plantilla')
 
-  // ¿Ya tiene cuenta? + nombres de organización/comunidad + URL base, en paralelo.
+  // ¿Ya tiene cuenta? + nombre de la organización + URL base, en paralelo.
   // `perfiles.email` lo llena el trigger desde auth.users (que Supabase guarda en minúsculas),
   // así que es un proxy fiable de "existe la cuenta" sin exponer el esquema auth.
   const emailNorm = email.trim().toLowerCase()
-  const [perfilRes, orgRes, comRes, cfgRes] = await Promise.all([
+  const [perfilRes, orgRes, cfgRes] = await Promise.all([
     admin.from('perfiles').select('id').eq('email', emailNorm).limit(1),
     admin.from('organizaciones').select('nombre').eq('id', inv.organizacion_id).maybeSingle(),
-    inv.comunidad_id
-      ? admin.from('comunidades').select('nombre').eq('id', inv.comunidad_id).maybeSingle()
-      : Promise.resolve({ data: null }),
     admin.from('configuracion').select('valor').eq('clave', 'admin_url').maybeSingle(),
   ])
 
@@ -136,7 +133,6 @@ Deno.serve(async (req: Request) => {
   }
 
   const organizacion = (orgRes.data?.nombre as string) ?? ''
-  const comunidad = (comRes.data?.nombre as string) ?? organizacion
 
   // URL base de admin: la clave `admin_url` de la tabla `configuracion` (columna `valor` = text).
   const base = String(cfgRes.data?.valor ?? '').trim().replace(/\/+$/, '')
@@ -153,7 +149,7 @@ Deno.serve(async (req: Request) => {
     )
     : ''
 
-  const vars = { org: organizacion, com: comunidad, expira }
+  const vars = { org: organizacion, expira }
   const asunto = interpolate(pick(plantilla.asunto as Localized, idioma), vars)
   const cuerpo = interpolate(pick(plantilla.cuerpo as Localized, idioma), vars)
   const ctaLabel = pick(plantilla.cta_label as Localized, idioma) || 'Abrir'

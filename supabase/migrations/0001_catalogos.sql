@@ -1,4 +1,4 @@
--- PlayHub · base de datos del proyecto nuevo (decisión 005, tarea 006)
+-- PlayHub · base de datos del proyecto nuevo (decisiones 005 y 011, tareas 006 y 011)
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 0001: tipos, configuración y catálogos con sus datos de referencia. Sin ellos la app no
 -- arranca (desplegables vacíos, FK de país sin resolver, correos sin plantilla).
@@ -19,13 +19,13 @@
 -- TIPOS
 -- ═════════════════════════════════════════════════════════════════════════════
 create type estado_licencia as enum ('ACTIVA', 'VENCIDA', 'SUSPENDIDA', 'TRIAL');
--- Qué enlaza una invitación al canjearse: ADMIN → la organización; COLABORADOR → la comunidad.
--- Ser admin o colaborador es una relación (tablas de pertenencia), no una propiedad del perfil.
+-- Qué enlaza una invitación al canjearse: ADMIN → administra la organización; COLABORADOR → la
+-- opera. Ser admin o colaborador es una relación (tablas de pertenencia), no una propiedad del perfil.
 create type rol_invitacion as enum ('ADMIN', 'COLABORADOR');
 create type estado_invitacion as enum ('PENDIENTE', 'USADA', 'EXPIRADA', 'REVOCADA', 'RECHAZADA');
 
--- Un storyboard (y un temario) como un artículo: registrado desde Player, en revisión del equipo,
--- publicado (lo ven las organizaciones) o archivado (no se programa más).
+-- Un storyboard como un artículo: registrado desde Player, en revisión del equipo, publicado (lo
+-- ven las organizaciones) o archivado (no se programa más).
 create type estado_publicacion as enum ('REGISTRADO', 'EN_REVISION', 'PUBLICADO', 'ARCHIVADO');
 
 -- El workshop programado. FINALIZADO: pasó su fecha o todos sus educadores dejaron el feedback;
@@ -48,15 +48,13 @@ create type subcategoria_storyboard as enum (
   'FUERZA', 'COORDINACION', 'HIGIENE', 'RUTINAS', 'PIEL', 'DESCANSO', 'ACEPTACION', 'CREENCIAS', 'MEDICINA', 'HABITOS');
 -- Infantil 4–8, preadolescencia 9–12, adolescencia 13–17 (no hay edición adulta).
 create type edicion_storyboard as enum ('KIDS', 'PREADOLESCENTES', 'ADOLESCENTES');
--- Las etiquetas de la guía: los enfoques de salud de las jornadas, las búsquedas y los intereses.
+-- Las etiquetas de la guía: los enfoques de salud de las jornadas y las búsquedas.
 create type enfoque_salud as enum (
   'DIABETES', 'OBESIDAD', 'DESNUTRICION', 'ANEMIA', 'CELIAQUIA', 'ALERGIAS', 'HIPERTENSION', 'CARIES',
   'SEDENTARISMO', 'ASMA', 'PIE_DIABETICO', 'INFECCIONES', 'AUTOESTIMA');
 
 -- Los idiomas de las apps y del contenido.
 create type idioma as enum ('es', 'en');
--- Perfil de un niño en la app del hogar.
-create type genero_perfil as enum ('NINO', 'NINA');
 
 -- ═════════════════════════════════════════════════════════════════════════════
 -- CONFIGURACIÓN
@@ -126,22 +124,23 @@ create table plantillas_correo (
   updated_at timestamptz not null default now()
 );
 
--- Marcadores: enviar-invitacion solo conoce {org}, {com} y {expira}. La clave es
--- <base>[_existente]: si el correo ya tiene cuenta, la invitación se acepta dentro de Admin.
+-- Marcadores: enviar-invitacion solo conoce {org} y {expira}. La clave es <base>[_existente]: si
+-- el correo ya tiene cuenta, la invitación se acepta dentro de Admin. (Admin no envía correos,
+-- decisión 009: las plantillas quedan para cuando vuelva a hacerlo.)
 insert into plantillas_correo (clave, nombre, asunto, cuerpo, cta_label) values
   ('invitacion_admin', 'Invitación de administrador',
    '{"es":"Te invitaron a administrar {org} en Nutrinación","en":"You have been invited to manage {org} on Nutrinación"}',
    '{"es":"Hola:\n\nTe invitaron a administrar {org} en Nutrinación.\n\nAbre el enlace y crea tu cuenta para empezar. La invitación vence el {expira}.","en":"Hello:\n\nYou have been invited to manage {org} on Nutrinación.\n\nOpen the link and create your account to get started. This invitation expires on {expira}."}',
    '{"es":"Crear mi cuenta","en":"Create my account"}'),
   ('invitacion_colaborador', 'Invitación de colaborador',
-   '{"es":"Te invitaron a colaborar en {com}","en":"You have been invited to collaborate at {com}"}',
-   '{"es":"Hola:\n\nTe invitaron a colaborar en {com}, de {org}.\n\nAbre el enlace y crea tu cuenta para empezar. La invitación vence el {expira}.","en":"Hello:\n\nYou have been invited to collaborate at {com}, part of {org}.\n\nOpen the link and create your account to get started. This invitation expires on {expira}."}',
+   '{"es":"Te invitaron a colaborar en {org}","en":"You have been invited to collaborate at {org}"}',
+   '{"es":"Hola:\n\nTe invitaron a colaborar en {org}, en Nutrinación.\n\nAbre el enlace y crea tu cuenta para empezar. La invitación vence el {expira}.","en":"Hello:\n\nYou have been invited to collaborate at {org} on Nutrinación.\n\nOpen the link and create your account to get started. This invitation expires on {expira}."}',
    '{"es":"Crear mi cuenta","en":"Create my account"}'),
   ('invitacion_admin_existente', 'Invitación de administrador (cuenta existente)',
    '{"es":"Te invitaron a administrar {org} en Nutrinación","en":"You have been invited to manage {org} on Nutrinación"}',
    '{"es":"Hola:\n\nTe invitaron a administrar {org} en Nutrinación.\n\nComo ya tienes una cuenta, solo entra y acéptala desde tus invitaciones pendientes. Vence el {expira}.","en":"Hello:\n\nYou have been invited to manage {org} on Nutrinación.\n\nSince you already have an account, just sign in and accept it from your pending invitations. It expires on {expira}."}',
    '{"es":"Ver mis invitaciones","en":"View my invitations"}'),
   ('invitacion_colaborador_existente', 'Invitación de colaborador (cuenta existente)',
-   '{"es":"Te invitaron a colaborar en {com}","en":"You have been invited to collaborate at {com}"}',
-   '{"es":"Hola:\n\nTe invitaron a colaborar en {com}, de {org}.\n\nComo ya tienes una cuenta, solo entra y acéptala desde tus invitaciones pendientes. Vence el {expira}.","en":"Hello:\n\nYou have been invited to collaborate at {com}, part of {org}.\n\nSince you already have an account, just sign in and accept it from your pending invitations. It expires on {expira}."}',
+   '{"es":"Te invitaron a colaborar en {org}","en":"You have been invited to collaborate at {org}"}',
+   '{"es":"Hola:\n\nTe invitaron a colaborar en {org}, en Nutrinación.\n\nComo ya tienes una cuenta, solo entra y acéptala desde tus invitaciones pendientes. Vence el {expira}.","en":"Hello:\n\nYou have been invited to collaborate at {org} on Nutrinación.\n\nSince you already have an account, just sign in and accept it from your pending invitations. It expires on {expira}."}',
    '{"es":"Ver mis invitaciones","en":"View my invitations"}');

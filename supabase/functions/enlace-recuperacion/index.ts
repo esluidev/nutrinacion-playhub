@@ -6,7 +6,7 @@
 //   POST { email } con la sesión de quien lo pide → { ok, token_hash } | { ok:false, error }
 //
 // 1. `recuperacion_autorizar(email)` con la sesión de quien lo pide: la base decide si puede
-//    (0011) y devuelve el correo de la cuenta.
+//    (0010) y devuelve el correo de la cuenta.
 // 2. Con service role, `auth.admin.generateLink` de tipo `recovery`: crea el token SIN enviar
 //    correo. Sirve una vez y dura lo que `otp_expiry` de Auth (24 h); uno nuevo anula el anterior.
 // Admin arma `/restablecer?token_hash=…`. Esa página lo canjea con `verifyOtp` al guardar la
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
 
   const url = Deno.env.get('SUPABASE_URL')!
 
-  // Con la sesión de quien lo pide: la RLS y la regla de 0011 lo deciden, no esta función.
+  // Con la sesión de quien lo pide: la RLS y la regla de 0010 lo deciden, no esta función.
   const solicitante = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, {
     global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     auth: sinSesion,

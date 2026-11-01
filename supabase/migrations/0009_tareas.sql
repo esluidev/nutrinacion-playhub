@@ -1,4 +1,4 @@
--- 0010: tareas programadas (pg_cron).
+-- 0009: tareas programadas (pg_cron).
 --
 -- Cada hora pasa a FINALIZADO lo publicado cuya fecha ya pasó (finalizar_workshops_vencidos, 0004).
 -- Lo que sus educadores terminan con feedback ya se finaliza al instante (trigger de 0004); esta

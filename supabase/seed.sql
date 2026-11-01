@@ -6,35 +6,24 @@
 -- Credenciales de prueba, solo locales:
 --   Admin y Player (Supabase Auth), contraseña «playhub-local»:
 --     superadmin@playhub.test  superadmin (único que entra a la gestión de Player)
---     admin@centro.test        titular de Fundación Centro
---     colaborador@centro.test  colaborador de Comunidad Centro
---     admin@norte.test         titular de Colegio Norte (la organización «ajena» de las pruebas)
+--     admin@centro.test        titular de Fundación Centro (opera en Guatemala y El Salvador)
+--     colaborador@centro.test  colaborador de Fundación Centro
+--     admin@norte.test         titular de Colegio Norte (Guatemala; la organización «ajena» de las pruebas)
 --   Educators (correo + PIN):
---     maria@ejemplo.test  246810   Fundación Centro: Comunidad Centro y Comunidad Sur
---     pedro@ejemplo.test  135790   Colegio Norte: Comunidad Norte
---     lucia@ejemplo.test  código de activación 112233 (aún no eligió su PIN)   Fundación Centro: Comunidad Centro
---   App del hogar (correo + PIN):
---     familia@ejemplo.test  240218   Juan Pérez (GT): Pepito, 6 (participa en Comunidad Centro) y Ana, 10
---   Código para unirse a Comunidad Centro: 482913
+--     maria@ejemplo.test  246810   Fundación Centro
+--     pedro@ejemplo.test  135790   Colegio Norte
+--     lucia@ejemplo.test  código de activación 112233 (aún no eligió su PIN)   Fundación Centro
 
 update configuracion set valor = 'http://localhost:3000' where clave = 'admin_url';
 update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';
 
--- ── Organizaciones, licencias y comunidades ───────────────────────────────────
-insert into organizaciones (nombre, correo, tipo_id, perfil_publico, descripcion_publica) values
-  ('Fundación Centro', 'contacto@centro.test', (select id from tipos_organizacion where codigo = 'FUNDACION'), true,
-   '{"es":"Talleres de nutrición para las familias de nuestras comunidades.","en":"Nutrition workshops for the families in our communities."}'),
-  ('Colegio Norte', 'contacto@norte.test', (select id from tipos_organizacion where codigo = 'CENTRO_EDUCATIVO'), false, null);
+-- ── Organizaciones y licencias ────────────────────────────────────────────────
+insert into organizaciones (nombre, correo, paises, tipo_id) values
+  ('Fundación Centro', 'contacto@centro.test', '{GT,SV}', (select id from tipos_organizacion where codigo = 'FUNDACION')),
+  ('Colegio Norte', 'contacto@norte.test', '{GT}', (select id from tipos_organizacion where codigo = 'CENTRO_EDUCATIVO'));
 
-insert into organizacion_licencias (organizacion_id, max_comunidades, max_educadores, max_personalizados, fecha_inicio, paises)
-select id, 3, 20, 2, current_date - 30, '{GT}'::text[] from organizaciones where nombre = 'Fundación Centro'
-union all
-select id, 1, 10, 1, current_date - 30, '{GT}'::text[] from organizaciones where nombre = 'Colegio Norte';
-
-insert into comunidades (nombre, pais, codigo_acceso, codigo_acceso_desde, organizacion_id) values
-  ('Comunidad Centro', 'GT', '482913', now(), (select id from organizaciones where nombre = 'Fundación Centro')),
-  ('Comunidad Sur', 'GT', null, null, (select id from organizaciones where nombre = 'Fundación Centro')),
-  ('Comunidad Norte', 'GT', null, null, (select id from organizaciones where nombre = 'Colegio Norte'));
+insert into organizacion_licencias (organizacion_id, fecha_inicio, notas)
+select id, current_date - 30, 'Contrato de prueba' from organizaciones where nombre in ('Fundación Centro', 'Colegio Norte');
 
 -- ── Usuarios de Admin (Auth) ──────────────────────────────────────────────────
 -- El trigger on_auth_user_created crea cada perfil y lo enlaza según raw_app_meta_data.
@@ -44,14 +33,14 @@ declare
 begin
   for u in
     select * from (values
-      ('00000000-0000-4000-8000-000000000001'::uuid, 'superadmin@playhub.test', 'Luis', 'Superadmin', null::text, null::bigint, null::bigint),
+      ('00000000-0000-4000-8000-000000000001'::uuid, 'superadmin@playhub.test', 'Luis', 'Superadmin', null::text, null::bigint, null::boolean),
       ('00000000-0000-4000-8000-000000000002'::uuid, 'admin@centro.test', 'Ana', 'Centro', 'ADMIN',
-        (select id from organizaciones where nombre = 'Fundación Centro'), null),
+        (select id from organizaciones where nombre = 'Fundación Centro'), true),
       ('00000000-0000-4000-8000-000000000003'::uuid, 'colaborador@centro.test', 'Carlos', 'Centro', 'COLABORADOR',
-        (select id from organizaciones where nombre = 'Fundación Centro'), (select id from comunidades where nombre = 'Comunidad Centro')),
+        (select id from organizaciones where nombre = 'Fundación Centro'), null),
       ('00000000-0000-4000-8000-000000000004'::uuid, 'admin@norte.test', 'Nora', 'Norte', 'ADMIN',
-        (select id from organizaciones where nombre = 'Colegio Norte'), null)
-    ) as v (id, email, nombre, apellido, role, org, comunidad)
+        (select id from organizaciones where nombre = 'Colegio Norte'), true)
+    ) as v (id, email, nombre, apellido, role, org, titular)
   loop
     insert into auth.users (
       instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -62,7 +51,7 @@ begin
       extensions.crypt('playhub-local', extensions.gen_salt('bf')), now(),
       jsonb_strip_nulls(jsonb_build_object(
         'provider', 'email', 'providers', jsonb_build_array('email'),
-        'role', u.role, 'organizacion_id', u.org, 'comunidad_id', u.comunidad)),
+        'role', u.role, 'organizacion_id', u.org, 'titular', u.titular)),
       jsonb_build_object('nombre', u.nombre, 'apellido', u.apellido, 'idioma', 'es'),
       now(), now(), '', '', '', '');
 
@@ -74,8 +63,6 @@ begin
 end $$;
 
 update perfiles set superadmin = true where email = 'superadmin@playhub.test';
-update organizacion_administradores set titular = true
- where perfil_id in (select id from perfiles where email in ('admin@centro.test', 'admin@norte.test'));
 
 -- ── Catálogo: el huevo, con la metadata de su JSON, publicado en Guatemala ─────
 insert into storyboards (clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud,
@@ -101,19 +88,13 @@ select g.id, 3, 'descubrimiento', '{"es": "Descubrimiento"}'::jsonb, '{"es": "De
 union all
 select g.id, 4, 'preparacion', '{"es": "Preparación"}'::jsonb, '{"es": "Secuenciar"}'::jsonb, '{"es": "Pasos seguros antes de comer huevo"}'::jsonb, '{"es": "Los niños ordenan una idea de seguridad: el huevo se conserva frío y se cocina hasta que clara y yema estén firmes. Conocen que el huevo crudo no es la opción segura para comer."}'::jsonb, '{"es": "Haz que puedan decir dos cuidados: conservar el huevo refrigerado y comerlo cocido, con clara y yema firmes."}'::jsonb, '{"es": "Di que esta escena trata de dejar el huevo listo para comer, sin preparar nada en el taller. Presenta dos pasos: primero, mantenerlo refrigerado; después, cocinarlo hasta que la clara y la yema estén firmes. Usa “frío y bien cocido” como frase corta. Pregunta qué pasaría si falta uno de los pasos y escucha respuestas sencillas. No describas recetas ni métodos de cocina. Cierra pidiendo que ordenen verbalmente “frío” y “bien cocido”."}'::jsonb, '{"es": "Puedes preguntar: “¿Qué va primero: dejarlo frío o comerlo?”, “¿Cómo deben quedar la clara y la yema?”, “¿Está listo si queda líquido?”, “¿Qué dos palabras nos ayudan a recordarlo?”. Pide que digan “frío y bien cocido” en coro y que repitan la secuencia con sus palabras."}'::jsonb, '{"es": "Aquí importa el criterio: “yo sé el orden”. Si alguien responde con una receta, agradece la idea y vuelve a los dos cuidados que hacen seguro el huevo."}'::jsonb, '{"es": "Refrigerar: conservar frío en el refrigerador. Cocción completa: calentar el huevo hasta que tanto la clara como la yema queden firmes; “firme” significa que ya no están líquidas. Son dos cuidados distintos y se necesitan ambos en la secuencia que enseñamos."}'::jsonb, '{"es": "No propone cocinar ni comer huevo en el taller; tampoco explica para qué sirve la proteína. Eso corresponde a Beneficio."}'::jsonb, '{"es": "No pidas que cuenten cómo se cocina en su casa ni corrijas prácticas familiares delante del grupo. Si mencionan huevo crudo, responde con calma: “Para comerlo seguro, recordamos frío y bien cocido”."}'::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo';
 
--- Un personalizado de Colegio Norte (solo lo ve esa organización) y uno recién registrado
--- (no lo ve ninguna organización).
+-- Uno recién registrado, sin JSON en el build: no lo ve ninguna organización ni se programa.
 insert into storyboards (clave, slug, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas, duracion_min,
-                         estado_publicacion, paises_disponibles, organizacion_id)
-values
-  ('2b0f6c1e-6a52-4d8e-9a39-5f0e8d1c7a11', 'el-pan', '{"es":"El pan"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{CELIAQUIA}', '{es}', 30,
-   'PUBLICADO', '{GT}', (select id from organizaciones where nombre = 'Colegio Norte')),
-  ('9c4d2a7b-1e3f-4b6a-8c5d-0f1e2d3c4b5a', 'la-soda', '{"es":"La soda"}', 'CUIDADO_PERSONAL', 'PREVENCION', 'PREADOLESCENTES', '{DIABETES,OBESIDAD}', '{es}', 30,
-   'REGISTRADO', '{}', null);
-update guias set adaptado_a = '{"es":"Niños celíacos de Colegio Norte"}'
- where storyboard_id = (select id from storyboards where slug = 'el-pan');
+                         estado_publicacion, paises_disponibles)
+values ('9c4d2a7b-1e3f-4b6a-8c5d-0f1e2d3c4b5a', 'la-soda', '{"es":"La soda"}', 'CUIDADO_PERSONAL', 'PREVENCION', 'PREADOLESCENTES',
+        '{DIABETES,OBESIDAD}', '{es}', 30, 'REGISTRADO', '{}');
 
--- ── Educadores de cada organización, sus comunidades y su grupo ───────────────
+-- ── Educadores de cada organización y un grupo ────────────────────────────────
 insert into educadores (nombre, apellido, correo, profesion, pin_hash, codigo_activacion_hash, organizacion_id) values
   ('María', 'López', 'maria@ejemplo.test', 'Educadora', extensions.crypt('246810', extensions.gen_salt('bf', 8)), null,
    (select id from organizaciones where nombre = 'Fundación Centro')),
@@ -122,62 +103,62 @@ insert into educadores (nombre, apellido, correo, profesion, pin_hash, codigo_ac
   ('Pedro', 'Ramírez', 'pedro@ejemplo.test', 'Educador', extensions.crypt('135790', extensions.gen_salt('bf', 8)), null,
    (select id from organizaciones where nombre = 'Colegio Norte'));
 
-insert into comunidad_educadores (educador_id, comunidad_id)
-select e.id, c.id
-  from (values ('maria@ejemplo.test', 'Comunidad Centro'), ('maria@ejemplo.test', 'Comunidad Sur'),
-               ('lucia@ejemplo.test', 'Comunidad Centro'), ('pedro@ejemplo.test', 'Comunidad Norte')) x(correo, comunidad)
-  join educadores e on e.correo = x.correo
-  join comunidades c on c.nombre = x.comunidad;
+insert into educador_grupos (nombre, descripcion, organizacion_id)
+values ('Equipo de la mañana', 'María y Lucía', (select id from organizaciones where nombre = 'Fundación Centro'));
+insert into educador_grupo_miembros (educador_grupo_id, educador_id)
+select g.id, e.id from educador_grupos g, educadores e
+ where g.nombre = 'Equipo de la mañana' and e.correo in ('maria@ejemplo.test', 'lucia@ejemplo.test');
 
-insert into educador_grupos (nombre, comunidad_id)
-values ('Equipo de la mañana', (select id from comunidades where nombre = 'Comunidad Centro'));
-insert into educador_grupo_miembros (educador_grupo_id, educador_id, comunidad_id)
-select g.id, e.id, g.comunidad_id from educador_grupos g, educadores e
- where g.nombre = 'Equipo de la mañana' and e.correo = 'maria@ejemplo.test';
-
--- ── Jornada de la organización ────────────────────────────────────────────────
-insert into jornadas (nombre, descripcion, enfoque_salud, fecha_inicio, fecha_fin, organizacion_id)
-values ('Semana de la nutrición', 'Workshops de alimentación para la jornada de desnutrición.', 'DESNUTRICION',
-        current_date - 3, current_date + 16, (select id from organizaciones where nombre = 'Fundación Centro'));
+-- ── Jornada de Fundación Centro (la del fixture: su lugar y sus días relativos) ──
+insert into jornadas (nombre, descripcion, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
+values ('Semana de la nutrición', 'Talleres de alimentación alrededor de la desnutrición.', 'Sede central',
+        current_date + (-3), current_date + (16),
+        (select id from organizaciones where nombre = 'Fundación Centro'));
 
 -- ── Workshops ─────────────────────────────────────────────────────────────────
--- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, lugar y
--- grupo); la referencia original va en `notas`. Las horas reales, en la zona de Guatemala.
+-- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, lugar, grupo,
+-- jornada y cierre); la referencia original va en `notas`. Las horas reales, en la zona de Guatemala.
 do $$
 declare
-  v_comunidad  bigint := (select id from comunidades where nombre = 'Comunidad Centro');
+  v_org        bigint := (select id from organizaciones where nombre = 'Fundación Centro');
   v_storyboard bigint := (select id from storyboards where slug = 'el-huevo');
   v_educador   bigint := (select id from educadores where correo = 'maria@ejemplo.test');
-  v_jornada    bigint := (select id from jornadas where nombre = 'Semana de la nutrición');
+  v_grupo      bigint := (select id from educador_grupos where nombre = 'Equipo de la mañana');
+  v_jornada    bigint := (select id from jornadas where organizacion_id = (select id from organizaciones where nombre = 'Fundación Centro'));
   v_workshop   bigint;
   v_asignacion bigint;
   t record;
 begin
   for t in
     select * from (values
-      ('t-101', 0, '10:00'::time, '10:30'::time, 'Aula 3A', '2.º B', 24, null::jsonb),
-      ('t-102', 0, '12:00'::time, '12:30'::time, 'Salón de usos múltiples', '1.º A', 20, null::jsonb),
-      ('t-100', -1, '09:00'::time, '09:30'::time, 'Aula 1C', '1.º C', 22, null::jsonb),
-      ('t-103', 2, '09:00'::time, '09:30'::time, 'Centro comunitario', 'Grupo de la tarde', 15, null::jsonb),
-      ('t-104', 1, '11:00'::time, '11:30'::time, 'Biblioteca', '3.º B', 25, null::jsonb),
-      ('t-105', 4, '10:00'::time, '10:30'::time, 'Aula 2A', '2.º A', 23, null::jsonb),
-      ('t-106', 9, '09:30'::time, '10:00'::time, 'Patio cubierto', '4.º A', 28, null::jsonb),
-      ('t-107', 16, '12:00'::time, '12:30'::time, 'Centro comunitario', 'Grupo de la mañana', 18, null::jsonb),
-      ('t-099', -3, '10:00'::time, '10:30'::time, 'Aula 2B', '3.º A', 26, '{"calificacion": 4, "asistentes": 23, "participacion": "alta", "claridad": "clara", "costo": "Ordenar el recorrido en el primer intento.", "faltoMaterial": ""}'::jsonb),
-      ('t-098', -8, '11:00'::time, '11:30'::time, 'Aula 1A', '1.º A', 21, '{"calificacion": 5, "asistentes": 21, "participacion": "alta", "claridad": "muy_clara", "costo": "", "faltoMaterial": ""}'::jsonb)
-    ) as v (ref, dia, inicio, fin, lugar, grupo, asistentes, feedback)
+      ('t-101', 0, '10:00'::time, '10:30'::time, 'Aula 3A', '2.º B', 24, true, null::text, null::jsonb),
+      ('t-102', 0, '12:00'::time, '12:30'::time, 'Salón de usos múltiples', '1.º A', 20, true, null::text, null::jsonb),
+      ('t-100', -1, '09:00'::time, '09:30'::time, 'Aula 1C', '1.º C', 22, true, null::text, null::jsonb),
+      ('t-103', 2, '09:00'::time, '09:30'::time, 'Centro comunitario', 'Grupo de la tarde', 15, true, null::text, null::jsonb),
+      ('t-104', 1, '11:00'::time, '11:30'::time, 'Biblioteca', '3.º B', 25, true, null::text, null::jsonb),
+      ('t-105', 4, '10:00'::time, '10:30'::time, 'Aula 2A', '2.º A', 23, true, null::text, null::jsonb),
+      ('t-108', 5, '11:00'::time, '11:30'::time, 'Aula 2C', '2.º C', 22, true, 'Feriado escolar', null::jsonb),
+      ('t-106', 9, '09:30'::time, '10:00'::time, 'Patio cubierto', '4.º A', 28, true, null::text, null::jsonb),
+      ('t-107', 16, '12:00'::time, '12:30'::time, 'Centro comunitario', 'Grupo de la mañana', 18, true, null::text, null::jsonb),
+      ('t-099', -3, '10:00'::time, '10:30'::time, 'Aula 2B', '3.º A', 26, true, null::text, '{"calificacion": 4, "asistentes": 23, "participacion": "alta", "claridad": "clara", "costo": "Ordenar el recorrido en el primer intento.", "faltoMaterial": ""}'::jsonb),
+      ('t-098', -8, '11:00'::time, '11:30'::time, 'Aula 1A', '1.º A', 21, false, null::text, '{"calificacion": 5, "asistentes": 21, "participacion": "alta", "claridad": "muy_clara", "costo": "", "faltoMaterial": ""}'::jsonb)
+    ) as v (ref, dia, inicio, fin, lugar, grupo, asistentes, en_jornada, motivo, feedback)
   loop
     -- Nace en borrador; con su educadora asignada, se publica.
     insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                           modalidad, notas, storyboard_id, jornada_id, comunidad_id)
+                           modalidad, notas, storyboard_id, jornada_id, organizacion_id)
     values (current_date + t.dia, t.inicio, t.fin, t.lugar, t.grupo, t.asistentes, 'es',
-            'PRESENCIAL', 'Datos de prueba ' || t.ref, v_storyboard,
-            case when t.dia between -3 and 16 then v_jornada end, v_comunidad)
+            'PRESENCIAL', 'Datos de prueba ' || t.ref, v_storyboard, case when t.en_jornada then v_jornada end, v_org)
     returning id into v_workshop;
 
     insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador)
     returning id into v_asignacion;
     update workshops set estado = 'PUBLICADO' where id = v_workshop;
+
+    -- Cancelado después de publicarse: María lo ve cancelado, con su motivo.
+    if t.motivo is not null then
+      update workshops set estado = 'CANCELADO', motivo_cancelacion = t.motivo where id = v_workshop;
+    end if;
 
     -- Los que ya se dieron: su ejecución y su feedback (el workshop queda finalizado).
     if t.feedback is not null then
@@ -196,65 +177,33 @@ begin
 
   -- Un borrador: María no lo ve hasta que se publique.
   insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, idioma_contenido, notas,
-                         storyboard_id, comunidad_id)
-  values (current_date + 20, '09:00', '09:30', 'Aula 1B', '1.º B', 'es', 'Datos de prueba: borrador',
-          v_storyboard, v_comunidad)
+                         storyboard_id, organizacion_id)
+  values (current_date + 20, '09:00', '09:30', 'Aula 1B', '1.º B', 'es', 'Datos de prueba: borrador', v_storyboard, v_org)
   returning id into v_workshop;
   insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador);
 
-  -- Uno cancelado después de publicarse: María lo ve cancelado, con su motivo.
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, idioma_contenido, notas,
-                         storyboard_id, comunidad_id)
-  values (current_date + 5, '10:00', '10:30', 'Aula 2A', '2.º A', 'es', 'Datos de prueba: cancelado',
-          v_storyboard, v_comunidad)
-  returning id into v_workshop;
-  insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador);
-  update workshops set estado = 'PUBLICADO' where id = v_workshop;
-  update workshops set estado = 'CANCELADO', motivo_cancelacion = 'Feriado escolar' where id = v_workshop;
-
-  -- Uno en Comunidad Sur: María lo ve junto a los de Comunidad Centro, con la misma cuenta.
+  -- Uno asignado al grupo entero (María y Lucía), dentro de la jornada.
   insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, comunidad_id)
-  values (current_date + 2, '14:00', '14:30', 'Salón Sur', '3.º B', 20, 'es', 'Datos de prueba: Comunidad Sur',
-          v_storyboard, (select id from comunidades where nombre = 'Comunidad Sur'))
+                         notas, storyboard_id, jornada_id, organizacion_id)
+  values (current_date + 2, '14:00', '14:30', 'Salón principal', '3.º B', 20, 'es', 'Datos de prueba: equipo de la mañana',
+          v_storyboard, v_jornada, v_org)
   returning id into v_workshop;
-  insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador);
+  insert into workshop_educadores (workshop_id, educador_id, educador_grupo_id)
+  select v_workshop, m.educador_id, v_grupo from educador_grupo_miembros m where m.educador_grupo_id = v_grupo;
   update workshops set estado = 'PUBLICADO' where id = v_workshop;
 end $$;
 
--- Un workshop de Pedro en Comunidad Norte, con el personalizado de su organización.
+-- Un workshop de Pedro en Colegio Norte, hoy, con el mismo estándar.
 with w as (
   insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, comunidad_id)
+                         notas, storyboard_id, organizacion_id)
   values (current_date, '08:00', '08:30', 'Aula Norte', '2.º A', 18, 'es', 'Datos de prueba: Norte',
-          (select id from storyboards where slug = 'el-pan'), (select id from comunidades where nombre = 'Comunidad Norte'))
+          (select id from storyboards where slug = 'el-huevo'), (select id from organizaciones where nombre = 'Colegio Norte'))
   returning id
 )
 insert into workshop_educadores (workshop_id, educador_id)
 select w.id, e.id from w, educadores e where e.correo = 'pedro@ejemplo.test';
 update workshops set estado = 'PUBLICADO' where notas = 'Datos de prueba: Norte';
 
--- Lo publicado que ya pasó queda finalizado, como lo dejaría la tarea horaria (0010).
+-- Lo publicado que ya pasó queda finalizado, como lo dejaría la tarea horaria (0009).
 select finalizar_workshops_vencidos();
-
--- ── Lo que se ofrece en casa ──────────────────────────────────────────────────
-insert into temarios (titulo, descripcion, estado_publicacion) values
-  ('{"es":"Comer bien en casa","en":"Eating well at home"}', '{"es":"Talleres de Nutrinación para jugar en familia."}', 'PUBLICADO');
-insert into temarios (titulo, estado_publicacion, organizacion_id, comunidad_id) values
-  ('{"es":"En casa con Comunidad Centro"}', 'PUBLICADO',
-   (select id from organizaciones where nombre = 'Fundación Centro'), (select id from comunidades where nombre = 'Comunidad Centro'));
-insert into temario_storyboards (orden, temario_id, storyboard_id)
-select 1, t.id, (select id from storyboards where slug = 'el-huevo') from temarios t;
-insert into organizacion_publicaciones (organizacion_id, comunidad_id, temario_id)
-select t.organizacion_id, t.comunidad_id, t.id from temarios t where t.comunidad_id is not null;
-
--- ── Una cuenta del hogar ──────────────────────────────────────────────────────
-insert into hogares (nombre, correo, pais, idioma, pin_hash)
-values ('Juan Pérez', 'familia@ejemplo.test', 'GT', 'es', extensions.crypt('240218', extensions.gen_salt('bf', 8)));
-insert into hogar_perfiles (nombre, genero, anio_nacimiento, intereses, hogar_id)
-select x.nombre, x.genero::genero_perfil, extract(year from current_date)::int - x.edad, x.intereses::enfoque_salud[], h.id
-  from (values ('Pepito', 'NINO', 6, '{DESNUTRICION}'), ('Ana', 'NINA', 10, '{}')) x(nombre, genero, edad, intereses),
-       hogares h
- where h.correo = 'familia@ejemplo.test';
-insert into comunidad_participantes (comunidad_id, hogar_perfil_id)
-select c.id, p.id from comunidades c, hogar_perfiles p where c.codigo_acceso = '482913' and p.nombre = 'Pepito';

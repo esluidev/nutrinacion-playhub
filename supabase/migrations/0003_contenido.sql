@@ -38,14 +38,6 @@ as $$
   end
 $$;
 
--- Un storyboard está disponible en un país solo si lo tiene asignado (Player lo elige al publicar).
-create function disponible_en_pais(p_paises text[], p_pais text)
-returns boolean
-language sql immutable
-as $$
-  select coalesce(p_pais = any (p_paises), false)
-$$;
-
 -- ═════════════════════════════════════════════════════════════════════════════
 -- STORYBOARDS: el catálogo
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -59,7 +51,7 @@ create table storyboards (
   categoria           categoria_storyboard not null,         -- `type`
   subcategoria        subcategoria_storyboard,               -- `category`
   edicion             edicion_storyboard not null,           -- `audience`
-  enfoques_salud      enfoque_salud[] not null default '{}', -- `healthFocus` (jornadas, búsquedas, intereses)
+  enfoques_salud      enfoque_salud[] not null default '{}', -- `healthFocus` (jornadas, búsquedas)
   idiomas             idioma[] not null default '{es}',      -- `languages`
   idioma_principal    idioma not null default 'es',          -- `defaultLanguage`
   duracion_min        int check (duracion_min > 0),          -- `estimatedDuration`
@@ -81,6 +73,24 @@ create index on storyboards (categoria);
 create index on storyboards using gin (enfoques_salud);
 create index on storyboards using gin (idiomas);
 create index on storyboards using gin (paises_disponibles);
+
+-- Qué tiene disponible una organización (decisión 011): un storyboard publicado que, si es
+-- estándar, está en alguno de los países donde opera y, si es personalizado, es suyo. Es la regla
+-- de los workshops (0004) y de lo que ve en Admin (0005).
+create function disponible_para_organizacion(p_storyboard_id bigint, p_organizacion_id bigint)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select coalesce((
+    select s.estado_publicacion = 'PUBLICADO'
+       and case when s.organizacion_id is null then s.paises_disponibles && o.paises
+                else s.organizacion_id = o.id end
+      from storyboards s, organizaciones o
+     where s.id = p_storyboard_id and o.id = p_organizacion_id), false)
+$$;
+
+revoke all on function disponible_para_organizacion(bigint, bigint) from public, anon;
+grant execute on function disponible_para_organizacion(bigint, bigint) to authenticated;
 
 -- ═════════════════════════════════════════════════════════════════════════════
 -- GUÍAS: la guía del educador de cada storyboard
@@ -154,12 +164,13 @@ $$;
 
 create trigger storyboards_guia after insert on storyboards for each row execute function storyboards_crea_guia();
 
--- Reglas de la publicación, para cualquier camino (Player, Admin o SQL). Usa tablas de 0004 y
--- 0009 (workshops, temarios, publicaciones): existen cuando el trigger corre.
+-- Reglas de la publicación, para cualquier camino (Player, Admin o SQL). Usa `workshops` (0004):
+-- existe cuando el trigger corre.
 --   · los países, del catálogo `paises` y activos; publicar exige al menos uno;
 --   · volver a registrado o a revisión, solo si nadie lo usa (si no, se archiva);
 --   · un personalizado no cambia de organización si ya tiene workshops;
---   · no se le quita un país ni un idioma en el que haya workshops publicados por venir.
+--   · no se le quita un país ni un idioma que deje sin él a una organización con workshops
+--     publicados por venir.
 create function storyboards_valida_publicacion()
 returns trigger
 language plpgsql
@@ -167,6 +178,7 @@ security definer set search_path = public
 as $$
 declare
   v_pais   text;
+  v_org    text;
   v_idioma idioma;
   v_n      int;
 begin
@@ -183,23 +195,24 @@ begin
   end if;
 
   if new.estado_publicacion in ('REGISTRADO', 'EN_REVISION') and old.estado_publicacion in ('PUBLICADO', 'ARCHIVADO')
-     and (exists (select 1 from workshops where storyboard_id = new.id)
-          or exists (select 1 from temario_storyboards where storyboard_id = new.id)
-          or exists (select 1 from organizacion_publicaciones where storyboard_id = new.id)) then
-    raise exception '«%» ya se usa en workshops, temarios o publicaciones: archívalo en lugar de despublicarlo', new.slug;
+     and exists (select 1 from workshops where storyboard_id = new.id) then
+    raise exception '«%» ya se usa en workshops: archívalo en lugar de despublicarlo', new.slug;
   end if;
 
   if new.organizacion_id is distinct from old.organizacion_id and exists (select 1 from workshops where storyboard_id = new.id) then
     raise exception '«%» ya tiene workshops: no puede cambiar de organización', new.slug;
   end if;
 
-  select c.pais, count(*) over () into v_pais, v_n
-    from workshops w join comunidades c on c.id = w.comunidad_id
-   where w.storyboard_id = new.id and w.estado = 'PUBLICADO' and w.fecha >= current_date
-     and not disponible_en_pais(new.paises_disponibles, c.pais)
-   limit 1;
-  if v_pais is not null then
-    raise exception 'No se puede quitar %: hay % workshop(s) publicado(s) ahí por venir', v_pais, v_n;
+  -- Un estándar sigue disponible para cada organización que lo tiene programado: comparten país.
+  if new.organizacion_id is null then
+    select o.nombre, count(*) over () into v_org, v_n
+      from workshops w join organizaciones o on o.id = w.organizacion_id
+     where w.storyboard_id = new.id and w.estado = 'PUBLICADO' and w.fecha >= current_date
+       and not (new.paises_disponibles && o.paises)
+     limit 1;
+    if v_org is not null then
+      raise exception 'No se puede dejar fuera a «%»: tiene % workshop(s) publicado(s) por venir con este storyboard', v_org, v_n;
+    end if;
   end if;
 
   foreach v_idioma in array old.idiomas loop
