@@ -86,9 +86,33 @@
             :title="t('platform.invs.revoke')"
             @click="revocar(row.id)"
           />
+          <!-- Eliminar: cualquiera salvo las aceptadas (el registro de quién entró); se confirma en coral -->
+          <UiButton
+            v-if="row.estado !== 'USADA'"
+            tone="neutral"
+            size="sm"
+            icon="trash"
+            icon-only
+            :label="t('platform.invs.delete')"
+            :title="t('platform.invs.delete')"
+            @click="borrando = row"
+          />
         </div>
       </template>
     </UiDataTable>
+
+    <UiConfirmDialog
+      :open="!!borrando"
+      :title="t('platform.invs.deleteTitle')"
+      :confirm-label="t('platform.invs.deleteConfirm')"
+      :cancel-label="t('common.cancel')"
+      symbol="trash"
+      :loading="eliminando"
+      @update:open="(v) => { if (!v) borrando = null }"
+      @confirm="eliminar"
+    >
+      <p class="ui-text">{{ t('platform.invs.deleteWarn', { nombre: borrando ? (nombreInvitado(borrando) || borrando.email || '—') : '' }) }}</p>
+    </UiConfirmDialog>
   </div>
 </template>
 
@@ -99,7 +123,8 @@ import { PAGE_SIZE } from '~/utils/paginacion'
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.invs.title', descKey: 'platform.invs.desc' })
 
 const { t, locale } = useT()
-const { listInvitacionesAdmin, revokeInvitacion } = usePlatform()
+const { listInvitacionesAdmin, revokeInvitacion, eliminarInvitacion } = usePlatform()
+const { toast } = useToast()
 
 const invitaciones = ref<InvitacionResumen[]>([])
 const total = ref(0)
@@ -161,6 +186,24 @@ watch(q, () => {
 
 async function revocar(id: number) {
   await revokeInvitacion(id)
+  await load()
+}
+
+// La invitación que se va a eliminar (abre la confirmación).
+const borrando = ref<InvitacionResumen | null>(null)
+const eliminando = ref(false)
+
+async function eliminar() {
+  if (!borrando.value) return
+  eliminando.value = true
+  const { error } = await eliminarInvitacion(borrando.value.id)
+  eliminando.value = false
+  if (error) {
+    toast.error(error)
+    return
+  }
+  borrando.value = null
+  toast.success(t('platform.invs.deleted'))
   await load()
 }
 

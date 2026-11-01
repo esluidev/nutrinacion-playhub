@@ -162,23 +162,22 @@
               <UiButton tone="neutral" size="sm" icon="plus" :to="`/platform/invitaciones/nueva?org=${org.id}`">{{ t('platform.invs.new') }}</UiButton>
             </div>
             <UiDataTable flat :columns="invCols" :rows="org.invitaciones" :row-key="(i) => i.id" :empty-text="t('platform.orgDetail.noInvitations')">
-              <template #cell-role="{ row }">
-                <!-- El rol es una categoría, no un estado: neutro -->
-                <UiBadge v-if="row.titular" tone="sky" icon="bookmark">{{ t('platform.invs.titularBadge') }}</UiBadge>
-                <UiBadge v-else tone="neutral">{{ roleLabel(row.role) }}</UiBadge>
-              </template>
               <template #cell-email="{ row }">
-                <!-- A quién se invitó: su nombre y, debajo, su correo; si sigue pendiente, cómo quedó el envío -->
+                <!-- A quién se invitó y con qué rol (categoría, no estado: neutro; titular en cielo); debajo, su
+                     correo y, si sigue pendiente, cómo quedó el envío. El rol va aquí para que quepan las acciones. -->
+                <div class="mb-1">
+                  <UiBadge v-if="row.titular" tone="sky" icon="bookmark">{{ t('platform.invs.titularBadge') }}</UiBadge>
+                  <UiBadge v-else tone="neutral">{{ roleLabel(row.role) }}</UiBadge>
+                </div>
                 <p v-if="nombreInvitado(row)" class="truncate font-extrabold text-ink">{{ nombreInvitado(row) }}</p>
                 <p v-if="row.email" :class="['truncate font-semibold text-muted', nombreInvitado(row) && 'text-caption']">{{ row.email }}</p>
                 <p v-else class="font-semibold italic text-subtle">{{ t('platform.invs.openLink') }}</p>
                 <InvitacionCorreo v-if="row.email && row.estado === 'PENDIENTE'" :enviado-en="row.correo_enviado_en" :error="row.correo_error" />
+                <!-- El vencimiento va aquí y no en su columna: con cuatro acciones, la tabla no cabe en la columna principal -->
+                <p v-if="row.estado === 'PENDIENTE' && row.expira_en" class="text-caption font-semibold text-muted">{{ t('platform.orgDetail.invExpires', { fecha: fechaCorta(row.expira_en, locale) }) }}</p>
               </template>
               <template #cell-estado="{ row }">
                 <UiBadge :tone="invitacionTone(row.estado)" dot>{{ t('state.' + row.estado) }}</UiBadge>
-              </template>
-              <template #cell-vence="{ row }">
-                <span class="text-caption font-semibold text-muted">{{ row.expira_en ? fechaCorta(row.expira_en, locale) : '—' }}</span>
               </template>
               <template #cell-acciones="{ row }">
                 <div class="flex items-center justify-end gap-2">
@@ -213,6 +212,17 @@
                     :label="t('platform.invs.revoke')"
                     :title="t('platform.invs.revoke')"
                     @click="revocar(row.id)"
+                  />
+                  <!-- Eliminar: las de administrador (las del superadmin), salvo las aceptadas -->
+                  <UiButton
+                    v-if="row.role === 'ADMIN' && row.estado !== 'USADA'"
+                    tone="neutral"
+                    size="sm"
+                    icon="trash"
+                    icon-only
+                    :label="t('platform.invs.delete')"
+                    :title="t('platform.invs.delete')"
+                    @click="borrandoInv = row"
                   />
                 </div>
               </template>
@@ -330,6 +340,19 @@
       <p>{{ t('admins.removeWarn', { nombre: quitando ? nombreAdmin(quitando) : '', org: org?.nombre ?? '' }) }}</p>
       <p v-if="quitando?.titular" class="mt-3">{{ t('platform.orgDetail.removeTitularWarn') }}</p>
     </UiConfirmDialog>
+
+    <!-- Eliminar una invitación de administrador -->
+    <UiConfirmDialog
+      :open="!!borrandoInv"
+      :title="t('platform.invs.deleteTitle')"
+      :confirm-label="t('platform.invs.deleteConfirm')"
+      symbol="trash"
+      :loading="enCurso"
+      @update:open="(v) => { if (!v) borrandoInv = null }"
+      @confirm="eliminarInv"
+    >
+      <p>{{ t('platform.invs.deleteWarn', { nombre: borrandoInv ? (nombreInvitado(borrandoInv) || borrandoInv.email || '—') : '' }) }}</p>
+    </UiConfirmDialog>
   </div>
 </template>
 
@@ -344,7 +367,7 @@ import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
 import type { AdminPlatform } from '~/composables/usePlatform'
 import type { LicenciaLigera } from '~/utils/platformResumen'
 
-const { getOrganizacion, revokeInvitacion, setTitular, quitarAdministrador, unirmeComoAdmin } = usePlatform()
+const { getOrganizacion, revokeInvitacion, eliminarInvitacion, setTitular, quitarAdministrador, unirmeComoAdmin } = usePlatform()
 const { setOrg } = useContexto()
 const { toast } = useToast()
 const { etiqueta: etiquetaPais, cargar: cargarPaises } = usePaises()
@@ -357,12 +380,11 @@ const copiado = ref<string | null>(null)
 const { reenviando, reenviar } = useReenvioInvitacion(() => cargar())
 
 const invCols = computed(() => [
-  { key: 'role', label: t('platform.invs.colRole') },
   // La más ancha: a quién se invitó y cómo quedó su correo
   { key: 'email', label: t('platform.invs.colInvitee'), grow: true },
   { key: 'estado', label: t('platform.invs.colState') },
-  { key: 'vence', label: t('platform.invs.colExpires') },
-  { key: 'acciones', label: t('platform.invs.colActions'), align: 'right' as const },
+  // Hasta cuatro acciones (copiar, reenviar, revocar, eliminar): el reparto fijo de la tabla no les basta
+  { key: 'acciones', label: t('platform.invs.colActions'), align: 'right' as const, width: 'w-44' },
 ])
 
 const administradores = computed(() => (org.value?.administradores ?? []) as any[])
@@ -418,6 +440,23 @@ onMounted(() => {
 
 async function revocar(invId: number) {
   await revokeInvitacion(invId)
+  await cargar()
+}
+
+// La invitación de administrador que se va a eliminar (abre la confirmación).
+const borrandoInv = ref<{ id: number, nombre: string | null, apellido: string | null, email: string | null } | null>(null)
+
+async function eliminarInv() {
+  if (!borrandoInv.value) return
+  enCurso.value = true
+  const { error } = await eliminarInvitacion(borrandoInv.value.id)
+  enCurso.value = false
+  if (error) {
+    toast.error(error)
+    return
+  }
+  borrandoInv.value = null
+  toast.success(t('platform.invs.deleted'))
   await cargar()
 }
 

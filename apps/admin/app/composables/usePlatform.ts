@@ -489,6 +489,16 @@ export function usePlatform() {
     return { error: error?.message ?? null }
   }
 
+  // Borrar la invitación: la RLS solo deja al superadmin las de administrador. Las aceptadas no se
+  // ofrecen: son el registro de quién entró y cuándo.
+  async function eliminarInvitacion(id: number) {
+    if (!isSupabaseConfigured()) return { error: null as string | null }
+    // Sin permiso, PostgREST no da error: borra cero filas. Se pide la fila para saberlo.
+    const { data, error } = await supabase().from('invitaciones').delete().eq('id', id).select('id')
+    if (error) return { error: error.message }
+    return { error: data?.length ? null : 'No puedes eliminar esta invitación.' }
+  }
+
   return {
     getResumenPlatform,
     listTiposOrganizacion,
@@ -511,5 +521,6 @@ export function usePlatform() {
     listInvitacionesAdmin,
     createInvitacionAdmin,
     revokeInvitacion,
+    eliminarInvitacion,
   }
 }

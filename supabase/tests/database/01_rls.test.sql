@@ -4,7 +4,7 @@
 -- la base sin seed (`supabase db reset --no-seed`).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(77);
+select plan(79);
 
 -- Actuar como un usuario de Auth (por su uuid) o como anon.
 -- Ayudas en un esquema propio (se deshace con el rollback), utilizables por anon y authenticated.
@@ -282,6 +282,10 @@ select pruebas.como('20000000-0000-4000-8000-000000000001');
 select lives_ok(
   format($$ insert into invitaciones (role, email, nombre, titular, organizacion_id) values ('ADMIN', 'nuevo-titular@rls.test', 'Nuevo', true, %s) $$, current_setting('t.centro')),
   'el superadmin invita a un titular');
+select is(pruebas.afectadas($$ delete from invitaciones where email = 'coadmin@rls.test' $$), 1,
+  'el superadmin elimina una invitación de administrador');
+select is(pruebas.afectadas($$ delete from invitaciones where email = 'colab2@rls.test' $$), 0,
+  'pero no una de colaborador de una organización que no administra');
 reset role;
 insert into auth.users (instance_id, id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values ('00000000-0000-0000-0000-000000000000', '20000000-0000-4000-8000-0000000000aa', 'authenticated', 'authenticated',
