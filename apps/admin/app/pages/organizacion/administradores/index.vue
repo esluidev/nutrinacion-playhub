@@ -77,7 +77,8 @@
     </UiDataTable>
 
     <!-- Invitaciones que aún no se aceptan: cierran el ciclo «invité → ¿ya entró?» (pendiente = uva).
-         El enlace se copia otra vez (Admin no envía correos); el titular puede revocarla. -->
+         Dicen cómo quedó su correo (decisión 012) y el enlace se copia otra vez; reenviar el correo y
+         revocarla es del titular (o soporte), como crearla: la RLS lo exige igual. -->
     <div v-if="pendientes.length" class="mt-6">
       <p class="eyebrow mb-3">{{ t('invLink.pending') }}</p>
       <div class="ui-panel divide-y divide-line">
@@ -86,6 +87,7 @@
           <div class="min-w-0 flex-1">
             <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('invLink.openLink') }}</p>
             <p class="text-caption font-semibold text-subtle">{{ [nombreInvitado(inv) && inv.email, inv.expira_en ? t('invLink.expires', { fecha: fechaCorta(inv.expira_en, locale) }) : t('invLink.noExpiry')].filter(Boolean).join(' · ') }}</p>
+            <InvitacionCorreo v-if="inv.email" :enviado-en="inv.correo_enviado_en" :error="inv.correo_error" />
           </div>
           <div class="flex shrink-0 items-center gap-2">
             <UiButton
@@ -96,6 +98,17 @@
               :label="t('invLink.copy')"
               :title="t('invLink.copy')"
               @click="copiarEnlace(inv.token)"
+            />
+            <UiButton
+              v-if="inv.email && (esTitularOrgActiva || esSuperadmin)"
+              tone="neutral"
+              size="sm"
+              icon="send"
+              icon-only
+              :loading="reenviando === inv.id"
+              :label="t('invMail.resend')"
+              :title="t('invMail.resend')"
+              @click="reenviar(inv)"
             />
             <UiButton
               v-if="esTitularOrgActiva || esSuperadmin"
@@ -192,8 +205,11 @@ function nombreDe(a: AdminDeOrg) {
   return nombre || a.perfil?.email || '—'
 }
 
-// ── Invitaciones pendientes: copiar el enlace y revocar ──────────────────────
+// ── Invitaciones pendientes: copiar el enlace, reenviar el correo y revocar ──
 const copiado = ref<string | null>(null)
+const { reenviando, reenviar } = useReenvioInvitacion(async () => {
+  pendientes.value = await listInvitacionesPendientes()
+})
 const revocando = ref<InvitacionAdminPendiente | null>(null)
 const enCurso = ref(false)
 

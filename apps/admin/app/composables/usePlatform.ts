@@ -63,6 +63,8 @@ export interface InvitacionResumen {
   expira_en: string | null
   idioma: string
   created_at: string
+  correo_enviado_en: string | null
+  correo_error: string | null
   organizaciones: { id: number, nombre: string } | null
 }
 
@@ -261,7 +263,7 @@ export function usePlatform() {
         id, nombre, correo, telefono, website, paises, created_at, tipo_id,
         tipo:tipos_organizacion ( nombre ),
         licencias:organizacion_licencias ( * ),
-        invitaciones ( id, token, role, email, nombre, apellido, titular, estado, expira_en, idioma, created_at )
+        invitaciones ( id, token, role, email, nombre, apellido, titular, estado, expira_en, idioma, created_at, correo_enviado_en, correo_error )
       `)
       .eq('id', id)
       .maybeSingle()
@@ -427,6 +429,7 @@ export function usePlatform() {
       .from('invitaciones')
       .select(`
         id, token, role, email, nombre, apellido, titular, estado, expira_en, idioma, created_at,
+        correo_enviado_en, correo_error,
         organizaciones!inner ( id, nombre )
       `, { count: 'exact' })
       .eq('role', 'ADMIN')
@@ -451,9 +454,9 @@ export function usePlatform() {
     return p ? (`${p.nombre ?? ''} ${p.apellido ?? ''}`.trim() || p.email || '—') : null
   }
 
-  // Emite una invitación de ADMIN y devuelve su token: Admin no envía correos (decisión 009), el
-  // enlace se copia y se comparte. A quién se invita (nombre y apellido) y si será el titular:
-  // solo el superadmin invita titulares.
+  // Emite una invitación de ADMIN y devuelve su id y token: la página la envía por correo y muestra
+  // el enlace para copiarlo (decisión 012). A quién se invita (nombre y apellido) y si será el
+  // titular: solo el superadmin invita titulares.
   async function createInvitacionAdmin(payload: {
     organizacion_id: number
     email: string

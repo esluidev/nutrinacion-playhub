@@ -15,14 +15,14 @@
 
       <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
-      <!-- Crear la invitación muestra su enlace: Admin no envía correos (decisión 009) -->
+      <!-- Crear la invitación la envía por correo y muestra su enlace para copiarlo (decisión 012) -->
       <div class="flex items-center justify-end gap-2 pt-2">
         <UiButton tone="neutral" size="sm" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
         <UiButton size="sm" type="submit" :loading="saving">{{ t('admins.submit') }}</UiButton>
       </div>
     </form>
 
-    <InvitacionEnlace :token="token" :nombre="form.nombre" @done="volver" />
+    <InvitacionEnlace :invitacion="creada" :nombre="form.nombre" @done="volver" />
   </div>
 </template>
 
@@ -41,7 +41,7 @@ if (!esTitularOrgActiva.value) {
 
 const saving = ref(false)
 const error = ref('')
-const token = ref<string | null>(null)
+const creada = ref<{ id: number, token: string, email: string | null } | null>(null)
 
 const idiomaOpciones = computed(() => [
   { value: 'es', label: t('lang.es') },
@@ -75,7 +75,7 @@ async function handleSubmit() {
   }
 
   saving.value = true
-  const { token: nuevo, error: err } = await invitarAdministrador({
+  const { id, token, error: err } = await invitarAdministrador({
     email: form.value.email.trim(),
     nombre: form.value.nombre,
     apellido: form.value.apellido,
@@ -88,6 +88,6 @@ async function handleSubmit() {
     error.value = err
     return
   }
-  token.value = nuevo
+  if (id !== null && token) creada.value = { id, token, email: form.value.email.trim() }
 }
 </script>

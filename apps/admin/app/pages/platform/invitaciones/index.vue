@@ -40,10 +40,11 @@
         <span v-else>—</span>
       </template>
       <template #cell-email="{ row }">
-        <!-- A quién se invitó: su nombre y, debajo, su correo -->
+        <!-- A quién se invitó: su nombre y, debajo, su correo; si sigue pendiente, cómo quedó el envío -->
         <p v-if="nombreInvitado(row)" class="truncate font-extrabold text-ink">{{ nombreInvitado(row) }}</p>
         <p v-if="row.email" :class="['truncate font-semibold text-muted', nombreInvitado(row) && 'text-caption']">{{ row.email }}</p>
         <p v-else class="font-semibold italic text-subtle">{{ t('platform.invs.openLink') }}</p>
+        <InvitacionCorreo v-if="row.email && row.estado === 'PENDIENTE'" :enviado-en="row.correo_enviado_en" :error="row.correo_error" />
       </template>
       <template #cell-estado="{ row }">
         <UiBadge :tone="invitacionTone(row.estado)" dot>{{ t('state.' + row.estado) }}</UiBadge>
@@ -52,7 +53,8 @@
         <span class="text-caption font-semibold text-muted">{{ row.expira_en ? fechaCorta(row.expira_en, locale) : '—' }}</span>
       </template>
       <template #cell-acciones="{ row }">
-        <!-- Acciones de tabla: neutras. Copiar confirma con el check durante un momento -->
+        <!-- Acciones de tabla: neutras. Copiar confirma con el check durante un momento; reenviar el
+             correo y revocar, mientras siga pendiente -->
         <div class="flex items-center justify-end gap-2">
           <UiButton
             tone="neutral"
@@ -62,6 +64,17 @@
             :label="copiado === row.token ? t('platform.invs.copied') : t('platform.invs.copyLink')"
             :title="copiado === row.token ? t('platform.invs.copied') : t('platform.invs.copyLink')"
             @click="copiarLink(row.token)"
+          />
+          <UiButton
+            v-if="row.email && row.estado === 'PENDIENTE'"
+            tone="neutral"
+            size="sm"
+            icon="send"
+            icon-only
+            :loading="reenviando === row.id"
+            :label="t('invMail.resend')"
+            :title="t('invMail.resend')"
+            @click="reenviar(row)"
           />
           <UiButton
             v-if="row.estado === 'PENDIENTE'"
@@ -96,9 +109,13 @@ const q = ref('')
 const estadoFiltro = ref('todas')
 const copiado = ref<string | null>(null)
 
+// «Reenviar correo»: toast del resultado y la página se vuelve a leer con el estado nuevo.
+const { reenviando, reenviar } = useReenvioInvitacion(load)
+
 const columns = computed(() => [
   { key: 'organizacion', label: t('platform.invs.colOrg') },
-  { key: 'email', label: t('platform.invs.colInvitee') },
+  // La más ancha: a quién se invitó y cómo quedó su correo
+  { key: 'email', label: t('platform.invs.colInvitee'), grow: true },
   { key: 'estado', label: t('platform.invs.colState') },
   { key: 'vence', label: t('platform.invs.colExpires') },
   { key: 'acciones', label: t('platform.invs.colActions'), align: 'right' as const },

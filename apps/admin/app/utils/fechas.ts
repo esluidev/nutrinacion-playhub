@@ -36,6 +36,11 @@ export function fechaCorta(valor: string, locale: string): string {
   return aFecha(valor).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+/** Un instante con su hora local, sin el año: «1 nov, 10:32» / «Nov 1, 10:32 AM». */
+export function fechaHora(valor: string, locale: string): string {
+  return aFecha(valor).toLocaleString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
 /** Días desde hoy hasta un día del calendario: 0 es hoy, negativo si ya pasó. */
 export function diasHasta(fecha: string, ahora = new Date()): number {
   const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())

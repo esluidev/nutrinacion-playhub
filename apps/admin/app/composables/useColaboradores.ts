@@ -1,7 +1,7 @@
 import type { Enums } from '~/utils/db'
 // Colaboradores de la organización activa sobre Supabase (organizacion_colaboradores): quiénes
 // operan la organización sin administrarla. Los invita y los activa o desactiva un administrador
-// (RLS 0005); Admin no envía correos (decisión 009): la invitación se comparte con su enlace.
+// (RLS 0005). La invitación sale por correo al crearla y su enlace se puede copiar (decisión 012).
 
 export interface ColaboradorFila {
   id: number
@@ -20,6 +20,8 @@ export interface InvitacionPendiente {
   apellido: string | null
   expira_en: string | null
   created_at: string
+  correo_enviado_en: string | null
+  correo_error: string | null
 }
 
 const DEMO_COLABORADORES: ColaboradorFila[] = [
@@ -86,12 +88,13 @@ export function useColaboradores() {
     return { error: error?.message ?? null }
   }
 
-  // Con su token: así la lista ofrece «Copiar enlace» a quien aún no entró.
+  // Con su token y el estado del correo: así la lista ofrece «Copiar enlace» y «Reenviar correo» a
+  // quien aún no entró.
   async function listInvitacionesPendientes(): Promise<InvitacionPendiente[]> {
     if (demo || !orgActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('invitaciones')
-      .select('id, token, email, nombre, apellido, expira_en, created_at')
+      .select('id, token, email, nombre, apellido, expira_en, created_at, correo_enviado_en, correo_error')
       .eq('organizacion_id', orgActiva.value.id)
       .eq('role', 'COLABORADOR')
       .eq('estado', 'PENDIENTE')
@@ -99,10 +102,10 @@ export function useColaboradores() {
     return (data as InvitacionPendiente[] | null) ?? []
   }
 
-  // Devuelve el token: la página muestra el enlace para copiarlo y compartirlo.
-  async function invitar(payload: { email: string, nombre: string, apellido: string, idioma: string, expira_en: string | null }): Promise<{ token: string | null, error: string | null }> {
-    if (demo) return { token: 'demo', error: null }
-    if (!orgActiva.value) return { token: null, error: t('ctx.noOrgActive') }
+  // Devuelve id y token: la página la envía por correo y muestra el enlace para copiarlo.
+  async function invitar(payload: { email: string, nombre: string, apellido: string, idioma: string, expira_en: string | null }): Promise<{ id: number | null, token: string | null, error: string | null }> {
+    if (demo) return { id: 0, token: 'demo', error: null }
+    if (!orgActiva.value) return { id: null, token: null, error: t('ctx.noOrgActive') }
     const { data, error } = await useSupabaseClient().from('invitaciones').insert({
       organizacion_id: orgActiva.value.id,
       role: 'COLABORADOR',
@@ -111,8 +114,8 @@ export function useColaboradores() {
       apellido: payload.apellido.trim() || null,
       idioma: payload.idioma as Enums<'idioma'>,
       expira_en: payload.expira_en,
-    }).select('token').single()
-    return { token: data?.token ?? null, error: error?.message ?? null }
+    }).select('id, token').single()
+    return { id: data?.id ?? null, token: data?.token ?? null, error: error?.message ?? null }
   }
 
   async function revocarInvitacion(id: number) {

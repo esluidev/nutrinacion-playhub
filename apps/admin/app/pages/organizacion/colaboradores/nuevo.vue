@@ -20,13 +20,13 @@
 
     <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
-    <!-- Crear la invitación muestra su enlace: Admin no envía correos (decisión 009) -->
+    <!-- Crear la invitación la envía por correo y muestra su enlace para copiarlo (decisión 012) -->
     <div class="mt-5 flex items-center justify-end gap-3">
       <UiButton variant="outline" @click="navigateTo('/organizacion/colaboradores')">{{ t('common.cancel') }}</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">{{ t('collabs.submit') }}</UiButton>
     </div>
 
-    <InvitacionEnlace :token="token" :nombre="form.nombre" @done="navigateTo('/organizacion/colaboradores')" />
+    <InvitacionEnlace :invitacion="creada" :nombre="form.nombre" @done="navigateTo('/organizacion/colaboradores')" />
   </div>
 </template>
 
@@ -62,7 +62,7 @@ const idiomaOptions = computed(() => [
 
 const saving = ref(false)
 const error = ref('')
-const token = ref<string | null>(null)
+const creada = ref<{ id: number, token: string, email: string | null } | null>(null)
 
 async function submit() {
   error.value = ''
@@ -76,7 +76,7 @@ async function submit() {
   }
 
   saving.value = true
-  const { token: nuevo, error: err } = await invitar({
+  const { id, token, error: err } = await invitar({
     email: form.email.trim(),
     nombre: form.nombre,
     apellido: form.apellido,
@@ -89,6 +89,6 @@ async function submit() {
     error.value = err
     return
   }
-  token.value = nuevo
+  if (id !== null && token) creada.value = { id, token, email: form.email.trim() }
 }
 </script>

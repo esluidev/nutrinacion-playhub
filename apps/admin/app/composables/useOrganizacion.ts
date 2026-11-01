@@ -20,6 +20,8 @@ export interface InvitacionAdminPendiente {
   estado: string
   expira_en: string | null
   created_at: string
+  correo_enviado_en: string | null
+  correo_error: string | null
 }
 
 export interface LicenciaDeOrg {
@@ -132,13 +134,13 @@ export function useOrganizacion() {
     return { error: error?.message ?? null }
   }
 
-  // Invitaciones ADMIN aún pendientes de la org, con su token: cierran el ciclo «invité → ¿ya
-  // entró?» y dejan copiar el enlace otra vez.
+  // Invitaciones ADMIN aún pendientes de la org, con su token y el estado del correo: cierran el
+  // ciclo «invité → ¿ya entró?» y dejan copiar el enlace o reenviar el correo.
   async function listInvitacionesPendientes(): Promise<InvitacionAdminPendiente[]> {
     if (!isSupabaseConfigured() || !orgActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('invitaciones')
-      .select('id, token, email, nombre, apellido, estado, expira_en, created_at')
+      .select('id, token, email, nombre, apellido, estado, expira_en, created_at, correo_enviado_en, correo_error')
       .eq('organizacion_id', orgActiva.value.id)
       .eq('role', 'ADMIN')
       .eq('estado', 'PENDIENTE')
@@ -147,17 +149,17 @@ export function useOrganizacion() {
   }
 
   // Invita un co-admin a la org activa. Solo el titular — la política RLS (0005) lo exige en
-  // la base; `esTitularOrgActiva` solo gatea la UI. Devuelve el token: Admin no envía correos
-  // (decisión 009), la página muestra el enlace para copiarlo.
+  // la base; `esTitularOrgActiva` solo gatea la UI. Devuelve id y token: la página la envía por
+  // correo y muestra el enlace para copiarlo (decisión 012).
   async function invitarAdministrador(payload: {
     email: string
     nombre: string
     apellido: string
     idioma: string
     expira_en: string | null
-  }): Promise<{ token: string | null, error: string | null }> {
-    if (!isSupabaseConfigured()) return { token: 'demo', error: null }
-    if (!orgActiva.value) return { token: null, error: t('ctx.noOrgActive') }
+  }): Promise<{ id: number | null, token: string | null, error: string | null }> {
+    if (!isSupabaseConfigured()) return { id: 0, token: 'demo', error: null }
+    if (!orgActiva.value) return { id: null, token: null, error: t('ctx.noOrgActive') }
     const { data, error } = await useSupabaseClient()
       .from('invitaciones')
       .insert({
@@ -169,9 +171,9 @@ export function useOrganizacion() {
         idioma: payload.idioma as Enums<'idioma'>,
         expira_en: payload.expira_en,
       })
-      .select('token')
+      .select('id, token')
       .single()
-    return { token: data?.token ?? null, error: error?.message ?? null }
+    return { id: data?.id ?? null, token: data?.token ?? null, error: error?.message ?? null }
   }
 
   async function revocarInvitacion(id: number) {

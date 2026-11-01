@@ -27,15 +27,15 @@
 
       <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
-      <!-- Una sola acción principal (lima); cancelar, neutro. Crear la invitación muestra su enlace:
-           Admin no envía correos (decisión 009) -->
+      <!-- Una sola acción principal (lima); cancelar, neutro. Crear la invitación la envía por correo
+           y muestra su enlace para copiarlo (decisión 012) -->
       <div class="flex items-center justify-end gap-3 pt-2">
         <UiButton tone="neutral" type="button" @click="volver">{{ t('common.cancel') }}</UiButton>
-        <UiButton type="submit" icon="link" :loading="saving">{{ t('platform.invs.submit') }}</UiButton>
+        <UiButton type="submit" icon="send" :loading="saving">{{ t('platform.invs.submit') }}</UiButton>
       </div>
     </form>
 
-    <InvitacionEnlace :token="token" :nombre="form.nombre" @done="volver" />
+    <InvitacionEnlace :invitacion="creada" :nombre="form.nombre" @done="volver" />
   </div>
 </template>
 
@@ -49,7 +49,7 @@ const { listOrganizacionesSimple, createInvitacionAdmin, titularDe } = usePlatfo
 const orgs = ref<{ id: number, nombre: string }[]>([])
 const saving = ref(false)
 const error = ref('')
-const token = ref<string | null>(null)
+const creada = ref<{ id: number, token: string, email: string | null } | null>(null)
 
 const preOrg = route.query.org ? Number(route.query.org) : null
 const orgLocked = computed(() => preOrg !== null)
@@ -124,6 +124,6 @@ async function handleSubmit() {
     error.value = err
     return
   }
-  token.value = data?.token ?? null
+  if (data) creada.value = { id: data.id, token: data.token, email: form.value.email.trim() }
 }
 </script>

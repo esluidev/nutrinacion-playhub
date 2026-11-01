@@ -1,7 +1,7 @@
 // Zona fija para que el resultado no dependa de la máquina: Guatemala, UTC−6 sin horario de verano.
 process.env.TZ = 'America/Guatemala'
 
-const { aFecha, diasHasta, fechaCorta, finDelDia, hoyLocal, isoLocal } = await import('~/utils/fechas')
+const { aFecha, diasHasta, fechaCorta, fechaHora, finDelDia, hoyLocal, isoLocal } = await import('~/utils/fechas')
 const { describe, expect, it } = await import('vitest')
 
 describe('aFecha', () => {
@@ -19,6 +19,14 @@ describe('fechaCorta', () => {
   it('muestra el día guardado en las dos lenguas', () => {
     expect(fechaCorta('2026-10-16', 'es')).toContain('16')
     expect(fechaCorta('2026-10-16', 'en')).toBe('Oct 16, 2026')
+  })
+})
+
+describe('fechaHora', () => {
+  it('un instante con su hora local, sin el año', () => {
+    // 16:32 UTC son las 10:32 en Guatemala
+    expect(fechaHora('2026-11-01T16:32:00Z', 'es')).toBe('1 nov, 10:32')
+    expect(fechaHora('2026-11-01T16:32:00Z', 'en')).toBe('Nov 1, 10:32 AM')
   })
 })
 

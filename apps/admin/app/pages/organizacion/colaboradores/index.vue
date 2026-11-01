@@ -59,8 +59,8 @@
       </template>
     </UiDataTable>
 
-    <!-- Invitaciones pendientes: cierran el ciclo «invité → ¿ya entró?». El enlace se copia otra vez
-         (Admin no envía correos) y se puede revocar. -->
+    <!-- Invitaciones pendientes: cierran el ciclo «invité → ¿ya entró?». Dicen cómo quedó su correo
+         (decisión 012); el enlace se copia otra vez, el correo se reenvía y se pueden revocar. -->
     <section v-if="pendientes.length" class="mt-6">
       <p class="eyebrow mb-2">{{ t('invLink.pending') }}</p>
       <div class="ui-panel divide-y divide-line">
@@ -70,6 +70,7 @@
           <div class="min-w-0 flex-1">
             <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('invLink.openLink') }}</p>
             <p class="ui-caption">{{ [nombreInvitado(inv) && inv.email, inv.expira_en ? t('invLink.expires', { fecha: fechaCorta(inv.expira_en, locale) }) : t('invLink.noExpiry')].filter(Boolean).join(' · ') }}</p>
+            <InvitacionCorreo v-if="inv.email" :enviado-en="inv.correo_enviado_en" :error="inv.correo_error" />
           </div>
           <div class="flex shrink-0 items-center gap-2">
             <UiButton
@@ -80,6 +81,17 @@
               :label="t('invLink.copy')"
               :title="t('invLink.copy')"
               @click="copiarEnlace(inv.token)"
+            />
+            <UiButton
+              v-if="inv.email"
+              tone="neutral"
+              size="sm"
+              icon="send"
+              icon-only
+              :loading="reenviando === inv.id"
+              :label="t('invMail.resend')"
+              :title="t('invMail.resend')"
+              @click="reenviar(inv)"
             />
             <UiButton
               tone="neutral"
@@ -152,6 +164,13 @@ const copiado = ref<string | null>(null)
 const revocando = ref<InvitacionPendiente | null>(null)
 const enCurso = ref(false)
 
+async function cargarPendientes() {
+  pendientes.value = await listInvitacionesPendientes()
+}
+
+// «Reenviar correo»: toast del resultado y la lista se vuelve a leer con el estado nuevo.
+const { reenviando, reenviar } = useReenvioInvitacion(cargarPendientes)
+
 async function cambiarActivo(c: ColaboradorFila, activo: boolean) {
   const { error } = await setActivo(c.id, activo)
   if (error) {
@@ -182,10 +201,8 @@ async function confirmarRevocar() {
   }
   revocando.value = null
   toast.success(t('invLink.revoked'))
-  pendientes.value = await listInvitacionesPendientes()
+  await cargarPendientes()
 }
 
-onMounted(async () => {
-  pendientes.value = await listInvitacionesPendientes()
-})
+onMounted(cargarPendientes)
 </script>

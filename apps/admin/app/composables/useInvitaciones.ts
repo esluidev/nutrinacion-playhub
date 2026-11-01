@@ -1,6 +1,7 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
-// Bandeja de invitaciones de la persona autenticada: las dirigidas a SU correo.
+// Bandeja de invitaciones de la persona autenticada: las dirigidas a SU correo. Aquí vive también
+// el envío por correo de las invitaciones que se gestionan (`enviarCorreoInvitacion`).
 //
 // Una invitación a un correo que YA tiene cuenta no se canjea por link: aparece aquí y se
 // acepta/rechaza estando dentro de la app (no hay identidad que probar, ya estás autenticado).
@@ -24,6 +25,64 @@ const SELECT = `
   id, token, role, estado, expira_en, created_at,
   organizaciones ( id, nombre )
 `
+
+// ── Envío por correo (decisión 012) ──────────────────────────────────────────
+// Al crear una invitación y desde «Reenviar correo», con la sesión de quien la gestiona: la RLS
+// decide quién puede (los mismos que pueden crearla o revocarla). La Edge Function anota en la
+// invitación cuándo salió o por qué no (`correo_enviado_en`, `correo_error`) y su `error` ya es un
+// texto listo para mostrar. El enlace se puede copiar igual, salga o no el correo.
+
+export interface EnvioCorreo {
+  ok: boolean
+  enviadoA: string | null
+  error: string | null
+}
+
+// Un 4xx/5xx llega como error de supabase-js con la respuesta en `context`: su cuerpo JSON trae
+// el `error` de la función. Si no se puede leer (red, relay), null y se usa el texto de respaldo.
+async function errorDeLaFuncion(error: unknown): Promise<string | null> {
+  const respuesta = (error as { context?: unknown } | null)?.context
+  if (!(respuesta instanceof Response)) return null
+  try {
+    const cuerpo = await respuesta.clone().json() as { error?: unknown }
+    return typeof cuerpo?.error === 'string' && cuerpo.error.trim() ? cuerpo.error : null
+  }
+  catch {
+    return null
+  }
+}
+
+export async function enviarCorreoInvitacion(invitacionId: number): Promise<EnvioCorreo> {
+  const { t } = useT()
+  if (!isSupabaseConfigured()) return { ok: false, enviadoA: null, error: t('invMail.demo') }
+
+  const { data, error } = await useSupabaseClient().functions.invoke('enviar-invitacion', {
+    body: { invitacion_id: invitacionId },
+  })
+  if (error) return { ok: false, enviadoA: null, error: (await errorDeLaFuncion(error)) ?? t('invMail.unreachable') }
+  if (!data?.ok) return { ok: false, enviadoA: null, error: (data?.error as string) || t('invMail.unreachable') }
+  return { ok: true, enviadoA: (data.enviado_a as string) ?? null, error: null }
+}
+
+// «Reenviar correo» en las listas de pendientes: uno a la vez, con el toast del resultado; después
+// la página vuelve a leer la lista para que la fila muestre el estado nuevo del correo.
+export function useReenvioInvitacion(alTerminar: () => unknown) {
+  const { t } = useT()
+  const { toast } = useToast()
+  const reenviando = ref<number | null>(null)
+
+  async function reenviar(inv: { id: number, email: string | null }) {
+    if (reenviando.value) return
+    reenviando.value = inv.id
+    const r = await enviarCorreoInvitacion(inv.id)
+    if (r.ok) toast.success(t('invMail.sent', { correo: r.enviadoA ?? inv.email ?? '' }))
+    else toast.error(t('invMail.failedToast', { motivo: sinPuntoFinal(r.error ?? t('invMail.unreachable')) }))
+    await alTerminar()
+    reenviando.value = null
+  }
+
+  return { reenviando, reenviar }
+}
 
 // Canal de Realtime único para toda la app: un RealtimeChannel no es estado serializable,
 // así que no puede vivir en `useState`. La app es SPA con un solo cliente de Supabase.
