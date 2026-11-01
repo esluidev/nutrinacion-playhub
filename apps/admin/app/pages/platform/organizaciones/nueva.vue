@@ -11,6 +11,9 @@
 
           <UiSelect v-model="form.tipo_id" :options="tipoOpciones" :label="t('platform.orgs.type')" :placeholder="t('platform.orgs.typePh')" />
 
+          <!-- Los países donde opera: deciden qué storyboards estándar tiene (decisión 011) -->
+          <PaisesSelector v-model="form.paises" :label="t('platform.orgs.countries')" :hint="t('platform.orgs.countriesHint')" :error="errorPaises" />
+
           <UiInput id="correo" v-model="form.correo" type="email" :label="t('platform.orgs.email')" :placeholder="t('platform.orgs.emailPh')" />
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -34,16 +37,17 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.orgs.newTitle' })
 
-const { t } = useT()
+const { t, locale } = useT()
 const { listTiposOrganizacion, createOrganizacion } = usePlatform()
 
 const tipos = ref<{ id: number, codigo: string, nombre: Record<string, string> }[]>([])
 const saving = ref(false)
 const error = ref('')
+const errorPaises = ref('')
 
-const tipoOpciones = computed(() => tipos.value.map(x => ({ value: x.id, label: x.nombre?.es ?? x.codigo })))
+const tipoOpciones = computed(() => tipos.value.map(x => ({ value: x.id, label: x.nombre?.[locale.value] ?? x.nombre?.es ?? x.codigo })))
 
-const form = ref({ nombre: '', correo: '', telefono: '', website: '', tipo_id: null as number | null })
+const form = ref({ nombre: '', correo: '', telefono: '', website: '', tipo_id: null as number | null, paises: [] as string[] })
 
 onMounted(async () => {
   tipos.value = await listTiposOrganizacion()
@@ -51,8 +55,13 @@ onMounted(async () => {
 
 async function handleSave() {
   error.value = ''
+  errorPaises.value = ''
   if (!form.value.nombre.trim()) {
     error.value = t('platform.orgs.nameRequired')
+    return
+  }
+  if (!form.value.paises.length) {
+    errorPaises.value = t('platform.orgs.countriesRequired')
     return
   }
 
@@ -63,6 +72,7 @@ async function handleSave() {
     telefono: form.value.telefono,
     website: form.value.website,
     tipo_id: form.value.tipo_id,
+    paises: form.value.paises,
   })
   saving.value = false
 

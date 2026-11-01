@@ -19,34 +19,12 @@
           </div>
         </div>
         <div class="ui-panel-body space-y-4">
-          <div class="grid grid-cols-3 gap-3">
-            <UiInput id="max_com" v-model.number="form.max_comunidades" type="number" :label="t('platform.lics.communities')" />
-            <UiInput id="max_edu" v-model.number="form.max_educadores" type="number" :label="t('platform.lics.educators')" />
-            <UiInput id="max_per" v-model.number="form.max_personalizados" type="number" :label="t('platform.lics.custom')" />
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
+          <!-- La licencia es el contrato: estado, vigencia y notas (decisión 011). Sin cupos ni
+               países: los países donde opera son de la organización. -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <UiSelect v-model="form.estado" :options="estadoOpciones" :label="t('platform.lics.state')" />
             <UiInput id="fecha_inicio" v-model="form.fecha_inicio" type="date" :label="t('platform.lics.start')" />
             <UiInput id="fecha_fin" v-model="form.fecha_fin" type="date" :label="t('platform.lics.end')" :min="form.fecha_inicio" />
-          </div>
-
-          <!-- Países: elección múltiple con filtros del kit (pulsado = noche, estructura) -->
-          <div role="group" aria-labelledby="paises-label">
-            <p id="paises-label" class="field-label">{{ t('platform.lics.countriesLabel') }}</p>
-            <p class="ui-caption mb-3">{{ t('platform.lics.countriesHint') }}</p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="p in paises"
-                :key="p.codigo"
-                type="button"
-                class="filter filter-sm"
-                :aria-pressed="form.paises.includes(p.codigo)"
-                @click="togglePais(p.codigo)"
-              >
-                <span v-if="p.bandera">{{ p.bandera }}</span>{{ p.nombre?.es ?? p.codigo }}
-              </button>
-            </div>
           </div>
 
           <UiTextarea id="notas" v-model="form.notas" :rows="2" :label="t('platform.lics.notes')" :placeholder="t('platform.lics.notesPh')" />
@@ -88,9 +66,8 @@ definePageMeta({ layout: 'dashboard', titleKey: 'platform.lics.editTitle' })
 const { t } = useT()
 const route = useRoute()
 const id = Number(route.params.id)
-const { getLicencia, listPaises, updateLicencia, deleteLicencia } = usePlatform()
+const { getLicencia, updateLicencia, deleteLicencia } = usePlatform()
 
-const paises = ref<{ codigo: string, nombre: Record<string, string>, bandera: string | null }[]>([])
 const loading = ref(true)
 const cargada = ref(false)
 const saving = ref(false)
@@ -106,54 +83,34 @@ const estadoOpciones = computed(() => [
 ])
 
 const form = ref({
-  max_comunidades: 0,
-  max_educadores: 0,
-  max_personalizados: 0,
   estado: 'ACTIVA' as Enums<'estado_licencia'>,
   fecha_inicio: '',
   fecha_fin: '' as string,
-  paises: [] as string[],
   notas: '',
 })
 
 onMounted(async () => {
-  paises.value = await listPaises()
   const lic = await getLicencia(id) as any
   if (lic) {
     cargada.value = true
     orgNombre.value = lic.organizaciones?.nombre ?? ''
     form.value = {
-      max_comunidades: lic.max_comunidades,
-      max_educadores: lic.max_educadores,
-      max_personalizados: lic.max_personalizados,
       estado: lic.estado,
       fecha_inicio: lic.fecha_inicio ?? '',
       fecha_fin: lic.fecha_fin ?? '',
-      paises: lic.paises ?? [],
       notas: lic.notas ?? '',
     }
   }
   loading.value = false
 })
 
-function togglePais(codigo: string) {
-  const arr = form.value.paises
-  const i = arr.indexOf(codigo)
-  if (i === -1) arr.push(codigo)
-  else arr.splice(i, 1)
-}
-
 async function handleSave() {
   error.value = ''
   saving.value = true
   const { error: err } = await updateLicencia(id, {
-    max_comunidades: Number(form.value.max_comunidades) || 0,
-    max_educadores: Number(form.value.max_educadores) || 0,
-    max_personalizados: Number(form.value.max_personalizados) || 0,
     estado: form.value.estado,
     fecha_inicio: form.value.fecha_inicio,
     fecha_fin: form.value.fecha_fin || null,
-    paises: form.value.paises,
     notas: form.value.notas,
   })
   saving.value = false

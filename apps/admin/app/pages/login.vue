@@ -47,7 +47,7 @@ const recuperando = ref(false)
 async function handleLogin() {
   error.value = ''
   if (!isSupabaseConfigured()) {
-    navigateTo('/dashboard')
+    navigateTo('/organizacion')
     return
   }
   if (!email.value.trim() || !password.value) {
@@ -63,8 +63,8 @@ async function handleLogin() {
     error.value = authError.code === 'invalid_credentials' ? t('auth.login.invalid') : authError.message
     return
   }
-  // El aterrizaje lo decide la superficie de acceso (admin → su organización,
-  // colaborador → su comunidad, etc.), no una ruta fija.
+  // El aterrizaje lo decide la superficie de acceso (superadmin → Platform; admin o
+  // colaborador → su organización), no una ruta fija.
   navigateTo(useContexto().rutaInicial())
 }
 </script>

@@ -1,4 +1,4 @@
-import type { AuthUser, ComunidadConOrg, InvitacionInfo, Organizacion, Perfil } from '~/utils/types'
+import type { AuthUser, InvitacionInfo, Organizacion, Perfil } from '~/utils/types'
 
 // Los rechazos de Supabase Auth al fijar una contraseña, en el idioma de la interfaz.
 function errorDePassword(error: { code?: string, message: string }) {
@@ -12,7 +12,7 @@ export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState('auth-loading', () => true)
 
-  // Resuelve la sesion actual → perfil + contexto (organizaciones propias, comunidades accesibles).
+  // Resuelve la sesion actual → perfil + contexto (organizaciones que administro o donde colaboro).
   // Un usuario de Auth sin perfil = registro incompleto: no se considera autenticado.
   async function fetchUser() {
     if (!isSupabaseConfigured()) {
@@ -44,31 +44,26 @@ export function useAuth() {
       // Idioma de UI = idioma del perfil (es/en).
       useLocale().value = perfil.idioma === 'en' ? 'en' : 'es'
 
-      // Superficie de acceso: las comunidades de las orgs que administro + aquellas donde soy
-      // colaborador activo. El RLS ya lo filtra así, salvo al superadmin, que las lee todas: su
-      // contexto solo baja a lo suyo (debajo de Platform no hay acceso por ser superadmin). Traemos la org embebida porque el
-      // switcher agrupa por organización, y de una donde solo colaboro no sabríamos el nombre.
-      // `colaboradores` se consulta aparte para distinguir CÓMO llego a cada comunidad: por
-      // administrar su organización o por estar asignado a ella.
-      const [{ data: adminRows }, { data: comunidades }, { data: colabRows }] = await Promise.all([
+      // Superficie de acceso: las organizaciones que administro y aquellas donde soy colaborador
+      // activo, cada una por su tabla de pertenencia (decisión 011). La organización viene
+      // embebida porque el switcher la nombra. El superadmin no tiene acceso por serlo: debajo
+      // de Platform solo ve lo suyo (la RLS lo filtra igual).
+      const [{ data: adminRows }, { data: colabRows }] = await Promise.all([
         supabase.from('organizacion_administradores').select('titular, organizaciones(*)').eq('perfil_id', perfil.id),
-        supabase.from('comunidades').select('*, organizaciones ( id, nombre )'),
-        supabase.from('comunidad_colaboradores').select('comunidad_id').eq('perfil_id', perfil.id).eq('activo', true),
+        supabase.from('organizacion_colaboradores').select('organizaciones(*)').eq('perfil_id', perfil.id).eq('activo', true),
       ])
 
       const admin = ((adminRows as { titular: boolean, organizaciones: Organizacion }[] | null) ?? [])
         .filter(r => r.organizaciones)
-      const orgsAdministradas = new Set(admin.map(r => r.organizaciones.id))
-      const colaboraEn = ((colabRows as { comunidad_id: number }[] | null) ?? []).map(r => r.comunidad_id)
+      const colabora = ((colabRows as { organizaciones: Organizacion }[] | null) ?? [])
+        .filter(r => r.organizaciones)
 
       user.value = {
         id: authUser.id,
         email: authUser.email!,
         perfil,
         organizaciones: admin.map(r => r.organizaciones),
-        comunidades: ((comunidades as unknown as ComunidadConOrg[]) ?? [])
-          .filter(c => orgsAdministradas.has(c.organizacion_id) || colaboraEn.includes(c.id)),
-        colaboraEn,
+        colaboraEn: colabora.map(r => r.organizaciones),
         titularDe: admin.filter(r => r.titular).map(r => r.organizaciones.id),
       }
     }
@@ -112,7 +107,8 @@ export function useAuth() {
   }
 
   // Canjea la invitacion: la Edge Function crea la cuenta de Auth + el perfil y enlaza a la
-  // organizacion/comunidad; luego iniciamos sesion con las credenciales recien definidas.
+  // organizacion (como administrador o colaborador); luego iniciamos sesion con las credenciales
+  // recien definidas.
   async function redeemInvitation(payload: {
     token: string
     email: string

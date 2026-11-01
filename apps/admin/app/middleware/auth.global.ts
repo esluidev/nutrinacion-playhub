@@ -26,18 +26,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!isAuthenticated) return
 
-  const { rutaInicial, asegurarContexto, asegurarComunidad, administraOrgActiva, destinos, recordarRuta } = useContexto()
+  const { rutaInicial, asegurarContexto, administraOrgActiva, recordarRuta } = useContexto()
 
   // Aterrizaje: el ultimo contexto del selector, si sigue valido; si no, por rol (superadmin →
-  // Platform, admin → su organizacion, colaborador → su comunidad). Ver `rutaInicial`.
-  // `/inicio` era el antiguo selector de destino: los enlaces viejos aterrizan igual.
-  if (to.path === '/login' || to.path === '/' || to.path === '/inicio') {
+  // Platform, admin o colaborador → su organizacion). Ver `rutaInicial`.
+  // `/inicio` y `/dashboard` eran rutas de antes: los enlaces viejos aterrizan igual.
+  if (to.path === '/login' || to.path === '/' || to.path === '/inicio' || to.path.startsWith('/dashboard')) {
     return navigateTo(rutaInicial())
   }
 
-  // Si tienes algun contexto, que SIEMPRE haya uno activo — tambien en paginas que no lo
+  // Si tienes alguna organizacion, que SIEMPRE haya una activa — tambien en paginas que no lo
   // exigen (como /invitaciones). Si no, el switcher aparece vacio y nadie entiende que pasa.
-  asegurarContexto()
+  const conOrg = asegurarContexto()
 
   // El contexto lo dicta la ruta (tipo = prefijo). Cada seccion valida su acceso:
 
@@ -46,18 +46,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(rutaInicial())
   }
 
-  // El nivel organizacion solo existe si administras la org activa.
-  if (to.path.startsWith('/organizacion') && !administraOrgActiva.value) {
+  // /organizacion exige operar alguna (administrar o colaborar); sin ninguna, el destino util
+  // es otro (Platform para el superadmin, sin acceso para el resto).
+  if (to.path.startsWith('/organizacion') && !conOrg) {
     return navigateTo(rutaInicial())
   }
 
-  // El dashboard opera SOBRE una comunidad: si el contexto no la tiene, se recupera la
-  // recordada o la primera de la org activa; sin ninguna, el destino util es otro.
-  if (to.path.startsWith('/dashboard') && !asegurarComunidad()) {
-    if (!destinos.value.length) return navigateTo('/sin-acceso')
-    // Admin sin comunidades todavia: al home de su org (ahi vive el CTA de crear la primera).
-    if (administraOrgActiva.value) return navigateTo('/organizacion')
-    return navigateTo(rutaInicial())
+  // Colaboradores y administradores son de quien administra la organizacion: el colaborador
+  // vuelve a su inicio (la RLS le negaria igual las escrituras).
+  if ((to.path.startsWith('/organizacion/colaboradores') || to.path.startsWith('/organizacion/administradores'))
+    && !administraOrgActiva.value) {
+    return navigateTo('/organizacion')
   }
 
   // El selector recuerda donde quedaste para la proxima entrada.

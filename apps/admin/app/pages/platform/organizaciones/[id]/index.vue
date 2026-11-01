@@ -53,34 +53,9 @@
             </div>
 
             <template v-if="lic">
-              <!-- Cupos -->
-              <div class="grid grid-cols-1 gap-5 px-6 py-5 sm:grid-cols-3">
-                <div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-title font-black tabular-nums text-ink">{{ org.comunidades.length }}</span>
-                    <span class="font-bold text-muted">de {{ lic.max_comunidades }}</span>
-                  </div>
-                  <p class="eyebrow mt-1">{{ t('platform.orgDetail.communitiesShort') }}</p>
-                </div>
-                <!-- Uso de la licencia: cifras de platform_uso (Platform no ve el detalle de la operación) -->
-                <div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-title font-black tabular-nums text-ink">{{ org.uso?.educadores ?? 0 }}</span>
-                    <span class="font-bold text-muted">de {{ lic.max_educadores }}</span>
-                  </div>
-                  <p class="eyebrow mt-1">{{ t('platform.orgDetail.educators') }}</p>
-                </div>
-                <div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-title font-black tabular-nums text-ink">{{ org.uso?.personalizados ?? 0 }}</span>
-                    <span class="font-bold text-muted">de {{ lic.max_personalizados }}</span>
-                  </div>
-                  <p class="eyebrow mt-1">{{ t('platform.orgDetail.custom') }}</p>
-                </div>
-              </div>
-
-              <!-- Vigencia / países -->
-              <div class="flex flex-wrap items-center gap-7 border-t border-line bg-canvas px-6 py-3.5">
+              <!-- La licencia es el contrato (decisión 011): vigencia y notas. Sin cupos ni países:
+                   los países donde opera son de la organización (abajo). -->
+              <div class="flex flex-wrap items-center gap-7 bg-canvas px-6 py-3.5">
                 <div class="flex items-center gap-2 text-caption font-semibold text-muted">
                   <UiIcon name="calendar" class="size-3.5 text-subtle" />
                   {{ t('platform.orgDetail.validity') }}:
@@ -88,10 +63,6 @@
                     {{ fechaCorta(lic.fecha_inicio, locale) }} –
                     <span :data-tone="finLicenciaTone(lic)" :class="finLicenciaTone(lic) && 'text-(--tone-strong)'">{{ lic.fecha_fin ? fechaCorta(lic.fecha_fin, locale) : t('platform.orgDetail.noEnd') }}</span>
                   </span>
-                </div>
-                <div class="flex items-center gap-2 text-caption font-semibold text-muted">
-                  <UiIcon name="globe" class="size-3.5 text-subtle" />
-                  {{ t('platform.orgDetail.countries') }}: <span class="font-extrabold text-ink">{{ lic.paises?.length ? lic.paises.join(', ') : t('platform.orgDetail.global') }}</span>
                 </div>
               </div>
 
@@ -293,28 +264,15 @@
             </div>
           </section>
 
-          <!-- Comunidades -->
+          <!-- Los países donde opera: deciden su catálogo estándar (decisión 011); se editan con la organización -->
           <section class="ui-panel">
             <div class="ui-panel-header justify-start gap-2.5">
-              <h2 class="ui-title">{{ t('platform.orgDetail.communities') }}</h2>
-              <span class="filter-count">{{ org.comunidades.length }}</span>
+              <h2 class="ui-title">{{ t('platform.orgDetail.countries') }}</h2>
+              <span class="filter-count">{{ org.paises?.length ?? 0 }}</span>
             </div>
-            <div class="px-6 py-4">
-              <p v-if="!org.comunidades.length" class="font-semibold text-subtle">—</p>
-              <div class="flex flex-col gap-1">
-                <div
-                  v-for="c in org.comunidades"
-                  :key="c.id"
-                  class="flex items-center gap-3 py-2"
-                >
-                  <!-- Comunidad: sin significado propio, tono estable según su nombre -->
-                  <UiSymbol size="sm" :tone="uiToneFor(c.nombre)">{{ c.nombre.charAt(0).toUpperCase() }}</UiSymbol>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate font-extrabold text-ink">{{ c.nombre }}</p>
-                    <p class="ui-caption">{{ resumenComunidad(c) }}</p>
-                  </div>
-                </div>
-              </div>
+            <div class="flex flex-wrap gap-2 px-6 py-4">
+              <UiBadge v-for="p in org.paises ?? []" :key="p" tone="neutral">{{ etiquetaPais(p) }}</UiBadge>
+              <p v-if="!org.paises?.length" class="font-semibold text-subtle">—</p>
             </div>
           </section>
         </div>
@@ -373,8 +331,9 @@ import type { AdminPlatform } from '~/composables/usePlatform'
 import type { LicenciaLigera } from '~/utils/platformResumen'
 
 const { getOrganizacion, revokeInvitacion, setTitular, quitarAdministrador, unirmeComoAdmin } = usePlatform()
-const { setContexto } = useContexto()
+const { setOrg } = useContexto()
 const { toast } = useToast()
+const { etiqueta: etiquetaPais, cargar: cargarPaises } = usePaises()
 
 const org = ref<any>(null)
 const loading = ref(true)
@@ -434,7 +393,10 @@ async function cargar() {
   loading.value = false
 }
 
-onMounted(cargar)
+onMounted(() => {
+  cargarPaises()
+  cargar()
+})
 
 async function revocar(invId: number) {
   await revokeInvitacion(invId)
@@ -457,17 +419,6 @@ const estado = computed<EstadoItem[]>(() => {
       ? { label: t('platform.orgDetail.stLicencia'), valor: t('platform.orgDetail.stVence', { n: dias }), icon: 'clock', tone: 'sun' }
       : { label: t('platform.orgDetail.stLicencia'), valor: t('platform.orgDetail.stVigente'), icon: 'check-circle', tone: 'lime' })
 
-  if (vigente) {
-    const usadas = o.comunidades.length
-    const lleno = usadas >= vigente.max_comunidades
-    items.push({
-      label: t('platform.orgDetail.stCupo'),
-      valor: t(lleno ? 'platform.orgDetail.stCupoLleno' : 'platform.orgDetail.stCupoUso', { usadas, max: vigente.max_comunidades }),
-      icon: lleno ? 'chart' : 'home',
-      tone: lleno ? 'sky' : 'lime',
-    })
-  }
-
   const admins = administradores.value as AdminPlatform[]
   const accesos = admins.map(a => a.ultimo_acceso).filter((x): x is string => !!x).sort()
   items.push(!admins.length
@@ -489,30 +440,26 @@ const estado = computed<EstadoItem[]>(() => {
       tone: uso.talleres_proximos ? 'sky' : 'neutral',
     })
     items.push({
+      label: t('platform.orgDetail.stJornadas'),
+      valor: uso.jornadas ? String(uso.jornadas) : t('platform.orgDetail.stNinguna'),
+      icon: 'layers',
+      tone: 'neutral',
+    })
+    items.push({
+      label: t('platform.orgDetail.stPersonalizados'),
+      valor: uso.personalizados ? String(uso.personalizados) : t('platform.orgDetail.stNinguno'),
+      icon: 'book',
+      tone: 'neutral',
+    })
+    items.push({
       label: t('platform.orgDetail.stActividad'),
       valor: uso.ultima_actividad ? fechaCorta(uso.ultima_actividad, locale.value) : t('platform.orgDetail.stSinActividad'),
       icon: 'clock',
       tone: 'neutral',
     })
   }
-
-  items.push({
-    label: t('platform.orgDetail.stPerfil'),
-    valor: o.perfil_publico ? t('platform.orgDetail.stVisible') : t('platform.orgDetail.stOculto'),
-    icon: 'globe',
-    tone: 'neutral',
-  })
   return items
 })
-
-function resumenComunidad(c: { pais: string | null, educadores: number, talleres_proximos: number, participantes: number }) {
-  return [
-    c.pais,
-    tCount(t, 'orgHome.educadoresCount', c.educadores),
-    tCount(t, 'platform.orgDetail.proximosCount', c.talleres_proximos),
-    c.participantes ? tCount(t, 'coms.participantesCount', c.participantes) : null,
-  ].filter(Boolean).join(' · ')
-}
 
 // ── Soporte de administradores ───────────────────────────────────────────────
 const restableciendo = ref<AdminPlatform | null>(null)
@@ -558,13 +505,13 @@ async function confirmarUnirme() {
 
 function irALaOrganizacion() {
   if (!org.value) return
-  setContexto(org.value.id, null)
+  setOrg(org.value.id)
   navigateTo('/organizacion')
 }
 
 async function copiarLink(token: string) {
   if (!(await copiarTexto(`${window.location.origin}/invitacion/${token}`))) {
-    useToast().toast.error(t('parts.copyFailed'))
+    toast.error(t('invLink.copyFailed'))
     return
   }
   copiado.value = token

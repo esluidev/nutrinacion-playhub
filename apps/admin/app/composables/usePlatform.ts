@@ -14,23 +14,20 @@ export interface OrgResumen {
   correo: string | null
   telefono: string | null
   website: string | null
+  paises: string[]
   created_at: string
   tipo_id: number | null
   tipo: { nombre: Record<string, string> } | null
   administradores: { titular: boolean, perfil: { nombre: string | null, apellido: string | null } | null }[]
   licencias: { id: number, estado: string, created_at: string, fecha_fin: string | null }[]
-  comunidades: number          // cuántas usa de su licencia (platform_uso)
 }
 
 /** Lo que Platform ve de la operación de una organización: solo cifras (platform_uso, 0005). */
 export interface UsoOrganizacion {
-  comunidades: number
   educadores: number
   personalizados: number
   talleres: number
-  participantes: number
   jornadas: number
-  temarios: number
   educadores_sin_acceso: number   // aún no eligieron su PIN
   talleres_proximos: number
   ultima_actividad: string | null
@@ -48,12 +45,8 @@ export interface AdminPlatform {
 export interface LicenciaResumen {
   id: number
   estado: string
-  max_comunidades: number
-  max_educadores: number
-  max_personalizados: number
   fecha_inicio: string
   fecha_fin: string | null
-  paises: string[]
   notas: string | null
   organizaciones: { id: number, nombre: string } | null
 }
@@ -79,17 +72,15 @@ export interface DatosOrganizacion {
   telefono: string
   website: string
   tipo_id: number | null
+  paises: string[]   // donde opera: al menos uno (la base lo exige)
 }
 
+// La licencia es el contrato: vigencia, estado y notas (decisión 011). Sin cupos ni países.
 export interface DatosLicencia {
   organizacion_id: number
-  max_comunidades: number
-  max_educadores: number
-  max_personalizados: number
   fecha_inicio: string
   fecha_fin: string | null
   estado: Enums<'estado_licencia'>
-  paises: string[]
   notas: string
 }
 
@@ -112,6 +103,7 @@ function normalizarOrg(p: DatosOrganizacion) {
     telefono: p.telefono.trim() || null,
     website: p.website.trim() || null,
     tipo_id: p.tipo_id,
+    paises: p.paises,
   }
 }
 
@@ -134,9 +126,9 @@ export function usePlatform() {
   const supabase = () => useSupabaseClient()
 
   // ── Lo que Platform ve de la operación ─────────────────────────────────────
-  // El superadmin administra organizaciones, no su operación: la RLS no le deja leer comunidades,
-  // educadores ni talleres de las organizaciones ajenas. De eso solo recibe cifras y el nombre y
-  // país de cada comunidad, por las funciones `platform_*` (0005).
+  // El superadmin administra organizaciones, no su operación: la RLS no le deja leer educadores,
+  // talleres ni jornadas de las organizaciones ajenas. De eso solo recibe cifras, por `platform_uso`
+  // (0005).
   async function usoOrganizaciones(organizacionId: number | null = null): Promise<Map<number, UsoOrganizacion>> {
     const mapa = new Map<number, UsoOrganizacion>()
     if (!isSupabaseConfigured()) return mapa
@@ -150,21 +142,21 @@ export function usePlatform() {
 
   // ── Dashboard del operador ──────────────────────────────────────────────────
   // La administración de las organizaciones. Orgs y licencias se traen COMPLETAS pero ligeras
-  // (al scale objetivo, ~100 orgs); de las comunidades, solo cuántas usa cada una (el cupo).
-  // El desglose, la atención y la actividad se computan con las reglas puras de utils.
+  // (al scale objetivo, ~100 orgs). El desglose, la atención y la actividad se computan con las
+  // reglas puras de utils.
   async function getResumenPlatform(): Promise<ResumenPlatform> {
     if (!isSupabaseConfigured()) return RESUMEN_VACIO
     const head = { count: 'exact' as const, head: true }
     const hoy = hoyLocal()
 
-    const [orgsRes, licRes, invPendientes, invRecientes, uso] = await Promise.all([
+    const [orgsRes, licRes, invPendientes, invRecientes] = await Promise.all([
       supabase()
         .from('organizaciones')
         .select(`id, nombre, created_at,
                  administradores:organizacion_administradores ( id, created_at, perfil:perfiles ( nombre, apellido, email ) )`),
       supabase()
         .from('organizacion_licencias')
-        .select('id, estado, fecha_inicio, fecha_fin, max_comunidades, organizacion_id, created_at'),
+        .select('id, estado, fecha_inicio, fecha_fin, organizacion_id, created_at'),
       supabase().from('invitaciones').select('id', head).eq('role', 'ADMIN').eq('estado', 'PENDIENTE'),
       supabase()
         .from('invitaciones')
@@ -173,7 +165,6 @@ export function usePlatform() {
         .eq('estado', 'PENDIENTE')
         .order('created_at', { ascending: false })
         .limit(5),
-      usoOrganizaciones(),
     ])
 
     type FilaOrg = {
@@ -186,7 +177,6 @@ export function usePlatform() {
       id: o.id,
       nombre: o.nombre,
       created_at: o.created_at,
-      comunidades: uso.get(o.id)?.comunidades ?? 0,
       administradores: o.administradores.map(a => ({
         id: a.id,
         created_at: a.created_at,
@@ -211,13 +201,6 @@ export function usePlatform() {
     const { data } = await supabase()
       .from('tipos_organizacion').select('id, codigo, nombre').eq('activo', true).order('orden')
     return (data as { id: number, codigo: string, nombre: Record<string, string> }[] | null) ?? []
-  }
-
-  async function listPaises() {
-    if (!isSupabaseConfigured()) return [] as { codigo: string, nombre: Record<string, string>, bandera: string | null }[]
-    const { data } = await supabase()
-      .from('paises').select('codigo, nombre, bandera').eq('activo', true).order('codigo')
-    return (data as { codigo: string, nombre: Record<string, string>, bandera: string | null }[] | null) ?? []
   }
 
   // Orgs para dropdowns (id + nombre, sin paginar).
@@ -248,7 +231,7 @@ export function usePlatform() {
     let query = supabase()
       .from('organizaciones')
       .select(`
-        id, nombre, correo, telefono, website, created_at, tipo_id,
+        id, nombre, correo, telefono, website, paises, created_at, tipo_id,
         tipo:tipos_organizacion ( nombre ),
         administradores:organizacion_administradores ( titular, perfil:perfiles ( nombre, apellido ) ),
         licencias:organizacion_licencias ( id, estado, created_at, fecha_fin )
@@ -266,10 +249,8 @@ export function usePlatform() {
       query = query.not('id', 'in', `(${idsConAdmin!.join(',')})`)
     }
 
-    const [{ data, count }, uso] = await Promise.all([query, usoOrganizaciones()])
-    const filas = ((data as unknown as Omit<OrgResumen, 'comunidades'>[] | null) ?? [])
-      .map(o => ({ ...o, comunidades: uso.get(o.id)?.comunidades ?? 0 }))
-    return { data: filas, total: count ?? 0 }
+    const { data, count } = await query
+    return { data: (data as unknown as OrgResumen[] | null) ?? [], total: count ?? 0 }
   }
 
   async function getOrganizacion(id: number) {
@@ -277,18 +258,17 @@ export function usePlatform() {
     const { data, error } = await supabase()
       .from('organizaciones')
       .select(`
-        id, nombre, correo, telefono, website, created_at, tipo_id, perfil_publico,
+        id, nombre, correo, telefono, website, paises, created_at, tipo_id,
         tipo:tipos_organizacion ( nombre ),
         licencias:organizacion_licencias ( * ),
-        invitaciones ( id, token, role, email, nombre, apellido, titular, estado, expira_en, comunidad_id, idioma, created_at )
+        invitaciones ( id, token, role, email, nombre, apellido, titular, estado, expira_en, idioma, created_at )
       `)
       .eq('id', id)
       .maybeSingle()
     if (!data) return { data, error }
-    // De su operación: sus comunidades con sus cifras, las cifras de la organización y sus
-    // administradores con su último acceso (para el soporte).
-    const [{ data: comunidades }, uso, { data: admins }] = await Promise.all([
-      supabase().rpc('platform_comunidades', { p_organizacion_id: id }),
+    // De su operación: las cifras de la organización y sus administradores con su último acceso
+    // (para el soporte).
+    const [uso, { data: admins }] = await Promise.all([
       usoOrganizaciones(id),
       supabase().rpc('platform_administradores', { p_organizacion_id: id }),
     ])
@@ -299,7 +279,7 @@ export function usePlatform() {
       ultimo_acceso: a.ultimo_acceso,
       perfil: { id: a.perfil_id, nombre: a.nombre, apellido: a.apellido, email: a.email },
     }))
-    return { data: { ...data, administradores, comunidades: comunidades ?? [], uso: uso.get(id) ?? null }, error }
+    return { data: { ...data, administradores, uso: uso.get(id) ?? null }, error }
   }
 
   async function createOrganizacion(payload: DatosOrganizacion) {
@@ -323,7 +303,7 @@ export function usePlatform() {
   // Lo que se pierde al dar de baja una organización (conteos reales para la confirmación) y lo
   // que lo impide: sus storyboards personalizados, que se resuelven antes en Player.
   async function resumenBorradoOrganizacion(id: number) {
-    const vacio = { licencias: 0, administradores: 0, comunidades: 0, educadores: 0, personalizados: 0, talleres: 0, participantes: 0, jornadas: 0, temarios: 0 }
+    const vacio = { licencias: 0, administradores: 0, educadores: 0, personalizados: 0, talleres: 0, jornadas: 0 }
     if (!isSupabaseConfigured()) return vacio
     const head = { count: 'exact' as const, head: true }
     const [licencias, administradores, uso] = await Promise.all([
@@ -331,11 +311,20 @@ export function usePlatform() {
       supabase().from('organizacion_administradores').select('id', head).eq('organizacion_id', id),
       usoOrganizaciones(id),
     ])
-    return { ...vacio, ...uso.get(id), licencias: licencias.count ?? 0, administradores: administradores.count ?? 0 }
+    const u = uso.get(id)
+    return {
+      ...vacio,
+      educadores: u?.educadores ?? 0,
+      personalizados: u?.personalizados ?? 0,
+      talleres: u?.talleres ?? 0,
+      jornadas: u?.jornadas ?? 0,
+      licencias: licencias.count ?? 0,
+      administradores: administradores.count ?? 0,
+    }
   }
 
-  // Baja entera (platform_eliminar_organizacion, 0005): sus comunidades con su operación y lo
-  // demás en cascada. `bloqueada`: tiene storyboards personalizados.
+  // Baja entera (platform_eliminar_organizacion, 0005): su operación y lo demás en cascada.
+  // `bloqueada`: tiene storyboards personalizados.
   async function deleteOrganizacion(id: number) {
     if (!isSupabaseConfigured()) return { error: null as string | null, bloqueada: false }
     const { error } = await supabase().rpc('platform_eliminar_organizacion', { p_organizacion_id: id })
@@ -392,8 +381,7 @@ export function usePlatform() {
     let query = supabase()
       .from('organizacion_licencias')
       .select(`
-        id, estado, max_comunidades, max_educadores, max_personalizados,
-        fecha_inicio, fecha_fin, paises, notas,
+        id, estado, fecha_inicio, fecha_fin, notas,
         organizaciones!inner ( id, nombre )
       `, { count: 'exact' })
       .order('fecha_fin', { ascending: true, nullsFirst: false })
@@ -452,7 +440,6 @@ export function usePlatform() {
     return { data: (data as InvitacionResumen[] | null) ?? [], total: count ?? 0 }
   }
 
-  // Emite una invitación de ADMIN. El INSERT dispara el Database Webhook → correo.
   // El titular actual de una organización (para avisar al invitar a otro), o null.
   async function titularDe(organizacionId: number): Promise<string | null> {
     if (!isSupabaseConfigured()) return null
@@ -464,7 +451,9 @@ export function usePlatform() {
     return p ? (`${p.nombre ?? ''} ${p.apellido ?? ''}`.trim() || p.email || '—') : null
   }
 
-  // A quién se invita (nombre y apellido) y si será el titular: solo el superadmin invita titulares.
+  // Emite una invitación de ADMIN y devuelve su token: Admin no envía correos (decisión 009), el
+  // enlace se copia y se comparte. A quién se invita (nombre y apellido) y si será el titular:
+  // solo el superadmin invita titulares.
   async function createInvitacionAdmin(payload: {
     organizacion_id: number
     email: string
@@ -474,13 +463,12 @@ export function usePlatform() {
     idioma: string
     expira_en: string | null
   }) {
-    if (!isSupabaseConfigured()) return { data: null, error: null as string | null }
+    if (!isSupabaseConfigured()) return { data: { id: 0, token: 'demo' }, error: null as string | null }
     const { data, error } = await supabase()
       .from('invitaciones')
       .insert({
         organizacion_id: payload.organizacion_id,
         role: 'ADMIN',
-        comunidad_id: null,
         email: payload.email || null,
         nombre: payload.nombre.trim() || null,
         apellido: payload.apellido.trim() || null,
@@ -501,7 +489,6 @@ export function usePlatform() {
   return {
     getResumenPlatform,
     listTiposOrganizacion,
-    listPaises,
     resumenBorradoOrganizacion,
     unirmeComoAdmin,
     titularDe,

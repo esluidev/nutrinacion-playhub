@@ -1,12 +1,12 @@
 <template>
-  <div v-if="loading" class="ui-panel ui-text p-10 text-center">Cargando…</div>
+  <div v-if="loading" class="ui-panel ui-text p-10 text-center">{{ t('common.loading') }}</div>
 
   <!-- La vista lleva el tono del área de su tipo (data-area): números de escena, objetivo y etiqueta -->
   <div v-else-if="storyboard" v-bind="tinte">
     <UiPageHeader :title="storyboard.title" :description="`${storyboard.category} · ${storyboard.targetAge} · ${storyboard.duration}`">
       <template #actions>
-        <UiButton icon="calendar" @click="navigateTo('/dashboard/workshops/new?storyboard=' + storyboard.id)">
-          Usar en Taller
+        <UiButton icon="calendar" @click="navigateTo('/organizacion/workshops/new?storyboard=' + storyboard.id)">
+          {{ t('storyboards.useInWorkshop') }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -16,10 +16,10 @@
       <div class="space-y-6 lg:col-span-2">
         <!-- Descripción -->
         <section class="ui-panel p-6">
-          <h3 class="ui-title mb-3">Descripción</h3>
+          <h3 class="ui-title mb-3">{{ t('storyboards.description') }}</h3>
           <p class="ui-text">{{ storyboard.description }}</p>
           <div v-if="storyboard.objective" class="mt-5 rounded-control border border-(--tone-tint-edge) bg-(--tone-wash) px-5 py-4">
-            <p class="eyebrow mb-2 text-(--tone-strong)">Objetivo del taller</p>
+            <p class="eyebrow mb-2 text-(--tone-strong)">{{ t('storyboards.objective') }}</p>
             <!-- Guía escrita en Player: texto enriquecido -->
             <div class="prose-guia text-body font-semibold leading-relaxed text-ink" v-html="storyboard.objective" />
           </div>
@@ -28,13 +28,13 @@
         <!-- Escenas -->
         <section class="ui-panel overflow-hidden">
           <div class="ui-panel-header flex-wrap justify-start gap-2">
-            <h3 class="ui-title">Escenas</h3>
+            <h3 class="ui-title">{{ t('storyboards.scenesTitle') }}</h3>
             <span class="filter-count">{{ storyboard.scenes.length }}</span>
-            <span class="ui-caption ml-auto hidden sm:block">Se ejecutan en orden · cada escena incluye su juego y su guía</span>
+            <span class="ui-caption ml-auto hidden sm:block">{{ t('storyboards.scenesHelp') }}</span>
           </div>
 
           <p v-if="!storyboard.scenes.length" class="ui-text px-6 py-6">
-            Este storyboard aún no tiene escenas sincronizadas.
+            {{ t('storyboards.noScenes') }}
           </p>
 
           <div class="divide-y divide-line">
@@ -59,8 +59,8 @@
               <!-- Guía pedagógica expandida (secciones reales de la escena) -->
               <div v-if="expandedSet.has(scene.id)" class="px-6 pb-5 pl-16">
                 <div class="flex flex-col gap-4 rounded-control border border-line bg-canvas px-5 py-4">
-                  <p class="eyebrow text-(--tone-strong)">Guía pedagógica de la escena</p>
-                  <p v-if="!tieneGuia(scene)" class="ui-text">La guía de esta escena aún no está escrita.</p>
+                  <p class="eyebrow text-(--tone-strong)">{{ t('storyboards.guide') }}</p>
+                  <p v-if="!tieneGuia(scene)" class="ui-text">{{ t('storyboards.noGuide') }}</p>
                   <div v-for="seccion in seccionesDe(scene)" :key="seccion.label">
                     <p class="eyebrow mb-1">{{ seccion.label }}</p>
                     <div class="prose-guia ui-text" v-html="seccion.html" />
@@ -76,38 +76,38 @@
       <div class="space-y-6">
         <!-- Contenido -->
         <section class="ui-panel p-6">
-          <h3 class="ui-title mb-4">Contenido</h3>
+          <h3 class="ui-title mb-4">{{ t('storyboards.content') }}</h3>
           <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Estado</span>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.state') }}</span>
               <!-- Publicado = vigente: lima -->
-              <UiBadge tone="lime" dot>Publicado</UiBadge>
+              <UiBadge tone="lime" dot>{{ t('sbState.PUBLICADO') }}</UiBadge>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Escenas</span>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.scenesTitle') }}</span>
               <span class="text-body font-extrabold text-ink">{{ storyboard.scenes.length || storyboard.scenesCount }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Duración</span>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.duration') }}</span>
               <span class="text-body font-extrabold text-ink">{{ storyboard.duration }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Plan</span>
-              <UiBadge :tone="TONO_PERTENENCIA[storyboard.pertenencia]">{{ storyboard.pertenencia }}</UiBadge>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.ownership') }}</span>
+              <UiBadge :tone="TONO_PERTENENCIA[storyboard.pertenencia]">{{ t(`storyboards.${storyboard.pertenencia}`) }}</UiBadge>
             </div>
           </div>
         </section>
 
         <!-- Clasificación -->
         <section class="ui-panel p-6">
-          <h3 class="ui-title mb-4">Clasificación</h3>
+          <h3 class="ui-title mb-4">{{ t('storyboards.classification') }}</h3>
           <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Categoría</span>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.category') }}</span>
               <span class="badge" v-bind="tinte">{{ storyboard.category }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-caption font-bold text-muted">Edición</span>
+              <span class="text-caption font-bold text-muted">{{ t('storyboards.edition') }}</span>
               <span class="text-body font-extrabold text-ink">{{ storyboard.targetAge }}</span>
             </div>
           </div>
@@ -115,7 +115,7 @@
 
         <!-- Público: la edición, con las palabras de la organización -->
         <section v-if="storyboard.publico" class="ui-panel p-6">
-          <h3 class="ui-title mb-4">Público</h3>
+          <h3 class="ui-title mb-4">{{ t('storyboards.audience') }}</h3>
           <p class="ui-text">{{ storyboard.publico }}</p>
         </section>
       </div>
@@ -126,11 +126,11 @@
   <div v-else class="ui-panel">
     <UiEmptyState
       icon="alert"
-      title="Storyboard no encontrado"
-      text="El storyboard que buscas no existe o ya no está disponible para tu comunidad."
+      :title="t('storyboards.notFound')"
+      :text="t('storyboards.notFoundText')"
     >
-      <UiButton variant="outline" size="sm" @click="navigateTo('/dashboard/storyboards')">
-        Volver a Storyboards
+      <UiButton variant="outline" size="sm" @click="navigateTo('/organizacion/storyboards')">
+        {{ t('storyboards.backToList') }}
       </UiButton>
     </UiEmptyState>
   </div>
@@ -141,6 +141,7 @@ import type { Storyboard, StoryboardScene } from '~/composables/useStoryboards'
 
 definePageMeta({ layout: 'dashboard' })
 
+const { t } = useT()
 const route = useRoute()
 const { fetchDetalle } = useStoryboards()
 
@@ -153,24 +154,23 @@ onMounted(async () => {
 })
 
 // Pertenencia sin estado: público es el catálogo base (neutro); personalizado, informativo (cielo).
-const TONO_PERTENENCIA = { 'Público': 'neutral', 'Personalizado': 'sky' } as const
+const TONO_PERTENENCIA = { publico: 'neutral', personalizado: 'sky' } as const
 
-// El tipo del storyboard es su área educativa. El composable solo trae el nombre traducido,
-// así que el área se reconoce por nombre (es/en); un tipo desconocido queda neutro.
+// El tipo del storyboard es su área educativa: tiñe la vista con data-area.
 const tinte = computed(() => uiAreaAttrs(storyboard.value?.area))
 
-// Secciones de guía con contenido, en el orden de la plantilla de la guía.
+// Secciones de guía con contenido, en el orden de la plantilla de la guía (los títulos, los de Platform).
 function seccionesDe(scene: StoryboardScene) {
   return [
-    { label: 'Objetivo', html: scene.objective },
-    { label: 'Pedagogía', html: scene.pedagogia },
-    { label: 'Preguntas e interacciones sugeridas', html: scene.preguntas },
-    { label: 'Psicología', html: scene.psicologia },
-    { label: 'Científico', html: scene.cientifico },
-    { label: 'Lo que esta escena no hace', html: scene.noHace },
-    { label: 'Consejos', html: scene.consejos },
-    { label: 'Mecánica', html: scene.mecanica },
-    { label: 'Material', html: scene.material },
+    { label: t('platform.sbs.g_objetivo'), html: scene.objective },
+    { label: t('platform.sbs.g_pedagogia'), html: scene.pedagogia },
+    { label: t('platform.sbs.g_preguntas'), html: scene.preguntas },
+    { label: t('platform.sbs.g_psicologia'), html: scene.psicologia },
+    { label: t('platform.sbs.g_cientifico'), html: scene.cientifico },
+    { label: t('platform.sbs.g_no_hace'), html: scene.noHace },
+    { label: t('platform.sbs.g_consejos'), html: scene.consejos },
+    { label: t('platform.sbs.g_mecanica'), html: scene.mecanica },
+    { label: t('platform.sbs.g_material'), html: scene.material },
   ].filter(s => !!s.html)
 }
 

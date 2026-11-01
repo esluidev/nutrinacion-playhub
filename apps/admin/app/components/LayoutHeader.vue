@@ -18,8 +18,8 @@
         variant="outline"
         icon="sidebar"
         icon-only
-        :label="isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'"
-        :title="isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'"
+        :label="isCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
+        :title="isCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
         class="hidden lg:inline-flex"
         @click="toggleCollapsed"
       />
@@ -130,7 +130,7 @@ defineEmits<{
 const { t } = useT()
 const route = useRoute()
 const { isCollapsed, toggleCollapsed } = useSidebar()
-const { comunidadActiva, orgActiva, tipo } = useContexto()
+const { orgActiva, tipo } = useContexto()
 
 // Invitaciones pendientes dirigidas a mi correo (estado compartido con la página /invitaciones).
 // Solo con Supabase configurado: useInvitaciones() crea el cliente al invocarse. En dev sin
@@ -184,31 +184,26 @@ const userNameShort = computed(() => {
 })
 
 const pages: Record<string, { titleKey: string }> = {
-  '/dashboard': { titleKey: 'nav.dashboard' },
-  '/dashboard/storyboards': { titleKey: 'nav.storyboards' },
-  '/dashboard/workshops': { titleKey: 'nav.workshops' },
-  '/dashboard/workshops/new': { titleKey: 'dash.newWorkshop' },
-  '/dashboard/planner': { titleKey: 'nav.planner' },
-  '/dashboard/educators': { titleKey: 'nav.educators' },
-  '/dashboard/colaboradores': { titleKey: 'nav.collaborators' },
-  '/dashboard/participantes': { titleKey: 'nav.participants' },
-  '/dashboard/casa': { titleKey: 'nav.homeContent' },
-  '/organizacion/jornadas': { titleKey: 'nav.jornadas' },
-  '/organizacion/casa': { titleKey: 'nav.homeContent' },
-  '/dashboard/configuracion': { titleKey: 'nav.settings' },
-  '/dashboard/perfil': { titleKey: 'nav.profile' },
-  '/organizacion/comunidades': { titleKey: 'nav.communities' },
+  '/organizacion': { titleKey: 'nav.dashboard' },
+  '/organizacion/workshops': { titleKey: 'nav.workshops' },
+  '/organizacion/workshops/new': { titleKey: 'workshops.newTitle' },
+  '/organizacion/planner': { titleKey: 'nav.planner' },
+  '/organizacion/educators': { titleKey: 'nav.educators' },
+  '/organizacion/colaboradores': { titleKey: 'nav.collaborators' },
+  '/organizacion/storyboards': { titleKey: 'nav.storyboards' },
   '/organizacion/administradores': { titleKey: 'nav.admins' },
+  '/perfil': { titleKey: 'nav.profile' },
+  '/invitaciones': { titleKey: 'inbox.title' },
   '/platform/organizaciones': { titleKey: 'nav.organizations' },
   '/platform/licencias': { titleKey: 'nav.licenses' },
+  '/platform/storyboards': { titleKey: 'nav.storyboards' },
   '/platform/invitaciones': { titleKey: 'nav.invitations' },
 }
 
 // Breadcrumb: A = contexto donde estás parado (por TIPO, no por estado), B = página actual.
 const crumbA = computed(() => {
   if (tipo.value === 'platform') return t('nav.platform')
-  if (tipo.value === 'organizacion') return orgActiva.value?.nombre ?? t('ctx.org')
-  return comunidadActiva.value?.nombre ?? orgActiva.value?.nombre ?? t('app.name')
+  return orgActiva.value?.nombre ?? t('app.name')
 })
 const crumbB = computed(() => {
   const tk = route.meta.titleKey as string | undefined
@@ -223,7 +218,7 @@ const crumbB = computed(() => {
 })
 
 function handleMenuAction(action: string) {
-  if (action === 'profile') navigateTo('/dashboard/perfil')
+  if (action === 'profile') navigateTo('/perfil')
 }
 
 async function handleSignOut() {

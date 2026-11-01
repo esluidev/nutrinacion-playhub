@@ -30,7 +30,7 @@
         </div>
       </section>
 
-      <!-- Accesos -->
+      <!-- Accesos: Platform y cada organización con el rol con que la opero -->
       <section class="ui-panel">
         <div class="ui-panel-header">
           <div class="min-w-0">
@@ -48,17 +48,18 @@
             </div>
             <UiBadge tone="neutral" class="shrink-0">Superadmin</UiBadge>
           </div>
-          <div v-for="org in accesos" :key="org.nombre" class="flex items-center gap-3 px-6 py-4">
+          <div v-for="org in orgs" :key="org.id" class="flex items-center gap-3 px-6 py-4">
             <!-- Organización: tono estable por nombre -->
             <UiSymbol size="md" :tone="uiToneFor(org.nombre)" class="text-body font-black">
               {{ org.nombre.charAt(0) }}
             </UiSymbol>
             <div class="min-w-0 flex-1">
               <p class="text-body font-extrabold text-ink">{{ org.nombre }}</p>
-              <p class="ui-caption mt-0.5">{{ org.sub }}</p>
+              <p class="ui-caption mt-0.5">{{ org.esAdmin ? t('perfil.roleAdminDesc') : t('perfil.roleCollabDesc') }}</p>
             </div>
-            <UiBadge tone="neutral" class="shrink-0">{{ org.rol }}</UiBadge>
+            <UiBadge tone="neutral" class="shrink-0">{{ org.esAdmin ? t('perfil.roleAdmin') : t('perfil.roleCollab') }}</UiBadge>
           </div>
+          <p v-if="!orgs.length && !esSuperadmin" class="ui-caption px-6 py-5">{{ t('ctx.noAccess') }}</p>
         </div>
       </section>
 
@@ -86,7 +87,8 @@
 </template>
 
 <script setup lang="ts">
-// Mi perfil (usuario de Admin): nombre, apellido e idioma de la interfaz, y la contraseña.
+// Mi perfil (usuario de Admin): nombre, apellido e idioma de la interfaz, y la contraseña. Es de
+// la persona, no de ningún contexto: vive en /perfil, también para quien solo entra a Platform.
 // El correo es la cuenta de acceso y no se cambia aquí; no hay foto (sin almacenamiento de avatares).
 definePageMeta({ layout: 'dashboard' })
 
@@ -113,14 +115,6 @@ const idiomaOptions = [
   { value: 'es', label: 'Español' },
   { value: 'en', label: 'English' },
 ]
-
-const accesos = computed(() =>
-  orgs.value.map(o => ({
-    nombre: o.nombre,
-    sub: tCount(t, 'perfil.communities', o.comunidades.length),
-    rol: o.esAdmin ? t('perfil.roleAdmin') : t('perfil.roleCollab'),
-  })),
-)
 
 const guardando = ref(false)
 async function guardar() {

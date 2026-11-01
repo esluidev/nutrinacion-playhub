@@ -37,17 +37,14 @@
       <template #cell-estado="{ row }">
         <UiBadge :tone="licenciaTone(row.estado)" dot>{{ t('state.' + row.estado) }}</UiBadge>
       </template>
-      <template #cell-cupos="{ row }">
-        <span class="font-semibold tabular-nums text-muted">{{ row.max_comunidades }} · {{ row.max_educadores }} · {{ row.max_personalizados }}</span>
-      </template>
       <template #cell-vigencia="{ row }">
         <span class="font-semibold text-muted">
           {{ fechaCorta(row.fecha_inicio, locale) }} —
           <span :data-tone="finLicenciaTone(row)" :class="finLicenciaTone(row) && 'font-extrabold text-(--tone-strong)'">{{ row.fecha_fin ? fechaCorta(row.fecha_fin, locale) : t('platform.lics.noExpiry') }}</span>
         </span>
       </template>
-      <template #cell-paises="{ row }">
-        <span class="font-semibold text-muted">{{ row.paises?.length ? row.paises.join(', ') : t('platform.orgDetail.global') }}</span>
+      <template #cell-notas="{ row }">
+        <span class="line-clamp-1 font-semibold text-muted">{{ row.notas || '—' }}</span>
       </template>
       <template #cell-acciones="{ row }">
         <!-- Acciones de tabla: neutras; el borrado se confirma en coral (UiConfirmDialog) -->
@@ -117,9 +114,8 @@ const estadoFiltro = ref('todas')
 const columns = computed(() => [
   { key: 'organizacion', label: t('platform.lics.colOrg') },
   { key: 'estado', label: t('platform.lics.colState') },
-  { key: 'cupos', label: t('platform.lics.colQuota') },
   { key: 'vigencia', label: t('platform.lics.colValidity') },
-  { key: 'paises', label: t('platform.lics.colCountries') },
+  { key: 'notas', label: t('platform.lics.notes') },
   { key: 'acciones', label: '', align: 'right' as const },
 ])
 

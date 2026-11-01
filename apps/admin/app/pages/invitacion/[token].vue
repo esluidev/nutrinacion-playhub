@@ -48,7 +48,7 @@
         <UiSymbol size="md" icon="mail" tone="grape" />
         <p class="text-caption font-semibold leading-snug text-muted">
           {{ t('auth.invite.as') }} <span class="font-extrabold text-ink">{{ roleLabel }}</span>
-          {{ t('auth.invite.in') }} <span class="font-extrabold text-ink">{{ info?.organizacion }}</span><template v-if="info?.comunidad"> · {{ info.comunidad }}</template>
+          {{ t('auth.invite.in') }} <span class="font-extrabold text-ink">{{ info?.organizacion }}</span>
         </p>
       </div>
 
@@ -175,6 +175,7 @@ async function handleSubmit() {
     return
   }
 
-  navigateTo('/dashboard')
+  // Con la sesión abierta, el middleware aterriza por rol (su organización).
+  navigateTo('/')
 }
 </script>

@@ -2,9 +2,9 @@
   <div>
     <!-- Toolbar -->
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <UiSearchInput v-model="search" placeholder="Buscar storyboard…" max-width="xs" />
-      <UiSelect v-model="activeCategory" variant="toolbar" prefix="Categoría" :options="categoryOptions" />
-      <span class="ui-caption ml-auto">{{ storyboards.length }} storyboards publicados</span>
+      <UiSearchInput v-model="search" :placeholder="t('wizard.searchSb')" max-width="xs" />
+      <UiSelect v-model="activeCategory" variant="toolbar" :prefix="t('wizard.category')" :options="categoryOptions" />
+      <span class="ui-caption ml-auto">{{ tCount(t, 'wizard.published', storyboards.length) }}</span>
     </div>
 
     <!-- Selección: la tarjeta elegida se marca en cielo (borde, marca y fondo); el símbolo, con su área -->
@@ -19,14 +19,10 @@
         @click="selectStoryboard(sb.id)"
       >
         <span class="selected-mark"><UiIcon name="check" /></span>
-        <UiSymbol
-          icon="book"
-          size="md"
-                    v-bind="uiAreaAttrs(sb.area)"
-        />
+        <UiSymbol icon="book" size="md" v-bind="uiAreaAttrs(sb.area)" />
         <span class="block">
           <span class="mb-1 block text-body font-extrabold leading-snug text-ink">{{ sb.title }}</span>
-          <span class="ui-caption block">{{ sb.duration }} · {{ sb.scenesCount }} escenas · {{ sb.targetAge }}</span>
+          <span class="ui-caption block">{{ sb.duration }} · {{ tCount(t, 'storyboards.scenes', sb.scenesCount) }} · {{ sb.targetAge }}</span>
         </span>
       </button>
     </div>
@@ -35,28 +31,28 @@
     <UiEmptyState
       v-if="filteredStoryboards.length === 0"
       icon="search"
-      title="Sin resultados"
-      text="Intenta con otros términos de búsqueda"
+      :title="t('common.noResults')"
+      :text="t('wizard.noResultsText')"
     >
       <UiButton variant="outline" size="sm" @click="clearFilters">
-        Limpiar filtros
+        {{ t('common.clearFilters') }}
       </UiButton>
     </UiEmptyState>
   </div>
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
 const { storyboards } = useStoryboards()
 const { state, selectStoryboard } = useWorkshopWizard()
 
 const search = ref('')
 const activeCategory = ref('all')
 
-
 const categoryOptions = computed(() => {
   const cats = new Set(storyboards.value.map(sb => sb.category))
   return [
-    { value: 'all', label: 'Todos' },
+    { value: 'all', label: t('common.all') },
     ...Array.from(cats).map(c => ({ value: c, label: c })),
   ]
 })

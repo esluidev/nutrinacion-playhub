@@ -1,15 +1,16 @@
-// Tipos alineados al esquema v1 de Supabase (supabase/migrations/0001_init.sql).
-// La UI de gestión es español; los nombres de campo siguen el esquema (español).
-// Tenancy = comunidad (nunca "workspace"): organizacion → comunidad → operacion.
+// Tipos alineados al esquema de Supabase (supabase/migrations). Los nombres de campo siguen el
+// esquema (español). Tenancy = organización (decisión 011): la organización es la única unidad
+// de operación; no hay comunidades.
 
-export type Role = 'SUPERADMIN' | 'ADMIN' | 'COLABORADOR' | 'EDUCADOR' | 'PARTICIPANTE'
+export type Role = 'SUPERADMIN' | 'ADMIN' | 'COLABORADOR' | 'EDUCADOR'
 
 // Texto multi-idioma tal como lo guarda la BD (jsonb Localized).
 export type Localized = { es?: string, en?: string, [lang: string]: string | undefined }
 
 // `superadmin` es lo único que define el tipo de usuario a nivel global (abre /platform).
-// Ser admin de una org o colaborador de una comunidad NO es propiedad de la persona: vive en
-// organizacion_administradores / colaboradores (por eso alguien puede ser ambas cosas a la vez).
+// Ser admin o colaborador de una organización NO es propiedad de la persona: vive en
+// organizacion_administradores / organizacion_colaboradores (por eso alguien puede ser ambas
+// cosas en organizaciones distintas).
 export interface Perfil {
   id: number
   nombre: string | null
@@ -28,42 +29,25 @@ export interface Organizacion {
   correo: string | null
   telefono: string | null
   website: string | null
+  logo: string | null
+  paises: string[]      // donde opera (códigos de `paises`, uno o más): deciden su catálogo
   tipo_id: number | null
   created_at: string
 }
 
-export interface Comunidad {
-  id: number
-  nombre: string
-  descripcion: string | null
-  correo: string | null
-  telefono: string | null
-  logo: string | null
-  organizacion_id: number
-  pais: string | null   // codigo ISO alpha-2
-  created_at: string
-}
-
-// Comunidad con su organizacion resuelta: el switcher las agrupa por org, y para las
-// comunidades donde solo colaboro necesito el nombre de una org que no administro.
-export interface ComunidadConOrg extends Comunidad {
-  organizaciones: { id: number, nombre: string } | null
-}
-
 // Usuario administrativo autenticado con su SUPERFICIE DE ACCESO resuelta.
-// Las tres piezas responden "que puedo tocar": el flag global, las orgs que administro, y las
-// comunidades a las que llego (por administrar su org o por colaborar en ellas).
+// Las piezas responden «qué puedo tocar»: el flag global, las organizaciones que administro y
+// aquellas donde colaboro (operación sin licencia, administradores ni colaboradores).
 export interface AuthUser {
   id: string                        // auth.users.id (uuid)
   email: string
   perfil: Perfil                    // perfil.superadmin abre /platform
   organizaciones: Organizacion[]    // las que ADMINISTRO (via organizacion_administradores)
-  comunidades: ComunidadConOrg[]    // a las que tengo acceso (el RLS de 0002 las filtra)
-  colaboraEn: number[]              // ids de comunidades donde soy COLABORADOR activo
+  colaboraEn: Organizacion[]        // donde soy COLABORADOR activo (organizacion_colaboradores)
   titularDe: number[]               // ids de orgs donde soy el TITULAR (puede invitar co-admins)
 }
 
-// Info de una invitacion validada, tal como la devuelve la Edge Function `canjear-invitacion`.
+// Info de una invitación validada, tal como la devuelve la Edge Function `canjear-invitacion`.
 export interface InvitacionInfo {
   role: Extract<Role, 'ADMIN' | 'COLABORADOR'>
   email: string | null
@@ -71,8 +55,7 @@ export interface InvitacionInfo {
   apellido: string
   titular: boolean          // invitación de administrador que será el titular
   organizacion: string
-  comunidad: string | null
-  // Si el correo invitado ya tiene cuenta, esta pagina no ofrece crear una: la invitacion se
+  // Si el correo invitado ya tiene cuenta, esta página no ofrece crear una: la invitación se
   // acepta dentro de la app, desde /invitaciones.
   cuentaExiste: boolean
 }

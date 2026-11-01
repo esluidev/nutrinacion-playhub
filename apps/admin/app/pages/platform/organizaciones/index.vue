@@ -66,8 +66,9 @@
         <!-- Sin licencia: le falta lo necesario para operar (coral) -->
         <UiBadge v-else tone="coral" dot>{{ t('platform.orgs.noLicense') }}</UiBadge>
       </template>
-      <template #cell-comunidades="{ row }">
-        <span class="font-extrabold tabular-nums text-ink">{{ row.comunidades }}</span>
+      <!-- Los países donde opera, con su bandera -->
+      <template #cell-paises="{ row }">
+        <span class="font-semibold text-muted">{{ (row.paises ?? []).map(etiquetaPais).join(' · ') || '—' }}</span>
       </template>
       <template #cell-acciones="{ row }">
         <!-- Acciones de tabla: neutras; el borrado se confirma en coral (UiConfirmDialog) -->
@@ -140,6 +141,7 @@ definePageMeta({ layout: 'dashboard', titleKey: 'platform.orgs.title', descKey: 
 const { t, locale } = useT()
 const { listOrganizaciones, listTiposOrganizacion, deleteOrganizacion, resumenBorradoOrganizacion } = usePlatform()
 const { toast } = useToast()
+const { etiqueta: etiquetaPais, cargar: cargarPaises } = usePaises()
 
 const orgs = ref<any[]>([])
 const total = ref(0)
@@ -156,7 +158,7 @@ const columns = computed(() => [
   { key: 'tipo', label: t('platform.orgs.colType') },
   { key: 'admins', label: t('platform.orgs.colAdmins') },
   { key: 'licencia', label: t('platform.orgs.colLicense') },
-  { key: 'comunidades', label: t('platform.orgs.colCommunities'), align: 'center' as const },
+  { key: 'paises', label: t('platform.orgs.colCountries') },
   { key: 'acciones', label: '', align: 'right' as const },
 ])
 
@@ -206,13 +208,14 @@ async function load() {
 }
 
 onMounted(async () => {
+  cargarPaises()
   tipos.value = await listTiposOrganizacion()
   await load()
 })
 
 // ── Eliminar ─────────────────────────────────────────────────────────────────
-// Se va entera: sus comunidades con toda su operación, licencias, administradores, educadores,
-// jornadas y temarios. Solo la impiden sus storyboards personalizados (se resuelven en Player).
+// Se va entera: su operación (educadores, talleres y jornadas), licencias y administradores. Solo
+// la impiden sus storyboards personalizados (se resuelven en Player).
 const borrando = ref<{ id: number, nombre: string } | null>(null)
 const resumen = ref<Awaited<ReturnType<typeof resumenBorradoOrganizacion>> | null>(null)
 const eliminando = ref(false)
@@ -227,12 +230,9 @@ const lineasResumen = computed(() => {
   const r = resumen.value
   return r
     ? lineas([
-        [r.comunidades, 'platform.orgs.comunidadesCount'],
-        [r.talleres, 'orgHome.talleresCount'],
-        [r.participantes, 'coms.participantesCount'],
         [r.educadores, 'orgHome.educadoresCount'],
-        [r.jornadas, 'platform.orgs.jornadasCount'],
-        [r.temarios, 'platform.orgs.temariosCount'],
+        [r.talleres, 'orgHome.talleresCount'],
+        [r.jornadas, 'orgHome.jornadasCount'],
         [r.licencias, 'platform.orgs.licenciasCount'],
         [r.administradores, 'platform.orgs.adminsLostCount'],
       ])

@@ -1,6 +1,6 @@
-// Workshops de la comunidad activa sobre Supabase. ADAPTADOR: la UI (lista, detalle, planner,
-// dashboard) consume la misma forma Workshop de siempre; aquí se resuelven storyboard, educadores
-// asignados (workshop_educadores) y estado. En dev sin Supabase, filas demo.
+// Workshops de la organización activa sobre Supabase. ADAPTADOR: la UI (lista, detalle, planner,
+// inicio) consume la misma forma Workshop de siempre; aquí se resuelven storyboard, jornada,
+// educadores asignados (workshop_educadores) y estado. En dev sin Supabase, filas demo.
 //
 // El estado guardado (estado_workshop, 0004) es el ciclo: borrador → en revisión → publicado →
 // finalizado, más cancelado y archivado (descartado); la base hace cumplir las transiciones. Lo que
@@ -10,6 +10,8 @@
 
 import type { Enums } from '~/utils/db'
 import type { Localized } from '~/utils/types'
+import type { JornadaResumen } from '~/utils/jornadas'
+import { lugarDelTaller } from '~/utils/jornadas'
 import { UI_SESSION_TONES, type UiSessionState, type UiTone } from '@playhub/ui/app/utils/ui-tones'
 
 export type Modalidad = Enums<'modalidad_workshop'>
@@ -34,7 +36,7 @@ export interface Workshop {
   initials: string
   date: string          // 'YYYY-MM-DD' ('' = sin fecha)
   time: string          // '09:00 - 10:30' ('' = sin horario)
-  location: string
+  location: string      // el lugar efectivo: el de su jornada con el detalle, o el suyo si va suelto
   capacity: number      // asistentes estimados
   group: string         // el grupo que asiste («2.º B»)
   language: string      // el idioma del contenido
@@ -47,8 +49,10 @@ export interface Workshop {
   // Tono de la sesión (hoy, próxima, cerrada…), el mismo que usa Educators: lo pinta la vista.
   tone: UiTone
   modalidad: Modalidad
-  jornada: string       // la jornada de la organización a la que pertenece ('' = ninguna)
-  // Los valores tal cual están guardados, para editarlos (los de arriba son para mostrar).
+  // La jornada a la que pertenece, con sus días y su lugar (la lista agrupa por ella); null = suelto.
+  jornada: JornadaResumen | null
+  // Los valores tal cual están guardados, para editarlos (los de arriba son para mostrar). Con
+  // jornada, `ubicacion` es solo el detalle («Aula 3A»).
   editable: { titulo: string, horaInicio: string, horaFin: string, ubicacion: string, jornadaId: number | null }
   // Todos los asignados (educadores directos o vía grupo), con su ejecución real y su cierre.
   asignados: {
@@ -63,30 +67,8 @@ export interface Workshop {
   }[]
 }
 
-// Modalidades de la constitución: presencial, remota o híbrida.
-export const MODALIDADES: Record<Modalidad, { label: string, desc: string }> = {
-  PRESENCIAL: { label: 'Presencial', desc: 'El educador imparte el taller en vivo, en la misma sala que el grupo.' },
-  REMOTO: { label: 'Remoto', desc: 'El educador lo conduce a distancia y el grupo lo sigue en su pantalla.' },
-  HIBRIDO: { label: 'Híbrido', desc: 'Parte del grupo está en la sala y parte a distancia.' },
-}
-
-export const PARTICIPACION_LABELS: Record<FeedbackWorkshop['participacion_grupo'], string> = { BAJA: 'Baja', MEDIA: 'Media', ALTA: 'Alta' }
-export const CLARIDAD_LABELS: Record<FeedbackWorkshop['claridad_contenido'], string> = { POCO_CLARA: 'Poco clara', CLARA: 'Clara', MUY_CLARA: 'Muy clara' }
-
-const STATUS_LABELS: Record<Workshop['status'], string> = {
-  programado: 'Programado',
-  completado: 'Realizado',
-  sin_realizar: 'Sin realizar',
-  cancelado: 'Cancelado',
-  borrador: 'Borrador',
-  revision: 'En revisión',
-  archivado: 'Archivado',
-}
-
-function hoyISO(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+// Modalidades de la constitución: presencial, remota o híbrida (las etiquetas, en i18n).
+export const MODALIDADES: Modalidad[] = ['PRESENCIAL', 'REMOTO', 'HIBRIDO']
 
 // Estado de la sesión para el color (DESIGN.md, «Roles de color»): hoy en sol, próxima en cielo,
 // completada en lima, borrador neutro y cancelada en coral.
@@ -97,18 +79,19 @@ export function sessionState(status: Workshop['status'], date: string): UiSessio
   if (status === 'cancelado') return 'cancelado'
   if (status === 'completado') return 'cerrado'
   if (status === 'sin_realizar') return 'por_cerrar'
-  return date === hoyISO() ? 'hoy' : 'proximo'
+  return date === hoyLocal() ? 'hoy' : 'proximo'
 }
 
 export function sessionTone(status: Workshop['status'], date: string): UiTone {
   return UI_SESSION_TONES[sessionState(status, date)]
 }
 
+const DEMO_JORNADA: JornadaResumen = { id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Centro Comunitario', fecha_inicio: hoyLocal(-2), fecha_fin: hoyLocal(4) }
 const DEMO_WORKSHOPS: Workshop[] = [
-  { id: 1, title: 'Los Frijoles Mágicos', storyboardId: 1, storyboard: 'Los Frijoles Mágicos', educatorId: 1, educator: 'Maria Lopez Hernandez', initials: 'ML', date: hoyISO(), time: '09:00 - 10:30', location: 'Aula 3A, Centro Comunitario', capacity: 25, group: '2.º B', language: 'es', notes: 'Traer frijoles reales para la demostración.', estado: 'PUBLICADO', status: 'programado', statusLabel: 'Programado', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('programado', hoyISO()), modalidad: 'PRESENCIAL', jornada: '', editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [{ id: 1, asignacionId: 1, nombre: 'Maria Lopez Hernandez', grupo: null, estado: 'PENDIENTE', iniciadoEn: null, terminadoEn: null, feedback: null }] },
-  { id: 2, title: 'Piernas Fuertes', storyboardId: 2, storyboard: 'Piernas Fuertes', educatorId: 2, educator: 'Carlos Ramirez Torres', initials: 'CR', date: '2026-03-17', time: '10:00 - 11:30', location: 'Salón Principal', capacity: 30, group: '3.º A', language: 'es', notes: '', estado: 'PUBLICADO', status: 'programado', statusLabel: 'Programado', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('programado', '2026-03-17'), modalidad: 'PRESENCIAL', jornada: '', editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [{ id: 2, asignacionId: 2, nombre: 'Carlos Ramirez Torres', grupo: null, estado: 'PENDIENTE', iniciadoEn: null, terminadoEn: null, feedback: null }] },
-  { id: 3, title: 'La Sopa de Verduras', storyboardId: 3, storyboard: 'La Sopa de Verduras', educatorId: 3, educator: 'Ana Torres Gutierrez', initials: 'AT', date: '2026-03-10', time: '11:00 - 12:30', location: 'Escuela Primaria Norte', capacity: 28, group: '1.º C', language: 'es', notes: 'Excelente participación.', estado: 'FINALIZADO', status: 'completado', statusLabel: 'Realizado', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('completado', '2026-03-10'), modalidad: 'PRESENCIAL', jornada: '', editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [{ id: 3, asignacionId: 3, nombre: 'Ana Torres Gutierrez', grupo: null, estado: 'COMPLETADO', iniciadoEn: null, terminadoEn: null, feedback: null }] },
-  { id: 4, title: 'Lácteos y Calcio', storyboardId: 1, storyboard: 'Los Frijoles Mágicos', educatorId: 3, educator: 'Ana Torres Gutierrez', initials: 'AT', date: '', time: '', location: 'Sin asignar', capacity: 0, group: '', language: 'es', notes: 'Borrador inicial.', estado: 'BORRADOR', status: 'borrador', statusLabel: 'Borrador', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('borrador', ''), modalidad: 'PRESENCIAL', jornada: '', editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [] },
+  { id: 1, title: 'Los Frijoles Mágicos', storyboardId: 1, storyboard: 'Los Frijoles Mágicos', educatorId: 1, educator: 'Maria Lopez Hernandez', initials: 'ML', date: hoyLocal(), time: '09:00 - 10:30', location: 'Centro Comunitario · Aula 3A', capacity: 25, group: '2.º B', language: 'es', notes: 'Traer frijoles reales para la demostración.', estado: 'PUBLICADO', status: 'programado', statusLabel: 'Hoy', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('programado', hoyLocal()), modalidad: 'PRESENCIAL', jornada: DEMO_JORNADA, editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: 'Aula 3A', jornadaId: 1 }, asignados: [{ id: 1, asignacionId: 1, nombre: 'Maria Lopez Hernandez', grupo: null, estado: 'PENDIENTE', iniciadoEn: null, terminadoEn: null, feedback: null }] },
+  { id: 2, title: 'Piernas Fuertes', storyboardId: 2, storyboard: 'Piernas Fuertes', educatorId: 2, educator: 'Carlos Ramirez Torres', initials: 'CR', date: hoyLocal(3), time: '10:00 - 11:30', location: 'Centro Comunitario · Salón Principal', capacity: 30, group: '3.º A', language: 'es', notes: '', estado: 'PUBLICADO', status: 'programado', statusLabel: 'Programado', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('programado', hoyLocal(3)), modalidad: 'PRESENCIAL', jornada: DEMO_JORNADA, editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: 'Salón Principal', jornadaId: 1 }, asignados: [{ id: 2, asignacionId: 2, nombre: 'Carlos Ramirez Torres', grupo: null, estado: 'PENDIENTE', iniciadoEn: null, terminadoEn: null, feedback: null }] },
+  { id: 3, title: 'La Sopa de Verduras', storyboardId: 3, storyboard: 'La Sopa de Verduras', educatorId: 3, educator: 'Ana Torres Gutierrez', initials: 'AT', date: hoyLocal(-9), time: '11:00 - 12:30', location: 'Escuela Primaria Norte', capacity: 28, group: '1.º C', language: 'es', notes: 'Excelente participación.', estado: 'FINALIZADO', status: 'completado', statusLabel: 'Realizado', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('completado', hoyLocal(-9)), modalidad: 'PRESENCIAL', jornada: null, editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [{ id: 3, asignacionId: 3, nombre: 'Ana Torres Gutierrez', grupo: null, estado: 'COMPLETADO', iniciadoEn: null, terminadoEn: null, feedback: null }] },
+  { id: 4, title: 'Lácteos y Calcio', storyboardId: 1, storyboard: 'Los Frijoles Mágicos', educatorId: 3, educator: 'Ana Torres Gutierrez', initials: 'AT', date: '', time: '', location: '—', capacity: 0, group: '', language: 'es', notes: 'Borrador inicial.', estado: 'BORRADOR', status: 'borrador', statusLabel: 'Borrador', motivoCancelacion: '', reprogramaciones: 0, tone: sessionTone('borrador', ''), modalidad: 'PRESENCIAL', jornada: null, editable: { titulo: '', horaInicio: '', horaFin: '', ubicacion: '', jornadaId: null }, asignados: [] },
 ]
 
 interface TallerRow {
@@ -126,7 +109,7 @@ interface TallerRow {
   notas: string | null
   motivo_cancelacion: string | null
   reprogramaciones: number
-  jornada: { id: number, nombre: string } | null
+  jornada: JornadaResumen | null
   storyboard: { id: number, titulo: Localized } | null
   asignaciones: {
     id: number
@@ -141,12 +124,12 @@ interface TallerRow {
 
 export function useWorkshops() {
   const demo = !isSupabaseConfigured()
-  const { locale } = useT()
-  const { comunidadActiva } = useContexto()
+  const { t, locale } = useT()
+  const { orgActiva } = useContexto()
 
-  const state = useState<{ comunidadId: number | null, workshops: Workshop[], loading: boolean }>(
+  const state = useState<{ orgId: number | null, workshops: Workshop[], loading: boolean }>(
     'workshops-data',
-    () => ({ comunidadId: null, workshops: demo ? DEMO_WORKSHOPS : [], loading: false }),
+    () => ({ orgId: null, workshops: demo ? DEMO_WORKSHOPS : [], loading: false }),
   )
 
   function mapRow(row: TallerRow): Workshop {
@@ -161,17 +144,17 @@ export function useWorkshops() {
     let status: Workshop['status']
     let statusLabel: string
     switch (row.estado) {
-      case 'BORRADOR': status = 'borrador'; statusLabel = STATUS_LABELS.borrador; break
-      case 'EN_REVISION': status = 'revision'; statusLabel = STATUS_LABELS.revision; break
-      case 'CANCELADO': status = 'cancelado'; statusLabel = STATUS_LABELS.cancelado; break
-      case 'ARCHIVADO': status = 'archivado'; statusLabel = STATUS_LABELS.archivado; break
+      case 'BORRADOR': status = 'borrador'; statusLabel = t('workshops.st.borrador'); break
+      case 'EN_REVISION': status = 'revision'; statusLabel = t('workshops.st.revision'); break
+      case 'CANCELADO': status = 'cancelado'; statusLabel = t('workshops.st.cancelado'); break
+      case 'ARCHIVADO': status = 'archivado'; statusLabel = t('workshops.st.archivado'); break
       case 'FINALIZADO':
         status = realizado ? 'completado' : 'sin_realizar'
-        statusLabel = realizado ? STATUS_LABELS.completado : empezado ? 'Falta el feedback' : STATUS_LABELS.sin_realizar
+        statusLabel = realizado ? t('workshops.st.completado') : empezado ? t('workshops.st.faltaFeedback') : t('workshops.st.sin_realizar')
         break
       default:
         status = 'programado'
-        statusLabel = empezado ? 'En curso' : row.fecha === hoyISO() ? 'Hoy' : STATUS_LABELS.programado
+        statusLabel = empezado ? t('workshops.st.enCurso') : row.fecha === hoyLocal() ? t('workshops.st.hoy') : t('workshops.st.programado')
     }
 
     const extras = row.asignaciones.filter(a => a.educador).length - 1
@@ -182,11 +165,11 @@ export function useWorkshops() {
       storyboardId: row.storyboard?.id ?? 0,
       storyboard: sbTitulo || '—',
       educatorId: primero?.id ?? 0,
-      educator: primero ? nombreDe(primero) + (extras > 0 ? ` +${extras}` : '') : 'Sin asignar',
+      educator: primero ? nombreDe(primero) + (extras > 0 ? ` +${extras}` : '') : t('workshops.unassigned'),
       initials: primero ? `${primero.nombre.charAt(0)}${(primero.apellido ?? '').charAt(0)}`.toUpperCase() : '—',
       date: row.fecha ?? '',
       time: row.hora_inicio && row.hora_fin ? `${row.hora_inicio.slice(0, 5)} - ${row.hora_fin.slice(0, 5)}` : '',
-      location: row.ubicacion || 'Sin asignar',
+      location: lugarDelTaller(row, row.jornada) || '—',
       capacity: row.asistentes_estimados ?? 0,
       group: row.grupo_asistente ?? '',
       language: row.idioma_contenido,
@@ -198,7 +181,7 @@ export function useWorkshops() {
       reprogramaciones: row.reprogramaciones,
       tone: sessionTone(status, row.fecha ?? ''),
       modalidad: row.modalidad,
-      jornada: row.jornada?.nombre ?? '',
+      jornada: row.jornada,
       editable: {
         titulo: row.titulo ?? '',
         horaInicio: row.hora_inicio?.slice(0, 5) ?? '',
@@ -221,33 +204,36 @@ export function useWorkshops() {
     }
   }
 
+  // `educadores` se embebe por su FK directa: la compuesta (educador_id, organizacion_id) también
+  // llega a `educadores` y PostgREST pide elegir una.
   async function refresh() {
     if (demo) return
-    const cid = comunidadActiva.value?.id
-    if (!cid) return
+    const oid = orgActiva.value?.id
+    if (!oid) return
     state.value.loading = true
     const { data } = await useSupabaseClient()
       .from('workshops')
       .select(`
         id, titulo, fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
         estado, modalidad, notas, motivo_cancelacion, reprogramaciones,
-        jornada:jornadas ( id, nombre ),
+        jornada:jornadas ( id, nombre, ubicacion, fecha_inicio, fecha_fin ),
         storyboard:storyboards ( id, titulo ),
         asignaciones:workshop_educadores ( id, estado, iniciado_en, terminado_en,
-          educador:educadores ( id, nombre, apellido ), grupo:educador_grupos ( id, nombre ),
+          educador:educadores!workshop_educadores_educador_id_fkey ( id, nombre, apellido ), grupo:educador_grupos ( id, nombre ),
           feedback:workshop_feedback ( calificacion, asistentes_reales, participacion_grupo, claridad_contenido,
             dificultades_grupo, material_faltante ) )
       `)
-      .eq('comunidad_id', cid)
+      .eq('organizacion_id', oid)
       .order('fecha', { ascending: true, nullsFirst: false })
     state.value.workshops = (((data as unknown) as TallerRow[] | null) ?? []).map(mapRow)
-    state.value.comunidadId = cid
+    state.value.orgId = oid
     state.value.loading = false
   }
 
+  // Carga perezosa: al entrar con una organización distinta a la última cargada.
   if (import.meta.client && !demo) {
-    const cid = comunidadActiva.value?.id ?? null
-    if (cid && state.value.comunidadId !== cid && !state.value.loading) refresh()
+    const oid = orgActiva.value?.id ?? null
+    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
   }
 
   const workshops = computed(() => state.value.workshops)
@@ -258,10 +244,11 @@ export function useWorkshops() {
   }
 
   // ── Escritura ───────────────────────────────────────────────────────────────
-  // Alta desde el wizard: el taller (nace en borrador o en revisión) + una asignación por educador
+  // Alta desde el asistente: el taller (nace en borrador o en revisión) + una asignación por educador
   // (con su grupo de educadores si vino de uno) y, si se eligió, se publica. La base comprueba que
-  // el storyboard esté publicado, que la organización pueda verlo, que el idioma sea uno de los
-  // suyos y que esté disponible en el país de la comunidad; para publicar, fecha, hora y educador.
+  // el storyboard esté publicado y disponible para la organización (sus países o personalizado suyo),
+  // que el idioma sea uno de los suyos y que la fecha caiga en los días de la jornada; para publicar,
+  // fecha, hora y educador.
   async function createTaller(payload: {
     titulo: string
     storyboardId: number
@@ -279,8 +266,9 @@ export function useWorkshops() {
     asignaciones: { educadorId: number, grupoId: number | null }[]
   }): Promise<{ id: number | null, error: string | null }> {
     if (demo) return { id: 1, error: null }
-    if (!comunidadActiva.value) return { id: null, error: 'Sin comunidad activa' }
+    if (!orgActiva.value) return { id: null, error: t('ctx.noOrgActive') }
     const supabase = useSupabaseClient()
+    const organizacionId = orgActiva.value.id
 
     const { data, error } = await supabase
       .from('workshops')
@@ -296,7 +284,7 @@ export function useWorkshops() {
         notas: payload.notas.trim() || null,
         estado: payload.estado === 'EN_REVISION' ? 'EN_REVISION' : 'BORRADOR',
         modalidad: payload.modalidad,
-        comunidad_id: comunidadActiva.value.id,
+        organizacion_id: organizacionId,
         storyboard_id: payload.storyboardId,
         jornada_id: payload.jornadaId,
       })
@@ -305,13 +293,12 @@ export function useWorkshops() {
     if (error) return { id: null, error: error.message }
 
     if (payload.asignaciones.length) {
-      const comunidadId = comunidadActiva.value.id
       const { error: e2 } = await supabase.from('workshop_educadores').insert(
         payload.asignaciones.map(a => ({
           workshop_id: data.id,
           educador_id: a.educadorId,
           educador_grupo_id: a.grupoId,
-          comunidad_id: comunidadId,
+          organizacion_id: organizacionId,
         })),
       )
       if (e2) return { id: null, error: e2.message }
@@ -321,7 +308,7 @@ export function useWorkshops() {
       const { error: e3 } = await supabase.from('workshops').update({ estado: 'PUBLICADO' }).eq('id', data.id)
       if (e3) {
         await refresh()
-        return { id: data.id, error: `Se guardó como borrador, pero no se pudo publicar: ${e3.message}` }
+        return { id: data.id, error: t('workshops.savedNotPublished', { error: e3.message }) }
       }
     }
 
@@ -330,20 +317,22 @@ export function useWorkshops() {
   }
 
   // El planner mueve talleres de día: se persiste y se refleja optimista en la lista. Mover uno
-  // finalizado sin realizar a hoy o después lo reprograma (vuelve a publicado).
+  // finalizado sin realizar a hoy o después lo reprograma (vuelve a publicado). Si el día cae
+  // fuera de su jornada, la base lo rechaza y el refresco lo devuelve a su sitio.
   async function updateFecha(id: number, fecha: string) {
     const w = state.value.workshops.find(x => x.id === id)
     if (w) w.date = fecha
     if (demo) return { error: null }
-    const reprogramar = w?.estado === 'FINALIZADO' && fecha >= hoyISO()
+    const reprogramar = w?.estado === 'FINALIZADO' && fecha >= hoyLocal()
     const { error } = await useSupabaseClient().from('workshops')
       .update(reprogramar ? { fecha, estado: 'PUBLICADO' } : { fecha }).eq('id', id)
     await refresh()
     return { error: error?.message ?? null }
   }
 
-  // Editar los datos del taller (no su estado). La base valida idioma, jornada y storyboard; uno
-  // archivado no se modifica.
+  // Editar los datos del taller (no su estado ni su jornada, que se cambia con cambiarJornada). La
+  // base valida idioma, storyboard y que la fecha caiga en los días de su jornada; uno archivado no
+  // se modifica.
   async function actualizarTaller(id: number, datos: {
     titulo: string
     fecha: string
@@ -354,7 +343,6 @@ export function useWorkshops() {
     capacidad: number | null
     idioma: string
     modalidad: Modalidad
-    jornadaId: number | null
     notas: string
   }) {
     if (demo) return { error: null }
@@ -368,23 +356,50 @@ export function useWorkshops() {
       asistentes_estimados: datos.capacidad,
       idioma_contenido: datos.idioma as Enums<'idioma'>,
       modalidad: datos.modalidad,
-      jornada_id: datos.jornadaId,
       notas: datos.notas.trim() || null,
     }).eq('id', id)
     await refresh()
     return { error: error?.message ?? null }
   }
 
-  // Sumar o quitar educadores. La base exige que el educador esté activo en la comunidad y que uno
-  // publicado conserve al menos uno (se asigna el nuevo antes de quitar al anterior).
-  async function asignarEducador(workshopId: number, educadorId: number) {
+  // Cambiar la jornada (o quitarla): la base exige que la fecha caiga en sus días. Con `ubicacion`,
+  // también su lugar (al salir de una jornada se queda con el lugar completo, no solo el detalle).
+  // Si era el último taller de su jornada anterior, la base la borra.
+  async function cambiarJornada(id: number, jornadaId: number | null, ubicacion?: string) {
     if (demo) return { error: null }
-    if (!comunidadActiva.value) return { error: 'Sin comunidad activa' }
-    // La comunidad la fija la base desde el workshop; se manda por el tipo de la tabla.
-    const { error } = await useSupabaseClient().from('workshop_educadores')
-      .insert({ workshop_id: workshopId, educador_id: educadorId, comunidad_id: comunidadActiva.value.id })
+    const cambios = ubicacion === undefined
+      ? { jornada_id: jornadaId }
+      : { jornada_id: jornadaId, ubicacion: ubicacion.trim() || null }
+    const { error } = await useSupabaseClient().from('workshops').update(cambios).eq('id', id)
     await refresh()
     return { error: error?.message ?? null }
+  }
+
+  // Sumar o quitar educadores. La base exige que el educador esté activo y que uno publicado
+  // conserve al menos uno (se asigna el nuevo antes de quitar al anterior).
+  async function asignarEducador(workshopId: number, educadorId: number) {
+    if (demo) return { error: null }
+    if (!orgActiva.value) return { error: t('ctx.noOrgActive') }
+    // La organización la fija la base desde el workshop; se manda por el tipo de la tabla.
+    const { error } = await useSupabaseClient().from('workshop_educadores')
+      .insert({ workshop_id: workshopId, educador_id: educadorId, organizacion_id: orgActiva.value.id })
+    await refresh()
+    return { error: error?.message ?? null }
+  }
+
+  // Asignar un grupo entero: una asignación por miembro que aún no esté, recordando el grupo.
+  async function asignarGrupo(workshopId: number, grupoId: number, miembros: number[]) {
+    if (demo) return { error: null, asignados: miembros.length }
+    if (!orgActiva.value) return { error: t('ctx.noOrgActive'), asignados: 0 }
+    const ya = new Set(getWorkshop(workshopId)?.asignados.map(a => a.id) ?? [])
+    const nuevos = miembros.filter(id => !ya.has(id))
+    if (!nuevos.length) return { error: null, asignados: 0 }
+    const organizacionId = orgActiva.value.id
+    const { error } = await useSupabaseClient().from('workshop_educadores').insert(
+      nuevos.map(id => ({ workshop_id: workshopId, educador_id: id, educador_grupo_id: grupoId, organizacion_id: organizacionId })),
+    )
+    await refresh()
+    return { error: error?.message ?? null, asignados: nuevos.length }
   }
 
   async function quitarAsignacion(asignacionId: number) {
@@ -419,24 +434,25 @@ export function useWorkshops() {
     return { error: error?.message ?? null }
   }
 
-  // Duplicar = mismo contenido y equipo, SIN fecha y en borrador (para reprogramarlo).
+  // Duplicar = mismo contenido, SIN fecha, sin jornada y en borrador (para reprogramarlo). Suelto,
+  // se lleva el lugar completo de la jornada del original.
   async function duplicarTaller(id: number): Promise<{ id: number | null, error: string | null }> {
     if (demo) return { id: null, error: null }
     const w = getWorkshop(id)
-    if (!w || !comunidadActiva.value) return { id: null, error: 'Taller no encontrado' }
+    if (!w || !orgActiva.value) return { id: null, error: t('workshops.notFound') }
     const supabase = useSupabaseClient()
     const { data, error } = await supabase
       .from('workshops')
       .insert({
         titulo: w.title,
-        ubicacion: w.location === 'Sin asignar' ? null : w.location,
+        ubicacion: lugarDelTaller(w.editable, w.jornada) || null,
         grupo_asistente: w.group || null,
         asistentes_estimados: w.capacity || null,
         idioma_contenido: w.language as Enums<'idioma'>,
         notas: w.notes || null,
         estado: 'BORRADOR',
         modalidad: w.modalidad,
-        comunidad_id: comunidadActiva.value.id,
+        organizacion_id: orgActiva.value.id,
         storyboard_id: w.storyboardId,
       })
       .select('id')
@@ -454,7 +470,9 @@ export function useWorkshops() {
     createTaller,
     updateFecha,
     actualizarTaller,
+    cambiarJornada,
     asignarEducador,
+    asignarGrupo,
     quitarAsignacion,
     enviarARevision,
     volverABorrador,

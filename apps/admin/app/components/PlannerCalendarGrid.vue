@@ -7,7 +7,8 @@
       </div>
     </div>
 
-    <!-- Semanas -->
+    <!-- Semanas. En cada día de una jornada, su marca con su nombre y su lugar (tinte lima, como la
+         navegación actual): al pulsarla se abre el panel de la jornada. -->
     <div v-for="(week, wIdx) in calendarWeeks" :key="wIdx" class="grid grid-cols-7 border-b border-line last:border-b-0">
       <div
         v-for="(cell, cIdx) in week"
@@ -21,10 +22,22 @@
       >
         <div class="mb-1.5 flex items-center justify-between">
           <span :class="['ui-day ui-day-sm', !cell.isCurrentMonth && 'is-outside']" :aria-current="cell.isToday ? 'date' : undefined">{{ cell.day }}</span>
-          <span v-if="cell.isToday" class="eyebrow text-(--tone-strong)">Hoy</span>
+          <span v-if="cell.isToday" class="eyebrow text-(--tone-strong)">{{ t('common.today') }}</span>
         </div>
 
         <div class="flex flex-col gap-0.5">
+          <button
+            v-for="j in cell.jornadas"
+            :key="'j-' + j.id"
+            type="button"
+            data-tone="lime"
+            class="flex w-full items-center gap-1 truncate rounded-chip bg-(--nav-current) px-1.5 py-0.5 text-left text-micro font-extrabold text-ink transition-colors hover:bg-(--tone-tint-edge)"
+            :title="`${j.nombre} · ${j.ubicacion}`"
+            @click="emit('abrirJornada', j.id)"
+          >
+            <UiIcon name="calendar" class="size-3 shrink-0 text-(--tone-icon)" />
+            <span class="truncate">{{ j.nombre }} · {{ j.ubicacion }}</span>
+          </button>
           <PlannerWorkshopCard v-for="ws in cell.workshops" :key="ws.id" :workshop="ws" compact />
         </div>
       </div>
@@ -33,9 +46,19 @@
 </template>
 
 <script setup lang="ts">
-const { visibleWorkshops, todayStr, monthAnchor, formatDate } = usePlanner()
+import type { JornadaFila } from '~/composables/useJornadas'
 
-const dayHeaders = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const emit = defineEmits<{ abrirJornada: [id: number] }>()
+
+const { t, locale } = useT()
+const { visibleWorkshops, todayStr, monthAnchor, formatDate, jornadasDe } = usePlanner()
+
+// Lunes a domingo, abreviados en el idioma de la UI.
+const dayHeaders = computed(() => Array.from({ length: 7 }, (_, i) => {
+  const d = new Date(2024, 0, 1 + i) // el 1 de enero de 2024 fue lunes
+  const s = d.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { weekday: 'short' }).replace('.', '')
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}))
 
 interface CalendarCell {
   day: number
@@ -43,6 +66,19 @@ interface CalendarCell {
   isCurrentMonth: boolean
   isToday: boolean
   workshops: typeof visibleWorkshops.value
+  jornadas: JornadaFila[]
+}
+
+function celda(d: Date, isCurrentMonth: boolean): CalendarCell {
+  const fecha = formatDate(d)
+  return {
+    day: d.getDate(),
+    fecha,
+    isCurrentMonth,
+    isToday: fecha === todayStr,
+    workshops: visibleWorkshops.value.filter(ws => ws.fecha === fecha),
+    jornadas: jornadasDe(fecha),
+  }
 }
 
 const calendarWeeks = computed(() => {
@@ -60,42 +96,18 @@ const calendarWeeks = computed(() => {
 
   // Mes anterior
   for (let i = startDow - 1; i >= 0; i--) {
-    const day = prevMonthDays - i
-    const d = new Date(year, month - 1, day)
-    const fecha = formatDate(d)
-    cells.push({
-      day,
-      fecha,
-      isCurrentMonth: false,
-      isToday: fecha === todayStr,
-      workshops: visibleWorkshops.value.filter(ws => ws.fecha === fecha),
-    })
+    cells.push(celda(new Date(year, month - 1, prevMonthDays - i), false))
   }
 
   // Mes actual
   for (let day = 1; day <= daysInMonth; day++) {
-    const fecha = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    cells.push({
-      day,
-      fecha,
-      isCurrentMonth: true,
-      isToday: fecha === todayStr,
-      workshops: visibleWorkshops.value.filter(ws => ws.fecha === fecha),
-    })
+    cells.push(celda(new Date(year, month, day), true))
   }
 
   // Mes siguiente (completa la última fila)
   const remaining = (7 - (cells.length % 7)) % 7
   for (let day = 1; day <= remaining; day++) {
-    const d = new Date(year, month + 1, day)
-    const fecha = formatDate(d)
-    cells.push({
-      day,
-      fecha,
-      isCurrentMonth: false,
-      isToday: fecha === todayStr,
-      workshops: visibleWorkshops.value.filter(ws => ws.fecha === fecha),
-    })
+    cells.push(celda(new Date(year, month + 1, day), false))
   }
 
   const weeks: CalendarCell[][] = []

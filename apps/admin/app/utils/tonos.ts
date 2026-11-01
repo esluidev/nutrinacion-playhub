@@ -1,5 +1,5 @@
 // Color = significado (packages/ui/DESIGN.md, «Roles de color»): un solo mapa por concepto para
-// todo Admin, para que el mismo estado se vea igual en Platform, organización y comunidad.
+// todo Admin, para que el mismo estado se vea igual en Platform y en la organización.
 import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
 import { hoyLocal } from './fechas'
 

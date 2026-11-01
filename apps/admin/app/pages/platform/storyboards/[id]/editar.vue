@@ -84,7 +84,8 @@ definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.editTitle', descKe
 const { t, locale } = useT()
 const route = useRoute()
 const { getStoryboard, actualizarCabeceraGuia } = usePlatformStoryboards()
-const { listPaises, listOrganizacionesSimple } = usePlatform()
+const { listOrganizacionesSimple } = usePlatform()
+const { cargar: listPaises } = usePaises()
 const { toast } = useToast()
 
 const sb = ref<StoryboardDetalle | null>(null)

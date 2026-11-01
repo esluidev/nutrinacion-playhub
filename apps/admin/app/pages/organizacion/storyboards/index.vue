@@ -1,6 +1,6 @@
 <template>
   <div>
-    <UiPageHeader title="Storyboards" description="Biblioteca de contenido para tus talleres" />
+    <UiPageHeader :title="t('storyboards.title')" :description="t('storyboards.desc')" />
 
     <!-- Toolbar -->
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -11,8 +11,8 @@
         </template>
       </UiChips>
       <div class="flex items-center gap-3">
-        <UiSearchInput v-model="searchQuery" placeholder="Buscar storyboard…" max-width="xs" />
-        <UiSelect v-model="activePertenencia" variant="toolbar" prefix="Pertenencia" :options="pertenenciaOptions" />
+        <UiSearchInput v-model="searchQuery" :placeholder="t('storyboards.searchPh')" max-width="xs" />
+        <UiSelect v-model="activePertenencia" variant="toolbar" :prefix="t('storyboards.ownership')" :options="pertenenciaOptions" />
       </div>
     </div>
 
@@ -33,11 +33,11 @@
           <UiSymbol icon="book" class="bg-surface" />
           <!-- Pertenencia: público o personalizado de la organización -->
           <UiBadge :tone="TONO_PERTENENCIA[sb.pertenencia]" class="absolute right-3 top-3 bg-surface">
-            {{ sb.pertenencia }}
+            {{ t(`storyboards.${sb.pertenencia}`) }}
           </UiBadge>
           <!-- Scenes count -->
           <UiBadge tone="neutral" class="absolute bottom-3 left-3 bg-surface">
-            {{ sb.scenesCount }} escenas
+            {{ tCount(t, 'storyboards.scenes', sb.scenesCount) }}
           </UiBadge>
         </div>
 
@@ -61,11 +61,11 @@
         <!-- Footer: dos acciones, mitad y mitad. Neutras: en una rejilla, un lima por tarjeta
              sería el lima repetido que el kit evita -->
         <div class="ui-panel-footer flex items-center gap-2">
-          <UiButton variant="outline" class="flex-1" @click="navigateTo(`/dashboard/storyboards/${sb.id}`)">
-            Ver Detalle
+          <UiButton variant="outline" class="flex-1" @click="navigateTo(`/organizacion/storyboards/${sb.id}`)">
+            {{ t('storyboards.viewDetail') }}
           </UiButton>
-          <UiButton variant="outline" icon="calendar" class="flex-1" @click="navigateTo(`/dashboard/workshops/new?storyboard=${sb.id}`)">
-            Usar en Taller
+          <UiButton variant="outline" icon="calendar" class="flex-1" @click="navigateTo(`/organizacion/workshops/new?storyboard=${sb.id}`)">
+            {{ t('storyboards.useInWorkshop') }}
           </UiButton>
         </div>
       </article>
@@ -75,22 +75,20 @@
     <div v-else class="ui-panel">
       <UiEmptyState
         icon="search"
-        title="Sin resultados"
-        text="No se encontraron storyboards con los filtros seleccionados. Intenta cambiar la categoría o el término de búsqueda."
+        :title="t('common.noResults')"
+        :text="storyboards.length ? t('storyboards.noResultsText') : t('storyboards.noneAvailable')"
       >
-        <UiButton variant="outline" size="sm" @click="resetFilters">
-          Limpiar filtros
+        <UiButton v-if="storyboards.length" variant="outline" size="sm" @click="resetFilters">
+          {{ t('common.clearFilters') }}
         </UiButton>
       </UiEmptyState>
     </div>
 
     <!-- Pagination -->
-    <div v-if="paginatedStoryboards.length > 0" class="mt-7 flex flex-col items-center justify-between gap-3 sm:flex-row">
-      <p class="ui-caption">
-        Página <span class="font-bold text-ink">{{ currentPage }}</span> de <span class="font-bold text-ink">{{ totalPages }}</span>
-      </p>
+    <div v-if="paginatedStoryboards.length > 0 && totalPages > 1" class="mt-7 flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <p class="ui-caption">{{ t('common.pageOf', { n: currentPage, total: totalPages }) }}</p>
       <div class="flex items-center gap-1.5">
-        <UiButton variant="outline" size="sm" :disabled="currentPage === 1" @click="currentPage--">Anterior</UiButton>
+        <UiButton variant="outline" size="sm" :disabled="currentPage === 1" @click="currentPage--">{{ t('common.previous') }}</UiButton>
         <button
           v-for="page in visiblePages"
           :key="page"
@@ -101,7 +99,7 @@
         >
           {{ page }}
         </button>
-        <UiButton variant="outline" size="sm" :disabled="currentPage === totalPages" @click="currentPage++">Siguiente</UiButton>
+        <UiButton variant="outline" size="sm" :disabled="currentPage === totalPages" @click="currentPage++">{{ t('common.next') }}</UiButton>
       </div>
     </div>
   </div>
@@ -110,6 +108,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard' })
 
+const { t } = useT()
 const { storyboards } = useStoryboards()
 
 const searchQuery = ref('')
@@ -119,24 +118,21 @@ const currentPage = ref(1)
 const perPage = 12
 
 const categoryChips = computed(() => [
-  { value: 'all', label: 'Todos' },
+  { value: 'all', label: t('common.all') },
   ...dynamicCategories.value.map(cat => ({ value: cat, label: cat })),
 ])
 
-// El catálogo real distingue estándar (de la plataforma) vs personalizado (de tu org).
-const pertenenciaOptions = [
-  { value: 'all', label: 'Todos' },
-  { value: 'Público', label: 'Público' },
-  { value: 'Personalizado', label: 'Personalizado' },
-]
+// El catálogo distingue público (de la plataforma) y personalizado (de tu organización).
+const pertenenciaOptions = computed(() => [
+  { value: 'all', label: t('common.all') },
+  { value: 'publico', label: t('storyboards.publico') },
+  { value: 'personalizado', label: t('storyboards.personalizado') },
+])
 
 // Pertenencia sin estado: público es el catálogo base (neutro); personalizado es un dato
 // informativo, hecho para tu organización (cielo).
-const TONO_PERTENENCIA = { 'Público': 'neutral', 'Personalizado': 'sky' } as const
+const TONO_PERTENENCIA = { publico: 'neutral', personalizado: 'sky' } as const
 
-// La categoría del storyboard (ALIMENTACION, ACTIVIDAD_FISICA…).
-// El composable solo trae el nombre traducido, así que el área se reconoce por nombre (es/en);
-// un tipo desconocido queda neutro.
 // Área de cada tipo (nombre traducido → área), para el punto de color de los filtros.
 const areaDeCategoria = computed(() => new Map(storyboards.value.map(sb => [sb.category, sb.area])))
 function areaDe(categoria: string) {

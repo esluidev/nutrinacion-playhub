@@ -1,7 +1,7 @@
 import type { Enums } from '~/utils/db'
-// Colaboradores de la comunidad activa sobre Supabase: quiénes pueden operarla desde el
-// admin. La invitación real la emite el admin de la org (RLS 0005/0006: role COLABORADOR
-// de sus comunidades); el INSERT dispara el Database Webhook → correo.
+// Colaboradores de la organización activa sobre Supabase (organizacion_colaboradores): quiénes
+// operan la organización sin administrarla. Los invita y los activa o desactiva un administrador
+// (RLS 0005); Admin no envía correos (decisión 009): la invitación se comparte con su enlace.
 
 export interface ColaboradorFila {
   id: number
@@ -12,8 +12,9 @@ export interface ColaboradorFila {
   initials: string
 }
 
-export interface InvitacionColabPendiente {
+export interface InvitacionPendiente {
   id: number
+  token: string
   email: string | null
   nombre: string | null
   apellido: string | null
@@ -35,22 +36,23 @@ interface ColaboradorRow {
 
 export function useColaboradores() {
   const demo = !isSupabaseConfigured()
-  const { comunidadActiva, orgActiva } = useContexto()
+  const { orgActiva } = useContexto()
+  const { t } = useT()
 
-  const state = useState<{ comunidadId: number | null, colaboradores: ColaboradorFila[], loading: boolean }>(
+  const state = useState<{ orgId: number | null, colaboradores: ColaboradorFila[], loading: boolean }>(
     'colaboradores-data',
-    () => ({ comunidadId: null, colaboradores: demo ? DEMO_COLABORADORES : [], loading: false }),
+    () => ({ orgId: null, colaboradores: demo ? DEMO_COLABORADORES : [], loading: false }),
   )
 
   async function refresh() {
     if (demo) return
-    const cid = comunidadActiva.value?.id
-    if (!cid) return
+    const oid = orgActiva.value?.id
+    if (!oid) return
     state.value.loading = true
     const { data } = await useSupabaseClient()
-      .from('comunidad_colaboradores')
+      .from('organizacion_colaboradores')
       .select('id, activo, created_at, perfil:perfiles ( id, nombre, apellido, email )')
-      .eq('comunidad_id', cid)
+      .eq('organizacion_id', oid)
       .order('created_at')
     state.value.colaboradores = (((data as unknown) as ColaboradorRow[] | null) ?? []).map((c) => {
       const nombre = [c.perfil?.nombre, c.perfil?.apellido].filter(Boolean).join(' ').trim()
@@ -64,13 +66,13 @@ export function useColaboradores() {
         initials: nombre.split(' ').slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || '?',
       }
     })
-    state.value.comunidadId = cid
+    state.value.orgId = oid
     state.value.loading = false
   }
 
   if (import.meta.client && !demo) {
-    const cid = comunidadActiva.value?.id ?? null
-    if (cid && state.value.comunidadId !== cid && !state.value.loading) refresh()
+    const oid = orgActiva.value?.id ?? null
+    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
   }
 
   const colaboradores = computed(() => state.value.colaboradores)
@@ -79,38 +81,45 @@ export function useColaboradores() {
   // Desactivar corta el acceso sin borrar historial; se puede reactivar.
   async function setActivo(id: number, activo: boolean) {
     if (demo) return { error: null }
-    const { error } = await useSupabaseClient().from('comunidad_colaboradores').update({ activo }).eq('id', id)
+    const { error } = await useSupabaseClient().from('organizacion_colaboradores').update({ activo }).eq('id', id)
     if (!error) await refresh()
     return { error: error?.message ?? null }
   }
 
-  async function listInvitacionesPendientes(): Promise<InvitacionColabPendiente[]> {
-    if (demo || !comunidadActiva.value) return []
+  // Con su token: así la lista ofrece «Copiar enlace» a quien aún no entró.
+  async function listInvitacionesPendientes(): Promise<InvitacionPendiente[]> {
+    if (demo || !orgActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('invitaciones')
-      .select('id, email, nombre, apellido, expira_en, created_at')
-      .eq('comunidad_id', comunidadActiva.value.id)
+      .select('id, token, email, nombre, apellido, expira_en, created_at')
+      .eq('organizacion_id', orgActiva.value.id)
       .eq('role', 'COLABORADOR')
       .eq('estado', 'PENDIENTE')
       .order('created_at', { ascending: false })
-    return (data as InvitacionColabPendiente[] | null) ?? []
+    return (data as InvitacionPendiente[] | null) ?? []
   }
 
-  async function invitar(payload: { email: string, nombre: string, apellido: string, idioma: string, expira_en: string | null }) {
-    if (demo) return { error: null }
-    if (!comunidadActiva.value || !orgActiva.value) return { error: 'Sin comunidad activa' }
-    const { error } = await useSupabaseClient().from('invitaciones').insert({
+  // Devuelve el token: la página muestra el enlace para copiarlo y compartirlo.
+  async function invitar(payload: { email: string, nombre: string, apellido: string, idioma: string, expira_en: string | null }): Promise<{ token: string | null, error: string | null }> {
+    if (demo) return { token: 'demo', error: null }
+    if (!orgActiva.value) return { token: null, error: t('ctx.noOrgActive') }
+    const { data, error } = await useSupabaseClient().from('invitaciones').insert({
       organizacion_id: orgActiva.value.id,
-      comunidad_id: comunidadActiva.value.id,
       role: 'COLABORADOR',
       email: payload.email || null,
       nombre: payload.nombre.trim() || null,
       apellido: payload.apellido.trim() || null,
       idioma: payload.idioma as Enums<'idioma'>,
       expira_en: payload.expira_en,
-    })
+    }).select('token').single()
+    return { token: data?.token ?? null, error: error?.message ?? null }
+  }
+
+  async function revocarInvitacion(id: number) {
+    if (demo) return { error: null as string | null }
+    const { error } = await useSupabaseClient().from('invitaciones').update({ estado: 'REVOCADA' }).eq('id', id)
     return { error: error?.message ?? null }
   }
 
-  return { colaboradores, loading, refresh, setActivo, listInvitacionesPendientes, invitar }
+  return { colaboradores, loading, refresh, setActivo, listInvitacionesPendientes, invitar, revocarInvitacion }
 }

@@ -149,7 +149,7 @@ async function revocar(id: number) {
 
 async function copiarLink(token: string) {
   if (!(await copiarTexto(`${window.location.origin}/invitacion/${token}`))) {
-    useToast().toast.error(t('parts.copyFailed'))
+    useToast().toast.error(t('invLink.copyFailed'))
     return
   }
   copiado.value = token

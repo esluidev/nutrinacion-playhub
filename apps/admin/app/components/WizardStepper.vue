@@ -54,7 +54,7 @@
 
     <!-- Mobile caption -->
     <p class="ui-caption mt-3 text-center md:hidden">
-      Paso {{ currentStep }}: {{ steps.find(s => s.id === currentStep)?.label }}
+      {{ t('wizard.stepOf', { n: currentStep, label: steps.find(s => s.id === currentStep)?.label ?? '' }) }}
     </p>
   </div>
 </template>
@@ -69,6 +69,8 @@ const props = defineProps<{
   steps: Step[]
   currentStep: number
 }>()
+
+const { t } = useT()
 
 const emit = defineEmits<{
   'step-click': [step: number]

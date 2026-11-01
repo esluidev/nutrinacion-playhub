@@ -1,6 +1,6 @@
 <template>
   <!-- Menú de la cuenta, igual en Admin, Player y Educators: botón de contorno con el avatar, el
-       nombre y un dato (correo o comunidad); al abrirlo, la identidad, las opciones de la app y
+       nombre y un dato (correo u organización); al abrirlo, la identidad, las opciones de la app y
        «Cerrar sesión» en coral. -->
   <div ref="root" class="relative">
     <UiButton
@@ -79,7 +79,7 @@ withDefaults(defineProps<{
   name: string
   // Nombre corto en el botón; el completo va en el menú.
   shortName?: string
-  // Dato bajo el nombre: correo en Admin y Player, comunidad en Educators.
+  // Dato bajo el nombre: correo en Admin y Player, organización en Educators.
   detail?: string
   items?: UiUserMenuItem[]
   signOutLabel?: string

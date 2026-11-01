@@ -1,8 +1,8 @@
 // Reglas de negocio del dashboard del operador (/platform): la administración de las
 // organizaciones. Qué licencia está vigente, en qué punto está cada organización (operando, en
 // alta, sin licencia), cómo se desglosa el parque de licencias, qué organizaciones NECESITAN
-// ATENCIÓN y la actividad de las organizaciones. La operación de cada una (comunidades,
-// educadores, talleres) no es asunto de Platform.
+// ATENCIÓN y la actividad de las organizaciones. La operación de cada una (educadores, talleres,
+// jornadas) no es asunto de Platform.
 // Funciones puras (la fecha entra como parámetro): usePlatform las alimenta con datos
 // de Supabase y los tests las ejercitan directo.
 
@@ -11,7 +11,6 @@ export interface LicenciaLigera {
   estado: string
   fecha_inicio: string
   fecha_fin: string | null
-  max_comunidades: number
   organizacion_id: number
   created_at: string
 }
@@ -20,12 +19,11 @@ export interface OrgLigera {
   id: number
   nombre: string
   created_at: string
-  comunidades: number       // cuántas usa de su licencia (solo para el cupo)
   administradores: { id: number, created_at: string, nombre: string }[]
 }
 
-// Orden = severidad: primero lo roto, luego lo urgente, luego el onboarding y la venta.
-export type AtencionTipo = 'lic_vencida_activa' | 'sin_licencia' | 'lic_vence' | 'sin_admins' | 'cupo_lleno'
+// Orden = severidad: primero lo roto, luego lo urgente, luego el onboarding.
+export type AtencionTipo = 'lic_vencida_activa' | 'sin_licencia' | 'lic_vence' | 'sin_admins'
 
 export interface AtencionItem {
   tipo: AtencionTipo
@@ -44,7 +42,7 @@ export interface ActividadItem {
   licenciaId?: number    // para 'licencia' y 'renovacion'
 }
 
-// Vigente = ACTIVA o TRIAL, ya iniciada, sin fin o con fin no pasado (criterio del trigger 0007).
+// Vigente = ACTIVA o TRIAL, ya iniciada, sin fin o con fin no pasado.
 export function esVigente(l: LicenciaLigera, hoy: string): boolean {
   return (l.estado === 'ACTIVA' || l.estado === 'TRIAL')
     && l.fecha_inicio.slice(0, 10) <= hoy
@@ -70,7 +68,7 @@ export function resumenLicencias(licencias: LicenciaLigera[], hoy: string) {
 }
 
 // En qué punto está cada organización. Operando = licencia vigente y al menos un administrador;
-// en alta = sin administradores todavía; sin licencia = sin una vigente (no abre comunidades).
+// en alta = sin administradores todavía; sin licencia = sin una vigente.
 export function resumenOrganizaciones(orgs: OrgLigera[], licencias: LicenciaLigera[], hoy: string) {
   const hace30 = fechaMas(hoy, -30)
   const conVigente = orgs.filter(o => licenciaVigenteDe(licencias, o.id, hoy))
@@ -108,15 +106,10 @@ export function construirAtencion(orgs: OrgLigera[], licencias: LicenciaLigera[]
     if (!o.administradores.length) {
       items.push({ tipo: 'sin_admins', orgId: o.id, orgNombre: o.nombre })
     }
-
-    // Cupo lleno no es un problema: es una señal de ampliación. Va al final.
-    if (vigente && o.comunidades >= vigente.max_comunidades) {
-      items.push({ tipo: 'cupo_lleno', orgId: o.id, orgNombre: o.nombre, licenciaId: vigente.id })
-    }
   }
 
   const severidad: Record<AtencionTipo, number> = {
-    lic_vencida_activa: 0, sin_licencia: 1, lic_vence: 2, sin_admins: 3, cupo_lleno: 4,
+    lic_vencida_activa: 0, sin_licencia: 1, lic_vence: 2, sin_admins: 3,
   }
   return items.sort((a, b) =>
     severidad[a.tipo] - severidad[b.tipo] || (a.dias ?? 0) - (b.dias ?? 0))

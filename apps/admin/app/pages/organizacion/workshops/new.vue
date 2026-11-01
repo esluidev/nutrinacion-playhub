@@ -1,6 +1,6 @@
 <template>
   <div>
-    <UiPageHeader title="Nuevo Taller" description="Programa un taller a partir de un storyboard publicado" />
+    <UiPageHeader :title="t('workshops.newTitle')" :description="t('workshops.newDesc')" />
 
     <!-- Stepper -->
     <WizardStepper
@@ -26,12 +26,25 @@
       ]"
     >
       <UiButton variant="outline" @click="currentStep > 1 ? prevStep() : $router.back()">
-        {{ currentStep > 1 ? 'Anterior' : 'Cancelar' }}
+        {{ currentStep > 1 ? t('wizard.prev') : t('common.cancel') }}
       </UiButton>
 
-      <UiButton :disabled="!canProceed" :loading="isSubmitting" @click="onNext">
-        {{ currentStep < 4 ? 'Siguiente' : 'Guardar Taller' }}
-      </UiButton>
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <!-- Secundaria, solo si el taller va en una jornada: guarda y vuelve a empezar con ella -->
+        <UiButton
+          v-if="currentStep === 4 && jornadaEfectiva"
+          variant="outline"
+          icon="plus"
+          :disabled="isSubmitting"
+          :loading="isSubmitting && guardando === 'otro'"
+          @click="guardar('otro')"
+        >
+          {{ t('wizard.saveAndAnother') }}
+        </UiButton>
+        <UiButton :disabled="!canProceed || (isSubmitting && guardando === 'otro')" :loading="isSubmitting && guardando !== 'otro'" @click="onNext">
+          {{ currentStep < 4 ? t('wizard.next') : t('wizard.save') }}
+        </UiButton>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +52,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard' })
 
+const { t } = useT()
 const {
   currentStep,
   direction,
@@ -46,16 +60,40 @@ const {
   canProceed,
   isSubmitting,
   isSuccess,
+  jornadaEfectiva,
   goToStep,
   nextStep,
   prevStep,
   submit,
   resetWizard,
+  vigilarJornada,
 } = useWorkshopWizard()
+
+// Los vigilantes de la jornada del asistente viven con la página.
+vigilarJornada()
+
+const guardando = ref<'uno' | 'otro' | null>(null)
 
 function onNext() {
   if (currentStep.value < 4) nextStep()
-  else submit()
+  else guardar('uno')
+}
+
+// «Guardar» termina en el aviso de éxito. «Crear y agregar otro a esta jornada» vuelve a empezar el
+// asistente con la jornada y la fecha del taller recién creado.
+async function guardar(modo: 'uno' | 'otro') {
+  guardando.value = modo
+  const nombre = jornadaEfectiva.value?.nombre ?? ''
+  const r = await submit()
+  guardando.value = null
+  if (!r) return
+  if (modo === 'otro' && r.jornadaId) {
+    await navigateTo({ path: '/organizacion/workshops/new', query: { jornada: String(r.jornadaId), fecha: r.fecha } })
+    resetWizard()
+    useToast().toast.success(t('wizard.createdNext', { nombre }))
+    return
+  }
+  isSuccess.value = true
 }
 
 onMounted(() => {

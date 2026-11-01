@@ -43,8 +43,8 @@
     </div>
 
     <!-- Navegación: el sidebar es el ESPEJO del contexto activo — muestra SOLO la sección
-         del tipo actual (platform / organización / comunidad), nunca secciones apiladas.
-         El lugar actual lo pinta el kit (ui-nav-item con aria-current): sin estilos propios. -->
+         del tipo actual (Platform u organización), nunca secciones apiladas; la lista la decide
+         useSidebar según el rol. El lugar actual lo pinta el kit (ui-nav-item con aria-current). -->
     <nav class="scrollbar-thin flex-1 overflow-y-auto px-3.5 pb-4 pt-1">
       <div v-if="seccion">
         <p :class="['eyebrow mb-2 px-3', isCollapsed ? 'lg:hidden' : '']">
@@ -67,7 +67,7 @@
       </div>
     </nav>
 
-    <!-- Bottom: solo lo global (la sesión), idéntico en los tres contextos. Salir es coral. -->
+    <!-- Bottom: solo lo global (la sesión), idéntico en los dos contextos. Salir es coral. -->
     <div :class="[
       'shrink-0 border-t border-line',
       isCollapsed ? 'px-3.5 py-3 lg:px-2' : 'px-3.5 py-3',
@@ -90,8 +90,6 @@
 </template>
 
 <script setup lang="ts">
-import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
-
 defineProps<{
   isOpen: boolean
   isCollapsed: boolean
@@ -103,57 +101,11 @@ defineEmits<{
 
 const { t } = useT()
 const route = useRoute()
-const { tipo, esSuperadmin, comunidadActiva, administraOrgActiva } = useContexto()
-
-interface NavItem { path: string, labelKey: string, icon: UiIconName }
-
-// Operar una comunidad: lo que hace el admin y el colaborador por igual. La misma pantalla
-// sirve a ambos; lo único que cambia es qué comunidades trae el switcher.
-const comunidadNav: NavItem[] = [
-  { path: '/dashboard', labelKey: 'nav.dashboard', icon: 'grid' },
-  { path: '/dashboard/storyboards', labelKey: 'nav.storyboards', icon: 'book' },
-  { path: '/dashboard/workshops', labelKey: 'nav.workshops', icon: 'clapperboard' },
-  { path: '/dashboard/planner', labelKey: 'nav.planner', icon: 'calendar' },
-  { path: '/dashboard/educators', labelKey: 'nav.educators', icon: 'users' },
-  { path: '/dashboard/colaboradores', labelKey: 'nav.collaborators', icon: 'user-plus' },
-  { path: '/dashboard/participantes', labelKey: 'nav.participants', icon: 'heart' },
-  { path: '/dashboard/casa', labelKey: 'nav.homeContent', icon: 'sparkles' },
-  { path: '/dashboard/configuracion', labelKey: 'nav.settings', icon: 'settings' },
-]
-
-// Nivel organización: el detalle de la org (lectura), sus comunidades, administradores, jornadas y lo
-// que ofrece para casa (con su perfil público).
-const orgNav: NavItem[] = [
-  { path: '/organizacion', labelKey: 'nav.dashboard', icon: 'grid' },
-  { path: '/organizacion/comunidades', labelKey: 'nav.communities', icon: 'home' },
-  { path: '/organizacion/administradores', labelKey: 'nav.admins', icon: 'users' },
-  { path: '/organizacion/jornadas', labelKey: 'nav.jornadas', icon: 'calendar' },
-  { path: '/organizacion/casa', labelKey: 'nav.homeContent', icon: 'sparkles' },
-]
-
-const platformNav: NavItem[] = [
-  { path: '/platform', labelKey: 'nav.dashboard', icon: 'grid' },
-  { path: '/platform/organizaciones', labelKey: 'nav.organizations', icon: 'building' },
-  { path: '/platform/licencias', labelKey: 'nav.licenses', icon: 'license' },
-  { path: '/platform/storyboards', labelKey: 'nav.storyboards', icon: 'book' },
-  { path: '/platform/invitaciones', labelKey: 'nav.invitations', icon: 'mail' },
-]
-
-// Una sección a la vez, la del tipo actual. Si el acceso que ese tipo requiere no está
-// (p. ej. bandeja /invitaciones de alguien sin comunidad), no hay nada que navegar.
-const seccion = computed(() => {
-  if (tipo.value === 'platform') {
-    return esSuperadmin.value ? { titleKey: 'nav.platform', items: platformNav } : null
-  }
-  if (tipo.value === 'organizacion') {
-    return administraOrgActiva.value ? { titleKey: 'ctx.org', items: orgNav } : null
-  }
-  return comunidadActiva.value ? { titleKey: 'ctx.community', items: comunidadNav } : null
-})
+const { seccion } = useSidebar()
 
 function isActive(path: string) {
   // Los "home" de sección matchean exacto: por prefijo se comerían a sus hermanos.
-  if (path === '/dashboard' || path === '/organizacion' || path === '/platform') return route.path === path
+  if (path === '/organizacion' || path === '/platform') return route.path === path
   return route.path.startsWith(path)
 }
 

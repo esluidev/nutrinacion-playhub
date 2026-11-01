@@ -76,19 +76,52 @@
       </template>
     </UiDataTable>
 
-    <!-- Invitaciones que aún no se aceptan: cierran el ciclo "invité → ¿ya entró?" (pendiente = uva) -->
+    <!-- Invitaciones que aún no se aceptan: cierran el ciclo «invité → ¿ya entró?» (pendiente = uva).
+         El enlace se copia otra vez (Admin no envía correos); el titular puede revocarla. -->
     <div v-if="pendientes.length" class="mt-6">
-      <p class="eyebrow mb-3">{{ t('admins.pending') }}</p>
+      <p class="eyebrow mb-3">{{ t('invLink.pending') }}</p>
       <div class="ui-panel divide-y divide-line">
         <div v-for="inv in pendientes" :key="inv.id" class="flex items-center gap-3 px-5 py-3">
           <UiSymbol size="sm" icon="mail" tone="grape" />
           <div class="min-w-0 flex-1">
-            <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('admins.openLink') }}</p>
-            <p class="text-caption font-semibold text-subtle">{{ [nombreInvitado(inv) && inv.email, venceLabel(inv)].filter(Boolean).join(' · ') }}</p>
+            <p class="truncate text-body font-bold text-ink">{{ nombreInvitado(inv) ?? inv.email ?? t('invLink.openLink') }}</p>
+            <p class="text-caption font-semibold text-subtle">{{ [nombreInvitado(inv) && inv.email, inv.expira_en ? t('invLink.expires', { fecha: fechaCorta(inv.expira_en, locale) }) : t('invLink.noExpiry')].filter(Boolean).join(' · ') }}</p>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <UiButton
+              tone="neutral"
+              size="sm"
+              :icon="copiado === inv.token ? 'check' : 'link'"
+              icon-only
+              :label="t('invLink.copy')"
+              :title="t('invLink.copy')"
+              @click="copiarEnlace(inv.token)"
+            />
+            <UiButton
+              v-if="esTitularOrgActiva || esSuperadmin"
+              tone="neutral"
+              size="sm"
+              icon="ban"
+              icon-only
+              :label="t('invLink.revoke')"
+              :title="t('invLink.revoke')"
+              @click="revocando = inv"
+            />
           </div>
         </div>
       </div>
     </div>
+
+    <UiConfirmDialog
+      :open="!!revocando"
+      :title="t('invLink.revokeTitle')"
+      :confirm-label="t('invLink.revoke')"
+      :loading="enCurso"
+      @update:open="(v) => { if (!v) revocando = null }"
+      @confirm="confirmarRevocar"
+    >
+      <p>{{ t('invLink.revokeWarn', { nombre: revocando ? (nombreInvitado(revocando) ?? revocando.email ?? '') : '' }) }}</p>
+    </UiConfirmDialog>
 
     <!-- Quitar acceso: no borra la cuenta y es reversible por invitación, pero se confirma -->
     <UiConfirmDialog
@@ -118,7 +151,7 @@ definePageMeta({ layout: 'dashboard', titleKey: 'admins.title', descKey: 'admins
 
 const { t, locale } = useT()
 const { orgActiva, esSuperadmin, esTitularOrgActiva } = useContexto()
-const { listAdministradores, listInvitacionesPendientes, removeAdministrador } = useOrganizacion()
+const { listAdministradores, listInvitacionesPendientes, removeAdministrador, revocarInvitacion } = useOrganizacion()
 const { toast } = useToast()
 
 const admins = ref<AdminDeOrg[]>([])
@@ -141,7 +174,7 @@ const columns = computed(() => [
   { key: 'nombre', label: t('admins.colAdmin'), grow: true },
   { key: 'desde', label: t('admins.colJoined') },
   { key: 'rol', label: t('admins.colRole') },
-  { key: 'acciones', label: puedeGestionar.value ? t('coms.colActions') : '', align: 'right' as const },
+  { key: 'acciones', label: puedeGestionar.value ? t('collabs.colActions') : '', align: 'right' as const },
 ])
 
 const filtros = computed(() => [{
@@ -159,13 +192,33 @@ function nombreDe(a: AdminDeOrg) {
   return nombre || a.perfil?.email || '—'
 }
 
+// ── Invitaciones pendientes: copiar el enlace y revocar ──────────────────────
+const copiado = ref<string | null>(null)
+const revocando = ref<InvitacionAdminPendiente | null>(null)
+const enCurso = ref(false)
 
-function venceLabel(inv: InvitacionAdminPendiente) {
-  if (!inv.expira_en) return t('admins.noExpiry')
-  const fecha = new Date(inv.expira_en).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-MX', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-  return `${t('admins.expires')} ${fecha}`
+async function copiarEnlace(token: string) {
+  if (!(await copiarTexto(enlaceInvitacion(token)))) {
+    toast.error(t('invLink.copyFailed'))
+    return
+  }
+  copiado.value = token
+  toast.success(t('invLink.copied'))
+  setTimeout(() => (copiado.value = null), 1500)
+}
+
+async function confirmarRevocar() {
+  if (!revocando.value) return
+  enCurso.value = true
+  const { error } = await revocarInvitacion(revocando.value.id)
+  enCurso.value = false
+  if (error) {
+    toast.error(error)
+    return
+  }
+  revocando.value = null
+  toast.success(t('invLink.revoked'))
+  pendientes.value = await listInvitacionesPendientes()
 }
 
 // Quitar acceso (nunca al titular: el botón ni se muestra en esa fila).

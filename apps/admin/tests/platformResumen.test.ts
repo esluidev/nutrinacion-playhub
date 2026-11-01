@@ -15,7 +15,6 @@ function lic(sobre: Partial<LicenciaLigera>): LicenciaLigera {
     estado: 'ACTIVA',
     fecha_inicio: '2026-01-01',
     fecha_fin: null,
-    max_comunidades: 5,
     organizacion_id: 1,
     created_at: `2026-01-01T00:00:0${seq % 10}Z`,
     ...sobre,
@@ -28,7 +27,6 @@ function org(sobre: Partial<OrgLigera>): OrgLigera {
     id: seq,
     nombre: `Org ${seq}`,
     created_at: '2026-01-01T00:00:00Z',
-    comunidades: 0,
     administradores: [{ id: 1, created_at: '2026-01-01T00:00:00Z', nombre: 'Ana' }],
     ...sobre,
   }
@@ -93,22 +91,17 @@ describe('construirAtencion', () => {
 
   it('vigente con fin lejano o sin fin no genera atención', () => {
     const items = construirAtencion(
-      [org({ id: 1, comunidades: 1 })],
+      [org({ id: 1 })],
       [lic({ organizacion_id: 1, fecha_fin: '2026-12-31' })],
       HOY,
     )
     expect(items).toEqual([])
   })
 
-  it('sin administradores y cupo lleno se reportan, ordenados por severidad', () => {
-    const o = org({
-      id: 1,
-      nombre: 'Llena',
-      administradores: [],
-      comunidades: 2,
-    })
-    const items = construirAtencion([o], [lic({ organizacion_id: 1, max_comunidades: 2 })], HOY)
-    expect(items.map(x => x.tipo)).toEqual(['sin_admins', 'cupo_lleno'])
+  it('sin administradores se reporta después de lo de la licencia', () => {
+    const o = org({ id: 1, nombre: 'En alta', administradores: [] })
+    const items = construirAtencion([o], [lic({ organizacion_id: 1, fecha_fin: '2026-07-30' })], HOY)
+    expect(items.map(x => x.tipo)).toEqual(['lic_vence', 'sin_admins'])
   })
 
   it('ordena entre orgs: roto > sin licencia > vence pronto (asc por días)', () => {

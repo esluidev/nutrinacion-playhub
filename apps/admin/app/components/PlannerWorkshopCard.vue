@@ -30,7 +30,7 @@
           <span class="whitespace-nowrap">{{ workshop.time.split(' - ')[0] }}</span>
           <span class="whitespace-nowrap">– {{ workshop.time.split(' - ')[1] }}</span>
         </template>
-        <span v-else>Sin horario</span>
+        <span v-else>{{ t('planner.noTime') }}</span>
       </p>
       <div class="mt-2.5 flex items-center gap-1.5">
         <UiAvatar :name="workshop.educator" size="sm" />
@@ -48,6 +48,7 @@ const props = defineProps<{
   compact?: boolean
 }>()
 
+const { t } = useT()
 const isDragging = ref(false)
 const didDrag = ref(false)
 
@@ -67,6 +68,6 @@ function onClick() {
     didDrag.value = false
     return
   }
-  navigateTo('/dashboard/workshops/' + props.workshop.id)
+  navigateTo('/organizacion/workshops/' + props.workshop.id)
 }
 </script>

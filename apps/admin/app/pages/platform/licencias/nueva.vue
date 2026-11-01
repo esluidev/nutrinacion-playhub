@@ -9,34 +9,12 @@
         <div class="ui-panel-body space-y-4">
           <UiSelect v-model="form.organizacion_id" :options="orgOpciones" :label="t('platform.lics.org')" :placeholder="t('platform.lics.orgPh')" :disabled="orgLocked" />
 
-          <div class="grid grid-cols-3 gap-3">
-            <UiInput id="max_com" v-model.number="form.max_comunidades" type="number" :label="t('platform.lics.communities')" />
-            <UiInput id="max_edu" v-model.number="form.max_educadores" type="number" :label="t('platform.lics.educators')" />
-            <UiInput id="max_per" v-model.number="form.max_personalizados" type="number" :label="t('platform.lics.custom')" />
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
+          <!-- La licencia es el contrato: estado, vigencia y notas (decisión 011). Sin cupos ni
+               países: los países donde opera son de la organización. -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <UiSelect v-model="form.estado" :options="estadoOpciones" :label="t('platform.lics.state')" />
             <UiInput id="fecha_inicio" v-model="form.fecha_inicio" type="date" :label="t('platform.lics.start')" />
             <UiInput id="fecha_fin" v-model="form.fecha_fin" type="date" :label="t('platform.lics.end')" :min="form.fecha_inicio" />
-          </div>
-
-          <!-- Países: elección múltiple con filtros del kit (pulsado = noche, estructura) -->
-          <div role="group" aria-labelledby="paises-label">
-            <p id="paises-label" class="field-label">{{ t('platform.lics.countriesLabel') }}</p>
-            <p class="ui-caption mb-3">{{ t('platform.lics.countriesHint') }}</p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="p in paises"
-                :key="p.codigo"
-                type="button"
-                class="filter filter-sm"
-                :aria-pressed="form.paises.includes(p.codigo)"
-                @click="togglePais(p.codigo)"
-              >
-                <span v-if="p.bandera">{{ p.bandera }}</span>{{ p.nombre?.es ?? p.codigo }}
-              </button>
-            </div>
           </div>
 
           <UiTextarea id="notas" v-model="form.notas" :rows="2" :label="t('platform.lics.notes')" :placeholder="t('platform.lics.notesPh')" />
@@ -60,10 +38,9 @@ definePageMeta({ layout: 'dashboard', titleKey: 'platform.lics.newTitle' })
 
 const { t } = useT()
 const route = useRoute()
-const { listOrganizacionesSimple, listPaises, createLicencia } = usePlatform()
+const { listOrganizacionesSimple, createLicencia } = usePlatform()
 
 const orgs = ref<{ id: number, nombre: string }[]>([])
-const paises = ref<{ codigo: string, nombre: Record<string, string>, bandera: string | null }[]>([])
 const saving = ref(false)
 const error = ref('')
 
@@ -84,27 +61,15 @@ function hoy() {
 
 const form = ref({
   organizacion_id: preOrg as number | null,
-  max_comunidades: 1,
-  max_educadores: 10,
-  max_personalizados: 0,
   estado: 'ACTIVA' as Enums<'estado_licencia'>,
   fecha_inicio: hoy(),
   fecha_fin: '' as string,
-  paises: [] as string[],
   notas: '',
 })
 
 onMounted(async () => {
   orgs.value = await listOrganizacionesSimple()
-  paises.value = await listPaises()
 })
-
-function togglePais(codigo: string) {
-  const arr = form.value.paises
-  const i = arr.indexOf(codigo)
-  if (i === -1) arr.push(codigo)
-  else arr.splice(i, 1)
-}
 
 function volver() {
   navigateTo(preOrg ? `/platform/organizaciones/${preOrg}` : '/platform/licencias')
@@ -120,13 +85,9 @@ async function handleSave() {
   saving.value = true
   const { error: err } = await createLicencia({
     organizacion_id: form.value.organizacion_id,
-    max_comunidades: Number(form.value.max_comunidades) || 0,
-    max_educadores: Number(form.value.max_educadores) || 0,
-    max_personalizados: Number(form.value.max_personalizados) || 0,
     estado: form.value.estado,
     fecha_inicio: form.value.fecha_inicio || hoy(),
     fecha_fin: form.value.fecha_fin || null,
-    paises: form.value.paises,
     notas: form.value.notas,
   })
   saving.value = false

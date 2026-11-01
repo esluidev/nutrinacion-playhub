@@ -1,8 +1,9 @@
-// Catálogo de storyboards que la COMUNIDAD activa puede usar, sobre Supabase.
-// Visible = PUBLICADO y (estándar, o personalizado de la org activa), filtrado por país
-// de la comunidad EN LA APP (paises vacío = global). ADAPTADOR: la UI consume títulos y
-// textos ya resueltos al locale actual; la guía por escena se sirve tal cual la escribió
-// Player (texto enriquecido). En dev sin Supabase, filas demo.
+// Catálogo de storyboards que la ORGANIZACIÓN activa puede usar, sobre Supabase.
+// Disponible = PUBLICADO y (estándar en alguno de los países donde opera, o personalizado suyo).
+// La RLS ya lo decide así (0005: `paises_opero()`): aquí solo se pide lo publicado y se acota a
+// la organización activa (lo personalizado de otra que también opero no se mezcla).
+// ADAPTADOR: la UI consume títulos y textos ya resueltos al locale actual; la guía por escena se
+// sirve tal cual la escribió Player (texto enriquecido). En dev sin Supabase, filas demo.
 
 import { uiAreaOf, type UiArea } from '@playhub/ui/app/utils/ui-tones'
 import type { Localized } from '~/utils/types'
@@ -31,10 +32,10 @@ export interface Storyboard {
   description: string
   category: string           // su área educativa (alimentación, actividad física, …), traducida
   area?: UiArea              // la categoría (storyboards.categoria): tiñe con data-area
-  // Pertenencia: PÚBLICO = del catálogo base, sin organización dueña (storyboards.organizacion_id
-  // nulo). PERSONALIZADO = hecho para una organización. No es un nivel de pago: el acceso lo
-  // da la licencia.
-  pertenencia: 'Público' | 'Personalizado'
+  // Pertenencia: público = del catálogo base, sin organización dueña (storyboards.organizacion_id
+  // nulo). Personalizado = hecho para la organización. No es un nivel de pago: el acceso lo
+  // dan los países donde opera.
+  pertenencia: 'publico' | 'personalizado'
   targetAge: string
   duration: string
   scenesCount: number
@@ -45,9 +46,9 @@ export interface Storyboard {
 }
 
 const DEMO_STORYBOARDS: Storyboard[] = [
-  { id: 1, title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', pertenencia: 'Público', targetAge: 'Kids', duration: '30 min', area: 'alimentacion', scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', publico: '', languages: ['es'], scenes: [] },
-  { id: 2, title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', pertenencia: 'Público', targetAge: 'Kids', duration: '25 min', area: 'actividad-fisica', scenesCount: 6, objective: 'Fomentar el movimiento diario.', publico: '', languages: ['es'], scenes: [] },
-  { id: 3, title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', pertenencia: 'Personalizado', targetAge: 'Kids', duration: '30 min', area: 'salud-emocional', scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', publico: '', languages: ['es'], scenes: [] },
+  { id: 1, title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'alimentacion', scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', publico: '', languages: ['es'], scenes: [] },
+  { id: 2, title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '25 min', area: 'actividad-fisica', scenesCount: 6, objective: 'Fomentar el movimiento diario.', publico: '', languages: ['es'], scenes: [] },
+  { id: 3, title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', pertenencia: 'personalizado', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'salud-emocional', scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', publico: '', languages: ['es'], scenes: [] },
 ]
 
 // El contenido viene como jsonb Localized: se resuelve al locale actual con fallback a es.
@@ -64,7 +65,6 @@ interface StoryboardRow {
   duracion_min: number | null
   numero_escenas: number
   idiomas: string[]
-  paises_disponibles: string[]
   organizacion_id: number | null
   guia: { descripcion: Localized | null, objetivo: Localized | null, publico: Localized | null } | null
 }
@@ -74,19 +74,18 @@ type CampoGuia = 'verbo' | 'subtitulo' | 'descripcion' | 'objetivo' | 'pedagogia
 type EscenaRow = { id: number, orden: number, titulo: Localized } & Record<CampoGuia, Localized | null>
 
 const SELECT_STORYBOARD = `
-  id, titulo, categoria, edicion, duracion_min, numero_escenas, idiomas, paises_disponibles, organizacion_id,
+  id, titulo, categoria, edicion, duracion_min, numero_escenas, idiomas, organizacion_id,
   guia:guias ( descripcion, objetivo, publico )
 `
 
 export function useStoryboards() {
   const demo = !isSupabaseConfigured()
   const { t, locale } = useT()
-  const { orgActiva, comunidadActiva } = useContexto()
-  const { user } = useAuth()
+  const { orgActiva } = useContexto()
 
-  const state = useState<{ comunidadId: number | null, storyboards: Storyboard[], loading: boolean }>(
+  const state = useState<{ orgId: number | null, storyboards: Storyboard[], loading: boolean }>(
     'storyboards-data',
-    () => ({ comunidadId: null, storyboards: demo ? DEMO_STORYBOARDS : [], loading: false }),
+    () => ({ orgId: null, storyboards: demo ? DEMO_STORYBOARDS : [], loading: false }),
   )
 
   function mapRow(row: StoryboardRow): Storyboard {
@@ -95,7 +94,7 @@ export function useStoryboards() {
       title: loc(row.titulo, locale.value),
       description: loc(row.guia?.descripcion, locale.value),
       category: t(`catalogo.categoria.${row.categoria}`),
-      pertenencia: row.organizacion_id ? 'Personalizado' : 'Público',
+      pertenencia: row.organizacion_id ? 'personalizado' : 'publico',
       targetAge: t(`catalogo.edicion.${row.edicion}`),
       duration: row.duracion_min ? `${row.duracion_min} min` : '—',
       area: uiAreaOf(row.categoria),
@@ -107,43 +106,29 @@ export function useStoryboards() {
     }
   }
 
-  // País de la comunidad activa (vive en la superficie de acceso de useAuth).
-  function paisComunidad(): string | null {
-    const cid = comunidadActiva.value?.id
-    return user.value?.comunidades.find(c => c.id === cid)?.pais ?? null
-  }
-
   async function refresh() {
     if (demo) return
-    const cid = comunidadActiva.value?.id
-    if (!cid) return
+    const oid = orgActiva.value?.id
+    if (!oid) return
     state.value.loading = true
 
-    let query = useSupabaseClient()
+    // Público (sin organización dueña) o personalizado de ESTA organización; la RLS ya filtró los
+    // estándar por los países donde opera.
+    const { data } = await useSupabaseClient()
       .from('storyboards')
       .select(SELECT_STORYBOARD)
       .eq('estado_publicacion', 'PUBLICADO')
-    // Público (sin organización dueña) o personalizado de MI organización.
-    query = orgActiva.value
-      ? query.or(`organizacion_id.is.null,organizacion_id.eq.${orgActiva.value.id}`)
-      : query.is('organizacion_id', null)
+      .or(`organizacion_id.is.null,organizacion_id.eq.${oid}`)
+      .order('id')
 
-    const { data } = await query.order('id')
-
-    // Disponibilidad por país: Player elige los países al publicar; la comunidad debe estar en la lista
-    // (la base lo exige también al programar).
-    const pais = paisComunidad()
-    const filas = (((data as unknown) as StoryboardRow[] | null) ?? [])
-      .filter(row => !!pais && row.paises_disponibles.includes(pais))
-
-    state.value.storyboards = filas.map(mapRow)
-    state.value.comunidadId = cid
+    state.value.storyboards = (((data as unknown) as StoryboardRow[] | null) ?? []).map(mapRow)
+    state.value.orgId = oid
     state.value.loading = false
   }
 
   if (import.meta.client && !demo) {
-    const cid = comunidadActiva.value?.id ?? null
-    if (cid && state.value.comunidadId !== cid && !state.value.loading) refresh()
+    const oid = orgActiva.value?.id ?? null
+    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
   }
 
   const storyboards = computed(() => state.value.storyboards)
@@ -185,7 +170,6 @@ export function useStoryboards() {
       }))
     return sb
   }
-
 
   return {
     storyboards,

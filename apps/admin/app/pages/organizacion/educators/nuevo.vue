@@ -1,28 +1,28 @@
 <template>
   <div class="mx-auto max-w-2xl">
-    <UiPageHeader title="Agregar Educador" :description="`Suma una persona al equipo de ${comunidad}`" />
+    <UiPageHeader :title="t('educators.add')" :description="t('educators.newDesc', { org })" />
 
     <form class="ui-panel p-6" @submit.prevent="submit">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
-          <UiInput v-model="form.nombre" label="Nombre completo" placeholder="Ej. Carmen Díaz Morales" required />
+          <UiInput v-model="form.nombre" :label="t('educators.fName')" :placeholder="t('educators.fNamePh')" required />
         </div>
         <div class="sm:col-span-2">
           <UiInput
             v-model="form.email"
             type="email"
-            label="Correo electrónico"
-            placeholder="carmen@nutrinacion.com"
-            hint="Con este correo entra en Educators. Luego genera su código de activación en «Acceso»: con él elige su PIN."
+            :label="t('educators.fEmail')"
+            :placeholder="t('educators.fEmailPh')"
+            :hint="t('educators.fEmailHint')"
             required
           />
         </div>
-        <UiInput v-model="form.telefono" label="Teléfono" placeholder="+52 55 0000 0000" optional />
-        <UiInput v-model="form.puesto" label="Puesto" placeholder="Ej. Nutrióloga" />
+        <UiInput v-model="form.telefono" :label="t('educators.fPhone')" :placeholder="t('educators.fPhonePh')" optional />
+        <UiInput v-model="form.puesto" :label="t('educators.fRole')" :placeholder="t('educators.fRolePh')" />
         <!-- UiSelect no tiene `optional`: la etiqueta replica la de UiInput -->
         <div class="sm:col-span-2">
-          <label class="field-label">Grupo <span class="font-semibold text-muted">(opcional)</span></label>
-          <UiSelect v-model="form.grupo" :options="grupoOptions" placeholder="Sin grupo" />
+          <label class="field-label">{{ t('educators.fGroup') }} <span class="font-semibold text-muted">({{ t('common.optional') }})</span></label>
+          <UiSelect v-model="form.grupo" :options="grupoOptions" :placeholder="t('educators.noGroup')" />
         </div>
       </div>
     </form>
@@ -30,8 +30,8 @@
     <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
     <div class="mt-5 flex items-center justify-end gap-3">
-      <UiButton variant="outline" @click="navigateTo('/dashboard/educators')">Cancelar</UiButton>
-      <UiButton type="button" :loading="saving" @click="submit">Agregar Educador</UiButton>
+      <UiButton variant="outline" @click="navigateTo('/organizacion/educators')">{{ t('common.cancel') }}</UiButton>
+      <UiButton type="button" :loading="saving" @click="submit">{{ t('educators.add') }}</UiButton>
     </div>
   </div>
 </template>
@@ -42,9 +42,9 @@ definePageMeta({ layout: 'dashboard' })
 const { t } = useT()
 const { toast } = useToast()
 const { groups, createEducador } = useEducators()
-const { comunidadActiva } = useContexto()
+const { orgActiva } = useContexto()
 
-const comunidad = computed(() => comunidadActiva.value?.nombre ?? t('common.myOrg'))
+const org = computed(() => orgActiva.value?.nombre ?? t('common.myOrg'))
 
 const form = reactive({
   nombre: '',
@@ -58,14 +58,18 @@ const saving = ref(false)
 const error = ref('')
 
 const grupoOptions = computed(() => [
-  { value: null, label: 'Sin grupo' },
+  { value: null, label: t('educators.noGroup') },
   ...groups.value.map(g => ({ value: g.id, label: g.nombre })),
 ])
 
 async function submit() {
   error.value = ''
   if (!form.nombre.trim()) {
-    error.value = 'El nombre es obligatorio.'
+    error.value = t('educators.nameRequired')
+    return
+  }
+  if (!form.email.trim()) {
+    error.value = t('educators.emailRequired')
     return
   }
 
@@ -73,7 +77,7 @@ async function submit() {
   const [nombre = '', ...apellido] = form.nombre.trim().split(/\s+/)
 
   saving.value = true
-  const { error: err } = await createEducador({
+  const { error: err, reactivado } = await createEducador({
     nombre,
     apellido: apellido.join(' '),
     correo: form.email,
@@ -87,7 +91,7 @@ async function submit() {
     error.value = err
     return
   }
-  toast.success('Educador agregado al equipo.')
-  navigateTo('/dashboard/educators')
+  toast.success(reactivado ? t('educators.reactivated') : t('educators.added'))
+  navigateTo('/organizacion/educators')
 }
 </script>

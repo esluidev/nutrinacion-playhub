@@ -2,7 +2,7 @@
   <!-- Dashboard del operador: la administración de las organizaciones. En qué punto está cada
        una, el parque de licencias, lo que NECESITA ATENCIÓN (reglas en utils/platformResumen), la
        actividad de las organizaciones y las invitaciones de administrador. La operación de cada
-       organización (comunidades, educadores, talleres) es asunto suyo, no de Platform. -->
+       organización (educadores, talleres, jornadas) es asunto suyo, no de Platform. -->
   <div>
     <UiPageHeader title="Platform" :description="t('platformHome.desc')">
       <template #actions>
@@ -168,7 +168,6 @@ const DEMO_RESUMEN: ResumenPlatform = {
     { tipo: 'lic_vencida_activa', orgId: 3, orgNombre: 'Colegio Andes', licenciaId: 3 },
     { tipo: 'lic_vence', orgId: 2, orgNombre: 'Fundación Crecer', dias: 8, licenciaId: 2 },
     { tipo: 'sin_admins', orgId: 3, orgNombre: 'Colegio Andes' },
-    { tipo: 'cupo_lleno', orgId: 1, orgNombre: 'Nutrinación', licenciaId: 1 },
   ],
   actividad: [
     { tipo: 'admin', orgNombre: 'Fundación Crecer', orgId: 2, fecha: '2026-07-18T00:00:00Z', persona: 'Ana Pérez' },
@@ -202,13 +201,12 @@ const miniLicencias = computed<{ label: string, value: number, icon: UiIconName,
 ])
 
 // Qué necesita atención, por severidad: lo roto o lo que falta en coral; lo pendiente (vence pronto,
-// onboarding sin administradores) en sol; lo informativo (cupo lleno, oportunidad de venta) en cielo.
+// onboarding sin administradores) en sol.
 const ATENCION: Record<AtencionTipo, { icon: UiIconName, tone: UiTone }> = {
   lic_vencida_activa: { icon: 'warning', tone: 'coral' },
   sin_licencia: { icon: 'license', tone: 'coral' },
   lic_vence: { icon: 'clock', tone: 'sun' },
   sin_admins: { icon: 'user-plus', tone: 'sun' },
-  cupo_lleno: { icon: 'chart', tone: 'sky' },
 }
 
 function labelAtencion(item: AtencionItem): string {
@@ -220,7 +218,6 @@ function labelAtencion(item: AtencionItem): string {
       if (item.dias === 1) return t('platformHome.atLicVenceManana')
       return t('platformHome.atLicVence', { n: item.dias ?? 0 })
     case 'sin_admins': return t('platformHome.atSinAdmins')
-    case 'cupo_lleno': return t('platformHome.atCupoLleno')
   }
 }
 

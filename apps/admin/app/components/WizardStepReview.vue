@@ -10,15 +10,15 @@
         <UiSymbol tone="lime" size="xl" class="animate-bounce-once mx-auto mb-5">
           <UiIcon name="check" class="animate-draw-check" />
         </UiSymbol>
-        <h2 class="ui-title mb-2">Taller creado exitosamente</h2>
-        <p class="ui-text mb-8">El taller ha sido programado correctamente</p>
+        <h2 class="ui-title mb-2">{{ t('wizard.successTitle') }}</h2>
+        <p class="ui-text mb-8">{{ t('wizard.successText') }}</p>
 
         <div class="mx-auto flex max-w-md flex-col items-center justify-center gap-3 sm:flex-row">
-          <UiButton class="w-full sm:w-auto" @click="navigateTo('/dashboard/planner')">
-            Ir al Planificador
+          <UiButton class="w-full sm:w-auto" @click="navigateTo('/organizacion/planner')">
+            {{ t('wizard.goPlanner') }}
           </UiButton>
-          <UiButton variant="outline" class="w-full sm:w-auto" @click="navigateTo('/dashboard/workshops')">
-            Ver Talleres
+          <UiButton variant="outline" class="w-full sm:w-auto" @click="navigateTo('/organizacion/workshops')">
+            {{ t('wizard.viewWorkshops') }}
           </UiButton>
         </div>
       </div>
@@ -30,30 +30,24 @@
         <!-- Header: el estado con el tono de la sesión que se va a crear -->
         <div class="ui-panel-header">
           <div>
-            <h3 class="ui-title">Resumen del taller</h3>
-            <p class="ui-caption mt-0.5">Revisa los datos antes de crear el taller</p>
+            <h3 class="ui-title">{{ t('wizard.summaryTitle') }}</h3>
+            <p class="ui-caption mt-0.5">{{ t('wizard.summaryText') }}</p>
           </div>
-          <UiBadge :tone="tone" dot>
-            {{ state.estado === 'PUBLICADO' ? 'Publicado' : state.estado === 'EN_REVISION' ? 'En revisión' : 'Borrador' }}
-          </UiBadge>
+          <UiBadge :tone="tone" dot>{{ t(`wizard.states.${state.estado}`) }}</UiBadge>
         </div>
 
         <!-- Storyboard: su símbolo con el tono de su área educativa -->
         <div class="px-6 py-5">
           <div class="mb-3.5 flex items-center justify-between">
-            <span class="eyebrow">Storyboard</span>
-            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(1)">Editar</button>
+            <span class="eyebrow">{{ t('wizard.stepStoryboard') }}</span>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(1)">{{ t('common.edit') }}</button>
           </div>
           <div v-if="selectedStoryboard" class="flex items-center gap-4">
-            <UiSymbol
-              icon="book"
-              size="md"
-                            v-bind="uiAreaAttrs(selectedStoryboard.area)"
-            />
+            <UiSymbol icon="book" size="md" v-bind="uiAreaAttrs(selectedStoryboard.area)" />
             <div class="min-w-0">
               <p class="text-body font-extrabold text-ink">{{ selectedStoryboard.title }}</p>
               <p class="ui-caption mt-0.5">
-                {{ selectedStoryboard.category }} · {{ selectedStoryboard.pertenencia }} · {{ selectedStoryboard.duration }} · {{ selectedStoryboard.scenesCount }} escenas
+                {{ selectedStoryboard.category }} · {{ t(`storyboards.${selectedStoryboard.pertenencia}`) }} · {{ selectedStoryboard.duration }} · {{ tCount(t, 'storyboards.scenes', selectedStoryboard.scenesCount) }}
               </p>
             </div>
           </div>
@@ -63,9 +57,9 @@
         <div class="border-t border-line px-6 py-5">
           <div class="mb-3.5 flex items-center justify-between">
             <span class="eyebrow">
-              {{ state.educatorMode === 'group' ? `Grupos (${selectedGroups.length})` : `Educadores (${selectedEducators.length})` }}
+              {{ state.educatorMode === 'group' ? `${t('wizard.groups')} (${selectedGroups.length})` : `${t('wizard.educators')} (${selectedEducators.length})` }}
             </span>
-            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(2)">Editar</button>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(2)">{{ t('common.edit') }}</button>
           </div>
           <div class="flex flex-col gap-3">
             <template v-if="selectedEducators.length > 0">
@@ -82,7 +76,7 @@
                 <UiSymbol icon="users" size="md" :tone="uiToneFor(grupo.nombre)" />
                 <div class="min-w-0">
                   <p class="text-body font-extrabold text-ink">{{ grupo.nombre }}</p>
-                  <p class="ui-caption mt-px">{{ grupo.miembros }} educadores · una asignación por educador</p>
+                  <p class="ui-caption mt-px">{{ tCount(t, 'wizard.groupMembers', getGroupMembers(grupo.id).length) }} · {{ t('wizard.oneAssignmentEach') }}</p>
                 </div>
               </div>
             </template>
@@ -92,8 +86,8 @@
         <!-- Horario y ubicación: la hora con el tono de la sesión -->
         <div class="border-t border-line px-6 py-5">
           <div class="mb-3.5 flex items-center justify-between">
-            <span class="eyebrow">Horario y ubicación</span>
-            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(3)">Editar</button>
+            <span class="eyebrow">{{ t('wizard.schedule') }}</span>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(3)">{{ t('common.edit') }}</button>
           </div>
           <div class="flex flex-col gap-3">
             <div class="flex items-start gap-3">
@@ -101,13 +95,27 @@
               <div>
                 <p class="text-body font-extrabold text-ink">{{ formatDateLong(state.date) }}</p>
                 <p class="ui-caption mt-0.5" :data-tone="tone">
-                  <span class="font-extrabold tabular-nums text-(--tone-strong)">{{ state.timeStart || '—' }}{{ state.timeEnd ? ` – ${state.timeEnd}` : '' }}</span> · fin calculado por la duración del storyboard
+                  <span class="font-extrabold tabular-nums text-(--tone-strong)">{{ state.timeStart || '—' }}{{ state.timeEnd ? ` – ${state.timeEnd}` : '' }}</span> · {{ t('wizard.endByDuration') }}
                 </p>
               </div>
             </div>
-            <div v-if="state.location" class="flex items-center gap-3">
+            <!-- La jornada: nombre y días (nueva, o ampliada para que quepa la fecha) -->
+            <div v-if="jornadaEfectiva" class="flex items-start gap-3">
+              <UiIcon name="layers" class="mt-px size-4 shrink-0 text-subtle" />
+              <div class="min-w-0">
+                <p class="flex flex-wrap items-center gap-2 text-body font-semibold text-muted">
+                  <span>{{ t('wizard.fJornada') }}: <span class="font-extrabold text-ink">{{ jornadaEfectiva.nombre }}</span></span>
+                  <UiBadge v-if="jornadaEfectiva.nueva" tone="neutral">{{ t('wizard.jornadaNew') }}</UiBadge>
+                </p>
+                <p class="ui-caption mt-0.5">
+                  {{ rangoJornada(jornadaEfectiva, locale) }}<template v-if="jornadaEfectiva.ampliada"> · {{ t('wizard.jornadaExtended') }}</template>
+                </p>
+              </div>
+            </div>
+            <!-- El lugar efectivo: el de la jornada con el detalle, o el suyo si va suelto -->
+            <div v-if="lugarEfectivo" class="flex items-center gap-3">
               <UiIcon name="map-pin" class="size-4 shrink-0 text-subtle" />
-              <p class="text-body font-semibold text-muted">{{ state.location }}</p>
+              <p class="text-body font-semibold text-muted">{{ lugarEfectivo }}</p>
             </div>
             <div v-if="state.notes" class="flex items-center gap-3">
               <UiIcon name="chat" class="size-4 shrink-0 text-subtle" />
@@ -119,31 +127,27 @@
         <!-- Footer strip -->
         <div class="ui-panel-footer flex flex-wrap items-center gap-x-7 gap-y-2">
           <div class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Modalidad</span>
-            <span class="text-caption font-extrabold text-muted">{{ MODALIDADES[state.modalidad].label }}</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.modality') }}</span>
+            <span class="text-caption font-extrabold text-muted">{{ t(`workshops.modality.${state.modalidad}`) }}</span>
           </div>
           <div class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Asignaciones</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.assignments') }}</span>
             <span class="text-caption font-extrabold tabular-nums text-muted">{{ assignmentCount }}</span>
           </div>
-          <div v-if="jornada" class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Jornada</span>
-            <span class="text-caption font-extrabold text-muted">{{ jornada }}</span>
-          </div>
           <div v-if="state.group" class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Grupo</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.fGroup') }}</span>
             <span class="text-caption font-extrabold text-muted">{{ state.group }}</span>
           </div>
           <div v-if="state.capacity" class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Asistentes estimados</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.fCapacity') }}</span>
             <span class="text-caption font-extrabold text-muted">{{ state.capacity }}</span>
           </div>
           <div class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Idioma</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.fLanguage') }}</span>
             <span class="text-caption font-extrabold text-muted">{{ state.language.toUpperCase() }}</span>
           </div>
           <div v-if="selectedStoryboard" class="flex items-baseline gap-2">
-            <span class="text-caption font-bold text-subtle">Duración</span>
+            <span class="text-caption font-bold text-subtle">{{ t('wizard.duration') }}</span>
             <span class="text-caption font-extrabold text-muted">{{ selectedStoryboard.duration }}</span>
           </div>
         </div>
@@ -152,26 +156,16 @@
       <!-- Nota según estado: publicado es información de lo próximo (cielo); lo demás, neutro -->
       <div class="alert mt-4" :data-tone="state.estado === 'PUBLICADO' ? 'sky' : 'neutral'">
         <UiIcon name="info" />
-        <p>
-          {{ state.estado === 'PUBLICADO'
-            ? 'Al publicar el taller, los educadores asignados lo verán en Educators.'
-            : state.estado === 'EN_REVISION'
-              ? 'Queda en revisión: otra persona de la comunidad o de la organización lo confirma y lo publica.'
-              : 'El borrador se guarda en Talleres; podrás completar fecha y educadores más adelante.' }}
-        </p>
+        <p>{{ t(`wizard.note.${state.estado}`) }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { MODALIDADES } from '~/composables/useWorkshops'
-import type { JornadaFila } from '~/composables/useJornadas'
-const { state, selectedStoryboard, selectedEducators, selectedGroups, selectedGroupsMembers, isSuccess, goToStep, formatDateLong } = useWorkshopWizard()
-
-// La jornada elegida en el paso de programación (lista cargada ahí).
-const jornadas = useState<JornadaFila[]>('wizard-jornadas', () => [])
-const jornada = computed(() => jornadas.value.find(j => String(j.id) === state.value.jornadaId)?.nombre ?? '')
+const { t, locale } = useT()
+const { getGroupMembers } = useEducators()
+const { state, selectedStoryboard, selectedEducators, selectedGroups, selectedGroupsMembers, jornadaEfectiva, lugarEfectivo, isSuccess, goToStep, formatDateLong } = useWorkshopWizard()
 
 // Un grupo genera una asignación por cada miembro.
 const assignmentCount = computed(() =>
@@ -183,7 +177,6 @@ const assignmentCount = computed(() =>
 const tone = computed(() =>
   sessionTone(state.value.estado === 'PUBLICADO' ? 'programado' : 'borrador', state.value.date),
 )
-
 </script>
 
 <style scoped>

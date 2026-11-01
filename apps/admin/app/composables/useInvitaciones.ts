@@ -18,13 +18,11 @@ export interface InvitacionMia {
   expira_en: string | null
   created_at: string
   organizaciones: { id: number, nombre: string } | null
-  comunidades: { id: number, nombre: string } | null
 }
 
 const SELECT = `
   id, token, role, estado, expira_en, created_at,
-  organizaciones ( id, nombre ),
-  comunidades ( id, nombre )
+  organizaciones ( id, nombre )
 `
 
 // Canal de Realtime único para toda la app: un RealtimeChannel no es estado serializable,
@@ -47,15 +45,12 @@ export function useInvitaciones() {
 
   // Cómo se lee una invitación. Vive aquí porque la usan el dropdown del header y la bandeja.
   function titulo(i: InvitacionMia) {
-    return i.role === 'ADMIN'
-      ? t('inbox.toAdmin', { org: i.organizaciones?.nombre ?? '—' })
-      : t('inbox.toCollab', { com: i.comunidades?.nombre ?? '—' })
+    const org = i.organizaciones?.nombre ?? '—'
+    return i.role === 'ADMIN' ? t('inbox.toAdmin', { org }) : t('inbox.toCollab', { org })
   }
 
-  // Para colaborador, da el contexto de a qué organización pertenece esa comunidad.
   function subtitulo(i: InvitacionMia) {
-    const rol = i.role === 'ADMIN' ? t('auth.invite.roleAdmin') : t('auth.invite.roleCollab')
-    return i.role === 'ADMIN' ? rol : `${rol} · ${i.organizaciones?.nombre ?? ''}`
+    return i.role === 'ADMIN' ? t('auth.invite.roleAdmin') : t('auth.invite.roleCollab')
   }
 
   async function listMias(): Promise<InvitacionMia[]> {
@@ -85,16 +80,16 @@ export function useInvitaciones() {
       body: { action: accion, token },
     })
 
-    if (error) return { error: 'No se pudo responder la invitación. Intenta de nuevo.' }
-    if (!data?.ok) return { error: (data?.error as string) || 'No se pudo responder la invitación.' }
+    if (error) return { error: t('inbox.respondFailed') }
+    if (!data?.ok) return { error: (data?.error as string) || t('inbox.respondFailed') }
 
-    // Aceptar cambia a qué organizaciones/comunidades tienes acceso → recargar el contexto.
+    // Aceptar cambia a qué organizaciones tienes acceso → recargar el contexto.
     if (accion === 'aceptar') await useAuth().fetchUser()
     await refreshPendientes()
     return { error: null }
   }
 
-  // ── Realtime (migración 0010) ────────────────────────────────────────────────
+  // ── Realtime ─────────────────────────────────────────────────────────────────
   // Te invitan con la sesión abierta y el sobre del header lo refleja al instante, sin
   // recargar. El canal es UNO para toda la app (SPA, un solo cliente): por eso vive a nivel
   // de módulo y no en `useState` — un RealtimeChannel no es estado serializable.

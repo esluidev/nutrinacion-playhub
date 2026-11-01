@@ -74,7 +74,7 @@ definePageMeta({ layout: 'dashboard', titleKey: 'inbox.title', descKey: 'inbox.d
 
 const { t, locale } = useT()
 const { pendientes, vigente, titulo, subtitulo, listMias, refreshPendientes, responder } = useInvitaciones()
-const { setContexto } = useContexto()
+const { setOrg } = useContexto()
 const { toast } = useToast()
 
 const todas = ref<InvitacionMia[]>([])
@@ -131,11 +131,11 @@ async function responderA(i: InvitacionMia, accion: 'aceptar' | 'rechazar') {
     // el aviso le dice qué ganó y le ofrece ir directo — el contexto ya quedó cargado.
     toast.success(t('inbox.accepted'), {
       accion: {
-        label: t('coms.enter'),
+        label: t('inbox.enter'),
         onClick: () => {
           if (!i.organizaciones) return
-          setContexto(i.organizaciones.id, i.comunidades?.id ?? null)
-          navigateTo(i.comunidades ? '/dashboard' : '/organizacion/comunidades')
+          setOrg(i.organizaciones.id)
+          navigateTo('/organizacion')
         },
       },
     })
