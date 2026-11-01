@@ -388,8 +388,11 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Secretos de las Edge Functions en local: sus valores van en `supabase/.env` (fuera de Git; plantilla
+# en `supabase/.env.example`). En la nube, `supabase secrets set`. Correo de invitaciones: decisión 012.
+[edge_runtime.secrets]
+RESEND_API_KEY = "env(RESEND_API_KEY)"
+RESEND_FROM = "env(RESEND_FROM)"
 
 [analytics]
 enabled = true

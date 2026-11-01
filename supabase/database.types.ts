@@ -153,13 +153,13 @@ isOneToOne: true
                   ]
                 },"invitaciones": {
                   Row: {
-                    "apellido": string | null,"created_at": string,"email": string | null,"estado": Database["public"]['Enums']["estado_invitacion"],"expira_en": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string | null,"organizacion_id": number,"role": Database["public"]['Enums']["rol_invitacion"],"titular": boolean,"token": string,"usada_por": number | null
+                    "apellido": string | null,"correo_enviado_en": string | null,"correo_error": string | null,"created_at": string,"email": string | null,"estado": Database["public"]['Enums']["estado_invitacion"],"expira_en": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string | null,"organizacion_id": number,"role": Database["public"]['Enums']["rol_invitacion"],"titular": boolean,"token": string,"usada_por": number | null
                   }
                   Insert: {
-                    "apellido"?: string | null,"created_at"?: string,"email"?: string | null,"estado"?: Database["public"]['Enums']["estado_invitacion"],"expira_en"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"organizacion_id": number,"role": Database["public"]['Enums']["rol_invitacion"],"titular"?: boolean,"token"?: string,"usada_por"?: number | null
+                    "apellido"?: string | null,"correo_enviado_en"?: string | null,"correo_error"?: string | null,"created_at"?: string,"email"?: string | null,"estado"?: Database["public"]['Enums']["estado_invitacion"],"expira_en"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"organizacion_id": number,"role": Database["public"]['Enums']["rol_invitacion"],"titular"?: boolean,"token"?: string,"usada_por"?: number | null
                   }
                   Update: {
-                    "apellido"?: string | null,"created_at"?: string,"email"?: string | null,"estado"?: Database["public"]['Enums']["estado_invitacion"],"expira_en"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"organizacion_id"?: number,"role"?: Database["public"]['Enums']["rol_invitacion"],"titular"?: boolean,"token"?: string,"usada_por"?: number | null
+                    "apellido"?: string | null,"correo_enviado_en"?: string | null,"correo_error"?: string | null,"created_at"?: string,"email"?: string | null,"estado"?: Database["public"]['Enums']["estado_invitacion"],"expira_en"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"organizacion_id"?: number,"role"?: Database["public"]['Enums']["rol_invitacion"],"titular"?: boolean,"token"?: string,"usada_por"?: number | null
                   }
                   Relationships: [
                     {

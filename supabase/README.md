@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 10 migraciones de `migrations/`, en orden:**
+**Solo las 11 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -18,12 +18,13 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0008_storage.sql` | Bucket de audios de narración |
 | `0009_tareas.sql` | Tarea horaria que finaliza los workshops vencidos (pg_cron) |
 | `0010_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
+| `0011_correo_invitaciones.sql` | El estado del correo de cada invitación (cuándo salió o por qué no) |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0010
+supabase db push --dry-run   # debe listar 0001 a 0011
 supabase db push
 ```
 
@@ -36,11 +37,13 @@ supabase db push
 
 ### Después de las migraciones
 
-1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion`. No necesitan secretos. `enviar-invitacion` no se despliega: Admin no envía correos ([decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md)).
+1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion enviar-invitacion`.
+   - `enviar-invitacion` manda las invitaciones por correo ([decisión 012](../docs/decisions/012-invitaciones-por-correo.md)) y necesita `supabase secrets set RESEND_API_KEY=<key>`. El remitente es `hello@nutrinacion.com`: verifica `nutrinacion.com` en Resend o fija otro con `supabase secrets set RESEND_FROM=…`.
+   - Las otras dos no necesitan secretos.
 2. **Auth:**
    - *URL Configuration → Site URL* = la URL de Admin. La recuperación no necesita *Redirect URLs*: el enlace va directo a `/restablecer` de Admin.
    - *Email → Email OTP Expiration* = `86400`: lo que dura el enlace de recuperación (24 h), como en `config.toml`.
-3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `admin_url` solo la usa `enviar-invitacion`.
+3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `update configuracion set valor = 'https://<admin>' where clave = 'admin_url';`: el enlace de los correos de invitación (si está vacía, `enviar-invitacion` usa el origen desde el que se creó la invitación).
 4. **El primer superadmin:**
    - Crea el usuario en *Authentication → Users*. Un trigger le crea su perfil.
    - Después: `update perfiles set superadmin = true where email = '<tu correo>';`.
@@ -62,6 +65,7 @@ supabase db reset --no-seed
 Después, los pasos de [Después de las migraciones](#después-de-las-migraciones) en su versión local:
 
 1. **Edge Functions:** `supabase start` ya las sirve. Una función nueva o un cambio de `config.toml` se toman al reiniciar con `supabase stop && supabase start`, que conserva los datos.
+   - **Correo de las invitaciones:** pega tu key de Resend en `supabase/.env` (`RESEND_API_KEY=`, fuera de Git; plantilla en `supabase/.env.example`) y reinicia. Sin dominio verificado, pon también `RESEND_FROM=onboarding@resend.dev`: Resend solo enviará al correo de tu cuenta. Sin key, la invitación se crea igual y Admin avisa de que el correo no salió; el enlace se copia.
 2. **Auth:** `config.toml` ya tiene la URL de Admin (`localhost:3000`) y el enlace de recuperación de 24 h.
 3. **Configuración**, en el editor SQL de Studio (`http://127.0.0.1:54323`): `update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';`.
 4. **El primer superadmin:** en Studio, *Authentication → Add user* con correo, contraseña y *Auto Confirm User*; después, `update perfiles set superadmin = true where email = '<correo>';`.
