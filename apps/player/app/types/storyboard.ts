@@ -1,8 +1,8 @@
 import type { I18nText } from '~/types/i18n'
 
-// Tipos del BUILD de storyboards (content/storyboards). Todo lo editorial (estado de
-// publicación, guía, países, duración contratada, propiedad) vive en Supabase y lo
-// administra Admin/Platform: Player no lo modela ni lo escribe.
+// Tipos del BUILD de storyboards (content/storyboards). Lo que no está en el JSON vive en
+// Supabase: la publicación (estado, países, organización) la decide Player en la gestión
+// (`publicar_storyboard`) y la guía la escribe Admin/Platform. Nada de eso se modela aquí.
 
 // Eje del storyboard, como carpeta y como slug de ruta (/play/<eje>/<slug>).
 export type TipoStoryboard = 'alimentacion' | 'actividad-fisica' | 'cuidado-personal' | 'salud-emocional'

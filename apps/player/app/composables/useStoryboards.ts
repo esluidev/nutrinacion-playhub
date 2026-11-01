@@ -3,8 +3,8 @@ import { tr } from '~/types/i18n'
 import type { StoryboardBuild, StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Los storyboards COMPILADOS, derivados en vivo de content/ (la misma lectura que usa el
-// runner). Su estado en el catálogo de la base está en useCatalogoBase; la publicación, los
-// países, la organización y la guía se deciden en Admin/Platform.
+// runner). Su estado en la base, su publicación (estado, países y organización, que se deciden
+// en Player) y cuánta guía tienen escrita (en Admin) están en useCatalogoBase.
 
 export const TIPO_LABELS: Record<TipoStoryboard, string> = {
   'alimentacion': 'Alimentación',

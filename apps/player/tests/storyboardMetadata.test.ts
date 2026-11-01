@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compararConBase, construirMetadata, mensajeDeLaBase, validarMetadata } from '~/utils/storyboardMetadata'
+import { compararConBase, construirMetadata, diferenciasConBase, escenasQueSeQuitan, mensajeDeLaBase, validarMetadata } from '~/utils/storyboardMetadata'
 import type { FilaCatalogo } from '~/utils/storyboardMetadata'
 import type { StoryboardJson } from '~/types/storyboard'
 
@@ -172,6 +172,64 @@ describe('compararConBase — ¿lo registrado está al día con el JSON?', () =>
   })
 })
 
+describe('diferenciasConBase — qué cambió, con los dos valores', () => {
+  const meta = construirMetadata(def())
+  const { clave: _clave, ...fila } = meta
+  const base = (parcial: Partial<FilaCatalogo> = {}): FilaCatalogo => ({ ...structuredClone(fila), ...parcial })
+
+  it('sin fila o sin cambios, no hay diferencias', () => {
+    expect(diferenciasConBase(meta, null)).toEqual([])
+    expect(diferenciasConBase(meta, base())).toEqual([])
+  })
+
+  it('enseña cada campo con cómo está en la base y cómo en el JSON, sin JSON crudo', () => {
+    const d = diferenciasConBase(meta, base({
+      titulo: { es: 'Las Lentejas', en: 'Lentils' },
+      duracion_min: null,
+      enfoques_salud: ['ANEMIA', 'DESNUTRICION'],
+      version_build: '0.0.9',
+    }))
+    expect(d.map(x => x.campo)).toEqual(['versión', 'título', 'enfoques de salud', 'duración'])
+    expect(d.find(x => x.campo === 'título')).toEqual({ campo: 'título', base: 'ES: Las Lentejas · EN: Lentils', json: 'ES: Los Frijoles · EN: Beans' })
+    expect(d.find(x => x.campo === 'duración')).toEqual({ campo: 'duración', base: '—', json: '30 min' })
+    expect(d.find(x => x.campo === 'enfoques de salud')).toEqual({ campo: 'enfoques de salud', base: 'ANEMIA, DESNUTRICION', json: 'DESNUTRICION' })
+    // El build de prueba no declara `version`: en el JSON no hay nada que enseñar.
+    expect(d.find(x => x.campo === 'versión')).toEqual({ campo: 'versión', base: '0.0.9', json: '—' })
+  })
+
+  it('los mismos campos y en el mismo orden que compararConBase', () => {
+    const b = base({ slug: 'otro', idiomas: ['es'], idioma_principal: 'en', escenas: [] })
+    expect(diferenciasConBase(meta, b).map(x => x.campo)).toEqual(compararConBase(meta, b).cambios)
+  })
+
+  it('con las escenas dice qué pasa con cada una: nueva, se quita, cambia de orden o de título', () => {
+    const escenas = [
+      { orden: 1, carpeta: 'descubrimiento', titulo: { es: 'La Ruleta', en: 'The Wheel' } },
+      { orden: 2, carpeta: 'bienvenida', titulo: { es: 'Hola', en: 'Welcome' } },
+      { orden: 3, carpeta: 'cierre', titulo: { es: 'Cierre' } },
+    ]
+    const [d] = diferenciasConBase(meta, base({ escenas }))
+    expect(d).toMatchObject({ campo: 'escenas', base: '3 escenas', json: '2 escenas' })
+    expect(d!.detalle).toEqual([
+      'Cambia de orden: bienvenida, de la 2 a la 1',
+      'Cambia el título: bienvenida, de «Hola» a «Bienvenida»',
+      'Cambia de orden: descubrimiento, de la 1 a la 2',
+      'Se quita: cierre («Cierre»); su guía se borra al actualizar',
+    ])
+  })
+
+  it('una escena nueva dice en qué posición entra', () => {
+    const [d] = diferenciasConBase(meta, base({ escenas: [fila.escenas[0]!] }))
+    expect(d!.detalle).toEqual(['Nueva: descubrimiento («La Ruleta»), en la posición 2'])
+  })
+
+  it('escenasQueSeQuitan: las carpetas de la base que ya no están en el JSON', () => {
+    expect(escenasQueSeQuitan(meta, null)).toEqual([])
+    expect(escenasQueSeQuitan(meta, base())).toEqual([])
+    expect(escenasQueSeQuitan(meta, base({ escenas: [...fila.escenas, { orden: 3, carpeta: 'cierre', titulo: { es: 'Cierre' } }] }))).toEqual(['cierre'])
+  })
+})
+
 describe('validarMetadata', () => {
   const base = {
     clave: 'k', slug: 'el-agua', version_build: '0.1.0', titulo: { es: 'El agua' }, categoria: 'ALIMENTACION',
@@ -201,5 +259,34 @@ describe('validarMetadata', () => {
   it('traduce el error de la base cuando la subcategoría no es de su categoría', () => {
     expect(mensajeDeLaBase('new row violates check constraint "storyboards_subcategoria"'))
       .toBe('La subcategoría no es de la lista de su categoría (catalogo.md).')
+  })
+})
+
+describe('mensajeDeLaBase — lo que levanta la base al registrar y al publicar, para el equipo', () => {
+  it('reconoce lo de publicar_storyboard y su trigger (migraciones 0003 y 0007)', () => {
+    expect(mensajeDeLaBase('Para publicar «el-huevo» elige al menos un país')).toBe('Para publicarlo elige al menos un país.')
+    expect(mensajeDeLaBase('«el-huevo» ya se usa en workshops, temarios o publicaciones: archívalo en lugar de despublicarlo'))
+      .toBe('Ya se usa en workshops, temarios o publicaciones: archívalo en lugar de volverlo a registrado o a revisión.')
+    expect(mensajeDeLaBase('«el-huevo» ya tiene workshops: no puede cambiar de organización')).toBe('Ya tiene workshops: no puede cambiar de organización.')
+    expect(mensajeDeLaBase('El storyboard 6f375f8d-0467-4dd2-958a-91d6d6d1c060 no está registrado'))
+      .toBe('Ese storyboard no está registrado en la base: regístralo primero.')
+    expect(mensajeDeLaBase('Solo el superadmin publica storyboards')).toBe('Solo el superadmin puede hacerlo: vuelve a entrar con una cuenta del equipo.')
+  })
+
+  it('reconoce las restricciones de la tabla y los enums', () => {
+    expect(mensajeDeLaBase('duplicate key value violates unique constraint "storyboards_categoria_slug_key"'))
+      .toBe('Ya hay otro storyboard con ese slug en el mismo eje: cambia el slug en el JSON.')
+    expect(mensajeDeLaBase('invalid input value for enum enfoque_salud: "DIABETIS"'))
+      .toBe('Algún código del JSON (categoría, subcategoría, edición, enfoque o idioma) no está en las listas de la base.')
+  })
+
+  it('reconoce la sesión caducada y la falta de conexión', () => {
+    expect(mensajeDeLaBase('JWT expired')).toBe('La sesión caducó: vuelve a entrar.')
+    expect(mensajeDeLaBase('TypeError: Failed to fetch')).toBe('No hay conexión con la base.')
+  })
+
+  it('lo que ya viene para el equipo pasa tal cual', () => {
+    const m = 'No se puede quitar MX: hay 2 workshop(s) publicado(s) ahí por venir'
+    expect(mensajeDeLaBase(m)).toBe(m)
   })
 })
