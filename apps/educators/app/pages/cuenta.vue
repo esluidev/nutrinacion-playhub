@@ -9,12 +9,10 @@
           <p class="ui-caption truncate">{{ educador?.correo }}</p>
         </div>
       </div>
-      <!-- Dónde trabaja: cada organización con sus comunidades. -->
-      <dl v-if="educador?.organizaciones?.length" class="mt-6 space-y-4">
-        <div v-for="org in educador.organizaciones" :key="org.id">
-          <dt class="ui-caption">{{ org.nombre }}</dt>
-          <dd class="font-black">{{ org.comunidades.map(c => c.nombre).join(', ') || t('cuenta.sinComunidades') }}</dd>
-        </div>
+      <!-- Dónde trabaja: sus organizaciones (una sesión puede abarcar varias). -->
+      <dl v-if="educador?.organizaciones?.length" class="mt-6">
+        <dt class="ui-caption">{{ t('cuenta.organizaciones') }}</dt>
+        <dd v-for="org in educador.organizaciones" :key="org.id" class="font-black">{{ org.nombre }}</dd>
       </dl>
     </UiCard>
     <UiCard class="mt-6">

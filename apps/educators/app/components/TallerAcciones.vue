@@ -8,7 +8,7 @@
       <ul class="mt-4 space-y-2 text-body font-bold text-muted">
         <li class="flex items-center gap-2.5"><UiIcon name="calendar" class="size-4 text-subtle" /><span class="first-letter:uppercase">{{ fechaLarga(taller.fecha, locale) }}</span></li>
         <li class="flex items-center gap-2.5 text-(--tone-strong)"><UiIcon name="clock" class="size-4" /><span class="tabular-nums">{{ horario(taller) }}</span></li>
-        <li class="flex items-center gap-2.5"><UiIcon name="building" class="size-4 text-subtle" />{{ taller.comunidad.nombre }}</li>
+        <li class="flex items-center gap-2.5"><UiIcon name="building" class="size-4 text-subtle" />{{ taller.organizacion.nombre }}</li>
         <li v-if="grupo" class="flex items-center gap-2.5"><UiIcon name="users" class="size-4 text-subtle" />{{ grupo }}</li>
         <li v-if="taller.lugar" class="flex items-center gap-2.5"><UiIcon name="map-pin" class="size-4 text-subtle" />{{ taller.lugar }}</li>
       </ul>

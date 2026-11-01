@@ -7,6 +7,10 @@
       </div>
       <h1 class="ui-heading">{{ taller.storyboard.titulo }}</h1>
       <p class="ui-text">{{ fechaLarga(taller.fecha, locale) }} · {{ horario(taller) }}</p>
+      <!-- De qué jornada forma parte, como en la tarjeta; el educador no gestiona jornadas. -->
+      <p v-if="taller.jornada" class="ui-text mt-1">
+        {{ t('taller.jornada') }} <strong class="text-ink">{{ t('taller.jornadaNombre', { nombre: taller.jornada.nombre }) }}</strong> · {{ rangoDeDias(taller.jornada.fechaInicio, taller.jornada.fechaFin, locale) }}
+      </p>
     </header>
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -79,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+import { rangoDeDias } from '~/utils/calendario'
 import { estadoDe, grupoYAsistentes, horario } from '~/utils/talleres'
 
 const { t, locale } = useT()
@@ -93,18 +98,20 @@ const resumen = computed(() => {
   if (!sb) return ''
   return [t('taller.escenas', { n: sb.escenas }), sb.duracion ? t('taller.minutos', { n: sb.duracion }) : ''].filter(Boolean).join(' · ')
 })
-const EDICION: Record<string, string> = { KIDS: 'Infantil · 4–8', PREADOLESCENTES: 'Preadolescencia · 9–12', ADOLESCENTES: 'Adolescencia · 13–17' }
+// Las ediciones con texto propio («Infantil · 4–8»); otra se muestra tal cual.
+const EDICIONES = ['KIDS', 'PREADOLESCENTES', 'ADOLESCENTES']
+const edicion = (codigo: string) => (EDICIONES.includes(codigo) ? t(`edicion.${codigo}`) : codigo)
 
-// Los datos del taller; los que la comunidad no rellenó no se muestran.
+// Los datos del taller; los que la organización no rellenó no se muestran.
 const datos = computed(() => taller.value
   ? [
       { label: t('taller.hora'), valor: horario(taller.value), icon: 'clock' as const },
-      { label: t('taller.comunidad'), valor: taller.value.comunidad.nombre, icon: 'building' as const },
+      { label: t('taller.organizacion'), valor: taller.value.organizacion.nombre, icon: 'building' as const },
       { label: t('taller.lugar'), valor: taller.value.lugar, icon: 'map-pin' as const },
       { label: t('taller.grupo'), valor: grupoYAsistentes(taller.value, n => t('taller.asistentes', { n })), icon: 'users' as const },
       { label: t('taller.modalidad'), valor: t(`modalidad.${taller.value.modalidad}`), icon: 'devices' as const },
       { label: t('taller.idioma'), valor: t(`idioma.${taller.value.idioma}`), icon: 'globe' as const },
-      { label: t('taller.edicion'), valor: EDICION[taller.value.storyboard.edicion] ?? taller.value.storyboard.edicion, icon: 'book' as const },
+      { label: t('taller.edicion'), valor: edicion(taller.value.storyboard.edicion), icon: 'book' as const },
     ].filter(dato => dato.valor)
   : [])
 

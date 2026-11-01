@@ -19,7 +19,14 @@
       <li v-if="cancelado && taller.motivoCancelacion" class="flex min-w-0 items-center gap-1.5 text-(--tone-strong)">
         <UiIcon name="ban" class="size-3.5" /><span class="truncate">{{ taller.motivoCancelacion }}</span>
       </li>
-      <li v-if="variasComunidades" class="flex min-w-0 items-center gap-1.5"><UiIcon name="building" class="size-3.5 text-subtle" /><span class="truncate">{{ taller.comunidad.nombre }}</span></li>
+      <li v-if="variasOrganizaciones" class="flex min-w-0 items-center gap-1.5"><UiIcon name="building" class="size-3.5 text-subtle" /><span class="truncate">{{ taller.organizacion.nombre }}</span></li>
+      <!-- De qué jornada forma parte (neutra, el nombre en negrita); el educador solo la ve. La línea
+           es larga para la tarjeta: hace salto (tres líneas como máximo, los días sin partir) en vez
+           de truncarse, para que se vean los días. -->
+      <li v-if="taller.jornada" class="flex min-w-0 items-start gap-1.5">
+        <UiIcon name="layers" class="mt-0.5 size-3.5 shrink-0 text-subtle" />
+        <span class="line-clamp-3">{{ t('taller.jornada') }} <strong class="text-ink">{{ t('taller.jornadaNombre', { nombre: taller.jornada.nombre }) }}</strong> · <span class="whitespace-nowrap">{{ rangoDeDias(taller.jornada.fechaInicio, taller.jornada.fechaFin, locale) }}</span></span>
+      </li>
       <li v-if="taller.grupo" class="flex min-w-0 items-center gap-1.5"><UiIcon name="users" class="size-3.5 text-subtle" /><span class="truncate">{{ taller.grupo }}</span></li>
       <li v-if="taller.lugar" class="flex min-w-0 items-center gap-1.5"><UiIcon name="map-pin" class="size-3.5 text-subtle" /><span class="truncate">{{ taller.lugar }}</span></li>
     </ul>
@@ -27,16 +34,17 @@
 </template>
 
 <script setup lang="ts">
-import { comunidadesDe } from '~/utils/sesion'
+import { rangoDeDias } from '~/utils/calendario'
 import { estadoDe, horario } from '~/utils/talleres'
 import type { Taller } from '~/utils/talleres'
 
 const props = defineProps<{ taller: Taller }>()
 
+const { t, locale } = useT()
 const { abrir } = useTallerAbierto()
 const { educador } = useSesion()
 const estado = computed(() => estadoDe(props.taller))
 const cancelado = computed(() => estado.value === 'cancelado')
-// Si trabaja en varias comunidades, cada tarjeta dice de cuál es.
-const variasComunidades = computed(() => (educador.value ? comunidadesDe(educador.value).length > 1 : false))
+// Si trabaja en varias organizaciones, cada tarjeta dice de cuál es.
+const variasOrganizaciones = computed(() => (educador.value?.organizaciones?.length ?? 0) > 1)
 </script>

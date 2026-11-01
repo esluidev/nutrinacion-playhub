@@ -1,25 +1,24 @@
 import type { StoryboardGuide } from '@playhub/ui/app/utils/runner-contract'
 import datos from '~/fixtures/talleres.json'
 import { sesionNoValida, useSupabaseClient } from '~/utils/supabase'
-import { agruparTalleres, cierreDesdeBase, diaRelativo, tallerDesdeBase } from '~/utils/talleres'
-import type { Cierre, CierreBase, Taller, WorkshopBase } from '~/utils/talleres'
+import { agruparTalleres, cierreDesdeBase, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
+import type { Cierre, CierreBase, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
-// Talleres del educador en todas sus comunidades (educador_workshops), la guía de cada uno
+// Talleres del educador en todas sus organizaciones (educador_workshops), la guía de cada uno
 // (educador_guia, en el idioma del workshop), su ejecución (educador_iniciar y educador_terminar,
 // con los eventos del runner) y el feedback (educador_guardar_feedback). Las filas de la base pasan
 // a `Taller` con tallerDesdeBase (utils/talleres.ts, con tests).
-// En modo demo (sin Supabase) son los datos de fixtures/, con fechas relativas a hoy; los cierres
-// se guardan en este dispositivo y la guía sale de fixtures/guia-<slug>.json.
+// En modo demo (sin Supabase) son los datos de fixtures/, con las fechas (también las de la
+// jornada) relativas a hoy; los cierres se guardan en este dispositivo y la guía sale de
+// fixtures/guia-<slug>.json.
 
 const CIERRES_DEMO = 'playhub-educadores-cierres'
-
-type Fixture = Omit<WorkshopBase, 'fecha'> & { diaRelativo: number }
 
 const guiasDemo = import.meta.glob<{ escenas: StoryboardGuide }>('~/fixtures/guia-*.json', { eager: true, import: 'default' })
 
 function talleresDemo(cierres: Record<string, Cierre>): Taller[] {
-  return (datos.talleres as unknown as Fixture[]).map(({ diaRelativo: offset, ...w }) => {
-    const taller = tallerDesdeBase({ ...w, fecha: diaRelativo(offset) })
+  return (datos.talleres as unknown as WorkshopFixture[]).map((w) => {
+    const taller = tallerDesdeFixture(w)
     return cierres[taller.id] ? { ...taller, cierre: cierres[taller.id] } : taller
   })
 }

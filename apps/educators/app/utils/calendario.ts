@@ -60,6 +60,24 @@ export function textoDelRango(iso: string, vista: VistaCalendario, locale: strin
   return `${ini.getDate()} ${fmt(ini, { month: 'short' })} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`
 }
 
+/**
+ * Los días de una jornada: «25 oct – 13 nov»; «12 – 16 oct» si es el mismo mes; «12 oct» si dura
+ * un día; con el año si cambia. En inglés, el mes delante («Oct 25 – Nov 13»).
+ */
+export function rangoDeDias(inicio: string, fin: string, locale: string): string {
+  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString(intl(locale), o).replace('.', '')
+  const ini = aFecha(inicio)
+  const end = aFecha(fin)
+  const mismoAnio = ini.getFullYear() === end.getFullYear()
+  const diaYMes = (d: Date) => fmt(d, mismoAnio ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' })
+  if (inicio === fin) return diaYMes(ini)
+  if (mismoAnio && ini.getMonth() === end.getMonth()) {
+    const mes = fmt(end, { month: 'short' })
+    return locale === 'en' ? `${mes} ${ini.getDate()} – ${end.getDate()}` : `${ini.getDate()} – ${end.getDate()} ${mes}`
+  }
+  return `${diaYMes(ini)} – ${diaYMes(end)}`
+}
+
 /** Nombre corto del día («lun») y del mes en el idioma de la interfaz. */
 export function diaCorto(iso: string, locale: string): string {
   return aFecha(iso).toLocaleDateString(intl(locale), { weekday: 'short' }).replace('.', '')

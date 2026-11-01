@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { agruparTalleres, cierreCompleto, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, talleresPorDia, urlDelTaller } from '~/utils/talleres'
-import type { Cierre, Taller, WorkshopBase } from '~/utils/talleres'
+import datos from '~/fixtures/talleres.json'
+import { agruparTalleres, cierreCompleto, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
+import type { Cierre, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 const HOY = new Date(2026, 9, 14, 9, 30) // 14 de octubre de 2026
 
@@ -10,7 +11,8 @@ function taller(parcial: Partial<Taller>): Taller {
   return {
     id: 't',
     storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
-    comunidad: { id: 1, nombre: 'Comunidad Centro' },
+    organizacion: { id: 1, nombre: 'Fundación Centro' },
+    jornada: null,
     fecha: '2026-10-14',
     horaInicio: '10:00',
     horaFin: '10:30',
@@ -35,10 +37,11 @@ const FINALIZADO: WorkshopBase = {
   estado: 'completado',
   idioma: 'es',
   horaFin: '10:30',
-  comunidad: { id: 1, nombre: 'Comunidad Centro' },
+  jornada: { id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Sede central', fecha_inicio: '2026-10-11', fecha_fin: '2026-10-30' },
   modalidad: 'presencial',
   horaInicio: '10:00',
   iniciadoEn: '2026-10-13T16:00:00+00:00',
+  organizacion: { id: 1, nombre: 'Fundación Centro' },
   storyboard: { eje: 'alimentacion', slug: 'el-huevo', titulo: 'El huevo', edicion: 'KIDS', escenas: 4, duracion: 30, categoria: 'ALIMENTACION' },
   terminadoEn: '2026-10-13T16:30:00+00:00',
   estadoWorkshop: 'finalizado',
@@ -50,6 +53,7 @@ const CANCELADO: WorkshopBase = {
   ...FINALIZADO,
   id: '12',
   fecha: '2026-10-21',
+  jornada: null,
   cierre: null,
   estado: 'pendiente',
   iniciadoEn: null,
@@ -59,15 +63,16 @@ const CANCELADO: WorkshopBase = {
 }
 
 describe('workshops de la base', () => {
-  it('pasa una fila de educador_workshops a Taller', () => {
+  it('pasa una fila de educador_workshops a Taller, con su organización y su jornada', () => {
     expect(tallerDesdeBase(FINALIZADO)).toEqual({
       id: '9',
       storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
-      comunidad: { id: 1, nombre: 'Comunidad Centro' },
+      organizacion: { id: 1, nombre: 'Fundación Centro' },
+      jornada: { id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Sede central', fechaInicio: '2026-10-11', fechaFin: '2026-10-30' },
       fecha: '2026-10-13',
       horaInicio: '10:00',
       horaFin: '10:30',
-      lugar: 'Aula 2B',
+      lugar: 'Sede central · Aula 2B',
       grupo: '3.º A',
       asistentesEstimados: 26,
       idioma: 'es',
@@ -85,6 +90,19 @@ describe('workshops de la base', () => {
     expect(t.idioma).toBe('en')
     expect(t.modalidad).toBe('hibrido')
     expect(t.cierre).toBeUndefined()
+  })
+
+  it('dentro de una jornada, el lugar es el de la jornada y el detalle del taller', () => {
+    expect(lugarDelTaller('Aula 3A', { ubicacion: 'Sede central' })).toBe('Sede central · Aula 3A')
+    expect(lugarDelTaller(null, { ubicacion: 'Sede central' })).toBe('Sede central')
+    expect(lugarDelTaller('  ', { ubicacion: 'Sede central' })).toBe('Sede central')
+    expect(lugarDelTaller('Biblioteca', null)).toBe('Biblioteca')
+    expect(lugarDelTaller(null, null)).toBe('')
+  })
+
+  it('un taller suelto no tiene jornada y lleva su propio lugar', () => {
+    expect(tallerDesdeBase(CANCELADO).jornada).toBeNull()
+    expect(tallerDesdeBase(CANCELADO).lugar).toBe('Aula 2B')
   })
 
   it('acepta los datos opcionales vacíos y el id numérico', () => {
@@ -105,6 +123,32 @@ describe('workshops de la base', () => {
   it('no inventa valores: lo desconocido cae en su respaldo', () => {
     const t = tallerDesdeBase({ ...CANCELADO, idioma: 'fr', modalidad: 'otra', estadoWorkshop: 'raro' })
     expect(t).toMatchObject({ idioma: 'es', modalidad: 'presencial', estadoWorkshop: 'publicado' })
+  })
+})
+
+describe('talleres del modo demo', () => {
+  const fixture = datos.talleres as unknown as WorkshopFixture[]
+  const de = (id: string) => fixture.find(w => w.id === id)!
+
+  it('cuenta la fecha del taller y las de su jornada desde hoy', () => {
+    const t = tallerDesdeFixture(de('t-101'), HOY)
+    expect(t.fecha).toBe('2026-10-14')
+    expect(t.organizacion).toEqual({ id: 1, nombre: 'Fundación Centro' })
+    expect(t.jornada).toEqual({ id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Sede central', fechaInicio: '2026-10-11', fechaFin: '2026-10-30' })
+    expect(t).not.toHaveProperty('diaRelativo')
+  })
+
+  it('un taller del fixture sin jornada queda sin ella', () => {
+    const t = tallerDesdeFixture(de('t-098'), HOY)
+    expect(t.fecha).toBe('2026-10-06')
+    expect(t.jornada).toBeNull()
+    expect(t.cierre).toMatchObject({ calificacion: 5, asistentes: 21 })
+  })
+
+  it('todo el fixture pasa a Taller', () => {
+    const talleres = fixture.map(w => tallerDesdeFixture(w, HOY))
+    expect(talleres).toHaveLength(fixture.length)
+    expect(talleres.filter(t => t.jornada)).toHaveLength(fixture.length - 1)
   })
 })
 

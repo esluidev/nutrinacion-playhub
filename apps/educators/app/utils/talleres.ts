@@ -20,14 +20,24 @@ export type Idioma = 'es' | 'en'
 export type Modalidad = 'presencial' | 'remoto' | 'hibrido'
 export type EstadoWorkshop = 'publicado' | 'finalizado' | 'cancelado'
 
+/** La jornada de la que forma parte un taller: un lugar y uno o varios días. El educador solo la ve. */
+export interface Jornada {
+  id: number
+  nombre: string
+  ubicacion: string // el lugar; sus talleres lo heredan
+  fechaInicio: string // YYYY-MM-DD
+  fechaFin: string // el mismo día que el inicio si dura uno
+}
+
 export interface Taller {
   id: string
   storyboard: { titulo: string, eje: string, slug: string, edicion: string, escenas: number, duracion: number | null }
-  comunidad: { id: number, nombre: string }
+  organizacion: { id: number, nombre: string }
+  jornada: Jornada | null
   fecha: string // YYYY-MM-DD
   horaInicio: string
   horaFin: string // '' si no tiene
-  lugar: string // '' si no tiene
+  lugar: string // dónde: el de la jornada y su detalle («Sede central · Aula 3A»), o el suyo; '' si no tiene
   grupo: string // '' si no tiene
   asistentesEstimados: number | null
   idioma: Idioma // el del contenido: el runner se abre en este idioma, no en el de la interfaz
@@ -51,11 +61,12 @@ export interface CierreBase {
 export interface WorkshopBase {
   id: string | number
   storyboard: { titulo: string | null, eje: string, categoria?: string, slug: string, edicion: string, escenas: number, duracion: number | null }
-  comunidad: { id: number, nombre: string }
+  organizacion: { id: number, nombre: string }
+  jornada: { id: number, nombre: string, ubicacion: string, fecha_inicio: string, fecha_fin: string } | null
   fecha: string
   horaInicio: string | null
   horaFin: string | null
-  lugar: string | null
+  lugar: string | null // dentro de una jornada, el detalle («Aula 3A»); suelto, el lugar
   grupo: string | null
   asistentesEstimados: number | null
   idioma: string
@@ -90,17 +101,25 @@ export function cierreDesdeBase(c: CierreBase): Cierre {
   }
 }
 
+/** Dónde es el taller: dentro de una jornada, su lugar y el detalle del taller; suelto, el suyo. */
+export function lugarDelTaller(lugar: string | null, jornada: { ubicacion: string } | null): string {
+  return [jornada?.ubicacion, lugar].map(x => x?.trim()).filter(Boolean).join(' · ')
+}
+
 /** Un workshop de la base como `Taller`: los vacíos de texto quedan en '' y los valores desconocidos, en su respaldo. */
 export function tallerDesdeBase(w: WorkshopBase): Taller {
   const s = w.storyboard
   return {
     id: String(w.id),
     storyboard: { titulo: s.titulo || s.slug, eje: s.eje, slug: s.slug, edicion: s.edicion, escenas: s.escenas, duracion: s.duracion ?? null },
-    comunidad: { id: w.comunidad.id, nombre: w.comunidad.nombre },
+    organizacion: { id: w.organizacion.id, nombre: w.organizacion.nombre },
+    jornada: w.jornada
+      ? { id: w.jornada.id, nombre: w.jornada.nombre, ubicacion: w.jornada.ubicacion, fechaInicio: w.jornada.fecha_inicio, fechaFin: w.jornada.fecha_fin }
+      : null,
     fecha: w.fecha,
     horaInicio: w.horaInicio ?? '',
     horaFin: w.horaFin ?? '',
-    lugar: w.lugar?.trim() ?? '',
+    lugar: lugarDelTaller(w.lugar, w.jornada),
     grupo: w.grupo?.trim() ?? '',
     asistentesEstimados: w.asistentesEstimados ?? null,
     idioma: w.idioma === 'en' ? 'en' : 'es',
@@ -120,7 +139,25 @@ export function diaRelativo(offset: number, hoy = new Date()): string {
   return isoDia(d)
 }
 
-/** Cancelado (lo decidió la comunidad); si no, cerrado (tiene su feedback), hoy, próximo o por cerrar (ya pasó y falta el feedback). */
+/** Un workshop del modo demo (fixtures/talleres.json): la forma de la base con los días relativos a hoy, también los de su jornada. */
+export interface WorkshopFixture extends Omit<WorkshopBase, 'fecha' | 'jornada'> {
+  diaRelativo: number
+  jornada: { id: number, nombre: string, ubicacion: string, diaInicioRelativo: number, diaFinRelativo: number } | null
+}
+
+/** Un workshop del fixture como `Taller`, con sus fechas (y las de su jornada) contadas desde `hoy`. */
+export function tallerDesdeFixture(w: WorkshopFixture, hoy = new Date()): Taller {
+  const { diaRelativo: offset, jornada, ...resto } = w
+  return tallerDesdeBase({
+    ...resto,
+    fecha: diaRelativo(offset, hoy),
+    jornada: jornada
+      ? { id: jornada.id, nombre: jornada.nombre, ubicacion: jornada.ubicacion, fecha_inicio: diaRelativo(jornada.diaInicioRelativo, hoy), fecha_fin: diaRelativo(jornada.diaFinRelativo, hoy) }
+      : null,
+  })
+}
+
+/** Cancelado (lo decidió la organización); si no, cerrado (tiene su feedback), hoy, próximo o por cerrar (ya pasó y falta el feedback). */
 export function estadoDe(taller: Taller, hoy = new Date()): EstadoTaller {
   if (taller.estadoWorkshop === 'cancelado') return 'cancelado'
   if (taller.cierre) return 'cerrado'

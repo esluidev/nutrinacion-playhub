@@ -32,11 +32,11 @@ import { lugarDeTrabajo, nombreCompleto } from '~/utils/sesion'
 const { t } = useT()
 const { educador, salir } = useSesion()
 
-// Bajo el nombre: su comunidad, su organización si tiene varias comunidades de una, o cuántas.
+// Bajo el nombre: su organización o, si trabaja en varias, cuántas.
 const dondeTrabaja = computed(() => {
   if (!educador.value) return undefined
   const lugar = lugarDeTrabajo(educador.value)
   if ('nombre' in lugar) return lugar.nombre
-  return lugar.comunidades ? t('sesion.comunidades', { n: lugar.comunidades }) : undefined
+  return lugar.organizaciones ? t('sesion.organizaciones', { n: lugar.organizaciones }) : undefined
 })
 </script>
