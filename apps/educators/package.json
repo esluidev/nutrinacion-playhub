@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build --dotenv .env.local",
-    "dev": "nuxt dev --port 3002 --dotenv .env.local",
+    "dev": "nuxt dev --dotenv .env.local",
     "preview": "nuxt preview --dotenv .env.local",
     "typecheck": "nuxt typecheck",
     "test": "vitest run"

@@ -1,7 +1,11 @@
-// Compartir en desarrollo por Tailscale: la capa @playhub/ui deja entrar a Vite los nombres *.ts.net
-// y `urlEnEsteEquipo` cambia localhost (Supabase, Player) por el equipo con que se abrió la app.
+// Compartir en desarrollo por Tailscale: la capa @playhub/ui escucha en todas las interfaces y deja
+// entrar a Vite los nombres *.ts.net, y `urlEnEsteEquipo` cambia localhost (Supabase, Player) por
+// el nombre o la IP con que se abrió la app.
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
+
+  // En desarrollo; `npm run dev:demo` usa el 3100.
+  devServer: { port: 3000 },
 
   // Herramienta interna (sin SEO). SPA: todo renderiza y autentica en el cliente, donde vive
   // la sesión de Supabase (localStorage). Evita el redirect a /login en cada refresh por SSR.

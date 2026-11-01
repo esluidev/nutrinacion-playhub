@@ -6,9 +6,13 @@ import tailwindcss from '@tailwindcss/vite'
 // así el tema se extiende en el mismo punto y Tailwind no se genera dos veces.
 // La densidad se elige en cada app con `data-density` (compact por defecto, touch para táctil).
 //
-// En desarrollo, el servidor de Vite acepta también los nombres de Tailscale (*.ts.net) para
-// compartir las apps por la tailnet; si no, responde 403 a todo lo que no sea localhost.
+// En desarrollo, las apps escuchan en todas las interfaces (0.0.0.0, sin `--host`): se abren con
+// localhost y desde la tailnet con el nombre (*.ts.net) o la IP (100.x) de este equipo. Vite acepta
+// siempre las IP y, por `allowedHosts`, los nombres *.ts.net; a cualquier otro nombre le responde 403.
+// El puerto lo fija cada app (Admin 3000, Player 3001, Educators 3002).
 export default defineNuxtConfig({
+  devServer: { host: '0.0.0.0' },
+
   vite: {
     plugins: [tailwindcss()],
     server: { allowedHosts: ['.ts.net'] },
