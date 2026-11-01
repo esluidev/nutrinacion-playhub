@@ -28,15 +28,15 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 | Tabla | Qué guarda |
 |---|---|
-| `configuracion` | `admin_url` (enlace a la guía desde Player) y `player_url` («Probar» en Admin) |
+| `configuracion` | `admin_url` (el enlace de los correos de invitación y de la guía desde Player) y `player_url` («Probar» en Admin) |
 | `paises` | El catálogo de países (nombre por idioma y bandera). Player elige de aquí los de cada storyboard; la organización, los suyos |
-| `tipos_organizacion`, `plantillas_correo` | Listas de referencia de Admin y los correos de invitación por idioma (sin uso mientras Admin no envía correos) |
+| `tipos_organizacion`, `plantillas_correo` | Listas de referencia de Admin y la copy de los correos de invitación por idioma (la usa `enviar-invitacion`) |
 | `organizaciones` | La unidad de operación: datos, tipo y **`paises`, los países donde opera** (uno o más, del catálogo). Un solo titular por organización (`organizacion_administradores.titular`, índice único) |
 | `organizacion_licencias` | El contrato: `estado`, `fecha_inicio`, `fecha_fin` y notas. Sin cupos |
 | `organizacion_administradores` | Quién administra cada organización (el titular y los demás) |
 | `organizacion_colaboradores` | Quién opera la organización sin administrarla (`activo` para apartarlo sin perder el historial) |
 | `perfiles` | Los usuarios de Admin (Supabase Auth); `superadmin` lo da solo la base |
-| `invitaciones` | Las invitaciones a administrar o colaborar, hasta que se canjean |
+| `invitaciones` | Las invitaciones a administrar o colaborar, hasta que se canjean; con el estado de su correo (`correo_enviado_en`, `correo_error`) |
 | `storyboards` | El catálogo, como un artículo. La metadata del JSON para listar, filtrar y buscar (`clave`, `slug`, `titulo`, `categoria`, `subcategoria`, `edicion`, `enfoques_salud`, `idiomas`…) y lo que decide Player al publicar: `estado_publicacion`, `paises_disponibles` y, si es personalizado, `organizacion_id` |
 | `guias`, `guia_escenas` | La guía del educador: cabecera y una por escena (los 12 campos de la plantilla, por idioma). Se escribe en Admin |
 | `educadores` | El educador de la organización: sus datos, `activo` (apartado: no recibe talleres ni entra en Educators), `deleted_at` (baja) y su acceso (código de activación y PIN, cifrados; Admin solo ve `tiene_pin` y `activacion_pendiente`) |
@@ -91,7 +91,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 | Superficie | Acceso |
 |---|---|
-| Admin | Supabase Auth con correo y contraseña. Alta cerrada (registro desactivado): las cuentas las crea `canjear-invitacion`. **Sin correos** ([decisión 009](decisions/009-acceso-admin-sin-correo.md)): la invitación se comparte con su enlace y, si alguien olvida la contraseña, el titular o soporte le genera un enlace de recuperación (`enlace-recuperacion`) |
+| Admin | Supabase Auth con correo y contraseña. Alta cerrada (registro desactivado): las cuentas las crea `canjear-invitacion`. La invitación sale por correo al crearla y su enlace se puede copiar ([decisión 012](decisions/012-invitaciones-por-correo.md)); si alguien olvida la contraseña, el titular o soporte le genera un enlace de recuperación sin correo (`enlace-recuperacion`, [decisión 009](decisions/009-acceso-admin-sin-correo.md)) |
 | Educators | Correo y PIN de 6 dígitos que elige el educador la primera vez, con el código de activación que genera Admin, **sin Supabase Auth**. Usa la anon key y las funciones `educador_*` con un token. No lee tablas |
 | Player, gestión | Supabase Auth con las cuentas de Admin, **solo superadmin**. Registra (`sincronizar_storyboard`) y publica (`publicar_storyboard`) el catálogo |
 | Player, runner `/play/**` | Público, sin sesión ni Supabase. La guía se la pasa la app que lo incrusta ([runner.md](runner.md)) |
@@ -111,7 +111,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 - `workshop_feedback`: Admin solo lo lee; lo escribe el educador con `educador_guardar_feedback`.
 - El trigger de alta lee el rol de `raw_app_meta_data`, nunca de `raw_user_meta_data`.
 
-Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de administrador, si será el titular (`titular`): solo el superadmin invita titulares, y quien la canjea o la acepta pasa a serlo (el anterior sigue como administrador). La Edge Function `canjear-invitacion` es la frontera de las invitaciones; `enviar-invitacion` (correo por Resend) se conserva sin desplegar ni disparar ([decisión 009](decisions/009-acceso-admin-sin-correo.md)). Al canjear, `canjear-invitacion` enlaza la cuenta explícitamente: Auth guarda el `app_metadata` después de insertar al usuario, así que el trigger de alta solo crea el perfil. Un cambio en ellas revisa a la vez la función, las políticas y el trigger.
+Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de administrador, si será el titular (`titular`): solo el superadmin invita titulares, y quien la canjea o la acepta pasa a serlo (el anterior sigue como administrador). La Edge Function `canjear-invitacion` es la frontera de las invitaciones. `enviar-invitacion` las manda por correo con Resend: Admin la llama al crear la invitación y desde «Reenviar correo»; la RLS decide quién puede (los que pueden crearla o revocarla) y la invitación guarda `correo_enviado_en` o `correo_error` ([decisión 012](decisions/012-invitaciones-por-correo.md)). Al canjear, `canjear-invitacion` enlaza la cuenta explícitamente: Auth guarda el `app_metadata` después de insertar al usuario, así que el trigger de alta solo crea el perfil. Un cambio en ellas revisa a la vez la función, las políticas y el trigger.
 
 ## Funciones
 
@@ -144,6 +144,7 @@ Las `educador_*` reciben el token, son `SECURITY DEFINER` y devuelven solo lo su
 | `0008_storage` | Bucket `narracion` |
 | `0009_tareas` | pg_cron: finalizar workshops cada hora |
 | `0010_recuperacion` | `recuperacion_autorizar`: quién genera el enlace para recuperar el acceso a Admin |
+| `0011_correo_invitaciones` | El estado del correo de cada invitación (`correo_enviado_en`, `correo_error`) |
 
 Qué se ejecuta en producción (y qué no), los pasos posteriores y la tabla de usuarios de prueba: [supabase/README.md](../supabase/README.md).
 
@@ -166,7 +167,7 @@ npm run db:types        # regenera supabase/database.types.ts, que tipan Admin y
 python3 scripts/generar-seed.py   # regenera supabase/seed.sql; después, supabase db reset
 ```
 
-Con Supabase local levantado: API en `http://127.0.0.1:54321`, Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (Admin no envía correos: la recuperación va por un enlace que se comparte a mano). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
+Con Supabase local levantado: API en `http://127.0.0.1:54321`, Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (Admin no usa el correo de Auth: las invitaciones salen por Resend y la recuperación es un enlace que se comparte a mano). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
 
 Pruebas en `supabase/tests/database/`, **autocontenidas** (cada una crea sus datos en una transacción que se deshace, así que corren con o sin seed):
 - `01_rls.test.sql`: lo que ve y escribe cada identidad (superadmin, admin, colaborador, organización ajena y anon); las funciones `platform_*` y la baja de una organización.

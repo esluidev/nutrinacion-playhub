@@ -1,7 +1,7 @@
 # Acceso a Admin sin enviar correos
 
 Fecha: 2026-10-28
-Estado: aceptada
+Estado: aceptada; sustituida en parte por la [decisión 012](012-invitaciones-por-correo.md): las invitaciones ya se envían por correo. La recuperación de la contraseña sigue como aquí
 Sustituye a: el webhook de `enviar-invitacion` previsto en la [decisión 005](005-base-nueva-y-acceso-educador.md) y el «¿La olvidaste?» por correo.
 
 ## Contexto
