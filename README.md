@@ -4,9 +4,9 @@ Monorepo con tres aplicaciones web desplegables por separado (Admin, Player y Ed
 
 | App | Ruta | Qué hace | Estado |
 |---|---|---|---|
-| Admin | [`apps/admin`](apps/admin/AGENTS.md) | Operación de organizaciones y comunidades; consola Platform | Activa, conectada a Supabase |
+| Admin | [`apps/admin`](apps/admin/AGENTS.md) | Operación de la organización (educadores, colaboradores, talleres, jornadas, planificador); consola Platform | Activa, conectada a Supabase |
 | Player | [`apps/player`](apps/player/AGENTS.md) | Construye y sirve los juegos; runner público `/play/**` | Activa; runner sobre el player de referencia |
-| Educators | [`apps/educators`](apps/educators/AGENTS.md) | El educador prepara, abre y cierra sus talleres; móviles y tabletas | Web, con datos de prueba |
+| Educators | [`apps/educators`](apps/educators/AGENTS.md) | El educador prepara, abre y cierra sus talleres; móviles y tabletas | Activa, conectada a Supabase |
 
 El `AGENTS.md` de cada app explica qué es, sus reglas y cómo arrancarla y verificarla.
 
@@ -34,13 +34,27 @@ Instala todo desde la raíz con `npm install` (npm workspaces). Cada app usa su 
 
 ### Compartir en desarrollo por Tailscale
 
-Con las apps y Supabase local en marcha, cualquier equipo de tu tailnet las abre con el nombre de este equipo: `http://<equipo>.<tailnet>.ts.net:3000` (Admin), `:3001` (Player) y `:3002` (Educators). No hace falta tocar los `.env.local`:
-- la capa `@playhub/ui` deja entrar a Vite los nombres `*.ts.net` (si no, responde 403);
-- `urlEnEsteEquipo` (`packages/ui/app/utils/equipo-local.ts`) cambia `localhost` y `127.0.0.1` de Supabase y de Player por el nombre con que se abrió la app;
-- Player acepta que lo incrusten Admin y Educators abiertos por la tailnet;
+Arranca cada app con `npm run dev`, sin `--host` ni `--port`. Con las apps y Supabase local en marcha, las abres en este equipo con `localhost` y desde cualquier equipo de tu tailnet con el nombre o la IP de este (`tailscale status`): `http://<equipo>.<tailnet>.ts.net:3000` o `http://100.x.y.z:3000` (Admin), `:3001` (Player) y `:3002` (Educators). No hace falta tocar los `.env.local`:
+- la capa `@playhub/ui` hace que las apps escuchen en todas las interfaces (`0.0.0.0`); cada app fija su puerto en su `nuxt.config.ts`;
+- Vite acepta las IP y, por la capa, los nombres `*.ts.net`; a cualquier otro nombre, como el corto sin `.ts.net`, le responde 403;
+- `urlEnEsteEquipo` (`packages/ui/app/utils/equipo-local.ts`) cambia `localhost` y `127.0.0.1` de Supabase y de Player por el nombre o la IP con que se abrió la app: la API va al mismo equipo, en `:54321`;
+- Player acepta que lo incrusten Admin y Educators abiertos con un nombre `*.ts.net` o con una IP de este equipo (las lee al arrancar: si cambia la IP, reinícialo);
 - Auth local admite volver a `*.ts.net:3000`.
 
-Es http: los botones de copiar usan un método alternativo, porque el portapapeles moderno exige HTTPS. Para HTTPS, `tailscale serve`. Si cambias la capa o `supabase/config.toml`, reinicia las apps o Supabase.
+Es http: los botones de copiar usan un método alternativo, porque el portapapeles moderno exige HTTPS. Escuchar en todas las interfaces también abre las apps a la red local (la Wi-Fi), no solo a la tailnet. Si cambias la capa o `supabase/config.toml`, reinicia las apps o Supabase.
+
+### Compartir con alguien sin Tailscale (Funnel)
+
+La tailnet solo llega a tus equipos. Para que otra persona pruebe las apps con un enlace, sin instalar nada, se publican con [Tailscale Funnel](https://tailscale.com/kb/1223/funnel):
+
+```bash
+./scripts/funnel.sh        # con las apps y Supabase local en marcha
+./scripts/funnel.sh off    # al terminar
+```
+
+Funnel solo sirve HTTPS y solo en los puertos 443, 8443 y 10000. El script pone una app en cada uno y Supabase local en `/supabase` de cada app: `https://<equipo>.<tailnet>.ts.net` (Admin), `:8443` (Player) y `:10000` (Educators). `urlEnEsteEquipo` sigue el mismo reparto: en una página https, Player pasa a su puerto de Funnel y Supabase a `/supabase` del mismo origen, Realtime incluido. Los enlaces de invitación y de recuperación salen con esa dirección.
+
+Mientras está publicado, cualquiera con el enlace llega a las apps y a la API de Supabase local, cuyas claves son las de ejemplo de Supabase (públicas): solo con datos de prueba, y apágalo al terminar. Sin altas abiertas: `enable_signup = false`.
 
 ## Verificación
 

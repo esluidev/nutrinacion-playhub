@@ -21,8 +21,8 @@ Cada app vive en su subdominio y se despliega por separado. Para el navegador, l
 
 | App | Responsable de | No es responsable de |
 |---|---|---|
-| Admin | Organizaciones, comunidades, educadores, jornadas, workshops (su ciclo), participantes y lo que se publica para ellos; la guía de los storyboards (Platform) | Construir juegos, registrarlos ni publicarlos |
-| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización; solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | La guía (en Admin/Platform); ser la app del hogar, que se creará aparte |
+| Admin | Organizaciones (con sus países, licencia, administradores y colaboradores), educadores y sus grupos, jornadas, workshops (su ciclo) y el planificador; la guía de los storyboards (Platform) | Construir juegos, registrarlos ni publicarlos; registrar personas (participantes) |
+| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización; solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | La guía (en Admin/Platform); ser la app del hogar, que no se construye ahora ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
 | Educators | Experiencia del educador: entrar, ver sus talleres (semana y mes), abrir el taller con el runner incrustado (y darle la guía) y dar el feedback al terminar | Implementar juegos |
 
 ## Cómo se conectan las apps (hoy)
@@ -43,26 +43,24 @@ Las apps no comparten estado. El runner se incrusta con el contrato de [runner.m
 1. El equipo construye un storyboard y sus escenas en Player.
 2. Un superadmin lo registra en la base desde Player: la metadata de su JSON (`clave`, slug, categoría, edición, enfoques, idiomas…) y sus escenas. Player avisa cuando el build cambia y hay que actualizarlo.
 3. En Admin/Platform se escribe la guía; desde Player se publica en sus países (Player muestra cuánta guía hay en cada idioma).
-4. Una comunidad programa un taller con un storyboard publicado.
+4. Una organización programa un taller con un storyboard publicado en alguno de sus países (o personalizado para ella), suelto o dentro de una jornada.
 5. Educators muestra el taller en el calendario del educador; desde su ventana, «Iniciar taller» abre el runner incrustado en modo educador (Educators le da la guía) y «Ver guía» su preparación.
 6. Al terminar el taller en el runner, Educators lleva al educador al feedback del taller (calificación, asistentes, participación, claridad y comentarios; solo del grupo). Al finalizarlo, el taller queda completado.
 
-Hoy los pasos 1–4 funcionan con Supabase; 5 y 6, con datos de prueba (el feedback se guarda en el dispositivo).
+Los seis pasos funcionan con Supabase local.
 
-## Pendiente para la conexión real (tarea 006)
+## Pendiente
 
-- **App del hogar**: la base ya tiene su modelo y sus funciones `hogar_*` ([decisión 007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)); la app está por crear.
+- **App del hogar**: fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)); cuando toque, se diseña sobre el modelo de organización.
 
-- **Sesión del educador**: diseñada y probada en local (decisiones [005](decisions/005-base-nueva-y-acceso-educador.md) y [007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)): correo y PIN que elige con el código de activación de Admin, token de sesión y funciones `educador_*`; ve sus workshops de todas sus comunidades. Falta conectar Educators (tarea 006, entrega 3).
+- **Sesión del educador**: en marcha (decisiones [005](decisions/005-base-nueva-y-acceso-educador.md) y [007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)): correo y PIN que elige con el código de activación de Admin, token de sesión y funciones `educador_*`; ve sus workshops de todas sus organizaciones.
 - **Guía en la base**: Educators la lee con `educador_guia` (ya con las claves del runner) y se la pasa al runner con `iniciar` ([decisión 004](decisions/004-runner-incrustado.md)); Player no necesita leer nada. Los modos dispositivo y casa nunca la reciben.
-- **Talleres y feedback reales**: `useTalleres` (Educators) es el único punto que cambia; el feedback pasa a la base sin datos de personas y sin puntos como evidencia.
 - **Sesión del taller con dispositivos**: un servicio real que sustituya al `BroadcastChannel` (unirse con código, escena, pausa y presencia).
 
 ## Límites de datos
 
-- `organizacion`: relación comercial, administradores y licencia.
-- `comunidad`: tenancy operativo.
+- `organizacion`: la unidad de operación ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)): países donde opera, licencia, administradores, colaboradores, educadores, jornadas y talleres.
 - Build de Player: la verdad del juego, en sus JSON (`clave`, slug, título, taxonomía y enfoques, idiomas, escenas, narración, consignas, contenido ejecutable, efectos, Rive y SVG).
 - Bucket de Supabase (previsto, tarea 009): las voces de narración, que es lo que pesa.
-- Supabase: la copia de la metadata del JSON para filtrar y buscar y la publicación (las registra Player), la guía, la operación, las relaciones y la app del hogar (cuentas, perfiles, participantes y avance). Nada del contenido del juego.
+- Supabase: la copia de la metadata del JSON para filtrar y buscar y la publicación (las registra Player), la guía, la operación y las relaciones. Nada del contenido del juego ni de personas (participantes).
 - La `clave` UUID une build y catálogo.

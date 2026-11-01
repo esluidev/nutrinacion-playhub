@@ -1,0 +1,138 @@
+---
+id: 010
+estado: backlog
+prioridad: alta
+creada: 2026-10-28
+---
+# Lo que falta para que la plataforma funcione completa
+
+## Objetivo
+
+Reunir en un solo sitio lo que está incompleto, lo que no existe todavía y lo que no se puede hacer desde ninguna app, para que Luis priorice después de su QA manual. Nace de dos hallazgos del QA del 2026-10-28 (la guía y los datos de un storyboard no se editan desde Player; no encontraba cómo crear un grupo de educadores) y de una revisión del código contra la base.
+
+## Alcance
+
+Inventario y análisis, con una propuesta corta por punto. Cada punto se corrige en su propia tarea o entrega; aquí no se cambia código. Las decisiones que cambian producto se marcan como tales: no se toman aquí.
+
+Lo que ya tiene tarea propia se enlaza, no se repite: la deuda de Admin tras el rediseño ([tarea 008](008-deuda-tras-rediseno.md)) y lo pendiente del runner en Educators ([tarea 009](009-runner-dentro-de-educators.md)).
+
+## Hallazgos de Luis
+
+### 1. Desde Player no se edita la guía ni la información del storyboard
+
+Es como está decidido, no un olvido: Player registra la metadata del storyboard **desde su JSON** (`storyboard.json`: nombre, tipo, categoría, edición, enfoque de salud, idiomas, duración, escenas) y decide su publicación (estado, países y organización si es personalizado). La guía la escribe Admin/Platform (decisiones [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)); en Platform, además, se edita la cabecera de la guía por escena.
+
+Consecuencia para quien opera: para publicar un storyboard hay que pasar por dos apps: Player (registrar y publicar) y Admin → Platform → Storyboards (escribir la guía). Y los datos básicos no se corrigen en ninguna de las dos: se corrigen en el JSON y se vuelve a registrar desde Player. Player lo dice («Guía (se escribe en Admin)», `pages/storyboards/[category]/[id]/index.vue:108`), pero no lleva a Admin.
+
+Qué decidir (decisión de producto, no de código):
+- **A. Mantener el reparto** y hacerlo visible: en Player, un enlace «Escribir la guía en Admin» hacia `platform/storyboards/<id>` (Admin necesitaría una URL conocida, como `player_url` en `configuracion`) y, en Platform, el aviso de que la metadata viene del JSON. Es lo más barato y respeta que el contenido vive en el JSON.
+- **B. Que Player también escriba la guía.** Rompe la regla «Platform es la única superficie que escribe las guías» (AGENTS de Admin y Player) y duplica el editor de la guía.
+- **C. Que Admin edite los datos básicos.** Deja de coincidir con el JSON, que es lo que corre en el runner.
+
+Recomendación: A. Si Luis prefiere B, va con una decisión nueva que sustituya a la 006 en ese punto.
+
+### 2. Crear un grupo de educadores
+
+Existe, pero solo dentro de una comunidad: `Dashboard → Educadores → Nuevo Grupo` (`apps/admin/app/pages/dashboard/educators/index.vue:5`, `grupo-nuevo.vue`). Un grupo es de la comunidad (`educador_grupos.comunidad_id`, migración `0004`) y solo admite educadores ligados a ella; sirve para asignar un taller a varios educadores de una vez.
+
+Por qué no se encuentra:
+- desde la organización (`/organizacion/comunidades`) no hay ningún enlace a los educadores ni a los grupos de una comunidad; para entrar en la comunidad hay que hacer clic en la fila entera (`comunidades/index.vue:26`, `entrar`), sin un botón que lo diga;
+- al crear la comunidad sí se entra en ella (`comunidades/nueva.vue:90`), pero el usuario llega a un dashboard vacío sin que nada le diga que los educadores y los grupos están en el menú lateral;
+- la página de educadores está en español fijo y sin i18n (tarea 008).
+
+Propuesta: un botón «Abrir» por comunidad en la lista de la organización, y en el inicio de una comunidad recién creada, los primeros pasos (ligar educadores, crear un grupo, crear un taller).
+
+## Revisión del resto
+
+Código contrastado con la base el 2026-10-28 (Admin; Player y Educators; base, correo y despliegue). Rutas relativas a la raíz. Las filas marcadas **decisión** cambian producto y las decide Luis; el resto se arregla con una tarea normal.
+
+### A. Impide operar (prioridad para el QA)
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| A1 | **Un colaborador sin cuenta no puede entrar.** La organización invita, pero su lista no trae el `token` y no tiene «Copiar enlace» ni «Revocar»; la página de alta tampoco muestra el enlace. El superadmin no ve las invitaciones de colaborador (RLS: solo `ADMIN`). Admin no envía correos (decisión 009), así que el enlace no llega a nadie. Lo mismo con las invitaciones de administrador fuera de Platform | `useColaboradores.ts:87-97`, `dashboard/colaboradores/{index,nuevo}.vue`, `useOrganizacion.ts:184-196`, `organizacion/administradores/{index,nuevo}.vue`, `0005_rls.sql:189-194` | **Hecho el 2026-10-28** (tarea 011): `InvitacionEnlace` al crear, «Copiar enlace» y «Revocar» en Administradores y Colaboradores |
+| A2 | Textos que prometen un correo que ya no se envía: «Invitación enviada», «El correo se envía automáticamente» | `colaboradores/nuevo.vue:97`, `messages.ts:427,528`, `platform/invitaciones/nueva.vue:29` | **Hecho el 2026-10-28** (tarea 011) |
+| A3 | Grupo de educadores: solo se crea; no se edita, borra ni se le añaden o quitan miembros después. En una comunidad nueva la lista de educadores sale vacía con «Ningún educador coincide con la búsqueda». El único rodeo es el desplegable «Grupo» al dar de alta un educador | `useEducators.ts:233-256,278-292`, `educators/index.vue:116-134`, `grupo-nuevo.vue:51-53`, `nuevo.vue:24-25` | **Hecho el 2026-10-28** (tarea 011): detalle del grupo con editar, borrar y miembros; estado vacío que lleva a «Agregar Educador» |
+| A4 | Educador: no se edita (nombre, correo, teléfono) ni se da de baja, aunque la base lo permite (`deleted_at`). No hay lista por organización, solo por comunidad | `useEducators.ts:92,201`, `LayoutSidebar.vue:126-132`, `0005_rls.sql:268` | **Hecho el 2026-10-28** (editar y dar de baja desde la tarjeta; «Acceso y PIN» explica que el PIN se cambia generando otro código). Con la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md) la lista ya es de la organización: **cerrado** |
+| A5 | Un taller en modo grupo acepta un grupo vacío y se crea sin educadores; en modo individual, sin educadores no hay estado vacío. Los miembros del grupo se buscan por nombre, no por id | `useWorkshopWizard.ts:138,184`, `WizardStepEducator.vue:7-26`, `useEducators.ts:170-172` | **Hecho el 2026-10-28** (tarea 011): el grupo necesita al menos un educador activo; miembros por id |
+| A6 | En el detalle de un taller un grupo no se puede asignar: solo educadores de uno en uno (el grupo, solo al crearlo) | `useWorkshops.ts:309-315,380-395`, `workshops/[id].vue:243-256` | **Hecho el 2026-10-28** (tarea 011): «Asignar un grupo entero» en el detalle |
+| A7 | «Ver guía» en Educators lleva al detalle del taller, que no muestra la guía: solo los pasos «antes» y un texto fijo de materiales pendientes. `taller.antes2` promete «el código para unirse», que no existe | `TallerAcciones.vue:23`, `workshops/[id]/index.vue:46-69`, `i18n/messages.ts:70,180` | Mostrar ahí la guía de `educador_guia`; quitar la promesa del código |
+| A8 | Un taller pasado sin cierre solo llega al feedback repitiendo el runner hasta «Terminar»; un cierre guardado no se puede corregir desde la vista | `TallerAcciones.vue:20-24`, `workshops/[id]/index.vue:32-44` | Acción «Cerrar taller» y «Corregir cierre» |
+| A9 | Un storyboard que está en la base pero no en el build de Player no aparece en su gestión: no se puede archivar ni cambiar su publicación. Hoy pasa con «El pan» y «La soda» del seed | `useCatalogoBase.ts:65` | **Hecho el 2026-10-28** (tarea 011, Player): sección «En la base, sin JSON en este build» con archivar |
+### B. Admin: incompleto o engañoso
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| B1 | Temarios: la descripción solo se edita en español (al guardar se pierde la inglesa); nacen `PUBLICADO` y no se archivan. Publicaciones: no se edita `disponible_desde` | `ContenidoCasa.vue:206,227`, `usePublicaciones.ts:108,129-150` | Dos idiomas, archivar y editar la fecha |
+| B2 | Desde la organización no hay camino a la operación de una comunidad (educadores, grupos, talleres): se entra haciendo clic en la fila, sin botón, y el inicio de una comunidad nueva no orienta | `comunidades/index.vue:26,163-166`, `dashboard/index.vue:320-341` | **Hecho el 2026-10-28** (tarea 011): ya no hay comunidades; el inicio de la organización trae primeros pasos |
+| B3 | Buscador «⌘K» de la cabecera: un `div` sin handler ni atajo (ya en la tarea 008) | `LayoutHeader.vue:37-41` | Implementar o quitar |
+| B4 | Vistas en español fijo fuera del i18n (ya en la tarea 008): inicio de comunidad, talleres (lista, detalle, nuevo), educadores (las tres), colaboradores (las dos), storyboards de comunidad, el planner y el asistente (5 componentes), y etiquetas visibles en `useWorkshops`, `useWorkshopWizard`, `useEducators`, `useColaboradores`, `useOrganizacion` y `usePlatform` | `apps/admin/app/**` | **Parcial el 2026-10-28** (tarea 011): las vistas movidas a la organización y el planificador pasaron a i18n; revisar el resto en la tarea 008 |
+| B5 | Comentarios desfasados: «le llega una invitación» | `useColaboradores.ts:3-4`, `dashboard/index.vue:318` | **Hecho el 2026-10-28** (tarea 011) |
+### C. Player, contenido y runner
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| C1 | Un solo storyboard con JSON («El huevo», 4 escenas, todas con plantilla, sin voces). «El pan» y «La soda» existen solo en el seed; «El pan» está publicado con un taller de hoy en el seed, así que en Educators el runner responde `no-encontrado`. La guía del seed de «El huevo» tiene `mecanica` y `material` en null y `no_hace` cita escenas que no existen | `content/storyboards/`, `seed.sql:95-111,224-233` | Crear sus JSON o sacarlos del seed; corregir la guía del seed |
+| C2 | Modo educador: siempre salen 7 dispositivos de prueba, también dentro de Educators en un taller real | `RunnerFrame.vue:707-711` | Solo al abrir el runner directo o en desarrollo |
+| C3 | Dispositivos reales: la sesión va por `BroadcastChannel`, que solo une pestañas del mismo navegador; no hay código ni QR para que un dispositivo se sume | `RunnerFrame.vue:8-9,909` | Es la entrega 5 de la tarea 006 (sesión del taller); **decisión** de alcance |
+| C4 | `material` no está en el contrato del runner: `educador_guia` lo manda y el saneado lo descarta; el panel no lo muestra | `runner-contract.ts:17-28,54`, `0006:418`, `RunnerGuide.vue:69-85` | Añadirlo al contrato (aditivo) y mostrarlo |
+| C5 | La cabecera de la guía (`descripcion`, `objetivo`, `publico`, `adaptado_a`) nunca llega al educador: ni `educador_guia` ni `educador_workshops` la devuelven | `0006:341-350,394-423` | Devolverla y mostrarla en la preparación |
+| C6 | Narración: el runner carga `.wav` del build y no hay ninguno; el bucket `narracion` solo admite mpeg/mp4/aac; `NUXT_PUBLIC_NARRATION_URL` está en la documentación pero no en el código; la voz de respaldo es siempre `es-MX`; `NARRATOR_KEY` nunca se provee. Es la entrega 4 de la tarea 006 | `audio/narration.ts:27-35,187-190`, `audio/speech.ts:15`, `0008_storage.sql:4,9`, `docs/backend.md:64` | Decidir formato y origen de las voces; respaldo según el idioma del storyboard |
+| C7 | Modo `home`: sin persistencia ni `hogar_completar`; la app del hogar no existe (ver E1) | `docs/runner.md:93` | Con la app del hogar |
+| C8 | `publicar()` devuelve el mensaje crudo de la base; comentarios que aún dicen que Admin publica | `useCatalogoBase.ts:136`, `storyboardMetadata.ts:8-9`, `usePlatformStoryboards.ts:8-11` | **Hecho el 2026-10-28** (tarea 011, Player) |
+| C9 | Pendientes de la tarea 009 que siguen abiertos: iPad y Android, sin conexión, voces en el bucket, «Probar» en Admin con `UiRunner`, despliegue y peso del build | [tarea 009](009-runner-dentro-de-educators.md) | Allí |
+
+### D. Educators
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| D1 | `educador_workshops` se llama sin `p_desde` ni `p_hasta`: siempre trae todos los talleres | `useTalleres.ts:49` | Pedir por rango cuando crezca |
+| D2 | Textos fuera del i18n: `EDICION` en español fijo y las etiquetas del kit en inglés en línea | `workshops/[id]/index.vue:96`, `app.vue:12-17` | **Hecho el 2026-10-28** (tarea 011) |
+| D3 | `AGENTS.md` de Educators habla de un «aviso de cierres pendientes» que ya se retiró | `apps/educators/AGENTS.md:16` | **Hecho el 2026-10-28** (tarea 011) |
+### E. Base, correo y app del hogar
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| E1 | **La app del hogar no existe.** Las 15 funciones `hogar_*` están y ninguna app las llama; `hogares`, `hogar_sesiones` y `hogar_perfil_avance` no tienen UI. Su dominio tendrá que entrar en `NUXT_PUBLIC_RUNNER_HOSTS` | `0009_hogar.sql:433-793` | **Fuera del alcance** desde la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md): el bloque del hogar salió de la base |
+| E2 | `hogar_crear_cuenta` responde `correo_en_uso` sin límite de intentos: permite saber qué correos están registrados | `0009:450` | **Fuera del alcance** desde la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md): el bloque del hogar salió de la base |
+| E3 | Recuperar el PIN del hogar: no hay función ni correo. Necesita un SMTP (Resend) la primera vez | decisiones 007:64 y 009:37 | **Fuera del alcance** desde la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md): el bloque del hogar salió de la base |
+| E4 | `enviar-invitacion` y `plantillas_correo` se conservan sin uso: la función necesita `RESEND_API_KEY`, `configuracion.admin_url` y un webhook que no está en las migraciones | `supabase/functions/enviar-invitacion/index.ts:2,9,118,164`, `0001:118` | **Fuera del alcance** desde la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md): el bloque del hogar salió de la base |
+| E5 | Afirmaciones y fuentes de la guía no tienen sitio en la base; `estructura.md` (fuera del repo) no documenta `healthFocus` | [tarea 006](006-modelo-de-datos.md) «Pendientes anotados» | **Decisión** |
+
+### F. Producción y despliegue
+
+| # | Qué pasa | Dónde | Propuesta |
+|---|---|---|---|
+| F1 | No hay proyecto de Supabase en la nube ni nada de hosting: ninguna referencia a DigitalOcean o App Platform, sin `.github/`, Dockerfile ni preset de Nitro. Las tres apps son SPA; Educators no tiene script `generate` | `README.md:67-69`, `.harness/project.md:83` | **Decisión**: dónde y cómo se despliega cada app y Supabase |
+| F2 | Player fija `frame-ancestors` de `/play/**` con `routeRules` al compilar: con `nuxt generate` no hay servidor que la mande y tendría que ponerla el hosting | `apps/player/nuxt.config.ts:41-45` | Decidir servidor Node o estático y documentarlo |
+| F3 | Pasos de Auth en la nube que no viajan con las migraciones: `site_url`, `otp_expiry`, y **`enable_signup = false`, que falta en el README** (el proyecto nuevo nace con el alta abierta) | `supabase/README.md:42-46`, `config.toml:160,180,240` | Añadir el paso al README |
+| F4 | Lo que se fija a mano en la nube: `configuracion.player_url`, el primer superadmin, pg_cron (0010), la versión de Postgres (17 en local, por confirmar) | `supabase/README.md:45-50` | Checklist de puesta en marcha |
+| F5 | `docs/runner.md:101` dice que Admin usa `NUXT_PUBLIC_PLAYER_URL`; Admin lee `configuracion.player_url` | `docs/runner.md:101` | **Hecho el 2026-10-28** |
+| F6 | Edge Functions sin `deno.json`, sin pruebas y fuera de `verify.sh`; sin E2E; pgTAP `01`–`05` dependen del seed; nada prueba la política del bucket `narracion` ni el trigger del cupo de comunidades | `scripts/verify.sh`, `supabase/tests/` | Pruebas que creen sus datos, como la `06`; cubrir el cupo |
+
+### G. Documentación desfasada
+
+- `docs/architecture.md:50,56` y decisión 007:62: dicen que Educators no está conectado; ya llama a las funciones `educador_*`.
+- `tasks/006`: la entrega 3 (Educators) sigue sin marcar aunque el log la da por hecha (`:798-801,817`).
+- `tasks/007:89` describe `?taller=` y `/talleres/<id>/cierre`, sustituidos por el iframe. `tasks/009:13` cita `utils/alTerminar.ts`, que no existe.
+- `apps/educators/AGENTS.md:16` (D3) y los comentarios de B5 y C8.
+
+## Criterios de aceptación
+
+- [ ] Cada punto tiene decisión de Luis: hacer (con su tarea), posponer o descartar con motivo.
+
+## Pendientes y siguiente paso
+
+Priorizar con Luis al terminar su QA manual. Propuesta de orden: A1 y A2 primero (sin ellos el QA de colaboradores no puede seguir), después A3–A9, y las decisiones (hallazgo 1, C3, E3, E5, F1) en una sesión de producto.
+
+## Log
+
+- 2026-10-28 — Creada a petición de Luis durante su QA. Verificado en el código: Player no escribe la guía por decisión 006/007; el grupo de educadores se crea en `Dashboard → Educadores → Nuevo Grupo`, solo desde el contexto de comunidad.
+- 2026-10-28 — Luis pide dos correcciones durante el QA: (1) un educador creado no se puede editar, dar de baja ni restringir, y no sabe cómo se cambia su PIN; (2) los filtros del planificador son botones y deben ser un desplegable junto a «Hoy».
+  - **El PIN ya tenía mecanismo:** Admin nunca lo ve (la base guarda su hash); «Generar código de activación» borra el PIN, cierra sus sesiones y el educador elige otro al entrar (`educador_generar_codigo`, 0006). La UI no lo decía con claridad.
+  - Admin, educadores (A4): la tarjeta pasa a tener «Editar» y «Acceso y PIN». Página nueva `dashboard/educators/[id]/editar.vue` (nombre, apellido, correo, teléfono, puesto) con «Dar de baja» (baja lógica en toda la organización, con confirmación). El diálogo «Acceso y PIN» explica los tres estados del acceso y conserva el interruptor «Activo en <comunidad>», que es la restricción por comunidad. `useEducators`: `getEducadorDetalle`, `updateEducador`, `darDeBaja`.
+  - Planificador: `PlannerToolbar` cambia los chips por `UiSelect variant="toolbar"` («Ver: Todos / Programados / Realizados / Sin realizar / Sin publicar»), junto a «Hoy».
+  - Verificación: typecheck de Admin, 54 tests y check-ui, **aprobado**. Navegador (Admin de Luis en `:3000`, con una organización, comunidad, educador y superadmin temporales, borrados después): alta → editar el puesto → «Acceso y PIN» genera el código y desactiva en la comunidad (tarjeta «Inactivo») → dar de baja (la lista queda vacía; en la base `deleted_at` puesto). Planificador: el desplegable abre y filtra («Ver: Programados»). La base de QA de Luis quedó con sus 2 usuarios, 1 organización y 1 educador.
+  - Pendiente de A4: la lista de educadores por organización. Las páginas de educadores siguen en español fijo (tarea 008).
+- 2026-10-28 — Revisión del código contra la base en tres frentes (Admin; Player y Educators; base, correo y despliegue), con comprobación a mano de las afirmaciones más fuertes: A1 (RLS y consultas de invitaciones), A7, A9, C2. Resultado: 9 puntos que impiden operar, 5 de Admin, 9 de Player y runner, 3 de Educators, 5 de base y hogar, 6 de producción y la documentación desfasada. Sin cambios de código.
+- 2026-10-28 — Con la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md) y la tarea 011 quedan hechos A1–A6, A9, B2, B5, C8, D2, D3 y F5, parcial B4, y fuera del alcance E1–E4 (el hogar salió de la base). Siguen abiertos A7, A8, B1 (temarios ya no existen: solo queda revisar nada), B3, C1–C7, C9, D1, E5, F1–F4, F6 y la constitución (G).

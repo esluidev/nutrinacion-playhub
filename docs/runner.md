@@ -90,7 +90,7 @@ En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 |---|---|---|
 | Educators | `/workshops/<id>/jugar`: pantalla completa con `UiRunner` en modo educador y la guía. `terminado` lleva al feedback del taller; `salir`, a donde estaba | Hecho, con Supabase (`educador_iniciar` con `listo`, `educador_terminar` con `terminado`) |
 | Admin | «Probar» con `UiRunner` y la guía de su base, para revisarla antes de publicar | Pendiente; hoy abre el runner en otra pestaña |
-| App del hogar | `UiRunner` en modo casa | Por crear |
+| App del hogar | `UiRunner` en modo casa | Fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
 | Dispositivos de participantes | Abren Player directamente (`?mode=device`), sin iframe | Sesión simulada entre pestañas |
 
 ## 8. Configuración
@@ -98,9 +98,9 @@ En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 | App | Variable | Para qué |
 |---|---|---|
 | Player | `NUXT_PUBLIC_RUNNER_HOSTS` | Orígenes que pueden incrustar el runner, separados por comas. Se usa para los mensajes y para `frame-ancestors`, que se fija al compilar |
-| Educators (y Admin) | `NUXT_PUBLIC_PLAYER_URL` | Dónde está Player |
+| Educators | `NUXT_PUBLIC_PLAYER_URL` | Dónde está Player. Admin lo lee de `configuracion.player_url` en la base |
 
-En local, `localhost:3001` dentro de `localhost:3002` también es el mismo sitio, así que se comporta como en producción.
+En local, `localhost:3001` dentro de `localhost:3002` también es el mismo sitio, así que se comporta como en producción. En desarrollo, Player también se deja incrustar desde la tailnet (nombres `*.ts.net` y las IP de este equipo); ver «Compartir en desarrollo por Tailscale» en el [README](../README.md).
 
 ## 9. Pendiente
 

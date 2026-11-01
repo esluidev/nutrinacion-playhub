@@ -9,17 +9,17 @@ PlayHub (marca Nutrinación) es educación nutricional y de cuidado de la salud 
 
 Este repositorio (`playhub-applications/`, remoto `esluidev/nutrinacion-playhub`) contiene las aplicaciones. Vive dentro del proyecto PlayHub (`../`), que no es un repositorio Git y reúne producto, storyboards, assets, UI Kit y el player de referencia; su entrada es `../AGENTS.md`.
 
-Objetivo actual: con el UI Kit compartido, el runner nuevo de Player y Educators en web ya en marcha (tareas 002–005), el siguiente paso es el modelo de datos según la constitución (tarea 006).
+Objetivo actual: simplificar la plataforma alrededor de la organización como única unidad de operación ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md), tarea 011): sin comunidades, participantes ni hogar; las jornadas viven en el planificador. Después, el QA manual de Luis desde cero.
 
 ## Componentes y stack
 
 | Componente | Ruta | Responsabilidad | Stack y fuente de la versión |
 |---|---|---|---|
 | UI Kit | `packages/ui` (`@playhub/ui`) | Tokens, componentes `Ui*`, iconos y laboratorio; capa de Nuxt que extienden las tres apps. Incluye `UiRunner` y el contrato del runner | Tailwind 4: `packages/ui/package.json` |
-| Admin | `apps/admin` | Operación de organizaciones y comunidades; consola Platform: publicación y guía del catálogo | Nuxt 4 SPA, densidad compacta: `apps/admin/package.json` |
+| Admin | `apps/admin` | Operación de la organización (educadores y grupos, colaboradores, talleres, jornadas, planificador, storyboards disponibles); consola Platform: organizaciones, licencias y la guía del catálogo | Nuxt 4 SPA, densidad compacta: `apps/admin/package.json` |
 | Player | `apps/player` | La app de la administración de Nutrinación para construir, probar y registrar el contenido en el catálogo (solo superadmin, con Supabase Auth), y el runner público `/play/**` que incrustan las demás apps (sin sesión ni Supabase). No es la app del hogar | Nuxt 4 SPA: `apps/player/package.json` |
 | Educators | `apps/educators` | El educador entra, prepara, juega el taller con el runner incrustado y hace el cierre. Supabase (funciones `educador_*`); sin variables, modo demo con `fixtures/` | Nuxt 4 SPA, densidad táctil: `apps/educators/package.json` |
-| Backend | `supabase/` | Esquema, RLS, funciones del educador, Storage y Edge Functions compartidos | Base nueva `0001`–`0011`, seed y pruebas pgTAP (decisiones [005](../docs/decisions/005-base-nueva-y-acceso-educador.md), [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)); incluye el modelo de la app del hogar, aún por crear |
+| Backend | `supabase/` | Esquema, RLS, funciones del educador, Storage y Edge Functions compartidos | Base `0001`–`0010` reescrita el 2026-10-28 sin comunidades ni hogar ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md); modelo de [005](../docs/decisions/005-base-nueva-y-acceso-educador.md), [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)), seed y pruebas pgTAP autocontenidas |
 
 Las apps comparten el kit por npm workspaces (`npm install` en la raíz, un solo lockfile) y cada una se despliega por separado, en su subdominio de `nutrinacion.com` (`admin.`, `educator.`, `player.`). Su `AGENTS.md` (con `CLAUDE.md` como symlink) tiene sus reglas, estructura y comandos, y manda dentro de su carpeta. Topología y flujo: [docs/architecture.md](../docs/architecture.md).
 
@@ -39,7 +39,7 @@ Para juegos, escenas, runner y su UI manda la raíz de PlayHub (`../`):
 
 ### Dominio, datos y UI
 
-1. **Comunidad es el tenancy**, nunca “workspace”. Vocabulario: [docs/glossary.md](../docs/glossary.md).
+1. **La organización es la unidad de operación** ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md)); no hay comunidades ni «workspaces». Vocabulario: [docs/glossary.md](../docs/glossary.md).
 2. **Código en inglés; UI localizada.** Admin y Educators son multidioma; la UI de Player es español; el contenido de juegos es multidioma y nunca va en el código.
 3. **Supabase es compartido.** RLS es la barrera, no los filtros de UI. Migraciones y código mandan sobre las descripciones. Antes de tocar datos, esquema o RLS lee [docs/backend.md](../docs/backend.md): flujo local primero, acceso del agente por MCP de solo lectura y qué requiere autorización.
 4. **El runner de Player no usa Supabase ni sesión**; la gestión de Player sí, solo para que entre el superadmin ([decisión 005](../docs/decisions/005-base-nueva-y-acceso-educador.md)). La gestión de Player registra el catálogo desde el JSON de cada storyboard y lo publica (estado, países y organización); Admin/Platform escribe la guía (decisiones [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)). El contenido del juego vive en los JSON, nunca en la base. **Las apps incrustan el runner en un iframe** con el contrato de [docs/runner.md](../docs/runner.md) ([decisión 004](../docs/decisions/004-runner-incrustado.md)): la URL dice qué cargar, la app le da la guía (`iniciar`) y el runner cuenta lo que pasa. Un cambio del contrato es aditivo.
@@ -86,9 +86,9 @@ Requisitos: Node 22 y npm, dependencias instaladas con `npm install` en la raíz
 
 Heredados o detectados; cada uno pasa a una tarea cuando se aborde.
 
-- **Catálogo sin QA de punta a punta:** registrar desde Player → escribir la guía en Admin → publicar → aparecer en el catálogo de comunidad → crear un workshop desde el wizard. Probados por separado el registro, la edición y el wizard.
-- **Base nueva sin proyecto en la nube** (tarea 006): Admin, Player y Educators funcionan contra Supabase local; la app del hogar no existe (sus funciones `hogar_*` sí). Al crear el proyecto hace falta pg_cron (`0010`). El proyecto anterior de la nube tiene tablas abiertas a cualquier sesión (marcarse superadmin): es de prueba y se abandona.
-- **Sin recuperación del PIN para las familias**: sin acceso a su correo, la familia crea otra cuenta. La recuperación por correo necesita enviar correos (Edge Function).
+- **Lo que falta para operar la plataforma completa** ([tarea 010](../tasks/010-pendientes-plataforma.md)): invitaciones de colaborador sin enlace que copiar, grupos de educadores sin gestión, la guía fuera del alcance del educador, la app del hogar por crear y el despliegue sin decidir, entre otros.
+- **Catálogo sin QA de punta a punta:** registrar desde Player → escribir la guía en Admin → publicar → aparecer en los storyboards de la organización → crear un workshop desde el asistente. Probados por separado el registro, la edición y el wizard.
+- **Base sin proyecto en la nube** (tarea 006): Admin, Player y Educators funcionan contra Supabase local. Al crear el proyecto hace falta pg_cron (`0009`). El proyecto anterior de la nube tiene tablas abiertas a cualquier sesión (marcarse superadmin): es de prueba y se abandona.
 - **Decisiones de color por confirmar con Luis** (tarea 004): licencia suspendida neutra o coral, «titular» en cielo, «Sin administradores» en sol, cifras de Platform en neutro y «Usar en taller» neutro en el catálogo.
 - **Deuda de producto en Admin** (tarea 008): textos fijos en español en vistas antiguas, el buscador ⌘K solo visual y el cierre del menú de usuario.
 - **Runner incrustado sin probar en iPad ni Android** (tarea 009): audio sin toque extra, almacenamiento del iframe y sin conexión.

@@ -810,8 +810,6 @@ Pendientes anotados:
 - **`estructura.md`** (skill `playhub-storyboard-games`, fuera de este repositorio) no documenta `healthFocus`.
 - **Recuperar el PIN de una cuenta del hogar:** por correo, con una Edge Function que envíe el código. Necesita un SMTP; Admin no envía correos ([decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md)), así que es ahí donde se configura por primera vez.
 - **Afirmaciones y fuentes:** sin sitio en la base; por confirmar si van en la guía.
-- **Cupo de educadores:** `organizacion_licencias.max_educadores` no se hace cumplir (sí el de comunidades).
-- **Personalizados por licencia:** tampoco se hace cumplir `max_personalizados`.
 - **Material en el runner:** el contrato no tiene `material`. `educador_guia` ya lo manda y el runner lo ignora hasta añadirlo (cambio aditivo).
 - **Versión de Postgres:** `config.toml` usa la 17; hay que confirmar la del proyecto nuevo.
 
@@ -1024,3 +1022,53 @@ Contexto ya decidido en tareas anteriores:
     - Build de Admin: **aprobado**.
     - **No ejecutado:** `verify.sh` completo: su pgTAP `01`–`05` necesita el seed.
 
+- 2026-10-28 — Luis no puede probar con Tailscale ni por el nombre ni por la IP. Causas:
+  - `npm run dev` escuchaba solo en `localhost`: Admin, arrancado así, quedaba en `[::1]:3000`; Player y Educators funcionaban porque Luis les pasaba `--host 0.0.0.0` a mano;
+  - por IP, Player no dejaba que Educators y Admin lo incrustaran: `frame-ancestors` solo admitía `*.ts.net` (una CSP no acepta comodines en una IP);
+  - Funnel publicaba en internet `https://<equipo>.ts.net/admin` hacia el Admin de desarrollo, y la app no cargaba ahí (sus recursos viven en `/_nuxt`, en la raíz, y la API va por http). Se le indica a Luis cómo apagarlo; no se toca su configuración de Tailscale.
+  - **Arreglado solo en desarrollo:**
+    - `devServer.host` `0.0.0.0` en la capa `@playhub/ui` y `devServer.port` en cada app (3000, 3001, 3002); los scripts `dev` ya no llevan `--port`;
+    - Player añade a `frame-ancestors` las IP de este equipo (`os.networkInterfaces()`), solo fuera de producción;
+    - test de `urlEnEsteEquipo` con la IP de Tailscale;
+    - README («Compartir en desarrollo por Tailscale») y `docs/runner.md`.
+  - Verificación:
+    - curl: las tres apps y Supabase (`:54321`) responden por `localhost`, `macbook-pro-de-luis.tail1ce4ee.ts.net` y `100.85.6.50`. CORS de Supabase con origen de la IP: `*`.
+    - Chrome sin interfaz (DevTools Protocol): el runner incrustado en Educators carga por `localhost`, por la IP y por el nombre; el control (`127.0.0.1`, fuera de la lista) queda bloqueado por `frame-ancestors`. Antes del cambio, por la IP quedaba en blanco.
+    - Chrome sin interfaz: el login de Admin por `localhost`, IP y nombre, y el de Player por IP, llaman a Supabase en ese mismo host y responden «El correo o la contraseña no son correctos».
+    - Configuración resuelta con `loadNuxtConfig`: host `0.0.0.0` y puertos 3000/3001/3002; la CSP de producción no lleva `*.ts.net` ni IP.
+    - Typecheck de las tres apps y tests (Admin 53, Player 32, Educators 26): **aprobado**.
+    - El navegador integrado bloquea por su cuenta los recursos de `*.ts.net` y los iframes a otra IP (`ERR_BLOCKED_BY_CLIENT`): no sirve para esta prueba.
+    - **No probado:** arrancar en frío con `npm run dev` sin `--host` (las apps en marcha son las de Luis) ni desde otro equipo de la tailnet.
+- 2026-10-28 — Luis quiere que una persona de confianza pruebe las apps sin instalar Tailscale. Un `tailscale funnel 3000` le mostró Admin, pero no Player, Educators ni Supabase. Según la [documentación de Funnel](https://tailscale.com/kb/1223/funnel), solo sirve HTTPS y solo en los puertos 443, 8443 y 10000, y son cuatro servicios.
+  - **Solo en desarrollo:**
+    - `scripts/funnel.sh` (y `off`): Admin en 443, Player en 8443 y Educators en 10000, y Supabase local en `/supabase` de cada una. El proxy de Tailscale recorta la ruta antes de pasar la petición (`serve.go`, #6571) y usa el `ReverseProxy` de Go, que pasa websockets.
+    - `urlEnEsteEquipo` recibe la página (`location`): en https, Player va a su puerto de Funnel y Supabase a `/supabase` del mismo origen; en http no cambia.
+    - Tests nuevos para Funnel, con la IP y con producción.
+    - README: «Compartir con alguien sin Tailscale (Funnel)».
+  - Se descartó el proxy de desarrollo de Nitro para Supabase: no pasa websockets (Realtime de Admin).
+  - Verificación:
+    - Funnel simulado en `127.0.0.1` (mismo nombre por `--host-resolver-rules`, HTTPS, prefijo `/supabase` recortado, Host conservado). Admin fue en 4443, porque el 443 pide root.
+    - Chrome sin interfaz:
+      - Admin y Player llaman a `…/supabase/auth/v1/token` en su origen;
+      - Educators llama a `…:10000/supabase/rest/v1/rpc/educador_entrar`;
+      - las tres responden su mensaje de credenciales incorrectas;
+      - el runner de `:8443` carga dentro de Educators en `:10000`;
+      - Realtime abre el websocket por `/supabase` y responde al heartbeat.
+    - Regresión: login por `localhost` y por `100.85.6.50`, y runner por IP, sin cambios.
+    - Typecheck de las tres apps y tests (Admin 54, Player 32, Educators 26): **aprobado**.
+    - No se publicó nada: el script lo corre Luis. **Falta:** probar por el Funnel real desde fuera, y Admin en 443.
+- 2026-10-28 — Luis: al asignar una licencia no se deben pedir el número de educadores ni de storyboards personalizados; solo el de comunidades. Análisis: `max_educadores` y `max_personalizados` se guardaban y se mostraban como «N de M», pero nada los hacía cumplir. Solo el de comunidades tiene regla (`comunidades_valida_cupo`). [Decisión 010](../docs/decisions/010-licencia-solo-cupo-de-comunidades.md), aceptada por Luis.
+  - `0012_licencia_solo_comunidades`: quita las dos columnas. Aplicada en local con `supabase migration up`, sin reset. La licencia de QA de Luis conserva su cupo de 5 comunidades. Tipos regenerados.
+  - Seed, `generar-seed.py` y la prueba `06` sin esas columnas.
+  - Admin:
+    - Platform, nueva y editar licencia: comunidades, estado e inicio y fin, en dos columnas;
+    - lista de licencias: columna «Comunidades»;
+    - detalle de la organización e inicio de la organización: solo el cupo de comunidades;
+    - fuera la consulta de personalizados de `useOrganizacion` y los textos sin uso.
+  - Constitución (`../product/01 - Constitucion de producto.md`, fuera de Git): «La licencia acota cuántos puede tener» pasa a «La licencia no acota cuántos puede tener: solo fija cuántas comunidades puede abrir la organización».
+  - Verificación:
+    - pgTAP `06_recuperacion`: 22, **aprobado**.
+    - SQL en una transacción deshecha: el cupo sigue rechazando una segunda comunidad con cupo 1, y `max_educadores` ya no existe.
+    - Typecheck de las tres apps, tests de Admin (54) y check-ui: **aprobado**.
+    - Navegador (Admin de Luis en `:3000`, con un superadmin temporal, borrado después; sin guardar nada): lista, nueva y editar licencia, detalle en Platform («1 de 5») e inicio de la organización («1 de 5» con su barra).
+    - **No ejecutado:** pgTAP `01`–`05` (necesitan el seed).
