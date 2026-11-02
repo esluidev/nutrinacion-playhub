@@ -30,7 +30,7 @@
     <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
     <div class="mt-5 flex items-center justify-end gap-3">
-      <UiButton variant="outline" @click="navigateTo('/organizacion/educators')">{{ t('common.cancel') }}</UiButton>
+      <UiButton variant="outline" @click="navigateTo(grupoDeOrigen ? `/organizacion/educators/grupos/${grupoDeOrigen}` : '/organizacion/educators')">{{ t('common.cancel') }}</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">{{ t('educators.add') }}</UiButton>
     </div>
   </div>
@@ -43,6 +43,8 @@ const { t } = useT()
 const { toast } = useToast()
 const { groups, createEducador } = useEducators()
 const { orgActiva } = useContexto()
+// Desde un grupo (`?grupo=<id>`): el educador entra en él y se vuelve al grupo.
+const grupoDeOrigen = Number(useRoute().query.grupo) || null
 
 const org = computed(() => orgActiva.value?.nombre ?? t('common.myOrg'))
 
@@ -51,7 +53,7 @@ const form = reactive({
   email: '',
   telefono: '',
   puesto: '',
-  grupo: null as number | null,
+  grupo: grupoDeOrigen as number | null,
 })
 
 const saving = ref(false)
@@ -92,6 +94,6 @@ async function submit() {
     return
   }
   toast.success(reactivado ? t('educators.reactivated') : t('educators.added'))
-  navigateTo('/organizacion/educators')
+  navigateTo(grupoDeOrigen ? `/organizacion/educators/grupos/${grupoDeOrigen}` : '/organizacion/educators')
 }
 </script>

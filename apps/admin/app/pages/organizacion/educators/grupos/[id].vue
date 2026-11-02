@@ -61,7 +61,13 @@
               <UiSelect v-model="nuevoMiembro" :options="disponibles" :label="t('educators.addMember')" :placeholder="t('educators.pickEducator')" class="min-w-0 flex-1" />
               <UiButton variant="outline" :disabled="!nuevoMiembro" :loading="enCurso" icon="plus" @click="agregar">{{ t('common.add') }}</UiButton>
             </div>
-            <p v-else class="ui-caption">{{ t('educators.groupAllIn') }}</p>
+            <!-- Sin nadie que agregar: si no hay educadores activos, darlos de alta y volver ya dentro del grupo -->
+            <p v-else-if="educators.some(e => e.estado === 'activo')" class="ui-caption">{{ t('educators.groupAllIn') }}</p>
+            <p v-else class="ui-caption">
+              {{ t('educators.groupNoActive') }}
+              <!-- Enlace: cielo -->
+              <NuxtLink :to="`/organizacion/educators/nuevo?grupo=${id}`" class="ui-link" data-tone="sky">{{ t('educators.add') }}</NuxtLink>
+            </p>
           </div>
         </section>
 
