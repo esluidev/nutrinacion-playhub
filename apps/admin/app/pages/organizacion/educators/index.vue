@@ -14,8 +14,10 @@
     <!-- Toolbar: selector de vista + búsqueda + filtros -->
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <UiTabs v-model="tabModel" :items="tabItems" fit />
-      <div v-if="activeTab === 'educadores'" class="flex items-center gap-3">
-        <UiSearchInput v-model="searchQuery" :placeholder="t('educators.searchPh')" max-width="xs" />
+      <!-- Ocupa lo que queda de la línea, a la derecha; si no le quedan 320 px, baja a la suya. El
+           buscador se encoge (hasta 320) y el filtro conserva su ancho: nunca se sale de la pantalla. -->
+      <div v-if="activeTab === 'educadores'" class="flex min-w-0 grow basis-80 items-center justify-end gap-3">
+        <UiSearchInput v-model="searchQuery" :placeholder="t('educators.searchPh')" max-width="xs" class="min-w-0 flex-1" />
         <UiSelect v-model="filterEstado" variant="toolbar" :prefix="t('educators.state')" :options="estadoOptions" />
       </div>
     </div>

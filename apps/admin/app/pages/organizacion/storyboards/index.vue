@@ -10,8 +10,10 @@
           <span v-if="areaDe(item.value)" class="size-2 shrink-0 rounded-full bg-(--tone-fill)" :data-area="areaDe(item.value)" />
         </template>
       </UiChips>
-      <div class="flex items-center gap-3">
-        <UiSearchInput v-model="searchQuery" :placeholder="t('storyboards.searchPh')" max-width="xs" />
+      <!-- Ocupa lo que queda de la línea, a la derecha; si no le quedan 320 px, baja a la suya. El
+           buscador se encoge (hasta 320) y el filtro conserva su ancho: nunca se sale de la pantalla. -->
+      <div class="flex min-w-0 grow basis-80 items-center justify-end gap-3">
+        <UiSearchInput v-model="searchQuery" :placeholder="t('storyboards.searchPh')" max-width="xs" class="min-w-0 flex-1" />
         <UiSelect v-model="activePertenencia" variant="toolbar" :prefix="t('storyboards.ownership')" :options="pertenenciaOptions" />
       </div>
     </div>
