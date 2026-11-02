@@ -4,7 +4,7 @@
 -- la base sin seed (`supabase db reset --no-seed`).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(79);
+select plan(81);
 
 -- Actuar como un usuario de Auth (por su uuid) o como anon.
 -- Ayudas en un esquema propio (se deshace con el rollback), utilizables por anon y authenticated.
@@ -183,7 +183,10 @@ select throws_ok(
   '42501', null, 'admin: el feedback solo lo escribe el educador');
 select lives_ok($$ update configuracion set valor = 'https://intruso.test' where clave = 'admin_url' $$,
   'admin: actualizar la configuración no falla, pero no toca nada (ver abajo)');
-select lives_ok($$ delete from educadores where correo = 'lucia@rls.test' $$, 'admin: da de baja a un educador de su organización');
+select throws_ok($$ delete from educadores where correo = 'lucia@rls.test' $$, '42501', null,
+  'admin: no borra educadores (0012: la baja es lógica)');
+select lives_ok($$ update educadores set deleted_at = now() where correo = 'lucia@rls.test' $$,
+  'admin: da de baja a un educador de su organización');
 
 -- ── Colaborador de Centro ─────────────────────────────────────────────────────
 select pruebas.como('20000000-0000-4000-8000-000000000003');
@@ -193,8 +196,8 @@ select lives_ok($$ update perfiles set nombre = 'Carlos C.' where usuario_id = a
   'colaborador: puede editar sus datos');
 select is((select array_agg(nombre) from organizaciones where nombre like 'RLS %'), array['RLS Centro'], 'colaborador: ve la organización donde colabora');
 select is((select count(*)::int from workshops where notas like 'RLS %'), 3, 'colaborador: ve los talleres de la organización');
-select is((select array_agg(correo) from educadores where correo like '%@rls.test'), array['maria@rls.test'],
-  'colaborador: ve a los educadores de la organización (Lucía ya no está; Pedro es de otra)');
+select is((select array_agg(correo) from educadores where correo like '%@rls.test' and deleted_at is null), array['maria@rls.test'],
+  'colaborador: ve a los educadores de la organización (Lucía está de baja; Pedro es de otra)');
 select is((select count(*)::int from jornadas where nombre = 'RLS Jornada'), 1, 'colaborador: ve sus jornadas');
 select is((select array_agg(slug) from storyboards where slug like 'rls-%'), array['rls-huevo'], 'colaborador: ve el catálogo disponible para la organización');
 select is((select count(*)::int from organizacion_licencias where organizacion_id = current_setting('t.centro')::bigint), 1,
@@ -205,8 +208,10 @@ select lives_ok(
   format($$ insert into educadores (nombre, correo, organizacion_id) values ('Nuevo', 'nuevo@rls.test', %s) $$, current_setting('t.centro')),
   'colaborador: da de alta educadores');
 select lives_ok($$ update educadores set telefono = '5555' where correo = 'maria@rls.test' $$, 'colaborador: y los edita');
-select is(pruebas.afectadas($$ delete from educadores where correo = 'nuevo@rls.test' $$), 0,
+select throws_ok($$ update educadores set deleted_at = now() where correo = 'nuevo@rls.test' $$, '42501', null,
   'colaborador: pero no los da de baja (eso es de los administradores)');
+select throws_ok($$ delete from educadores where correo = 'nuevo@rls.test' $$, '42501', null,
+  'colaborador: ni los borra');
 select lives_ok(
   format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('RLS Jornada 2', 'Sede', current_date, current_date, %s) $$, current_setting('t.centro')),
   'colaborador: crea jornadas');

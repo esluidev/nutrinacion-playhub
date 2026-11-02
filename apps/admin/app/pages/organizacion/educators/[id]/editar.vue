@@ -30,8 +30,9 @@
         </div>
       </form>
 
-      <!-- Dar de baja: deja la organización. Para apartarlo sin baja está «Activo» en «Acceso y PIN». -->
-      <section class="ui-panel mt-5 p-6">
+      <!-- Dar de baja: deja la organización y sus grupos. Es de los administradores (la base lo exige,
+           0012). Para apartarlo sin baja está «Activo» en «Acceso y PIN». -->
+      <section v-if="orgActiva?.esAdmin" class="ui-panel mt-5 p-6">
         <h2 class="ui-title">{{ t('educators.deregisterTitle') }}</h2>
         <p class="ui-text mt-1">{{ t('educators.deregisterText') }}</p>
         <!-- Quitar: coral -->
@@ -68,6 +69,7 @@ const { t } = useT()
 const route = useRoute()
 const { toast } = useToast()
 const { getEducadorDetalle, updateEducador, darDeBaja } = useEducators()
+const { orgActiva } = useContexto()
 
 const id = Number(route.params.id)
 

@@ -99,11 +99,6 @@
             </UiCheckbox>
             <p v-if="!filtrados.length" class="ui-text p-6 text-center">{{ t('educators.groupNoMatch') }}</p>
           </div>
-          <p class="ui-caption mt-3 flex flex-wrap items-baseline gap-x-1">
-            <span>{{ t('educators.notInList') }}</span>
-            <!-- Enlace: cielo -->
-            <NuxtLink :to="altaEnGrupo" class="ui-link" data-tone="sky">{{ t('educators.add') }}</NuxtLink>
-          </p>
           <template #actions>
             <UiButton tone="neutral" @click="cerrarAgregar">{{ t('common.cancel') }}</UiButton>
             <UiButton :disabled="!elegidos.length" :loading="enCurso" @click="agregar">

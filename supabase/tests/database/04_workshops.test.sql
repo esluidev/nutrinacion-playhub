@@ -4,7 +4,7 @@
 -- transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(47);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -203,8 +203,20 @@ select throws_ok(format($$ insert into educador_grupo_miembros (educador_grupo_i
 select lives_ok(format($$ insert into educador_grupo_miembros (educador_grupo_id, educador_id) values (%s, %s) $$, current_setting('t.grupo'), current_setting('t.lucia')),
   'Lucía entra al equipo');
 
--- ── Borrar: el workshop se lleva sus asignaciones; el educador, no si deja uno publicado sin nadie ─
+-- ── Dar de baja: lógica (0012); nadie borra educadores por la API, y la baja lo saca de sus grupos ─
+select throws_ok(format($$ delete from educadores where id = %s $$, current_setting('t.lucia')), '42501', null,
+  'nadie borra educadores por la API: la baja es lógica');
+select lives_ok(format($$ update educadores set deleted_at = now() where id = %s $$, current_setting('t.lucia')),
+  'Lucía se da de baja');
+select is((select count(*)::int from educador_grupo_miembros where educador_id = current_setting('t.lucia')::bigint), 0,
+  'la baja la saca de sus grupos');
 update workshops set estado = 'PUBLICADO' where id = current_setting('t.w4')::bigint;
+select throws_ok(format($$ update educadores set deleted_at = now() where id = %s $$, current_setting('t.maria')), 'P0001', null,
+  'no se da de baja al único educador de un taller publicado (se reasigna antes)');
+
+-- ── Borrar (solo la base, p. ej. al eliminar una organización): el workshop se lleva sus
+--    asignaciones; el educador, no si deja uno publicado sin nadie ─────────────────────────────
+reset role;
 select throws_ok(format($$ delete from educadores where id = %s $$, current_setting('t.maria')), 'P0001', null,
   'no se borra a un educador que es el único de un workshop publicado (se aparta o se reasigna)');
 select lives_ok(format($$ delete from workshops where id = %s $$, current_setting('t.w4')),

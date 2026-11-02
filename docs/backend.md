@@ -39,7 +39,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 | `invitaciones` | Las invitaciones a administrar o colaborar, hasta que se canjean; con el estado de su correo (`correo_enviado_en`, `correo_error`) |
 | `storyboards` | El catálogo, como un artículo. La metadata del JSON para listar, filtrar y buscar (`clave`, `slug`, `titulo`, `categoria`, `subcategoria`, `edicion`, `enfoques_salud`, `idiomas`…) y lo que decide Player al publicar: `estado_publicacion`, `paises_disponibles` y, si es personalizado, `organizacion_id` |
 | `guias`, `guia_escenas` | La guía del educador: cabecera y una por escena (los 12 campos de la plantilla, por idioma). Se escribe en Admin |
-| `educadores` | El educador de la organización: sus datos, `activo` (apartado: no recibe talleres ni entra en Educators), `deleted_at` (baja) y su acceso (código de activación y PIN, cifrados; Admin solo ve `tiene_pin` y `activacion_pendiente`) |
+| `educadores` | El educador de la organización: sus datos, `activo` (apartado: no recibe talleres ni entra en Educators), `deleted_at` (la baja, la única: no se borran por la API; la dan los administradores y lo saca de sus grupos, 0012) y su acceso (código de activación y PIN, cifrados; Admin solo ve `tiene_pin` y `activacion_pendiente`) |
 | `educador_sesiones` | Los tokens de Educators: una fila por cada educador (organización) que cubre el token |
 | `educador_grupos`, `educador_grupo_miembros` | Grupos de educadores de la organización para asignar un workshop a varios a la vez |
 | `jornadas` | Dónde y cuándo se va: nombre, `ubicacion` y uno o varios días (`fecha_inicio`, `fecha_fin`), todos obligatorios, y descripción opcional. Se crea o se elige al programar un taller |
@@ -107,7 +107,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 - Un storyboard publicado lo ve cualquier usuario de Admin de una organización que opere en alguno de sus países; un personalizado, solo su organización; registrado o en revisión, solo el superadmin.
 - `perfiles`: nadie puede escribir `superadmin`, `email` ni `usuario_id` desde la API (permisos por columna).
-- `educadores`: el código de activación y el PIN no se leen ni se escriben por la API, ni siquiera el superadmin.
+- `educadores`: el código de activación y el PIN no se leen ni se escriben por la API, ni siquiera el superadmin. Nadie los borra por la API (0012): la baja es `deleted_at` y solo la dan los administradores de la organización.
 - `workshop_feedback`: Admin solo lo lee; lo escribe el educador con `educador_guardar_feedback`.
 - El trigger de alta lee el rol de `raw_app_meta_data`, nunca de `raw_user_meta_data`.
 
@@ -145,6 +145,7 @@ Las `educador_*` reciben el token, son `SECURITY DEFINER` y devuelven solo lo su
 | `0009_tareas` | pg_cron: finalizar workshops cada hora |
 | `0010_recuperacion` | `recuperacion_autorizar`: quién genera el enlace para recuperar el acceso a Admin |
 | `0011_correo_invitaciones` | El estado del correo de cada invitación (`correo_enviado_en`, `correo_error`) |
+| `0012_baja_de_educadores` | La baja de un educador es lógica (`deleted_at`) y de los administradores: sin `delete` por la API, lo saca de sus grupos y no se da al único educador de un taller publicado |
 
 Qué se ejecuta en producción (y qué no), los pasos posteriores y la tabla de usuarios de prueba: [supabase/README.md](../supabase/README.md).
 

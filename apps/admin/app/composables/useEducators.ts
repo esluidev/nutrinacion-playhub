@@ -351,9 +351,10 @@ export function useEducators() {
     return { error: null }
   }
 
-  // Baja lógica (`deleted_at`, 0004): desaparece de la organización y ya no entra en Educators
-  // (0006 exige `deleted_at is null`). Sus talleres pasados conservan la asignación. Para
-  // apartarlo sin darlo de baja está `cambiarActivo`.
+  // Baja lógica (`deleted_at`, 0004), la única que hay (0012 quitó el borrado por la API) y solo de
+  // los administradores de la organización: desaparece de la organización y de sus grupos (la base
+  // lo saca, 0012) y ya no entra en Educators (0006 exige `deleted_at is null`). Sus talleres
+  // pasados conservan la asignación. Para apartarlo sin darlo de baja está `cambiarActivo`.
   async function darDeBaja(educadorId: number) {
     if (demo) return { error: null }
     const { error } = await useSupabaseClient()

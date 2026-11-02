@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 11 migraciones de `migrations/`, en orden:**
+**Solo las 12 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -19,12 +19,13 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0009_tareas.sql` | Tarea horaria que finaliza los workshops vencidos (pg_cron) |
 | `0010_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
 | `0011_correo_invitaciones.sql` | El estado del correo de cada invitación (cuándo salió o por qué no) |
+| `0012_baja_de_educadores.sql` | La baja de un educador es lógica y de los administradores: sin borrado por la API; la baja lo saca de sus grupos |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0011
+supabase db push --dry-run   # debe listar 0001 a 0012
 supabase db push
 ```
 
