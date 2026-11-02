@@ -12,10 +12,11 @@
 --   Educators (correo + PIN):
 --     maria@ejemplo.test  246810   Fundación Centro
 --     pedro@ejemplo.test  135790   Colegio Norte
---     lucia@ejemplo.test  código de activación 112233 (aún no eligió su PIN)   Fundación Centro
+--     lucia@ejemplo.test  enlace /acceso/lucia-enlace-de-prueba (aún no eligió su PIN)   Fundación Centro
 
 update configuracion set valor = 'http://localhost:3000' where clave = 'admin_url';
 update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';
+update configuracion set valor = 'http://localhost:3002' where clave = 'educators_url';
 
 -- ── Organizaciones y licencias ────────────────────────────────────────────────
 insert into organizaciones (nombre, correo, paises, tipo_id) values
@@ -95,12 +96,12 @@ values ('9c4d2a7b-1e3f-4b6a-8c5d-0f1e2d3c4b5a', 'la-soda', '{"es":"La soda"}', '
         '{DIABETES,OBESIDAD}', '{es}', 30, 'REGISTRADO', '{}');
 
 -- ── Educadores de cada organización y un grupo ────────────────────────────────
-insert into educadores (nombre, apellido, correo, profesion, pin_hash, codigo_activacion_hash, organizacion_id) values
-  ('María', 'López', 'maria@ejemplo.test', 'Educadora', extensions.crypt('246810', extensions.gen_salt('bf', 8)), null,
+insert into educadores (nombre, apellido, correo, profesion, pin_hash, acceso_token, acceso_creado_en, acceso_expira_en, organizacion_id) values
+  ('María', 'López', 'maria@ejemplo.test', 'Educadora', extensions.crypt('246810', extensions.gen_salt('bf', 8)), null, null, null,
    (select id from organizaciones where nombre = 'Fundación Centro')),
-  ('Lucía', 'Gómez', 'lucia@ejemplo.test', 'Educadora', null, extensions.crypt('112233', extensions.gen_salt('bf', 8)),
+  ('Lucía', 'Gómez', 'lucia@ejemplo.test', 'Educadora', null, 'lucia-enlace-de-prueba', now(), now() + interval '7 days',
    (select id from organizaciones where nombre = 'Fundación Centro')),
-  ('Pedro', 'Ramírez', 'pedro@ejemplo.test', 'Educador', extensions.crypt('135790', extensions.gen_salt('bf', 8)), null,
+  ('Pedro', 'Ramírez', 'pedro@ejemplo.test', 'Educador', extensions.crypt('135790', extensions.gen_salt('bf', 8)), null, null, null,
    (select id from organizaciones where nombre = 'Colegio Norte'));
 
 insert into educador_grupos (nombre, descripcion, organizacion_id)

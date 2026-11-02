@@ -28,9 +28,9 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 | Tabla | Qué guarda |
 |---|---|
-| `configuracion` | `admin_url` (el enlace de los correos de invitación y de la guía desde Player) y `player_url` («Probar» en Admin) |
+| `configuracion` | `admin_url` (el enlace de los correos de invitación y de la guía desde Player), `player_url` («Probar» en Admin) y `educators_url` (el enlace de acceso del educador, 0013) |
 | `paises` | El catálogo de países (nombre por idioma y bandera). Player elige de aquí los de cada storyboard; la organización, los suyos |
-| `tipos_organizacion`, `plantillas_correo` | Listas de referencia de Admin y la copy de los correos de invitación por idioma (la usa `enviar-invitacion`) |
+| `tipos_organizacion`, `plantillas_correo` | Listas de referencia de Admin y la copy de los correos por idioma: las invitaciones (`enviar-invitacion`) y el enlace de acceso del educador (`enviar-acceso-educador`) |
 | `organizaciones` | La unidad de operación: datos, tipo y **`paises`, los países donde opera** (uno o más, del catálogo). Un solo titular por organización (`organizacion_administradores.titular`, índice único) |
 | `organizacion_licencias` | El contrato: `estado`, `fecha_inicio`, `fecha_fin` y notas. Sin cupos |
 | `organizacion_administradores` | Quién administra cada organización (el titular y los demás) |
@@ -92,7 +92,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 | Superficie | Acceso |
 |---|---|
 | Admin | Supabase Auth con correo y contraseña. Alta cerrada (registro desactivado): las cuentas las crea `canjear-invitacion`. La invitación sale por correo al crearla y su enlace se puede copiar ([decisión 012](decisions/012-invitaciones-por-correo.md)); si alguien olvida la contraseña, el titular o soporte le genera un enlace de recuperación sin correo (`enlace-recuperacion`, [decisión 009](decisions/009-acceso-admin-sin-correo.md)) |
-| Educators | Correo y PIN de 6 dígitos que elige el educador la primera vez, con el código de activación que genera Admin, **sin Supabase Auth**. Usa la anon key y las funciones `educador_*` con un token. No lee tablas |
+| Educators | Correo y PIN de 6 dígitos que elige el educador con el enlace de acceso que le manda Admin (0013), la primera vez o cuando lo olvida, **sin Supabase Auth**. Usa la anon key y las funciones `educador_*` con un token. No lee tablas |
 | Player, gestión | Supabase Auth con las cuentas de Admin, **solo superadmin**. Registra (`sincronizar_storyboard`) y publica (`publicar_storyboard`) el catálogo |
 | Player, runner `/play/**` | Público, sin sesión ni Supabase. La guía se la pasa la app que lo incrusta ([runner.md](runner.md)) |
 
@@ -107,7 +107,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 - Un storyboard publicado lo ve cualquier usuario de Admin de una organización que opere en alguno de sus países; un personalizado, solo su organización; registrado o en revisión, solo el superadmin.
 - `perfiles`: nadie puede escribir `superadmin`, `email` ni `usuario_id` desde la API (permisos por columna).
-- `educadores`: el código de activación y el PIN no se leen ni se escriben por la API, ni siquiera el superadmin. Nadie los borra por la API (0012): la baja es `deleted_at` y solo la dan los administradores de la organización.
+- `educadores`: el PIN no se lee ni se escribe por la API, ni siquiera el superadmin. El enlace de acceso pendiente (`acceso_token`) sí lo ve quien opera la organización, para copiarlo. Nadie los borra directamente por la API (0012). Quien no ha dado ningún taller lo elimina un administrador con `educador_eliminar` (0014); quien ya dio talleres se da de baja (`deleted_at`), también solo un administrador de la organización, y queda como historial.
 - `workshop_feedback`: Admin solo lo lee; lo escribe el educador con `educador_guardar_feedback`.
 - El trigger de alta lee el rol de `raw_app_meta_data`, nunca de `raw_user_meta_data`.
 
@@ -120,8 +120,10 @@ Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de admi
 | `sincronizar_storyboard(metadata)` | Superadmin (Player) | Registra o actualiza un storyboard por su `clave` y las escenas de su guía. No toca estado, países ni organización. `SECURITY INVOKER` |
 | `publicar_storyboard(clave, estado, países, organización)` | Superadmin (Player) | El estado del artículo, sus países y si es personalizado |
 | `disponible_para_organizacion(storyboard, organización)` | Cualquier sesión de Admin | Si un storyboard está disponible para una organización (publicado en alguno de sus países, o personalizado suyo). La usan el trigger de los workshops y las apps |
-| `educador_generar_codigo` | Quien opera la organización | Código de activación de 6 dígitos (se ve una vez); borra el PIN y cierra sus sesiones. Es también la forma de «cambiar» el PIN desde Admin |
-| `educador_entrar`, `educador_activar`, `educador_cambiar_pin`, `educador_sesion`, `educador_salir` | Educators (anon) | Entrar con correo y PIN; la primera vez, elegir el PIN con el código. 5 fallos bloquean 15 minutos |
+| `educador_crear_acceso`, `educador_revocar_acceso` | Quien opera la organización | El enlace de acceso a Educators (`/acceso/<token>`, 0013): vale una vez y vence a los 7 días; crear otro reemplaza al anterior y revocarlo lo anula, como una invitación. Se guarda cuándo se creó. No toca su PIN ni sus sesiones. La Edge Function `enviar-acceso-educador` lo manda por correo, en el idioma del educador |
+| `educador_tiene_historial`, `educador_eliminar` | Quien opera la organización; eliminar, solo un administrador | Si el educador ya dio algún taller (lo inició, lo terminó, dejó feedback o el taller quedó finalizado) y, si no, eliminarlo de verdad con sus asignaciones a talleres que no dio, sus grupos y sus sesiones (0014). Con historial, se da de baja. Un taller publicado conserva al menos un educador |
+| `educador_acceso`, `educador_usar_acceso` | Educators (anon) | De quién es el enlace (correo, nombre, organización y si es su primer PIN) y elegir el PIN con él: entra y se cierran las sesiones anteriores de ese acceso |
+| `educador_entrar`, `educador_verificar_pin`, `educador_cambiar_pin`, `educador_sesion`, `educador_salir` | Educators (anon) | Entrar con correo y PIN. 5 fallos bloquean 15 minutos. Cambiar el PIN es en dos pasos (0013): confirmar el actual y elegir el nuevo, que lo vuelve a comprobar. Un PIN actual equivocado cuenta como fallo |
 | `educador_workshops`, `educador_guia`, `educador_iniciar`, `educador_terminar`, `educador_guardar_feedback` | Educators (anon) | Sus workshops de todas sus organizaciones (con su organización y su jornada, con su lugar), la guía en el idioma del workshop, la ejecución y el feedback |
 | `platform_uso`, `platform_administradores` | Superadmin | Cifras por organización (educadores, personalizados, talleres, jornadas y, para el soporte, educadores sin acceso, talleres próximos y última actividad) y sus administradores con su último acceso; nunca el detalle de la operación |
 | `platform_eliminar_organizacion` | Superadmin | La baja entera: sus talleres y lo demás en cascada. La impiden sus storyboards personalizados |
@@ -146,6 +148,8 @@ Las `educador_*` reciben el token, son `SECURITY DEFINER` y devuelven solo lo su
 | `0010_recuperacion` | `recuperacion_autorizar`: quién genera el enlace para recuperar el acceso a Admin |
 | `0011_correo_invitaciones` | El estado del correo de cada invitación (`correo_enviado_en`, `correo_error`) |
 | `0012_baja_de_educadores` | La baja de un educador es lógica (`deleted_at`) y de los administradores: sin `delete` por la API, lo saca de sus grupos y no se da al único educador de un taller publicado |
+| `0013_enlace_de_acceso_educadores` | El acceso del educador es un enlace (`educador_crear_acceso`, `educador_revocar_acceso`, `educador_acceso`, `educador_usar_acceso`), como las invitaciones; sin código de activación. `configuracion.educators_url` y las plantillas `acceso_educador` y `acceso_educador_pin` |
+| `0014_eliminar_educadores_sin_historial` | Eliminar de verdad al educador que no ha dado ningún taller (`educador_tiene_historial`, `educador_eliminar`); con historial, la baja lógica de 0012 |
 
 Qué se ejecuta en producción (y qué no), los pasos posteriores y la tabla de usuarios de prueba: [supabase/README.md](../supabase/README.md).
 

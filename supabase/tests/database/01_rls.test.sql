@@ -117,7 +117,8 @@ select pruebas.como('20000000-0000-4000-8000-000000000001');
 select is((select count(*)::int from organizaciones where nombre like 'RLS %'), 2, 'superadmin: ve todas las organizaciones');
 select is((select count(*)::int from storyboards where slug like 'rls-%'), 4, 'superadmin: ve todo el catálogo, también registrados y personalizados');
 select throws_ok($$ select pin_hash from educadores $$, '42501', null, 'superadmin: nunca lee el PIN de los educadores');
-select throws_ok($$ select codigo_activacion_hash from educadores $$, '42501', null, 'superadmin: ni su código de activación');
+select is((select count(*)::int from educadores where acceso_token is not null and correo like '%@rls.test'), 0,
+  'superadmin: tampoco ve sus enlaces de acceso (no opera las organizaciones ajenas)');
 -- Administra organizaciones, no su operación (decisión 008).
 select is((select count(*)::int from organizacion_licencias where organizacion_id in (current_setting('t.centro')::bigint, current_setting('t.norte')::bigint)),
   2, 'superadmin: ve todas las licencias');

@@ -1,12 +1,12 @@
 import datos from '~/fixtures/talleres.json'
-import type { Educador, RespuestaEntrar } from '~/utils/sesion'
+import type { Educador, RespuestaAcceso, RespuestaEntrar } from '~/utils/sesion'
 import { isSupabaseConfigured, sesionNoValida, useSupabaseClient } from '~/utils/supabase'
 import { codigoValido, correoValido, normalizarCodigo } from '~/utils/talleres'
 
 // Sesión del educador: correo y PIN de 6 dígitos, sin Supabase Auth (decisión 005,
-// supabase/migrations/0006). La primera vez (o tras un código nuevo de Admin) entra con el código
-// de activación: la base responde `definir_pin` y el educador elige su PIN (educador_activar).
-// El token se guarda en el dispositivo; la ficha (educador_sesion), solo en memoria.
+// supabase/migrations/0006). El PIN lo elige con el enlace de acceso que le manda Admin (0013,
+// página /acceso/<token>): la primera vez o cuando lo olvidó. El token de la sesión se guarda en
+// el dispositivo; la ficha (educador_sesion), solo en memoria.
 // Sin Supabase configurado (modo demo), cualquier correo con 6 dígitos entra como el educador de
 // fixtures/.
 
@@ -14,9 +14,12 @@ const TOKEN = 'playhub-educadores-token'
 const DEMO = 'demo'
 
 export type ErrorEntrada = 'correo' | 'pin' | 'credenciales' | 'bloqueado' | 'pin_invalido' | 'no_coinciden' | 'red'
-export type ResultadoEntrada = 'dentro' | 'definir_pin' | ErrorEntrada
+export type ResultadoEntrada = 'dentro' | ErrorEntrada
+// El enlace de acceso: a quién es (para mostrarlo) y qué pasó al elegir el PIN.
+export interface InfoAcceso { correo: string, nombre: string, organizacion: string, primeraVez: boolean }
+export type ResultadoAcceso = 'dentro' | 'no_vale' | 'pin_invalido' | 'no_coinciden' | 'red'
 // 'sesion': el token ya no valía y la app vuelve a «Entrar».
-export type ErrorPin = 'pin_invalido' | 'no_coinciden' | 'red' | 'sesion'
+export type ErrorPin = 'pin_actual' | 'bloqueado' | 'pin_invalido' | 'no_coinciden' | 'red' | 'sesion'
 
 function leerToken(): string | null {
   try { return localStorage.getItem(TOKEN) }
@@ -37,14 +40,11 @@ let comprobando: Promise<void> | null = null
 export function useSesion() {
   const token = useState<string | null>('sesion-token', () => (import.meta.client ? leerToken() : null))
   const educador = useState<Educador | null>('educador', () => null)
-  // La activación en curso: el correo y el código que dio Admin, solo en memoria.
-  const activacion = useState<{ correo: string, codigo: string } | null>('sesion-activacion', () => null)
   const demo = !isSupabaseConfigured()
 
   function abrir(nuevo: string, ficha: Educador) {
     token.value = nuevo
     educador.value = ficha
-    activacion.value = null
     guardarToken(nuevo)
   }
 
@@ -52,7 +52,6 @@ export function useSesion() {
   function olvidar() {
     token.value = null
     educador.value = null
-    activacion.value = null
     guardarToken(null)
     clearNuxtState(['talleres', 'talleres-carga', 'guias'], { reset: true })
   }
@@ -71,34 +70,38 @@ export function useSesion() {
       abrir(respuesta.token, respuesta.educador)
       return 'dentro'
     }
-    // Los 6 dígitos son su código de activación: ahora elige su PIN.
-    if (respuesta.error === 'definir_pin') {
-      activacion.value = { correo: correo.trim(), codigo: normalizarCodigo(pin) }
-      return 'definir_pin'
-    }
     return respuesta.error === 'bloqueado' ? 'bloqueado' : 'credenciales'
   }
 
-  /** Elige el PIN con el código de activación de `entrar` y entra. */
-  async function activar(pin: string, repetido: string): Promise<ResultadoEntrada> {
-    if (!activacion.value) return 'credenciales'
+  /** A quién es el enlace de acceso (0013): su correo, su nombre y si es su primer PIN. */
+  async function infoAcceso(enlace: string): Promise<InfoAcceso | 'no_vale' | 'red'> {
+    if (demo) {
+      const e = datos.educador as Educador
+      return { correo: e.correo, nombre: e.nombre, organizacion: e.organizaciones[0]?.nombre ?? '', primeraVez: true }
+    }
+    const { data, error } = await useSupabaseClient().rpc('educador_acceso', { p_token: enlace })
+    if (error || !data) return 'red'
+    const r = data as unknown as RespuestaAcceso
+    if (!r.ok) return 'no_vale'
+    return { correo: r.correo, nombre: r.nombre, organizacion: r.organizacion, primeraVez: r.primera_vez }
+  }
+
+  /** Elige su PIN con el enlace de acceso y entra. El enlace vale una vez. */
+  async function usarAcceso(enlace: string, pin: string, repetido: string): Promise<ResultadoAcceso> {
     if (!codigoValido(pin)) return 'pin_invalido'
     if (normalizarCodigo(pin) !== normalizarCodigo(repetido)) return 'no_coinciden'
-    const { correo, codigo } = activacion.value
-    const { data, error } = await useSupabaseClient().rpc('educador_activar', { p_correo: correo, p_codigo: codigo, p_pin: normalizarCodigo(pin) })
+    if (demo) {
+      abrir(DEMO, datos.educador as Educador)
+      return 'dentro'
+    }
+    const { data, error } = await useSupabaseClient().rpc('educador_usar_acceso', { p_token: enlace, p_pin: normalizarCodigo(pin) })
     if (error || !data) return 'red'
     const respuesta = data as unknown as RespuestaEntrar
     if (respuesta.ok) {
       abrir(respuesta.token, respuesta.educador)
       return 'dentro'
     }
-    // El código ya no vale (Admin generó otro o se bloqueó): se vuelve a empezar.
-    if (respuesta.error !== 'pin_invalido') activacion.value = null
-    return respuesta.error === 'definir_pin' ? 'credenciales' : respuesta.error
-  }
-
-  function cancelarActivacion() {
-    activacion.value = null
+    return respuesta.error === 'pin_invalido' ? 'pin_invalido' : 'no_vale'
   }
 
   /** Trae la ficha del token guardado; si ya no vale, olvida la sesión. Sin conexión, la conserva. */
@@ -131,18 +134,42 @@ export function useSesion() {
     await navigateTo('/entrar')
   }
 
-  async function cambiarPin(pin: string, repetido: string): Promise<ErrorPin | null> {
+  // Cambiar el PIN desde la cuenta, en dos pasos (0013): primero confirma que es él con el actual
+  // (uno equivocado cuenta como un fallo al entrar) y después elige el nuevo, que vuelve a mandar el
+  // actual para que la base lo compruebe otra vez.
+  async function verificarPin(actual: string): Promise<ErrorPin | null> {
+    if (!codigoValido(actual)) return 'pin_actual'
+    if (demo || !token.value) return null
+    const { data, error } = await useSupabaseClient().rpc('educador_verificar_pin', {
+      p_token: token.value,
+      p_pin: normalizarCodigo(actual),
+    })
+    return respuestaPin(data, error)
+  }
+
+  async function cambiarPin(actual: string, pin: string, repetido: string): Promise<ErrorPin | null> {
     if (!codigoValido(pin)) return 'pin_invalido'
     if (normalizarCodigo(pin) !== normalizarCodigo(repetido)) return 'no_coinciden'
     if (demo || !token.value) return null
-    const { error } = await useSupabaseClient().rpc('educador_cambiar_pin', { p_token: token.value, p_pin: normalizarCodigo(pin) })
+    const { data, error } = await useSupabaseClient().rpc('educador_cambiar_pin', {
+      p_token: token.value,
+      p_pin_actual: normalizarCodigo(actual),
+      p_pin: normalizarCodigo(pin),
+    })
+    return respuestaPin(data, error)
+  }
+
+  // Las dos responden { ok } o { ok: false, error }.
+  async function respuestaPin(data: unknown, error: { code?: string } | null): Promise<ErrorPin | null> {
     if (sesionNoValida(error)) {
       await caducada()
       return 'sesion'
     }
-    if (error) return error.code === '22023' ? 'pin_invalido' : 'red'
-    return null
+    if (error) return 'red'
+    const r = data as { ok?: boolean, error?: string } | null
+    if (r?.ok) return null
+    return r?.error === 'pin_actual' || r?.error === 'bloqueado' || r?.error === 'pin_invalido' ? r.error : 'red'
   }
 
-  return { token, educador, activacion, demo, entrar, activar, cancelarActivacion, comprobar, caducada, salir, cambiarPin }
+  return { token, educador, demo, entrar, infoAcceso, usarAcceso, comprobar, caducada, salir, verificarPin, cambiarPin }
 }

@@ -141,13 +141,20 @@ export function useAuth() {
     return { error: error?.message ?? null }
   }
 
-  // Cambiar la contraseña pide la actual: se comprueba entrando con ella antes de cambiarla.
-  async function cambiarPassword(actual: string, nueva: string): Promise<{ error: 'actual' | string | null }> {
+  // Cambiar la contraseña va en dos pasos, como el PIN en Educators: primero se comprueba la actual
+  // entrando con ella (`verificarPassword`) y después se cambia (`cambiarPassword`, que la vuelve a
+  // comprobar).
+  async function verificarPassword(actual: string): Promise<{ error: 'actual' | string | null }> {
     if (!user.value) return { error: 'Sin sesión' }
-    const supabase = useSupabaseClient()
-    const { error: e1 } = await supabase.auth.signInWithPassword({ email: user.value.email, password: actual })
-    if (e1) return { error: 'actual' }
-    const { error } = await supabase.auth.updateUser({ password: nueva })
+    const { error } = await useSupabaseClient().auth.signInWithPassword({ email: user.value.email, password: actual })
+    if (!error) return { error: null }
+    return { error: error.code === 'invalid_credentials' || error.status === 400 ? 'actual' : error.message }
+  }
+
+  async function cambiarPassword(actual: string, nueva: string): Promise<{ error: 'actual' | string | null }> {
+    const { error: e1 } = await verificarPassword(actual)
+    if (e1) return { error: e1 }
+    const { error } = await useSupabaseClient().auth.updateUser({ password: nueva })
     return { error: error ? errorDePassword(error) : null }
   }
 
@@ -178,6 +185,6 @@ export function useAuth() {
 
   return {
     user, loading, fetchUser, signIn, signOut, validateInvitation, redeemInvitation,
-    actualizarPerfil, cambiarPassword, generarEnlaceRecuperacion, canjearEnlaceRecuperacion, restablecerPassword,
+    actualizarPerfil, verificarPassword, cambiarPassword, generarEnlaceRecuperacion, canjearEnlaceRecuperacion, restablecerPassword,
   }
 }

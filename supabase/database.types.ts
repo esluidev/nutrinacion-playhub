@@ -90,13 +90,13 @@ isOneToOne: false
                   ]
                 },"educadores": {
                   Row: {
-                    "activacion_pendiente": boolean | null,"activo": boolean,"apellido": string | null,"avatar": string | null,"biografia": string | null,"codigo_activacion_hash": string | null,"correo": string,"created_at": string,"deleted_at": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string,"organizacion_id": number,"pais": string | null,"pin_bloqueado_hasta": string | null,"pin_hash": string | null,"pin_intentos_fallidos": number,"profesion": string | null,"telefono": string | null,"tiene_pin": boolean | null
+                    "acceso_correo_enviado_en": string | null,"acceso_correo_error": string | null,"acceso_creado_en": string | null,"acceso_expira_en": string | null,"acceso_token": string | null,"activo": boolean,"apellido": string | null,"avatar": string | null,"biografia": string | null,"correo": string,"created_at": string,"deleted_at": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string,"organizacion_id": number,"pais": string | null,"pin_bloqueado_hasta": string | null,"pin_hash": string | null,"pin_intentos_fallidos": number,"profesion": string | null,"telefono": string | null,"tiene_pin": boolean | null
                   }
                   Insert: {
-                    "activacion_pendiente"?: never,"activo"?: boolean,"apellido"?: string | null,"avatar"?: string | null,"biografia"?: string | null,"codigo_activacion_hash"?: string | null,"correo": string,"created_at"?: string,"deleted_at"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre": string,"organizacion_id": number,"pais"?: string | null,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number,"profesion"?: string | null,"telefono"?: string | null,"tiene_pin"?: never
+                    "acceso_correo_enviado_en"?: string | null,"acceso_correo_error"?: string | null,"acceso_creado_en"?: string | null,"acceso_expira_en"?: string | null,"acceso_token"?: string | null,"activo"?: boolean,"apellido"?: string | null,"avatar"?: string | null,"biografia"?: string | null,"correo": string,"created_at"?: string,"deleted_at"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre": string,"organizacion_id": number,"pais"?: string | null,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number,"profesion"?: string | null,"telefono"?: string | null,"tiene_pin"?: never
                   }
                   Update: {
-                    "activacion_pendiente"?: never,"activo"?: boolean,"apellido"?: string | null,"avatar"?: string | null,"biografia"?: string | null,"codigo_activacion_hash"?: string | null,"correo"?: string,"created_at"?: string,"deleted_at"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string,"organizacion_id"?: number,"pais"?: string | null,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number,"profesion"?: string | null,"telefono"?: string | null,"tiene_pin"?: never
+                    "acceso_correo_enviado_en"?: string | null,"acceso_correo_error"?: string | null,"acceso_creado_en"?: string | null,"acceso_expira_en"?: string | null,"acceso_token"?: string | null,"activo"?: boolean,"apellido"?: string | null,"avatar"?: string | null,"biografia"?: string | null,"correo"?: string,"created_at"?: string,"deleted_at"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string,"organizacion_id"?: number,"pais"?: string | null,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number,"profesion"?: string | null,"telefono"?: string | null,"tiene_pin"?: never
                   }
                   Relationships: [
                     {
@@ -453,8 +453,8 @@ isOneToOne: false
 "educador_abrir_sesion":
 { Args: { "p_ids": (number)[] }; Returns: Json
                            },
-"educador_activar":
-{ Args: { "p_codigo": string,"p_correo": string,"p_pin": string }; Returns: Json
+"educador_acceso":
+{ Args: { "p_token": string }; Returns: Json
                            },
 "educador_asignacion":
 { Args: { "p_ids": (number)[],"p_para": string,"p_workshop_id": number }; Returns: {
@@ -475,7 +475,13 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "educador_cambiar_pin":
-{ Args: { "p_pin": string,"p_token": string }; Returns: undefined
+{ Args: { "p_pin": string,"p_pin_actual": string,"p_token": string }; Returns: Json
+                           },
+"educador_crear_acceso":
+{ Args: { "p_educador_id": number }; Returns: Json
+                           },
+"educador_eliminar":
+{ Args: { "p_educador_id": number }; Returns: undefined
                            },
 "educador_entrar":
 { Args: { "p_correo": string,"p_pin": string }; Returns: Json
@@ -486,9 +492,6 @@ isOneToOne: false
 "educador_ficha":
 { Args: { "p_ids": (number)[] }; Returns: Json
                            },
-"educador_generar_codigo":
-{ Args: { "p_educador_id": number }; Returns: string
-                           },
 "educador_guardar_feedback":
 { Args: { "p_feedback": Json,"p_token": string,"p_workshop_id": number }; Returns: Json
                            },
@@ -498,6 +501,9 @@ isOneToOne: false
 "educador_iniciar":
 { Args: { "p_token": string,"p_workshop_id": number }; Returns: undefined
                            },
+"educador_revocar_acceso":
+{ Args: { "p_educador_id": number }; Returns: undefined
+                           },
 "educador_salir":
 { Args: { "p_token": string }; Returns: undefined
                            },
@@ -506,6 +512,15 @@ isOneToOne: false
                            },
 "educador_terminar":
 { Args: { "p_token": string,"p_workshop_id": number }; Returns: undefined
+                           },
+"educador_tiene_historial":
+{ Args: { "p_educador_id": number }; Returns: boolean
+                           },
+"educador_usar_acceso":
+{ Args: { "p_pin": string,"p_token": string }; Returns: Json
+                           },
+"educador_verificar_pin":
+{ Args: { "p_pin": string,"p_token": string }; Returns: Json
                            },
 "educador_workshops":
 { Args: { "p_desde"?: string,"p_hasta"?: string,"p_token": string }; Returns: Json

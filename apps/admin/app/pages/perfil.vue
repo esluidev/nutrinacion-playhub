@@ -71,18 +71,15 @@
             <p class="ui-caption mt-0.5">{{ t('perfil.securityDesc') }}</p>
           </div>
         </div>
-        <form class="ui-panel-body" @submit.prevent="cambiar">
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <UiInput v-model="pwd.actual" type="password" autocomplete="current-password" :label="t('perfil.pwCurrent')" :error="pwdErrores.actual" />
-            <UiInput v-model="pwd.nueva" type="password" autocomplete="new-password" :label="t('perfil.pwNew')" :placeholder="t('perfil.pwMin')" :error="pwdErrores.nueva" />
-            <UiInput v-model="pwd.confirmar" type="password" autocomplete="new-password" :label="t('perfil.pwConfirm')" :error="pwdErrores.confirmar" />
-          </div>
-          <div class="mt-4 flex justify-end">
-            <UiButton type="submit" variant="outline" :loading="cambiando" :disabled="!pwd.actual || !pwd.nueva">{{ t('perfil.pwSubmit') }}</UiButton>
-          </div>
-        </form>
+        <!-- Se cambia en dos pasos (CambiarPassword): primero la actual, después la nueva -->
+        <div class="ui-panel-body">
+          <UiButton variant="outline" icon="key" @click="cambiandoPassword = true">{{ t('perfil.pwSubmit') }}</UiButton>
+          <p class="ui-caption mt-3">{{ t('perfil.pwForgot') }}</p>
+        </div>
       </section>
     </div>
+
+    <CambiarPassword :open="cambiandoPassword" @close="cambiandoPassword = false" />
   </div>
 </template>
 
@@ -126,22 +123,6 @@ async function guardar() {
   toast.success(t('perfil.saved'))
 }
 
-// ── Contraseña ───────────────────────────────────────────────────────────────
-const pwd = reactive({ actual: '', nueva: '', confirmar: '' })
-const pwdErrores = reactive({ actual: '', nueva: '', confirmar: '' })
-const cambiando = ref(false)
-
-async function cambiar() {
-  Object.assign(pwdErrores, { actual: '', nueva: '', confirmar: '' })
-  if (pwd.nueva.length < 6) { pwdErrores.nueva = t('auth.invite.pwShort'); return }
-  if (pwd.nueva !== pwd.confirmar) { pwdErrores.confirmar = t('auth.invite.pwMismatch'); return }
-  if (demo) { toast.success(t('perfil.pwChanged')); return }
-  cambiando.value = true
-  const { error } = await useAuth().cambiarPassword(pwd.actual, pwd.nueva)
-  cambiando.value = false
-  if (error === 'actual') { pwdErrores.actual = t('perfil.pwWrong'); return }
-  if (error) { toast.error(error); return }
-  Object.assign(pwd, { actual: '', nueva: '', confirmar: '' })
-  toast.success(t('perfil.pwChanged'))
-}
+// ── Contraseña: el diálogo de dos pasos ──────────────────────────────────────
+const cambiandoPassword = ref(false)
 </script>

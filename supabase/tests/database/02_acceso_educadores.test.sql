@@ -1,11 +1,11 @@
 -- Acceso de los educadores sin Supabase Auth (0006). Educators usa la anon key y un token: aquí
--- todo se llama como anon, salvo la generación del código (Admin). No usa el seed: crea sus propios
+-- todo se llama como anon, salvo crear y revocar el enlace de acceso (Admin, 0013). No usa el seed: crea sus propios
 -- datos (prefijo «Acceso», correos @acc.test) en una transacción que se deshace.
 --   maria@acc.test PIN 246810 (Acceso Centro) · pedro@acc.test PIN 135790 (Acceso Norte)
---   lucia@acc.test con código de activación 112233 (Acceso Centro)
+--   lucia@acc.test con su enlace de acceso pendiente, sin PIN todavía (Acceso Centro)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(48);
+select plan(63);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -50,10 +50,10 @@ select g.id, e.orden, e.carpeta, jsonb_build_object('es', e.carpeta), jsonb_buil
   from guias g, (values (1, 'bienvenida', 'Situar'), (2, 'origen', 'Reconocer'), (3, 'descubrimiento', 'Descubrir'), (4, 'preparacion', 'Secuenciar')) e(orden, carpeta, verbo)
  where g.storyboard_id = current_setting('t.sb')::bigint;
 
-insert into educadores (nombre, apellido, correo, pin_hash, codigo_activacion_hash, organizacion_id) values
-  ('María', 'López', 'maria@acc.test', extensions.crypt('246810', extensions.gen_salt('bf', 8)), null, current_setting('t.centro')::bigint),
-  ('Lucía', 'Gómez', 'lucia@acc.test', null, extensions.crypt('112233', extensions.gen_salt('bf', 8)), current_setting('t.centro')::bigint),
-  ('Pedro', 'Ramírez', 'pedro@acc.test', extensions.crypt('135790', extensions.gen_salt('bf', 8)), null, current_setting('t.norte')::bigint);
+insert into educadores (nombre, apellido, correo, pin_hash, acceso_token, acceso_expira_en, organizacion_id) values
+  ('María', 'López', 'maria@acc.test', extensions.crypt('246810', extensions.gen_salt('bf', 8)), null, null, current_setting('t.centro')::bigint),
+  ('Lucía', 'Gómez', 'lucia@acc.test', null, 'enlace-de-lucia', now() + interval '7 days', current_setting('t.centro')::bigint),
+  ('Pedro', 'Ramírez', 'pedro@acc.test', extensions.crypt('135790', extensions.gen_salt('bf', 8)), null, null, current_setting('t.norte')::bigint);
 select set_config('t.maria', (select id from educadores where correo = 'maria@acc.test')::text, true);
 select set_config('t.pedro', (select id from educadores where correo = 'pedro@acc.test')::text, true);
 
@@ -106,16 +106,15 @@ select is(educador_entrar('nadie@acc.test', '246810'), '{"ok": false, "error": "
 do $$ begin perform educador_entrar('pedro@acc.test', '111111') from generate_series(1, 5); end $$;
 select is(educador_entrar('pedro@acc.test', '135790')->>'error', 'bloqueado', 'tras 5 fallos, el correo queda bloqueado');
 
--- ── Primera vez: código de activación y PIN propio ────────────────────────────
-select is(educador_entrar('lucia@acc.test', '112233')->>'error', 'definir_pin',
-  'con el código de activación, Educators le pide elegir su PIN');
-select is(educador_activar('lucia@acc.test', '999999', '000000')->>'error', 'credenciales',
-  'activar con un código equivocado no vale');
-select is(educador_activar('lucia@acc.test', '112233', '12')->>'error', 'pin_invalido', 'el PIN son 6 dígitos');
-select is(educador_activar('lucia@acc.test', '112233', '000000')->>'ok', 'true',
-  'con el código bueno elige su PIN (cualquiera, también 000000) y entra');
+-- ── Primera vez: el enlace de acceso (0013) y su PIN propio ───────────────────
+select is(educador_acceso('enlace-de-lucia')->>'correo', 'lucia@acc.test', 'el enlace dice de quién es');
+select is(educador_acceso('enlace-de-lucia')->>'primera_vez', 'true', 'y que elige su primer PIN');
+select is(educador_acceso('enlace-falso')->>'error', 'no_vale', 'un enlace falso no vale');
+select is(educador_usar_acceso('enlace-de-lucia', '12')->>'error', 'pin_invalido', 'el PIN son 6 dígitos');
+select is(educador_usar_acceso('enlace-de-lucia', '000000')->>'ok', 'true',
+  'con el enlace elige su PIN (cualquiera, también 000000) y entra');
 select is(educador_entrar('lucia@acc.test', '000000')->>'ok', 'true', 'desde entonces entra con su PIN');
-select is(educador_entrar('lucia@acc.test', '112233')->>'error', 'credenciales', 'y el código de activación ya no sirve');
+select is(educador_usar_acceso('enlace-de-lucia', '111111')->>'error', 'no_vale', 'y el enlace ya no sirve otra vez');
 
 -- ── María: su sesión ──────────────────────────────────────────────────────────
 select set_config('t.token', educador_entrar(' Maria@Acc.test ', '246-810')->>'token', true);
@@ -206,27 +205,52 @@ select is(
 -- ── Lo que no puede hacer nadie sin permiso ───────────────────────────────────
 select throws_ok($$ select educador_workshops('token-falso') $$, '28000', null, 'un token falso no vale');
 select throws_ok($$ select educadores_de_sesion('x') $$, '42501', null, 'las funciones internas no se pueden llamar');
-select throws_ok(format('select educador_generar_codigo(%s)', current_setting('t.maria')), '42501', null,
-  'anon no genera códigos');
+select throws_ok(format('select educador_crear_acceso(%s)', current_setting('t.maria')), '42501', null,
+  'anon no crea enlaces de acceso');
 select throws_ok($$ select count(*) from educador_sesiones $$, '42501', null, 'anon no lee las sesiones');
 
--- ── Admin genera un código de activación nuevo ────────────────────────────────
+-- ── Admin crea un enlace para un PIN nuevo (lo olvidó) ────────────────────────
 select pruebas.como('30000000-0000-4000-8000-000000000004');
-select throws_ok(format('select educador_generar_codigo(%s)', current_setting('t.maria')), '42501', null,
-  'el admin de otra organización no genera códigos para María de Acceso Centro');
+select throws_ok(format('select educador_crear_acceso(%s)', current_setting('t.maria')), '42501', null,
+  'el admin de otra organización no crea enlaces para María de Acceso Centro');
 select pruebas.como('30000000-0000-4000-8000-000000000003');
-select set_config('t.codigo', educador_generar_codigo(current_setting('t.maria')::bigint), true);
-select matches(current_setting('t.codigo'), '^\d{6}$', 'el colaborador de su organización sí: 6 dígitos');
+select set_config('t.enlace', educador_crear_acceso(current_setting('t.maria')::bigint)->>'token', true);
+select is(length(current_setting('t.enlace')), 48, 'el colaborador de su organización sí');
+select isnt((select acceso_creado_en from educadores where id = current_setting('t.maria')::bigint), null, 'y queda cuándo se creó');
 select pruebas.como_anon();
+select is(educador_sesion(current_setting('t.token'))->>'correo', 'maria@acc.test', 'crear el enlace no cierra su sesión');
+select is(educador_entrar('maria@acc.test', '246810')->>'ok', 'true', 'y su PIN sigue valiendo hasta que lo use');
+select is(educador_acceso(current_setting('t.enlace'))->>'primera_vez', 'false', 'el enlace sabe que es un PIN nuevo');
+select is(educador_usar_acceso(current_setting('t.enlace'), '135135')->>'ok', 'true', 'con él elige uno nuevo y entra');
 select throws_ok(format('select educador_sesion(%L)', current_setting('t.token')), '28000', null,
-  'el código nuevo cierra sus sesiones de Acceso Centro');
-select is(educador_entrar('maria@acc.test', current_setting('t.codigo'))->>'error', 'definir_pin',
-  'y con él vuelve a elegir PIN');
-select is(educador_activar('maria@acc.test', current_setting('t.codigo'), '135135')->>'ok', 'true', 'elige uno nuevo');
-select lives_ok(format('select educador_cambiar_pin(%L, %L)', educador_entrar('maria@acc.test', '135135')->>'token', '246246'),
-  'y lo puede cambiar desde su sesión');
+  'y sus sesiones anteriores de Acceso Centro se cierran');
+select is(jsonb_array_length(educador_entrar('maria@acc.test', '246810')->'educador'->'organizaciones'), 1,
+  'con el PIN anterior ya solo entra a Acceso Norte, que no cambió');
+select set_config('t.token4', educador_entrar('maria@acc.test', '135135')->>'token', true);
+select is(educador_verificar_pin(current_setting('t.token4'), '000000')->>'error', 'pin_actual',
+  'para cambiarlo desde su sesión, primero confirma que es él con su PIN actual');
+select is(educador_verificar_pin(current_setting('t.token4'), '135135')->>'ok', 'true', 'con el correcto, sí');
+select is(educador_cambiar_pin(current_setting('t.token4'), '000000', '246246')->>'error', 'pin_actual',
+  'y cambiarlo lo vuelve a comprobar');
+select is(educador_cambiar_pin(current_setting('t.token4'), '135135', '246246')->>'ok', 'true', 'y con él lo cambia');
 select set_config('t.token3', educador_entrar('maria@acc.test', '246246')->>'token', true);
 select is(length(current_setting('t.token3')), 64, 'entra con el PIN cambiado');
+
+-- ── Revocar el enlace pendiente, como una invitación ──────────────────────────
+select pruebas.como('30000000-0000-4000-8000-000000000003');
+select set_config('t.enlace2', educador_crear_acceso(current_setting('t.maria')::bigint)->>'token', true);
+select pruebas.como('30000000-0000-4000-8000-000000000004');
+select throws_ok(format('select educador_revocar_acceso(%s)', current_setting('t.maria')), '42501', null,
+  'el admin de otra organización no revoca el enlace de María');
+select pruebas.como_anon();
+select throws_ok(format('select educador_revocar_acceso(%s)', current_setting('t.maria')), '42501', null, 'anon tampoco');
+select pruebas.como('30000000-0000-4000-8000-000000000003');
+select lives_ok(format('select educador_revocar_acceso(%s)', current_setting('t.maria')), 'quien opera su organización lo revoca');
+select is((select acceso_token from educadores where id = current_setting('t.maria')::bigint), null, 'y ya no queda pendiente');
+select pruebas.como_anon();
+select is(educador_acceso(current_setting('t.enlace2'))->>'error', 'no_vale', 'el enlace revocado no vale');
+select is(educador_usar_acceso(current_setting('t.enlace2'), '999999')->>'error', 'no_vale', 'ni para elegir un PIN');
+select is(educador_entrar('maria@acc.test', '246246')->>'ok', 'true', 'y su PIN sigue valiendo');
 
 -- ── Un educador apartado (activo = false) deja de entrar ──────────────────────
 reset role;

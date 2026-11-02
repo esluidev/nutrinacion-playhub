@@ -35,6 +35,10 @@
 
     <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
+    <!-- Recién dado de alta: su enlace de acceso a Educators se crea y sale por correo; aquí se
+         copia si el correo no llega. Al cerrar, vuelve a donde se pidió el alta. -->
+    <EducadorAcceso :educador-id="recienCreado" crear-al-abrir @close="navigateTo(volverA)" />
+
     <div class="mt-5 flex items-center justify-end gap-3">
       <UiButton variant="outline" @click="navigateTo(volverA)">{{ t('common.cancel') }}</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">{{ t('educators.add') }}</UiButton>
@@ -68,6 +72,7 @@ const form = reactive({
 
 const saving = ref(false)
 const error = ref('')
+const recienCreado = ref<number | null>(null)
 
 const grupoOptions = computed(() => [
   { value: null, label: t('educators.noGroup') },
@@ -89,7 +94,7 @@ async function submit() {
   const [nombre = '', ...apellido] = form.nombre.trim().split(/\s+/)
 
   saving.value = true
-  const { error: err, reactivado } = await createEducador({
+  const { error: err, id, reactivado } = await createEducador({
     nombre,
     apellido: apellido.join(' '),
     correo: form.email,
@@ -104,6 +109,8 @@ async function submit() {
     return
   }
   toast.success(reactivado ? t('educators.reactivated') : t('educators.added'))
-  navigateTo(volverA.value)
+  // Su acceso a Educators: un enlace que sale por correo (y se puede copiar) en el diálogo.
+  if (id) recienCreado.value = id
+  else navigateTo(volverA.value)
 }
 </script>

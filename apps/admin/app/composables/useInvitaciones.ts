@@ -40,7 +40,7 @@ export interface EnvioCorreo {
 
 // Un 4xx/5xx llega como error de supabase-js con la respuesta en `context`: su cuerpo JSON trae
 // el `error` de la función. Si no se puede leer (red, relay), null y se usa el texto de respaldo.
-async function errorDeLaFuncion(error: unknown): Promise<string | null> {
+export async function errorDeLaFuncion(error: unknown): Promise<string | null> {
   const respuesta = (error as { context?: unknown } | null)?.context
   if (!(respuesta instanceof Response)) return null
   try {

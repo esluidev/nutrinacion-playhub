@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 12 migraciones de `migrations/`, en orden:**
+**Solo las 13 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -20,12 +20,14 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0010_recuperacion.sql` | Quién genera el enlace para recuperar el acceso a Admin |
 | `0011_correo_invitaciones.sql` | El estado del correo de cada invitación (cuándo salió o por qué no) |
 | `0012_baja_de_educadores.sql` | La baja de un educador es lógica y de los administradores: sin borrado por la API; la baja lo saca de sus grupos |
+| `0013_enlace_de_acceso_educadores.sql` | El acceso del educador a Educators es un enlace, como las invitaciones (sin código de activación) |
+| `0014_eliminar_educadores_sin_historial.sql` | Un administrador elimina de verdad al educador que no ha dado ningún taller; con historial, se sigue dando de baja |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0012
+supabase db push --dry-run   # debe listar 0001 a 0014
 supabase db push
 ```
 
@@ -38,13 +40,14 @@ supabase db push
 
 ### Después de las migraciones
 
-1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion enviar-invitacion`.
+1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion enviar-invitacion enviar-acceso-educador`.
+   - `enviar-acceso-educador` manda el enlace de acceso del educador a Educators (0013); usa los mismos secretos que `enviar-invitacion`.
    - `enviar-invitacion` manda las invitaciones por correo ([decisión 012](../docs/decisions/012-invitaciones-por-correo.md)) y necesita `supabase secrets set RESEND_API_KEY=<key>`. El remitente es `hello@nutrinacion.com`: verifica `nutrinacion.com` en Resend o fija otro con `supabase secrets set RESEND_FROM=…`.
    - Las otras dos no necesitan secretos.
 2. **Auth:**
    - *URL Configuration → Site URL* = la URL de Admin. La recuperación no necesita *Redirect URLs*: el enlace va directo a `/restablecer` de Admin.
    - *Email → Email OTP Expiration* = `86400`: lo que dura el enlace de recuperación (24 h), como en `config.toml`.
-3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `update configuracion set valor = 'https://<admin>' where clave = 'admin_url';`: el enlace de los correos de invitación (si está vacía, `enviar-invitacion` usa el origen desde el que se creó la invitación).
+3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `update configuracion set valor = 'https://<admin>' where clave = 'admin_url';`: el enlace de los correos de invitación (si está vacía, `enviar-invitacion` usa el origen desde el que se creó la invitación). `update configuracion set valor = 'https://<educators>' where clave = 'educators_url';`: el enlace de acceso de los educadores (obligatoria fuera de desarrollo).
 4. **El primer superadmin:**
    - Crea el usuario en *Authentication → Users*. Un trigger le crea su perfil.
    - Después: `update perfiles set superadmin = true where email = '<tu correo>';`.
@@ -97,7 +100,7 @@ Las pruebas pgTAP (`supabase test db`, también dentro de `verify.sh`) crean sus
 |---|---|---|
 | `maria@ejemplo.test` | `246810` | Fundación Centro: 12 talleres (publicados, finalizados, uno cancelado y uno del grupo), la mayoría dentro de la jornada «Semana de la nutrición» |
 | `pedro@ejemplo.test` | `135790` | Colegio Norte: un taller hoy |
-| `lucia@ejemplo.test` | Aún no tiene: código de activación `112233` (con él elige su PIN) | Fundación Centro: el taller del grupo «Equipo de la mañana» |
+| `lucia@ejemplo.test` | Aún no tiene: enlace de acceso `http://localhost:3002/acceso/lucia-enlace-de-prueba` (con él elige su PIN) | Fundación Centro: el taller del grupo «Equipo de la mañana» |
 
 El catálogo del seed: «El huevo» publicado en Guatemala (el único con JSON en el build de Player) y «La soda» solo registrada.
 

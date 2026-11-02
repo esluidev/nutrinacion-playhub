@@ -6,6 +6,23 @@
 // La carga es perezosa y por organización: al invocarse con un contexto distinto al último
 // cargado, se refresca solo.
 
+import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
+
+// La URL de Educators (`configuracion.educators_url`, 0013), para el enlace de acceso. En
+// desarrollo, si está vacía, la de este equipo en el puerto de Educators; por Tailscale, el nombre
+// de este equipo (equipo-local).
+export async function urlDeEducators(): Promise<string | null> {
+  if (!isSupabaseConfigured()) return null
+  const { data } = await useSupabaseClient().from('configuracion').select('valor').eq('clave', 'educators_url').maybeSingle()
+  const url = (data?.valor ?? '').trim() || (import.meta.dev ? 'http://localhost:3002' : '')
+  return url ? urlEnEsteEquipo(url.replace(/\/+$/, '')) : null
+}
+
+// El enlace de acceso de un educador: abre en Educators la página donde elige su PIN.
+export function enlaceAcceso(base: string, token: string): string {
+  return `${base}/acceso/${token}`
+}
+
 export interface EducatorGroup {
   id: number
   nombre: string
@@ -22,12 +39,25 @@ export interface Educator {
   email: string
   telefono: string
   estado: 'activo' | 'inactivo'
-  // El acceso a Educators: con PIN, con la activación pendiente o sin código todavía.
-  acceso: 'pin' | 'pendiente' | 'sin-codigo'
+  // El acceso a Educators: con PIN o sin él todavía. El enlace de acceso (0013) va aparte: el
+  // pendiente se ve y se copia mientras no venza, también si ya tiene PIN (para elegir uno nuevo).
+  acceso: 'pin' | 'sin-pin'
+  enlace: EnlaceAcceso | null
   grupo: string            // primer grupo (chip de la card); '' si no está en ninguno
   grupos: string[]         // todos (la membresía real es N:M)
   grupoIds: number[]
   talleres: number
+}
+
+// El enlace de acceso pendiente de un educador (0013) y cómo quedó su correo. Es de primer acceso
+// si aún no tiene PIN y para restablecerlo si ya lo tiene.
+export interface EnlaceAcceso {
+  token: string
+  creadoEn: string | null
+  expiraEn: string
+  vencido: boolean
+  correoEnviadoEn: string | null
+  correoError: string | null
 }
 
 // La ficha editable, con las columnas de `educadores` que Admin puede escribir (0005).
@@ -38,13 +68,14 @@ export interface EducadorDetalle {
   correo: string
   telefono: string | null
   profesion: string | null
+  activo: boolean
 }
 
 const DEMO_EDUCATORS: Educator[] = [
-  { id: 1, nombre: 'Maria Lopez Hernandez', initials: 'ML', profesion: 'Nutrióloga', email: 'maria.lopez@nutrinacion.org', telefono: '+52 55 1234 5678', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 8 },
-  { id: 2, nombre: 'Carlos Ramirez Torres', initials: 'CR', profesion: 'Educador en Salud', email: 'carlos.ramirez@nutrinacion.org', telefono: '+52 55 2345 6789', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 5 },
-  { id: 3, nombre: 'Ana Torres Gutierrez', initials: 'AT', profesion: 'Psicóloga Infantil', email: 'ana.torres@nutrinacion.org', telefono: '+52 55 3456 7890', estado: 'activo', acceso: 'pin', grupo: 'Zona Sur', grupos: ['Zona Sur'], grupoIds: [2], talleres: 6 },
-  { id: 4, nombre: 'Pedro Sanchez Morales', initials: 'PS', profesion: 'Chef Educativo', email: 'pedro.sanchez@nutrinacion.org', telefono: '+52 55 4567 8901', estado: 'activo', acceso: 'pin', grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 4 },
+  { id: 1, nombre: 'Maria Lopez Hernandez', initials: 'ML', profesion: 'Nutrióloga', email: 'maria.lopez@nutrinacion.org', telefono: '+52 55 1234 5678', estado: 'activo', acceso: 'pin', enlace: null, grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 8 },
+  { id: 2, nombre: 'Carlos Ramirez Torres', initials: 'CR', profesion: 'Educador en Salud', email: 'carlos.ramirez@nutrinacion.org', telefono: '+52 55 2345 6789', estado: 'activo', acceso: 'pin', enlace: null, grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 5 },
+  { id: 3, nombre: 'Ana Torres Gutierrez', initials: 'AT', profesion: 'Psicóloga Infantil', email: 'ana.torres@nutrinacion.org', telefono: '+52 55 3456 7890', estado: 'activo', acceso: 'pin', enlace: null, grupo: 'Zona Sur', grupos: ['Zona Sur'], grupoIds: [2], talleres: 6 },
+  { id: 4, nombre: 'Pedro Sanchez Morales', initials: 'PS', profesion: 'Chef Educativo', email: 'pedro.sanchez@nutrinacion.org', telefono: '+52 55 4567 8901', estado: 'activo', acceso: 'pin', enlace: null, grupo: 'Zona Norte', grupos: ['Zona Norte'], grupoIds: [1], talleres: 4 },
 ]
 
 const DEMO_GROUPS: EducatorGroup[] = [
@@ -61,7 +92,11 @@ interface EducadorRow {
   profesion: string | null
   activo: boolean
   tiene_pin: boolean
-  activacion_pendiente: boolean
+  acceso_token: string | null
+  acceso_creado_en: string | null
+  acceso_expira_en: string | null
+  acceso_correo_enviado_en: string | null
+  acceso_correo_error: string | null
   educador_grupo_miembros: { grupo: { id: number, nombre: string } | null }[]
 }
 
@@ -100,7 +135,8 @@ export function useEducators() {
       supabase
         .from('educadores')
         .select(`
-          id, nombre, apellido, correo, telefono, profesion, activo, tiene_pin, activacion_pendiente,
+          id, nombre, apellido, correo, telefono, profesion, activo, tiene_pin,
+          acceso_token, acceso_creado_en, acceso_expira_en, acceso_correo_enviado_en, acceso_correo_error,
           educador_grupo_miembros!educador_grupo_miembros_educador_id_fkey ( grupo:educador_grupos ( id, nombre ) )
         `)
         .eq('organizacion_id', oid)
@@ -130,7 +166,17 @@ export function useEducators() {
           email: e.correo ?? '—',
           telefono: e.telefono ?? '—',
           estado: e.activo ? 'activo' : 'inactivo',
-          acceso: e.tiene_pin ? 'pin' : e.activacion_pendiente ? 'pendiente' : 'sin-codigo',
+          acceso: e.tiene_pin ? 'pin' : 'sin-pin',
+          enlace: e.acceso_token && e.acceso_expira_en
+            ? {
+                token: e.acceso_token,
+                creadoEn: e.acceso_creado_en,
+                expiraEn: e.acceso_expira_en,
+                vencido: new Date(e.acceso_expira_en).getTime() <= Date.now(),
+                correoEnviadoEn: e.acceso_correo_enviado_en,
+                correoError: e.acceso_correo_error,
+              }
+            : null,
           grupo: grupos[0]?.nombre ?? '',
           grupos: grupos.map(g => g.nombre),
           grupoIds: grupos.map(g => g.id),
@@ -193,7 +239,7 @@ export function useEducators() {
     telefono: string
     profesion: string
     grupoId?: number | null
-  }): Promise<{ error: string | null, reactivado?: boolean }> {
+  }): Promise<{ error: string | null, id?: number, reactivado?: boolean }> {
     if (demo) return { error: null }
     if (!orgActiva.value) return { error: t('ctx.noOrgActive') }
     const supabase = useSupabaseClient()
@@ -242,7 +288,7 @@ export function useEducators() {
       if (e2) return { error: e2.message }
     }
     await refresh()
-    return { error: null, reactivado }
+    return { error: null, id: educadorId, reactivado }
   }
 
   async function createGrupo(datos: { nombre: string, descripcion: string, educadorIds: number[] }): Promise<{ id: number | null, error: string | null }> {
@@ -321,11 +367,11 @@ export function useEducators() {
       const e = DEMO_EDUCATORS.find(x => x.id === educadorId)
       if (!e) return null
       const [nombre = '', ...apellido] = e.nombre.split(' ')
-      return { id: e.id, nombre, apellido: apellido.join(' '), correo: e.email, telefono: e.telefono, profesion: e.profesion }
+      return { id: e.id, nombre, apellido: apellido.join(' '), correo: e.email, telefono: e.telefono, profesion: e.profesion, activo: e.estado === 'activo' }
     }
     const { data } = await useSupabaseClient()
       .from('educadores')
-      .select('id, nombre, apellido, correo, telefono, profesion')
+      .select('id, nombre, apellido, correo, telefono, profesion, activo')
       .eq('id', educadorId)
       .is('deleted_at', null)
       .maybeSingle()
@@ -333,7 +379,8 @@ export function useEducators() {
   }
 
   // Edita la ficha. El correo es con el que entra en Educators: cambiarlo cambia su entrada,
-  // pero no su PIN ni sus sesiones.
+  // pero no su PIN ni sus sesiones. Inactivo (`activo`): no se le asignan talleres nuevos (la base
+  // lo rechaza) y no entra en Educators; su historial se conserva.
   async function updateEducador(educadorId: number, datos: Omit<EducadorDetalle, 'id'>) {
     if (demo) return { error: null }
     const { error } = await useSupabaseClient()
@@ -344,6 +391,7 @@ export function useEducators() {
         correo: datos.correo.trim().toLowerCase(),
         telefono: datos.telefono?.trim() || null,
         profesion: datos.profesion?.trim() || null,
+        activo: datos.activo,
       })
       .eq('id', educadorId)
     if (error) return { error: error.message }
@@ -351,10 +399,10 @@ export function useEducators() {
     return { error: null }
   }
 
-  // Baja lógica (`deleted_at`, 0004), la única que hay (0012 quitó el borrado por la API) y solo de
-  // los administradores de la organización: desaparece de la organización y de sus grupos (la base
-  // lo saca, 0012) y ya no entra en Educators (0006 exige `deleted_at is null`). Sus talleres
-  // pasados conservan la asignación. Para apartarlo sin darlo de baja está `cambiarActivo`.
+  // Baja lógica (`deleted_at`, 0004), para quien ya dio talleres, y solo de los administradores de
+  // la organización: desaparece de la organización y de sus grupos (la base lo saca, 0012) y ya no
+  // entra en Educators (0006 exige `deleted_at is null`). Sus talleres pasados conservan la
+  // asignación. Para apartarlo sin darlo de baja está `activo` en la ficha.
   async function darDeBaja(educadorId: number) {
     if (demo) return { error: null }
     const { error } = await useSupabaseClient()
@@ -366,22 +414,54 @@ export function useEducators() {
     return { error: null }
   }
 
-  // Activo o inactivo en la organización (`educadores.activo`). Inactivo: no se le asignan talleres
-  // nuevos (la base lo rechaza) y no entra en Educators; su historial se conserva.
-  async function cambiarActivo(educadorId: number, activo: boolean) {
+  // El enlace de acceso a Educators (0013), como las invitaciones: con él el educador ve su correo y
+  // elige su PIN, la primera vez o cuando lo olvidó. Vence a los 7 días y vale una vez; crear otro
+  // reemplaza al anterior. No toca su PIN ni sus sesiones hasta que lo use.
+  async function crearAcceso(educadorId: number): Promise<{ token: string | null, error: string | null }> {
+    if (demo) return { token: 'demo', error: null }
+    const { data, error } = await useSupabaseClient().rpc('educador_crear_acceso', { p_educador_id: educadorId })
+    if (error) return { token: null, error: error.message }
+    await refresh()
+    return { token: ((data as { token?: string } | null)?.token) ?? null, error: null }
+  }
+
+  // Si ya dio algún taller (0014): con historial se da de baja; sin él, se elimina. Si no se puede
+  // saber, se trata como con historial: la baja no pierde nada.
+  async function tieneHistorial(educadorId: number): Promise<boolean> {
+    if (demo) return (DEMO_EDUCATORS.find(e => e.id === educadorId)?.talleres ?? 0) > 0
+    const { data, error } = await useSupabaseClient().rpc('educador_tiene_historial', { p_educador_id: educadorId })
+    return error ? true : data !== false
+  }
+
+  // Elimina de verdad a quien no ha dado ningún taller, solo un administrador (0014): con él se van
+  // sus asignaciones a talleres que no dio, sus grupos y sus sesiones. La base no deja sin educador
+  // un taller publicado.
+  async function eliminarEducador(educadorId: number) {
     if (demo) return { error: null }
-    const { error } = await useSupabaseClient().from('educadores').update({ activo }).eq('id', educadorId)
+    const { error } = await useSupabaseClient().rpc('educador_eliminar', { p_educador_id: educadorId })
+    if (error) return { error: error.message }
+    await refresh()
+    return { error: null }
+  }
+
+  // Revoca el enlace pendiente, como una invitación: deja de valer. Su PIN, si lo tiene, sigue valiendo.
+  async function revocarAcceso(educadorId: number): Promise<{ error: string | null }> {
+    if (demo) return { error: null }
+    const { error } = await useSupabaseClient().rpc('educador_revocar_acceso', { p_educador_id: educadorId })
     await refresh()
     return { error: error?.message ?? null }
   }
 
-  // El código de activación de Educators (6 dígitos, 0006): con él, el educador elige su PIN la
-  // primera vez. La base lo devuelve una sola vez y guarda solo su hash; generar otro borra su PIN
-  // y cierra sus sesiones (sirve también si lo olvidó).
-  async function generarCodigo(educadorId: number): Promise<{ codigo: string | null, error: string | null }> {
-    if (demo) return { codigo: '000000', error: null }
-    const { data, error } = await useSupabaseClient().rpc('educador_generar_codigo', { p_educador_id: educadorId })
-    return { codigo: data ?? null, error: error?.message ?? null }
+  // Lo manda por correo (Edge Function `enviar-acceso-educador`); después se relee el estado.
+  async function enviarCorreoAcceso(educadorId: number): Promise<{ ok: boolean, error: string | null }> {
+    if (demo) return { ok: false, error: t('invMail.demo') }
+    const { data, error } = await useSupabaseClient().functions.invoke('enviar-acceso-educador', {
+      body: { educador_id: educadorId, educators_url: await urlDeEducators() },
+    })
+    await refresh()
+    if (error) return { ok: false, error: (await errorDeLaFuncion(error)) ?? t('invMail.unreachable') }
+    if (!data?.ok) return { ok: false, error: (data?.error as string) || t('invMail.unreachable') }
+    return { ok: true, error: null }
   }
 
   return {
@@ -399,12 +479,15 @@ export function useEducators() {
     getEducadorDetalle,
     updateEducador,
     darDeBaja,
+    tieneHistorial,
+    eliminarEducador,
     createGrupo,
     updateGrupo,
     deleteGrupo,
     addGroupMembers,
     removeGroupMember,
-    generarCodigo,
-    cambiarActivo,
+    crearAcceso,
+    revocarAcceso,
+    enviarCorreoAcceso,
   }
 }

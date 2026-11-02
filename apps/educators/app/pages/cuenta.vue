@@ -1,81 +1,79 @@
 <template>
-  <div class="mx-auto max-w-xl">
-    <h1 class="ui-heading mb-6">{{ t('cuenta.titulo') }}</h1>
-    <UiCard>
-      <div class="flex items-center gap-4">
-        <UiAvatar :name="nombre" size="lg" />
-        <div class="min-w-0">
-          <p class="ui-title truncate">{{ nombre }}</p>
-          <p class="ui-caption truncate">{{ educador?.correo }}</p>
-        </div>
+  <!-- Mi perfil, como el de Admin: quién es arriba y un panel por tema. Salir está en el menú de la
+       cuenta, igual que en Admin y Player. -->
+  <div class="mx-auto max-w-3xl">
+    <div class="mb-7 flex items-center gap-5">
+      <UiAvatar :name="nombre" size="lg" />
+      <div class="min-w-0">
+        <h1 class="ui-heading truncate">{{ nombre }}</h1>
+        <p class="ui-text mt-1 truncate">{{ educador?.correo }}</p>
       </div>
-      <!-- Dónde trabaja: sus organizaciones (una sesión puede abarcar varias). -->
-      <dl v-if="educador?.organizaciones?.length" class="mt-6">
-        <dt class="ui-caption">{{ t('cuenta.organizaciones') }}</dt>
-        <dd v-for="org in educador.organizaciones" :key="org.id" class="font-black">{{ org.nombre }}</dd>
-      </dl>
-    </UiCard>
-    <UiCard class="mt-6">
-      <p class="field-label">{{ t('cuenta.idioma') }}</p>
-      <UiTabs :model-value="locale" :items="[{ value: 'es', label: 'Español' }, { value: 'en', label: 'English' }]" :label="t('cuenta.idioma')" @update:model-value="(v) => setLocale(v as 'es' | 'en')" />
-    </UiCard>
-    <UiCard class="mt-6">
-      <form class="space-y-5" novalidate @submit.prevent="cambiar">
-        <div>
-          <h2 class="ui-title">{{ t('pin.cambiar') }}</h2>
-          <p class="ui-text mt-1">{{ t('pin.cambiarTexto') }}</p>
+    </div>
+
+    <div class="flex flex-col gap-6">
+      <!-- Sus organizaciones: una sesión puede abarcar varias -->
+      <section v-if="educador?.organizaciones?.length" class="ui-panel">
+        <div class="ui-panel-header">
+          <div class="min-w-0">
+            <h2 class="ui-title">{{ t('cuenta.organizaciones') }}</h2>
+            <p class="ui-caption mt-0.5">{{ t('cuenta.organizacionesTexto') }}</p>
+          </div>
         </div>
-        <UiInput
-          v-model="nuevo"
-          :label="t('pin.nuevo')"
-          type="password"
-          inputmode="numeric"
-          autocomplete="new-password"
-          :hint="t('pin.ayuda')"
-          :error="error === 'pin_invalido' ? t('pin.errorInvalido') : undefined"
-          size="lg"
-        />
-        <UiInput
-          v-model="repetido"
-          :label="t('pin.repetir')"
-          type="password"
-          inputmode="numeric"
-          autocomplete="new-password"
-          :error="error === 'no_coinciden' ? t('pin.errorNoCoinciden') : undefined"
-          size="lg"
-        />
-        <UiAlert v-if="error === 'red'" tone="warning">{{ t('pin.errorRed') }}</UiAlert>
-        <UiButton type="submit" variant="outline" icon="key" block :loading="guardando">{{ t('pin.cambiar') }}</UiButton>
-      </form>
-    </UiCard>
-    <UiButton class="mt-6" block size="lg" variant="outline" icon="logout" @click="salir">{{ t('cuenta.salir') }}</UiButton>
+        <div class="divide-y divide-line">
+          <div v-for="org in educador.organizaciones" :key="org.id" class="flex items-center gap-3 px-6 py-4">
+            <!-- Organización: tono estable por nombre, como en Admin -->
+            <UiSymbol size="md" :tone="uiToneFor(org.nombre)" class="text-body font-black">{{ org.nombre.charAt(0) }}</UiSymbol>
+            <p class="min-w-0 flex-1 truncate text-body font-extrabold text-ink">{{ org.nombre }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Preferencias: el idioma de la interfaz, recordado en este dispositivo -->
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div class="min-w-0">
+            <h2 class="ui-title">{{ t('cuenta.preferencias') }}</h2>
+            <p class="ui-caption mt-0.5">{{ t('cuenta.preferenciasTexto') }}</p>
+          </div>
+        </div>
+        <div class="ui-panel-body sm:max-w-xs">
+          <UiSelect :model-value="locale" :options="IDIOMAS" :label="t('cuenta.idioma')" @update:model-value="(v) => setLocale(v as Locale)" />
+        </div>
+      </section>
+
+      <!-- Su PIN: se cambia en dos pasos (CambiarPin). Sin el actual, el enlace de la organización. -->
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div class="min-w-0">
+            <h2 class="ui-title">{{ t('pin.titulo') }}</h2>
+            <p class="ui-caption mt-0.5">{{ t('pin.tituloTexto') }}</p>
+          </div>
+        </div>
+        <div class="ui-panel-body">
+          <UiButton variant="outline" icon="key" @click="cambiando = true">{{ t('pin.cambiar') }}</UiButton>
+          <p class="ui-caption mt-3">{{ t('pin.olvido') }}</p>
+        </div>
+      </section>
+    </div>
+
+    <CambiarPin :open="cambiando" @close="cambiando = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ErrorPin } from '~/composables/useSesion'
+import type { Locale } from '~/i18n/messages'
 import { nombreCompleto } from '~/utils/sesion'
 
 const { t, locale, setLocale } = useT()
-const { educador, salir, cambiarPin } = useSesion()
-const { toast } = useToast()
+const { educador } = useSesion()
 
 const nombre = computed(() => (educador.value ? nombreCompleto(educador.value) : ''))
+const IDIOMAS = [
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'English' },
+]
 
-// Cambiar el PIN: 6 dígitos, dos veces. Vale para todos sus accesos de la sesión.
-const nuevo = ref('')
-const repetido = ref('')
-const error = ref<ErrorPin | null>(null)
-const guardando = ref(false)
-
-async function cambiar() {
-  guardando.value = true
-  error.value = await cambiarPin(nuevo.value, repetido.value)
-  guardando.value = false
-  if (error.value) return
-  nuevo.value = repetido.value = ''
-  toast.success(t('pin.cambiado'))
-}
+const cambiando = ref(false)
 
 useHead({ title: computed(() => t('cuenta.titulo')) })
 </script>

@@ -4,7 +4,7 @@
 -- transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(47);
+select plan(57);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -213,6 +213,53 @@ select is((select count(*)::int from educador_grupo_miembros where educador_id =
 update workshops set estado = 'PUBLICADO' where id = current_setting('t.w4')::bigint;
 select throws_ok(format($$ update educadores set deleted_at = now() where id = %s $$, current_setting('t.maria')), 'P0001', null,
   'no se da de baja al único educador de un taller publicado (se reasigna antes)');
+
+-- ── Eliminar a quien no ha dado ningún taller (0014); con historial, solo la baja ────────────
+-- Nuevo: en un taller futuro publicado (no es el único) y en el equipo. Dio: inició un taller.
+-- Solo: el único educador de un taller publicado.
+reset role;
+insert into educadores (nombre, correo, organizacion_id) values
+  ('Nuevo', 'nuevo@ws.test', current_setting('t.centro')::bigint),
+  ('Dio', 'dio@ws.test', current_setting('t.centro')::bigint),
+  ('Solo', 'solo@ws.test', current_setting('t.centro')::bigint);
+select set_config('t.nuevo', (select id from educadores where correo = 'nuevo@ws.test')::text, true);
+select set_config('t.dio', (select id from educadores where correo = 'dio@ws.test')::text, true);
+select set_config('t.solo', (select id from educadores where correo = 'solo@ws.test')::text, true);
+select set_config('t.w5', pruebas.nuevo('W futuro', 10)::text, true);
+select set_config('t.w6', pruebas.nuevo('W dado', 2)::text, true);
+select set_config('t.w7', pruebas.nuevo('W de uno', 12)::text, true);
+insert into workshop_educadores (workshop_id, educador_id) values
+  (current_setting('t.w5')::bigint, current_setting('t.nuevo')::bigint),
+  (current_setting('t.w5')::bigint, current_setting('t.dio')::bigint),
+  (current_setting('t.w6')::bigint, current_setting('t.dio')::bigint),
+  (current_setting('t.w7')::bigint, current_setting('t.solo')::bigint);
+update workshops set estado = 'PUBLICADO'
+ where id in (current_setting('t.w5')::bigint, current_setting('t.w6')::bigint, current_setting('t.w7')::bigint);
+update workshop_educadores set estado = 'EN_CURSO', iniciado_en = now()
+ where workshop_id = current_setting('t.w6')::bigint and educador_id = current_setting('t.dio')::bigint;
+insert into educador_grupo_miembros (educador_grupo_id, educador_id) values (current_setting('t.grupo')::bigint, current_setting('t.nuevo')::bigint);
+
+select pruebas.como('50000000-0000-4000-8000-000000000003');
+select is(educador_tiene_historial(current_setting('t.nuevo')::bigint), false, 'Nuevo no ha dado ningún taller');
+select is(educador_tiene_historial(current_setting('t.dio')::bigint), true, 'Dio sí: inició uno');
+select throws_ok(format('select educador_eliminar(%s)', current_setting('t.nuevo')), '42501', null,
+  'el colaborador no elimina educadores');
+reset role;
+set local role anon;
+select throws_ok(format('select educador_eliminar(%s)', current_setting('t.nuevo')), '42501', null, 'anon tampoco');
+select pruebas.como('50000000-0000-4000-8000-000000000002');
+select lives_ok(format('select educador_eliminar(%s)', current_setting('t.nuevo')),
+  'al que no ha dado ningún taller, el administrador lo elimina');
+select throws_ok(format('select educador_eliminar(%s)', current_setting('t.dio')), 'P0001', null,
+  'al que ya dio uno no: se da de baja para conservar su historial');
+select throws_ok(format('select educador_eliminar(%s)', current_setting('t.solo')), 'P0001', null,
+  'ni al único educador de un taller publicado (se reasigna antes)');
+reset role;
+select is((select count(*)::int from educadores where id = current_setting('t.nuevo')::bigint), 0, 'Nuevo ya no está en la base');
+select is((select array_agg(educador_id) from workshop_educadores where workshop_id = current_setting('t.w5')::bigint),
+  array[current_setting('t.dio')::bigint], 'su taller futuro se queda con Dio');
+select is((select count(*)::int from educador_grupo_miembros where educador_grupo_id = current_setting('t.grupo')::bigint
+            and educador_id = current_setting('t.nuevo')::bigint), 0, 'y salió de su grupo');
 
 -- ── Borrar (solo la base, p. ej. al eliminar una organización): el workshop se lleva sus
 --    asignaciones; el educador, no si deja uno publicado sin nadie ─────────────────────────────

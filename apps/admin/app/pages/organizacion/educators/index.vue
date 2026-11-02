@@ -56,19 +56,22 @@
             <!-- Etiquetas sin significado: neutras (un grupo en lima se leería como «Activo») -->
             <UiBadge v-if="educator.grupo" tone="neutral">{{ educator.grupo }}</UiBadge>
             <UiBadge tone="neutral">{{ tCount(t, 'orgHome.talleresCount', educator.talleres) }}</UiBadge>
-            <!-- El acceso solo avisa lo que falta: activación pendiente (sol) o sin código (coral). -->
-            <UiBadge v-if="educator.acceso !== 'pin'" :tone="educator.acceso === 'pendiente' ? 'sun' : 'coral'">
-              {{ educator.acceso === 'pendiente' ? t('educators.notActivated') : t('educators.noAccess') }}
+            <!-- El acceso solo avisa lo pendiente o lo que falta: sin PIN con su enlace (sol) o sin él
+                 (coral); con PIN, un enlace para restablecerlo sin usar (sol). -->
+            <UiBadge v-if="educator.acceso !== 'pin'" :tone="enlacePendiente(educator) ? 'sun' : 'coral'">
+              {{ enlacePendiente(educator) ? t('educators.notActivated') : t('educators.noAccess') }}
             </UiBadge>
+            <UiBadge v-else-if="enlacePendiente(educator)" tone="sun">{{ t('educators.pinResetPending') }}</UiBadge>
           </div>
 
-          <!-- Editar la ficha (y dar de baja, dentro); el acceso a Educators, el PIN y si está activo aquí -->
+          <!-- Editar la ficha (si está activo y dar de baja, dentro) y su acceso: sin PIN, su enlace de
+               acceso; con PIN, restablecerlo -->
           <div class="mt-4 flex items-center justify-end gap-2 border-t border-line pt-4">
             <UiButton variant="outline" size="sm" icon="pencil" :to="`/organizacion/educators/${educator.id}/editar`">
               {{ t('common.edit') }}
             </UiButton>
-            <UiButton variant="outline" size="sm" icon="key" @click="abrirCodigo(educator)">
-              {{ t('educators.accessPin') }}
+            <UiButton variant="outline" size="sm" :icon="educator.acceso === 'pin' ? 'key' : 'link'" @click="educadorAcceso = educator.id">
+              {{ educator.acceso === 'pin' ? t('educators.resetPin') : t('educators.accessLink') }}
             </UiButton>
           </div>
         </article>
@@ -86,42 +89,8 @@
       </div>
     </div>
 
-    <!-- Código de activación de Educators: se ve una sola vez; con él, el educador elige su PIN. El PIN
-         solo lo conoce él (la base guarda su hash): «cambiarlo» desde Admin es generar otro código. -->
-    <UiDialog :open="!!educadorCodigo" :title="t('educators.accessPin')" @update:open="(v) => { if (!v) cerrarCodigo() }">
-      <template v-if="educadorCodigo">
-        <p class="ui-text">
-          {{ t('educators.accessIntro', { nombre: educadorCodigo.nombre }) }} <strong class="text-ink">{{ educadorCodigo.email }}</strong> {{ t('educators.accessIntro2') }}
-        </p>
-        <div v-if="codigo" class="mt-5 rounded-control border border-line bg-canvas px-5 py-4 text-center">
-          <p class="eyebrow mb-1">{{ t('educators.codeLabel') }}</p>
-          <p class="ui-stat-value font-mono tracking-widest">{{ codigo }}</p>
-          <p class="ui-caption mt-2">{{ t('educators.codeShare') }}</p>
-        </div>
-        <p v-else class="ui-caption mt-4">
-          {{ educadorCodigo.acceso === 'pin'
-            ? t('educators.hasPin')
-            : educadorCodigo.acceso === 'pendiente'
-              ? t('educators.pendingCode')
-              : t('educators.noCode') }}
-        </p>
-
-        <!-- Activo en la organización: inactivo no recibe talleres y no entra en Educators -->
-        <div class="mt-6 border-t border-line pt-5">
-          <UiSwitch
-            :model-value="educadorCodigo.activo"
-            :disabled="cambiandoActivo"
-            :label="t('educators.activeLabel')"
-            @update:model-value="alternarActivo"
-          />
-          <p class="ui-caption mt-2">{{ t('educators.activeHelp') }}</p>
-        </div>
-      </template>
-      <template #actions>
-        <UiButton v-if="!codigo" :loading="generando" icon="key" @click="generar">{{ t('educators.generate') }}</UiButton>
-        <UiButton v-else icon="copy" @click="copiar">{{ t('common.copy') }}</UiButton>
-      </template>
-    </UiDialog>
+    <!-- Su acceso a Educators: el enlace de primer acceso o el de restablecer el PIN (0013) -->
+    <EducadorAcceso :educador-id="educadorAcceso" @close="educadorAcceso = null" />
 
     <!-- GRUPOS TAB: cada tarjeta lleva a su detalle (miembros, edición y borrado) -->
     <div v-if="activeTab === 'grupos'">
@@ -162,6 +131,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Educator } from '~/composables/useEducators'
+
 definePageMeta({ layout: 'dashboard' })
 
 const { t } = useT()
@@ -180,56 +151,11 @@ const estadoOptions = computed(() => [
   { value: 'inactivo', label: t('educators.inactives') },
 ])
 
-const { educators, groups: grupos, generarCodigo, cambiarActivo, refresh } = useEducators()
-const { toast } = useToast()
+const { educators, groups: grupos } = useEducators()
 
-// ── Código de acceso ──────────────────────────────────────────────────────────
-const educadorCodigo = ref<{ id: number, nombre: string, email: string, acceso: string, activo: boolean } | null>(null)
-const codigo = ref('')
-const generando = ref(false)
-const cambiandoActivo = ref(false)
-
-function abrirCodigo(educator: { id: number, nombre: string, email: string, acceso: string, estado: string }) {
-  educadorCodigo.value = { id: educator.id, nombre: educator.nombre, email: educator.email, acceso: educator.acceso, activo: educator.estado === 'activo' }
-  codigo.value = ''
-}
-
-async function alternarActivo(activo: boolean) {
-  const e = educadorCodigo.value
-  if (!e) return
-  cambiandoActivo.value = true
-  const { error } = await cambiarActivo(e.id, activo)
-  cambiandoActivo.value = false
-  if (error) {
-    toast.error(error)
-    return
-  }
-  e.activo = activo
-  toast.success(activo ? t('educators.activeOn', { nombre: e.nombre }) : t('educators.activeOff', { nombre: e.nombre }))
-}
-
-function cerrarCodigo() {
-  educadorCodigo.value = null
-  codigo.value = ''
-}
-
-async function generar() {
-  if (!educadorCodigo.value) return
-  generando.value = true
-  const { codigo: nuevo, error } = await generarCodigo(educadorCodigo.value.id)
-  generando.value = false
-  if (error || !nuevo) {
-    toast.error(error ?? t('educators.generateFailed'))
-    return
-  }
-  codigo.value = nuevo
-  refresh()
-}
-
-async function copiar() {
-  if (await copiarTexto(codigo.value)) toast.success(t('educators.codeCopied'))
-  else toast.error(t('educators.copyFailed'))
-}
+// ── Su acceso: el educador del diálogo ────────────────────────────────────────
+const educadorAcceso = ref<number | null>(null)
+const enlacePendiente = (e: Educator) => !!e.enlace && !e.enlace.vencido
 
 const tabItems = computed(() => [
   { value: 'educadores', label: `${t('educators.title')} · ${educators.value.length}` },

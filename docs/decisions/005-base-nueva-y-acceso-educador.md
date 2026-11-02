@@ -5,6 +5,7 @@ Estado: aceptada (lo que ve el superadmin lo precisa la [decisión 008](008-supe
 Sustituye a: no aplica. Precisa la [decisión 002](002-superficies-y-guia.md) en cómo entra el educador.
 Precisada por la [decisión 006](006-modelo-y-catalogo-desde-player.md) (2026-10-15): las tablas y sus nombres.
 Precisada por la [decisión 007](007-educador-hogar-y-ciclo-del-workshop.md) (2026-10-16): el educador es de la organización y entra con un PIN que elige, con el código de activación de Admin.
+Actualizada el 2026-11-02 (Luis, migración 0013): el código de activación pasa a ser un enlace de acceso, como las invitaciones. Llega por correo, se puede copiar y con él solo se elige el PIN, la primera vez o cuando se olvidó.
 
 ## Contexto
 
