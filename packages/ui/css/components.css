@@ -64,16 +64,18 @@
   /* Filter: a toggle with the neutral button's outline and base; pressed, it turns night. */
   .filter {
     @apply inline-flex shrink-0 items-center justify-center gap-2 bg-surface px-4 font-extrabold text-muted hover:text-ink;
-    min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--ph-radius);
+    min-height: var(--ph-control); font-size: var(--text-body); border-radius: var(--ph-radius);   /* the controls' text size, like the tabs and the group label */
     box-shadow: inset 0 0 0 1px var(--color-depth), 0 var(--ph-depth) 0 var(--color-depth);
     transition: color var(--ph-duration), transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration);
   }
   .filter:active { transform: translateY(var(--ph-press-offset)); box-shadow: inset 0 0 0 1px var(--color-depth), 0 var(--ph-depth-pressed) 0 var(--color-depth); }
   .filter[aria-pressed=true] { background: var(--color-night-850); color: var(--color-inverse); box-shadow: 0 var(--ph-depth) 0 var(--color-night-950); }
-  .filter-sm { @apply px-3; min-height: var(--ph-control-sm); }
+  .filter-sm { @apply px-3; min-height: var(--ph-control-sm); font-size: var(--text-caption); }
   .filter-count { @apply rounded-pill px-1.5 py-0.5 leading-none tabular-nums; font-size: var(--text-micro); background: var(--color-sunken); color: var(--color-muted); }
   .filter[aria-pressed=true] .filter-count { background: color-mix(in srgb, var(--color-inverse) 22%, transparent); color: inherit; }
-  .search-box { @apply flex min-w-0 items-center gap-2 rounded-control-sm border-2 border-line bg-surface px-3 text-muted; height: var(--ph-control); }
+  /* The search is a field (see .field): white, its 2 px border and no shadow, as tall as a control
+     with its base. */
+  .search-box { @apply flex min-w-0 items-center gap-2 rounded-control-sm border-2 border-line bg-surface px-3 text-muted; height: calc(var(--ph-control) + var(--ph-depth)); margin-bottom: calc(var(--ph-depth) * -1); }
   .search-box:focus-within { border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
   .search-box input { @apply min-w-0 flex-1 bg-transparent font-bold text-ink outline-none; font-size: var(--text-body); }
   .search-box input::placeholder { color: var(--color-disabled); }
@@ -94,22 +96,23 @@
   .ui-symbol-lg > .icon { width: 36px; height: 36px; }
 
   /* ---- Tabs and navigation --------------------------------------------- */
-  /* Tabs and segmented controls: a sunken rail that stands like a button (control height and the
-     shared base, the cards' colour), so it lines up with the buttons beside it. The tabs inside are
-     flat: the selected one is just the white face. */
-  .ui-tabs { @apply flex gap-1 p-1; height: var(--ph-control); background: var(--color-sunken); border-radius: calc(var(--ph-radius) + 4px); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
+  /* Tabs and segmented controls: a control like the others, a control tall with the controls' radius
+     and the base. The rail is grey; the tabs fill it edge to edge (no inner margin), with the
+     controls' height, radius and text size. The inactive ones keep the rail's grey; the active one is
+     the white face with the white pieces' 1 px outline. */
+  .ui-tabs { @apply flex; height: var(--ph-control); background: var(--color-sunken); border-radius: var(--ph-radius); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
   .ui-tabs-fit { @apply inline-flex; }
   .ui-tabs-fit .ui-tab { @apply flex-none px-4; }
-  .ui-tab { @apply flex min-w-0 flex-1 items-center justify-center gap-2 px-3 font-extrabold text-muted transition-all hover:text-ink; height: calc(var(--ph-control) - 8px); font-size: var(--text-caption); border-radius: var(--ph-radius); }
-  .ui-tab[aria-selected=true], .ui-tab[aria-pressed=true] { @apply bg-surface text-ink; }
+  .ui-tab { @apply flex h-full min-w-0 flex-1 items-center justify-center gap-2 px-3 font-extrabold text-muted transition-colors hover:text-ink; font-size: var(--text-body); border-radius: var(--ph-radius); }
+  .ui-tab[aria-selected=true], .ui-tab[aria-pressed=true] { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-depth); }
   .ui-tab[aria-selected=true] .icon, .ui-tab[aria-pressed=true] .icon { color: var(--tone-icon); }
-  .ui-navbar { @apply flex items-center justify-between gap-1 bg-surface p-2 shadow-panel; border-radius: calc(var(--ph-radius) + 8px); }   /* radius + padding keeps the items concentric */
+  .ui-navbar { @apply flex items-center justify-between gap-1 border border-line bg-surface p-2; border-radius: calc(var(--ph-radius) + 8px); }   /* radius + padding keeps the items concentric; navigation is flat */
   .ui-navbar button { @apply flex min-w-12 flex-1 flex-col items-center justify-center gap-1 font-extrabold text-muted; border-radius: var(--ph-radius); min-height: calc(var(--ph-control) + 8px); font-size: var(--text-micro); }
   .ui-navbar button[aria-pressed=true], .ui-navbar button[aria-current=page] { background: var(--tone-wash); color: var(--color-ink); }
   .ui-navbar button[aria-pressed=true] .icon, .ui-navbar button[aria-current=page] .icon { color: var(--tone-icon); }
 
   /* ---- Counter ---------------------------------------------------------- */
-  .counter { @apply relative flex min-w-0 items-center gap-3 border border-line bg-surface px-3 py-2; min-height: calc(var(--ph-control) + 8px); border-radius: var(--radius-control); box-shadow: var(--shadow-panel); }
+  .counter { @apply relative flex min-w-0 items-center gap-3 border border-line bg-surface px-3 py-2; min-height: calc(var(--ph-control) + 8px); border-radius: var(--radius-control); }   /* it informs: flat. A counter that is a button gets its base where it is used (the player's bar) */
   .counter-art { @apply flex shrink-0 items-center justify-center; width: calc(var(--ph-icon-lg) + 16px); height: calc(var(--ph-icon-lg) + 16px); }
   .counter-art .icon { width: calc(var(--ph-icon-lg) + 12px); height: calc(var(--ph-icon-lg) + 12px); stroke-width: 1.3; filter: drop-shadow(0 3px 0 var(--color-shade)); }
   .counter-value { @apply font-black tabular-nums tracking-tight; font-size: var(--text-lead); }
@@ -134,7 +137,7 @@
   .progress-fill { @apply relative h-full rounded-full; background: var(--tone-fill); transition: width var(--ph-duration-slow) var(--ease-playful); }
   .progress-segments { @apply grid grid-cols-8 gap-1.5; }
   .progress-segments span { @apply h-4 rounded-[calc(var(--radius-control-sm)/2)]; background: var(--color-line); }
-  .progress-segments span.is-filled { background: var(--tone-fill); box-shadow: 0 2px 0 var(--tone-edge); }
+  .progress-segments span.is-filled { background: var(--tone-fill); }
   .progress-ring { @apply relative grid size-28 shrink-0 place-items-center; }
   .progress-ring svg { @apply absolute inset-0 size-full -rotate-90; }
   .progress-ring circle { fill: none; stroke-width: 9; }
@@ -150,9 +153,12 @@
 
   /* ---- Cards ------------------------------------------------------------ */
   .ui-card { @apply border border-line p-5; border-radius: var(--radius-panel); background: color-mix(in srgb, var(--color-canvas) 70%, transparent); }
-  .select-card { @apply relative flex w-full flex-col items-center justify-center gap-3 border-2 border-line bg-surface px-4 py-6 text-center; border-radius: var(--radius-panel); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); transition: border-color var(--ph-duration), background var(--ph-duration), transform var(--ph-duration); }
+  /* A card you choose is a key: its base, a lift on hover and a sink when pressed. Chosen, the base
+     takes the tone. */
+  .select-card { @apply relative flex w-full flex-col items-center justify-center gap-3 border-2 border-line bg-surface px-4 py-6 text-center; --card-depth: var(--ph-depth); --card-edge: var(--color-depth); border-radius: var(--radius-panel); box-shadow: 0 var(--card-depth) 0 var(--card-edge); transition: border-color var(--ph-duration), background var(--ph-duration), transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
   .select-card:hover:not(:disabled) { transform: translateY(-2px); }
-  .select-card[aria-pressed=true] { border-color: var(--tone-fill); background: var(--tone-wash); box-shadow: 0 var(--ph-depth) 0 var(--tone-edge); }
+  .select-card:active:not(:disabled) { --card-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  .select-card[aria-pressed=true] { --card-edge: var(--tone-edge); border-color: var(--tone-fill); background: var(--tone-wash); }
   .select-card:disabled { @apply bg-canvas text-muted; }
   .card-art { @apply flex items-center justify-center; width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: var(--radius-card); background: var(--tone-tint); color: var(--tone-icon); }
   .card-art .icon { @apply size-9; stroke-width: 2; }
@@ -197,19 +203,31 @@
   .field-label { @apply mb-2 block font-extrabold; font-size: var(--text-caption); }
   /* Every single-line form control (input, select, search, button) is exactly --ph-control tall:
      the height is fixed, not a minimum padded past. Only textareas grow. */
-  .field { @apply w-full rounded-control-sm border-2 border-line bg-surface px-4 py-0 font-bold text-ink; height: var(--ph-control); font-size: var(--text-body); transition: border-color var(--ph-duration); }
+  /* Form fields are flat: white, their 2 px border, no shadow. A raised control is its face
+     (--ph-control) plus the base under it, so a field is exactly that tall: beside a button, both
+     start and end on the same pixel. The negative margin keeps its layout box at --ph-control, like
+     the button's (whose base hangs outside its box), so rows centre them the same way. Only
+     textareas grow. Focused, the border takes the tone with its halo. */
+  .field { @apply w-full rounded-control-sm border-2 border-line bg-surface px-4 py-0 font-bold text-ink; height: calc(var(--ph-control) + var(--ph-depth)); margin-bottom: calc(var(--ph-depth) * -1); font-size: var(--text-body); transition: border-color var(--ph-duration); }
   .field:is(p, div, span) { @apply flex items-center; }   /* a read-only value shown as a field */
   .field::placeholder { color: var(--color-disabled); }
   .field:focus { @apply outline-none; border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
   .field[aria-invalid=true] { border-color: var(--color-danger-strong); background: var(--color-danger-wash); }
   .field:disabled { @apply bg-canvas text-muted; }
-  .field-sm { @apply px-3; height: var(--ph-control-sm); font-size: var(--text-caption); }
-  .field-lg { @apply px-5; height: var(--ph-control-lg); font-size: var(--text-lead); }
-  textarea.field { @apply py-3 leading-relaxed; height: auto; min-height: calc(var(--ph-control) * 2.5); resize: vertical; }
+  /* The browser's autofill paints its own colour over the field: keep the kit's white face. */
+  .field:-webkit-autofill, .field:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--color-ink); caret-color: var(--color-ink);
+    box-shadow: inset 0 0 0 1000px var(--color-surface);
+    transition: background-color 9999999s ease-in-out 0s;
+  }
+  .field:-webkit-autofill:focus { box-shadow: inset 0 0 0 1000px var(--color-surface), 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
+  .field-sm { @apply px-3; height: calc(var(--ph-control-sm) + var(--ph-depth)); font-size: var(--text-caption); }
+  .field-lg { @apply px-5; height: calc(var(--ph-control-lg) + var(--ph-depth)); font-size: var(--text-lead); }
+  textarea.field { @apply py-3 leading-relaxed; height: auto; margin-bottom: 0; min-height: calc(var(--ph-control) * 2.5); resize: vertical; }
   .field-error { @apply mt-1.5 font-bold; font-size: var(--text-caption); color: var(--color-danger); }
   .field-help { @apply mt-1.5 font-semibold text-muted; font-size: var(--text-micro); }
   .field-with-icon { @apply relative; }
-  .field-with-icon > .icon { @apply pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted; }
+  .field-with-icon > .icon { @apply pointer-events-none absolute left-4 -translate-y-1/2 text-muted; top: calc(50% + var(--ph-depth) / 2); }   /* the field runs a base's height past its box */
   .field-with-icon .field { @apply pl-12; }
 
   /* ---- Preferences ------------------------------------------------------ */
@@ -231,7 +249,7 @@
   .ui-feedback { @apply flex min-w-0 items-center gap-5; transition: opacity var(--ph-duration) ease; }
   .ui-feedback[data-visible=false] { opacity: 0; visibility: hidden; }
   .ui-feedback-art { @apply relative shrink-0; }
-  .ui-feedback-symbol { @apply relative flex shrink-0 items-center justify-center; width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); box-shadow: 0 var(--ph-depth) 0 color-mix(in srgb, var(--tone-tint-edge) 60%, var(--tone-mid)); }
+  .ui-feedback-symbol { @apply relative flex shrink-0 items-center justify-center; width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); }
   .ui-feedback-symbol > .icon { @apply size-9; }
   .ui-feedback-symbol > img { @apply size-14 object-contain; }
   .ui-feedback-check { @apply absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full; background: var(--tone-icon); color: var(--color-inverse); border: 3px solid var(--activity-surface, var(--tone-tint)); }
@@ -258,7 +276,7 @@
   .ui-link { @apply inline-flex items-center gap-1 font-extrabold underline-offset-4 hover:underline; color: var(--tone-strong); }
 
   /* ---- Listbox (custom select menu) ------------------------------------ */
-  .ui-listbox { @apply absolute z-40 mt-1.5 max-h-72 overflow-y-auto border border-line bg-surface p-1.5; border-radius: var(--radius-control); box-shadow: var(--shadow-float); }
+  .ui-listbox { @apply absolute z-40 mt-1.5 max-h-72 overflow-y-auto border border-line bg-surface p-1.5; max-width: calc(100vw - 16px); border-radius: var(--radius-control); box-shadow: var(--shadow-float); }
   /* Inside a positioned popover (Reka, a portal): the popover places it, so it stays in flow. */
   .ui-listbox-floating { @apply relative z-50 mt-0; }
   .ui-option { @apply flex w-full items-center justify-between gap-2 px-3 text-left font-bold text-ink transition-colors; min-height: var(--ph-control-sm); border-radius: var(--radius-control-sm); font-size: var(--text-body); }
@@ -278,7 +296,7 @@
   .field-trigger[aria-expanded=true] > .icon { @apply rotate-180; }
 
   /* ---- Table ------------------------------------------------------------ */
-  .ui-table-wrap { @apply overflow-hidden border border-line bg-surface; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); }
+  .ui-table-wrap { @apply overflow-hidden border border-line bg-surface; border-radius: var(--radius-panel); }   /* a surface: flat */
   .ui-table { @apply w-full table-fixed border-collapse text-left; font-size: var(--text-body); }
   .ui-table th { @apply px-5 py-3 font-black uppercase tracking-wider text-muted; font-size: var(--text-micro); border-bottom: 1px solid var(--color-line); }
   .ui-table td { @apply px-5 py-3.5 font-semibold text-ink; border-bottom: 1px solid var(--color-line); }
@@ -291,7 +309,7 @@
   /* ---- Pagination ------------------------------------------------------- */
   .ui-pagination { @apply flex items-center gap-1; }
   .ui-page { @apply flex items-center justify-center px-2 font-extrabold tabular-nums text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-35 disabled:hover:bg-transparent; min-width: var(--ph-control-sm); height: var(--ph-control-sm); font-size: var(--text-caption); border-radius: var(--ph-radius); }
-  .ui-page[aria-current=page] { background: var(--color-night-850); color: var(--color-inverse); box-shadow: 0 var(--ph-depth) 0 var(--color-night-950); }
+  .ui-page[aria-current=page] { background: var(--color-night-850); color: var(--color-inverse); }   /* the current item of a set is marked by colour, not by a base */
 
   /* ---- Page header ------------------------------------------------------ */
   .ui-page-header { @apply mb-7 flex flex-wrap items-end justify-between gap-4; }
@@ -307,9 +325,13 @@
   .ui-auth-box { @apply w-full; max-width: 420px; }
 
   /* ---- Panel (a card that holds content) ------------------------------- */
-  .ui-panel { @apply min-w-0 border border-line bg-surface; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); }
-  .ui-panel-interactive { @apply cursor-pointer transition-transform; }
+  /* A panel holds content: flat, with its border. Clickable as a whole, it is a key: the base under
+     it, a lift on hover and a sink when pressed, like the buttons. */
+  .ui-panel { @apply min-w-0 border border-line bg-surface; border-radius: var(--radius-panel); }
+  .ui-panel-interactive { @apply cursor-pointer; box-shadow: var(--shadow-raised); transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
   .ui-panel-interactive:hover { transform: translateY(-2px); }
+  /* Only the key you press sinks: a button inside the card sinks alone. */
+  .ui-panel-interactive:active:not(:has(:is(button, a, [role=button]):active)) { transform: translateY(var(--ph-press-offset)); box-shadow: 0 var(--ph-depth-pressed) 0 var(--color-depth); }
   .ui-panel-header { @apply flex items-center justify-between gap-4 px-6 py-4; border-bottom: 1px solid var(--color-line); }
   .ui-panel-body { @apply p-6; }
   .ui-panel-footer { @apply px-6 py-4; border-top: 1px solid var(--color-line); background: var(--color-canvas); border-radius: 0 0 var(--radius-panel) var(--radius-panel); }
@@ -326,13 +348,14 @@
   .ui-group-label { @apply flex items-center whitespace-nowrap px-3 font-extrabold tabular-nums text-ink; font-size: var(--text-body); }
 
   /* ---- Tray (a column that holds cards: planner days, boards) ---------- */
-  .ui-tray { @apply flex flex-col p-2.5; gap: calc(var(--ph-gap) * .75); background: var(--color-sunken); border-radius: var(--radius-panel); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
+  /* A tray holds cards: a sunken hollow, flat (no base); the cards in it are the keys. */
+  .ui-tray { @apply flex flex-col p-2.5; gap: calc(var(--ph-gap) * .75); background: var(--color-sunken); border-radius: var(--radius-panel); }
   /* A toned tray (today) stays in the trays' grey family with a warm hint: an accent, not a highlight. */
   .ui-tray[data-tone] {
     background: color-mix(in srgb, var(--tone-wash) 60%, var(--color-sunken));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-sunken)), 0 var(--ph-depth) 0 color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-depth-strong));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-sunken));
   }
-  .ui-tray.is-target { box-shadow: inset 0 0 0 2px var(--color-line-strong), 0 var(--ph-depth) 0 var(--color-depth); }
+  .ui-tray.is-target { box-shadow: inset 0 0 0 2px var(--color-line-strong); }
   /* Slot: an empty place to add something. Dashed, grey, one step darker than its tray. */
   .ui-slot { @apply flex w-full items-center justify-center gap-1.5 border-2 border-dashed px-3 font-extrabold text-muted transition-colors; min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--radius-control-sm); border-color: var(--color-night-300); }
   .ui-slot:hover { border-color: var(--color-night-500); background: var(--color-surface); color: var(--color-ink); }
@@ -345,7 +368,7 @@
   /* ---- Calendar day and time ------------------------------------------- */
   /* The day number. Today wears the sun, the same as the «Hoy» badge. */
   .ui-day { @apply inline-flex shrink-0 items-center justify-center font-black tabular-nums; min-width: var(--ph-control-sm); height: var(--ph-control-sm); padding-inline: 4px; font-size: var(--text-body); border-radius: var(--radius-control-sm); color: var(--color-ink); }
-  .ui-day[aria-current=date] { background: var(--color-sun-400); color: var(--color-sun-900); box-shadow: 0 2px 0 var(--color-sun-600); }
+  .ui-day[aria-current=date] { background: var(--color-sun-400); color: var(--color-sun-900); }   /* a mark, not a key: flat */
   .ui-day[aria-pressed=true] { box-shadow: inset 0 0 0 2px var(--color-sky-400); }   /* the chosen day (date picker): selection is sky */
   .ui-day-sm { min-width: 24px; height: 24px; font-size: var(--text-caption); border-radius: var(--radius-chip); }
   .ui-day.is-outside { color: var(--color-disabled); }
@@ -383,7 +406,9 @@
   .ui-appbar .ui-button.is-pressed { --button-depth: 0px; transform: none; }
   .ui-appbar .ui-button:hover:not(:disabled) { transform: none; }
   .ui-appbar .ui-button[data-tone=neutral]::before { inset: 1px; }
-  .ui-appbar :is(.filter, .ui-group, .ui-tabs) { box-shadow: inset 0 0 0 1px var(--color-depth); }
+  .ui-appbar :is(.filter, .ui-group) { box-shadow: inset 0 0 0 1px var(--color-depth); }
+  .ui-appbar .ui-tabs { box-shadow: none; }
+  .ui-appbar :is(.field, .search-box) { height: var(--ph-control); margin-bottom: 0; }
 
   /* ---- Toasts stack ----------------------------------------------------- */
   .toast-stack { @apply pointer-events-none fixed left-1/2 top-4 z-[100] flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2; }

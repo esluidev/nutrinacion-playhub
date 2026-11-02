@@ -9,14 +9,4 @@
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: var(--radius-pill); }
 }
 
-@layer base {
-  /* El autocompletado del navegador pinta los campos por encima del fondo del kit. */
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
-    -webkit-text-fill-color: var(--color-ink);
-    caret-color: var(--color-ink);
-    transition: background-color 9999999s ease-in-out 0s;
-  }
-}
+/* El autocompletado del navegador sobre los campos lo resuelve el kit (`.field`), igual en las tres apps. */

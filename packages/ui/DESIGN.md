@@ -13,36 +13,41 @@ Los colores, radios, relieve, tamaños, textos y movimiento viven en `css/tokens
 ## Lenguaje visual
 
 - Superficies claras sobre un fondo frío casi blanco.
-- Controles con una cara frontal y una base inferior que expresa pulsación (3 px en compacta, 4 en táctil). Son rectángulos redondeados de 12 en todas las apps y densidades (cuadrados redondeados si solo llevan icono).
+- Lo que se pulsa tiene una cara frontal y una base inferior que expresa pulsación (3 px en compacta, 4 en táctil). Los campos y lo que contiene son planos (ver «Profundidad»). Los controles son rectángulos redondeados de 12 en todas las apps y densidades (cuadrados redondeados si solo llevan icono).
 - Los botones usan `appearance: none` para evitar el bisel nativo del navegador. Los de color tienen borde de 0 px y no llevan brillo interior blanco. En la variante blanca, una silueta gris continua sostiene la cara blanca, separada 1 px arriba y a los lados (el mismo trazo de los contadores). La cara llega hasta abajo y deja que la sombra compartida dibuje una sola base (`--ph-depth`). Así se evita tanto apilar borde y relieve como cortar el contorno en las esquinas. Las dos capas comparten la misma forma en todos los tamaños.
 - Sin degradados ni brillos: botones, medidores (barra, segmentos y aro de progreso), cintas y paneles usan color plano. Los botones conservan su base de 4 px.
 - Cada color dice algo (ver «Roles de color»): noche para estructura y texto; los tonos vivos para significados concretos.
 - Texto oscuro sobre colores vivos; blanco sobre azul noche.
 - Iconos funcionales de trazo redondo en una caja de 24 × 24. Símbolos de contadores con color y volumen ligero; estrella y corazón con siluetas curvas y puntas redondeadas.
 - Nunito variable: 600 para texto, 800 para etiquetas y 900 para títulos y acciones.
-- Forma, la misma en Admin, Player y Educators: botones, campos, desplegables, filtros, pestañas y navegación, 12; contadores, avisos y horas, 14; tarjetas, paneles, tablas y bandejas, 16; ventanas y piezas del tablero, 20. Solo es redondo lo que lo es por naturaleza: puntos, interruptores, barras de progreso y burbujas de contador. Todo control de una línea mide exactamente `--ph-control` (40 en compacta, 48 en táctil): campos, desplegables, buscador y botones se alinean.
+- Forma, la misma en Admin, Player y Educators: botones, campos, desplegables, filtros, pestañas y navegación, 12; contadores, avisos y horas, 14; tarjetas, paneles, tablas y bandejas, 16; ventanas y piezas del tablero, 20. Solo es redondo lo que lo es por naturaleza: puntos, interruptores, barras de progreso y burbujas de contador. Todo control de una línea ocupa la misma altura, `--ph-control` más la base (43 en compacta, 52 en táctil): el botón la reparte en cara y base, y el campo la ocupa entera con su borde. Así campos, desplegables, buscador y botones se alinean al píxel, arriba y abajo.
 - Separaciones en múltiplos de 4 px. Altura principal de botón: 40 px en densidad compacta y 48 en táctil.
 
 Los colores son una adaptación visual del logo suministrado, no una extracción certificada ni una guía de marca ya aprobada. Cielo y uva son acentos secundarios. Los tonos de éxito, aviso y error tienen funciones semánticas separadas del color de marca.
 
 ## Profundidad
 
-Un solo lenguaje de relieve en todas las apps. La base mide `--ph-depth`: 3 px en compacta y 4 en táctil.
+Un solo lenguaje de relieve en todas las apps, decidido por el papel de la pieza y aplicado en el kit (las apps no lo cambian). La base inferior mide `--ph-depth`: 3 px en compacta y 4 en táctil.
 
 | Capa | Qué es | Cómo se ve |
 | --- | --- | --- |
-| Elevado | Lo que se pulsa: botón, filtro, grupo de controles (`ui-group`), página actual, pestaña seleccionada, tarjeta seleccionable | Cara plana y base del color de su borde (`--tone-edge`; gris `line-strong` en los neutros) |
-| Superficie | Lo que contiene: panel, tarjeta, tabla, contador, bandeja (`ui-tray`) | Borde `line` y la misma base (`--shadow-panel`; las bandejas, `--shadow-raised`) |
-| Carril | Lo que aloja una elección: raíl de pestañas, pista de progreso | Fondo `sunken`, sin base; lo elegido sube encima. El raíl de pestañas ocupa lo mismo que un botón con su base, para alinearse con él |
-| Campo | Lo que recibe texto | Plano, borde de 2 px; el foco es un halo del tono |
-| Flotante | Menú, aviso, ventana | Sombra difusa (`--shadow-float`, `--shadow-dialog`) |
+| Control | Botón (cualquier tono), filtro, grupo de controles (`ui-group`) y pestañas (`ui-tabs`). También las tarjetas que se pulsan o se eligen (`ui-panel-interactive`, `select-card`) y las piezas de la barra del reproductor | Cara de `--ph-control` y base debajo (`--color-depth` en los blancos, con contorno de 1 px; `--tone-edge` en los de color). Las pestañas son un carril gris con base; la activa es la cara blanca con su contorno |
+| Campo | Campo, área de texto, buscador y desplegable, en un formulario o en una barra | Plano: blanco, borde de 2 px `line`, sin sombra. Mide `--ph-control` más la base: ocupa con su borde la misma altura que un botón con su base. Al enfocarlo, el borde toma el tono con su halo |
+| Superficie | Lo que contiene o informa: panel, tabla, tarjeta informativa, cifra, bandeja (`ui-tray`) | Plana: cara blanca (gris la bandeja) y borde `line` |
+| Estructura | La cabecera (`ui-appbar`) y la barra lateral | Plana. Dentro, los controles van sin base y no se mueven al pulsar; sus campos miden `--ph-control` |
+| Marca | Lo actual dentro de un conjunto: pestaña activa, página actual, opción elegida, lugar de la navegación, día de hoy | Se marca con color, sin base propia |
+| Flotante | Menú, aviso, ventana | Sombra difusa (`--shadow-float`, `--shadow-dialog`), sin base |
 
 Reglas:
 
-- En una barra, todo mide `--ph-control` y comparte la base, para que caras y bases queden alineadas: arriba y abajo, al píxel (comprobado en el planner de Admin y la barra de Educators). Una sola base por pieza: nada de sombras extra debajo. Filtros, grupos, pestañas en raíl, campos y botones se pueden poner juntos.
-- Nada elevado sin base y nada plano con base. Si un elemento no es ni control ni superficie, va plano: etiquetas, avisos y textos.
-- La cabecera principal de cada app (`ui-appbar`) es una banda plana con su borde inferior: dentro, los controles van planos (solo contorno, sin base). Fuera de ella, todo lo elevado lleva su base.
-- Las sombras de Tailwind (`shadow-sm`, `shadow-md`…), los anillos (`ring-*`) y los radios sueltos no forman parte del lenguaje.
+- Todo control de una línea ocupa la misma altura. Lo que se pulsa la reparte en cara y base. El campo, plano, la ocupa entera con su borde. En una fila, botones, filtros, pestañas, campos, desplegables y buscador empiezan y terminan en el mismo píxel, se alineen arriba, al centro o abajo. El campo conserva una caja de `--ph-control` con un margen negativo, igual que el botón, cuya base cuelga fuera de su caja.
+- Un campo no lleva sombra: con base parecería una tarjeta.
+- Lo que contiene va plano, aunque sea blanco. Una tarjeta solo lleva base si se pulsa o se elige entera.
+- La excepción es el hueco discontinuo para agregar (`ui-slot`): es un espacio vacío, no una pieza.
+- Una tecla dentro de otra baja sola: al pulsar «Editar» en una tarjeta clicable, la tarjeta no se hunde.
+- Una sola base por pieza: nada de sombras extra debajo.
+- El tablero de juego sigue la misma idea, con sus medidas y colores de `PLAYER-DESIGN.md`. Lo que se arrastra o se voltea (las fichas de Colocar, las cartas de Destapar) lleva una base de 6 en su color. Donde caen las fichas (las ranuras) y la tapa de una carta son huecos grises, planos. La cinta (`ribbon`) es una ilustración.
+- Las sombras de Tailwind (`shadow-sm`, `shadow-md`…), los anillos (`ring-*`) y los radios sueltos no forman parte del lenguaje. `scripts/check-ui.mjs` los rechaza en las vistas.
 
 ## Roles de color
 
@@ -80,19 +85,19 @@ El color comunica. Una vista se entiende por sus colores sin leer: qué es la ac
 | --- | --- |
 | Botón | Texto opcional solo si hay nombre accesible; icono opcional; cualquier tono (`lime` principal, `sun` acento, `neutral` secundario, `night` contraste, `coral`, `sky`, `grape`, `rose`); tamaños pequeño, normal y grande. |
 | Botón de icono | Caja circular, etiqueta accesible y estado de pulsación. |
-| Tarjeta | Informativa o seleccionable; la selección usa borde y marca además de color. |
+| Tarjeta | Informativa (plana), clicable entera (`ui-panel-interactive`, tecla) o seleccionable (`select-card`, tecla); la selección usa borde y marca además de color. |
 | Título/cinta | Título neutro como base; cinta decorativa reservada para momentos especiales. |
 | Contador | Símbolo + etiqueta + valor; máximo y acciones opcionales; cifras tabulares. |
 | Progreso | Lineal continuo, segmentado y circular con valor accesible; carga indeterminada diferenciada. |
-| Navegación | Pestañas con panel asociado y teclado, menú de selección y paginación con límites. |
+| Navegación | Pestañas con panel asociado y teclado, menú de selección y paginación con límites. El menú de un desplegable (`UiSelect`) se abre donde cabe: hacia la izquierda si a la derecha se sale de la ventana y hacia arriba si abajo no cabe. Nunca asoma fuera ni abre el desplazamiento de la página. Las pestañas (`ui-tabs`) son un carril gris con base, del alto y el radio de un control. No tienen margen interior: cada pestaña llena el carril con la altura, el radio y la letra de los controles. Las inactivas conservan el gris del carril; la activa es la cara blanca con el contorno de 1 px de las piezas blancas. |
 | Ventana | `dialog` nativo, título, contenido y acciones. El cierre devuelve el foco al disparador. |
 | Campo | Etiqueta persistente, ayuda asociada, validación y mensaje de error. |
 | Preferencias | Selector, checkbox, radio, switch y rango; etiquetas visibles o accesibles. |
 | Aviso | Color + icono + texto; `data-tone` success, info, warning o danger. |
 | Símbolo | `ui-symbol`: cuadro con tinte y pictograma, en cualquier tono; tamaños sm, normal y lg. |
 | Etiqueta y punto | `badge` y `ui-dot` en cualquier tono. |
-| Grupo | `ui-group`: controles unidos que actúan como uno (paso de fechas). Elevado, alto de control. |
-| Bandeja y hueco | `ui-tray`: columna que aloja tarjetas (días del planner); `data-tone` la tiñe. `ui-slot`: hueco discontinuo para agregar, gris un paso más oscuro que la bandeja. |
+| Grupo | `ui-group`: controles unidos que actúan como uno (paso de fechas). Una tecla, alto de control. |
+| Bandeja y hueco | `ui-tray`: columna plana que aloja tarjetas (días del planner); `data-tone` la tiñe. `ui-slot`: hueco discontinuo para agregar, gris un paso más oscuro que la bandeja. |
 | Día y hora | `ui-day` (hoy con `aria-current="date"`, en sol) y `ui-time` (hora de una sesión con el tono de su área o estado). |
 | Navegación | `ui-nav-item` para barras laterales y pestañas superiores; el actual con `aria-current="page"`. |
 | Menú de la cuenta | `UiUserMenu`: el mismo en Admin, Player y Educators (botón de contorno con avatar, nombre y un dato; identidad, opciones de la app y «Cerrar sesión» en coral). |

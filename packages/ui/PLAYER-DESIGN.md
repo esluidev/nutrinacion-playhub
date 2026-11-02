@@ -52,7 +52,7 @@ El modo se fija al abrir con `?mode=` y queda en `data-mode` del marco; cada pie
 
 ## La consola
 
-Una sola forma, la del resto del producto: rectángulos redondeados de 12 para los botones (cuadrados redondeados los de icono), las piezas de estado, el bloque de escena y el riel. Todo va en relieve con su base de 4; los botones neutros y las piezas de estado son blancos con el contorno de 1 px del kit. **Activo** (un panel abierto, el tiempo en pausa) no hunde la pieza, porque una pieza sin su base se ve deformada: conserva su base y se tiñe de cielo (cara `sky-50`, contorno y base `sky-400`), el lenguaje de selección del kit. Solo la pulsación la hunde.
+Una sola forma, la del resto del producto: rectángulos redondeados de 12 para los botones (cuadrados redondeados los de icono), las piezas de estado, el bloque de escena y el riel. Todo va en relieve con su base de 4; los botones neutros y las piezas de estado son blancos con el contorno de 1 px del kit. La escena y el participante solo informan, pero van en fila con teclas blancas: sin base se leen como una tecla rota («Profundidad» en `DESIGN.md`). **Activo** (un panel abierto, el tiempo en pausa) no hunde la pieza, porque una pieza sin su base se ve deformada: conserva su base y se tiñe de cielo (cara `sky-50`, contorno y base `sky-400`), el lenguaje de selección del kit. Solo la pulsación la hunde.
 
 ### Barra
 

@@ -3,6 +3,7 @@
     <label v-if="label" :id="`${uid}-label`" class="field-label">{{ label }}</label>
     <button
       :id="`${uid}-trigger`"
+      ref="trigger"
       type="button"
       :disabled="disabled"
       :class="[
@@ -29,6 +30,7 @@
       tabindex="-1"
       :aria-labelledby="`${uid}-trigger`"
       :class="['ui-listbox', variant === 'toolbar' ? 'left-0 min-w-52' : 'w-full']"
+      :style="posicion"
       @keydown="onListKey"
     >
       <li
@@ -74,14 +76,48 @@ const uid = useId()
 const open = ref(false)
 const active = ref(-1)
 const root = ref<HTMLElement | null>(null)
+const trigger = ref<HTMLElement | null>(null)
 const list = ref<HTMLElement | null>(null)
+const posicion = ref<Record<string, string>>({})
 
 const selected = computed(() => props.options.find(o => o.value === props.modelValue) ?? null)
 
+// El menú se abre donde cabe en la ventana: hacia la izquierda si a la derecha se sale (el de
+// barra es más ancho que su botón) y hacia arriba si abajo no cabe y arriba hay más sitio. Se
+// mide antes de pintarse, así nunca asoma fuera ni abre el desplazamiento de la página.
+const MARGEN = 8
+const SEPARACION = 6
+function colocar() {
+  const menu = list.value, boton = trigger.value, caja = root.value
+  if (!menu || !boton || !caja) return
+  const b = boton.getBoundingClientRect()
+  const anchoVentana = document.documentElement.clientWidth
+  const estilo: Record<string, string> = {}
+  if (b.left + menu.offsetWidth > anchoVentana - MARGEN) Object.assign(estilo, { left: 'auto', right: '0' })
+  const abajo = window.innerHeight - b.bottom - SEPARACION - MARGEN
+  const arriba = b.top - SEPARACION - MARGEN
+  if (menu.offsetHeight > abajo && arriba > abajo) {
+    Object.assign(estilo, { top: 'auto', bottom: `${caja.offsetHeight - boton.offsetTop + SEPARACION}px`, marginTop: '0', maxHeight: `${arriba}px` })
+  }
+  else if (menu.offsetHeight > abajo) estilo.maxHeight = `${Math.max(abajo, 120)}px`
+  posicion.value = estilo
+}
+
 function openList() {
+  posicion.value = {}
   open.value = true
   active.value = Math.max(0, props.options.findIndex(o => o.value === props.modelValue))
-  nextTick(() => list.value?.focus())
+  nextTick(() => {
+    colocar()
+    list.value?.focus({ preventScroll: true })
+  })
+}
+
+// Si cambia la ventana con el menú abierto (girar el teléfono, la barra del navegador), se vuelve a colocar.
+function recolocar() {
+  if (!open.value) return
+  posicion.value = {}
+  nextTick(colocar)
 }
 
 function toggle() {
@@ -119,6 +155,12 @@ function onClickOutside(e: MouseEvent) {
   if (open.value && root.value && !root.value.contains(e.target as Node)) open.value = false
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside))
-onUnmounted(() => document.removeEventListener('click', onClickOutside))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('resize', recolocar)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('resize', recolocar)
+})
 </script>
