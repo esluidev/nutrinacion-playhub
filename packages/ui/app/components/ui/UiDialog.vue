@@ -75,7 +75,13 @@ function onClose() {
   if (props.open) emit('update:open', false)
 }
 
+// El velo es el propio <dialog>: un clic en su margen interior también llega con él de destino,
+// así que solo cierra si cae fuera de la caja de la ventana.
 function onBackdrop(e: MouseEvent) {
-  if (e.target === el.value) close()
+  const d = el.value
+  if (!d || e.target !== d) return
+  const r = d.getBoundingClientRect()
+  const dentro = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+  if (!dentro) close()
 }
 </script>

@@ -19,8 +19,14 @@
         </div>
         <UiInput v-model="form.telefono" :label="t('educators.fPhone')" :placeholder="t('educators.fPhonePh')" optional />
         <UiInput v-model="form.puesto" :label="t('educators.fRole')" :placeholder="t('educators.fRolePh')" />
-        <!-- UiSelect no tiene `optional`: la etiqueta replica la de UiInput -->
-        <div class="sm:col-span-2">
+        <!-- Desde un grupo, el grupo es fijo: se muestra y se guarda siempre. Si no, se elige
+             (UiSelect no tiene `optional`: la etiqueta replica la de UiInput). -->
+        <div v-if="grupoDeOrigen" class="sm:col-span-2">
+          <p class="field-label">{{ t('educators.fGroup') }}</p>
+          <p class="field">{{ grupoFijo?.nombre ?? '…' }}</p>
+          <p class="field-help">{{ t('educators.fGroupFixed') }}</p>
+        </div>
+        <div v-else class="sm:col-span-2">
           <label class="field-label">{{ t('educators.fGroup') }} <span class="font-semibold text-muted">({{ t('common.optional') }})</span></label>
           <UiSelect v-model="form.grupo" :options="grupoOptions" :placeholder="t('educators.noGroup')" />
         </div>
@@ -30,7 +36,7 @@
     <UiAlert v-if="error" tone="danger" class="mt-4">{{ error }}</UiAlert>
 
     <div class="mt-5 flex items-center justify-end gap-3">
-      <UiButton variant="outline" @click="navigateTo(grupoDeOrigen ? `/organizacion/educators/grupos/${grupoDeOrigen}` : '/organizacion/educators')">{{ t('common.cancel') }}</UiButton>
+      <UiButton variant="outline" @click="navigateTo(volverA)">{{ t('common.cancel') }}</UiButton>
       <UiButton type="button" :loading="saving" @click="submit">{{ t('educators.add') }}</UiButton>
     </div>
   </div>
@@ -43,8 +49,12 @@ const { t } = useT()
 const { toast } = useToast()
 const { groups, createEducador } = useEducators()
 const { orgActiva } = useContexto()
-// Desde un grupo (`?grupo=<id>`): el educador entra en él y se vuelve al grupo.
-const grupoDeOrigen = Number(useRoute().query.grupo) || null
+// Desde un grupo (`?grupo=<id>`): el educador entra en él y se vuelve al grupo. Se lee de la ruta
+// en cada momento (la página puede reutilizarse si solo cambia la consulta).
+const route = useRoute()
+const grupoDeOrigen = computed(() => Number(route.query.grupo) || null)
+const grupoFijo = computed(() => groups.value.find(g => g.id === grupoDeOrigen.value) ?? null)
+const volverA = computed(() => grupoDeOrigen.value ? `/organizacion/educators/grupos/${grupoDeOrigen.value}` : '/organizacion/educators')
 
 const org = computed(() => orgActiva.value?.nombre ?? t('common.myOrg'))
 
@@ -53,7 +63,7 @@ const form = reactive({
   email: '',
   telefono: '',
   puesto: '',
-  grupo: grupoDeOrigen as number | null,
+  grupo: null as number | null,
 })
 
 const saving = ref(false)
@@ -85,7 +95,7 @@ async function submit() {
     correo: form.email,
     telefono: form.telefono,
     profesion: form.puesto,
-    grupoId: form.grupo,
+    grupoId: grupoDeOrigen.value ?? form.grupo,
   })
   saving.value = false
 
@@ -94,6 +104,6 @@ async function submit() {
     return
   }
   toast.success(reactivado ? t('educators.reactivated') : t('educators.added'))
-  navigateTo(grupoDeOrigen ? `/organizacion/educators/grupos/${grupoDeOrigen}` : '/organizacion/educators')
+  navigateTo(volverA.value)
 }
 </script>

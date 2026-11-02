@@ -290,11 +290,17 @@ export function useEducators() {
     return { error: null }
   }
 
-  async function addGroupMember(grupoId: number, educadorId: number) {
-    if (demo) return { error: null }
+  // Varios educadores de una vez (el diálogo «Agregar educadores» del grupo). Los que ya estaban
+  // no se duplican.
+  async function addGroupMembers(grupoId: number, educadorIds: number[]) {
+    if (demo || !educadorIds.length) return { error: null }
     if (!orgActiva.value) return { error: t('ctx.noOrgActive') }
+    const organizacionId = orgActiva.value.id
     const { error } = await useSupabaseClient().from('educador_grupo_miembros')
-      .insert({ educador_grupo_id: grupoId, educador_id: educadorId, organizacion_id: orgActiva.value.id })
+      .upsert(
+        educadorIds.map(educadorId => ({ educador_grupo_id: grupoId, educador_id: educadorId, organizacion_id: organizacionId })),
+        { onConflict: 'educador_grupo_id,educador_id', ignoreDuplicates: true },
+      )
     if (error) return { error: error.message }
     await refresh()
     return { error: null }
@@ -395,7 +401,7 @@ export function useEducators() {
     createGrupo,
     updateGrupo,
     deleteGrupo,
-    addGroupMember,
+    addGroupMembers,
     removeGroupMember,
     generarCodigo,
     cambiarActivo,
