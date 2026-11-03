@@ -2,19 +2,16 @@
   <div>
     <UiPageHeader :title="t('storyboards.title')" :description="t('storyboards.desc')" />
 
-    <!-- Toolbar -->
+    <!-- Toolbar: los filtros, en desplegables, a la izquierda; el buscador, a la derecha. Siempre
+         están, haya o no storyboards: dicen qué se puede filtrar. -->
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <UiChips v-model="activeCategory" :items="categoryChips">
-        <!-- Cada tipo es un área educativa: su punto lleva el tono del área -->
-        <template #icon="{ item }">
-          <span v-if="areaDe(item.value)" class="size-2 shrink-0 rounded-full bg-(--tone-fill)" :data-area="areaDe(item.value)" />
-        </template>
-      </UiChips>
-      <!-- Ocupa lo que queda de la línea, a la derecha; si no le quedan 320 px, baja a la suya. El
-           buscador se encoge (hasta 320) y el filtro conserva su ancho: nunca se sale de la pantalla. -->
-      <div class="flex min-w-0 grow basis-80 items-center justify-end gap-3">
-        <UiSearchInput v-model="searchQuery" :placeholder="t('storyboards.searchPh')" max-width="xs" class="min-w-0 flex-1" />
+      <div class="flex flex-wrap items-center gap-3">
+        <UiSelect v-model="activeCategory" variant="toolbar" :prefix="t('storyboards.category')" :options="categoryOptions" />
         <UiSelect v-model="activePertenencia" variant="toolbar" :prefix="t('storyboards.ownership')" :options="pertenenciaOptions" />
+      </div>
+      <!-- Ocupa lo que queda de la línea, a la derecha; si no le quedan 320 px, baja a la suya. -->
+      <div class="flex min-w-0 grow basis-80 justify-end">
+        <UiSearchInput v-model="searchQuery" :placeholder="t('storyboards.searchPh')" max-width="xs" class="min-w-0 flex-1" />
       </div>
     </div>
 
@@ -73,11 +70,11 @@
       </article>
     </div>
 
-    <!-- Empty state -->
+    <!-- Vacío: sin storyboards disponibles para la organización, o sin ninguno que coincida con los filtros -->
     <div v-else class="ui-panel">
       <UiEmptyState
-        icon="search"
-        :title="t('common.noResults')"
+        :icon="storyboards.length ? 'search' : 'book'"
+        :title="storyboards.length ? t('common.noResults') : t('storyboards.noneTitle')"
         :text="storyboards.length ? t('storyboards.noResultsText') : t('storyboards.noneAvailable')"
       >
         <UiButton v-if="storyboards.length" variant="outline" size="sm" @click="resetFilters">
@@ -119,9 +116,13 @@ const activePertenencia = ref('all')
 const currentPage = ref(1)
 const perPage = 12
 
-const categoryChips = computed(() => [
+// Las áreas educativas de la base (categoria_storyboard), como la «Categoría» de Platform: no
+// dependen de lo que haya en el catálogo.
+const CATEGORIAS = ['ALIMENTACION', 'ACTIVIDAD_FISICA', 'CUIDADO_PERSONAL', 'SALUD_EMOCIONAL'] as const
+
+const categoryOptions = computed(() => [
   { value: 'all', label: t('common.all') },
-  ...dynamicCategories.value.map(cat => ({ value: cat, label: cat })),
+  ...CATEGORIAS.map(cat => ({ value: cat, label: t(`catalogo.categoria.${cat}`) })),
 ])
 
 // El catálogo distingue público (de la plataforma) y personalizado (de tu organización).
@@ -135,22 +136,11 @@ const pertenenciaOptions = computed(() => [
 // informativo, hecho para tu organización (cielo).
 const TONO_PERTENENCIA = { publico: 'neutral', personalizado: 'sky' } as const
 
-// Área de cada tipo (nombre traducido → área), para el punto de color de los filtros.
-const areaDeCategoria = computed(() => new Map(storyboards.value.map(sb => [sb.category, sb.area])))
-function areaDe(categoria: string) {
-  return areaDeCategoria.value.get(categoria)
-}
-
-const dynamicCategories = computed(() => {
-  const cats = new Set(storyboards.value.map(sb => sb.category))
-  return [...cats].sort()
-})
-
 const filteredStoryboards = computed(() => {
   let result = storyboards.value
 
   if (activeCategory.value !== 'all') {
-    result = result.filter(sb => sb.category === activeCategory.value)
+    result = result.filter(sb => sb.area === uiAreaOf(activeCategory.value))
   }
 
   if (activePertenencia.value !== 'all') {
