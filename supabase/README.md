@@ -22,12 +22,13 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0012_baja_de_educadores.sql` | La baja de un educador es lógica y de los administradores: sin borrado por la API; la baja lo saca de sus grupos |
 | `0013_enlace_de_acceso_educadores.sql` | El acceso del educador a Educators es un enlace, como las invitaciones (sin código de activación) |
 | `0014_eliminar_educadores_sin_historial.sql` | Un administrador elimina de verdad al educador que no ha dado ningún taller; con historial, se sigue dando de baja |
+| `0015_guia_con_orden_y_titulo.sql` | La guía que lee el educador trae el orden y el título de cada escena, para mostrarla en la ficha del taller |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0014
+supabase db push --dry-run   # debe listar 0001 a 0015
 supabase db push
 ```
 

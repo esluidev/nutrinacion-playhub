@@ -5,7 +5,7 @@
 --   lucia@acc.test con su enlace de acceso pendiente, sin PIN todavía (Acceso Centro)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(63);
+select plan(65);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -156,6 +156,10 @@ select is((select count(*)::int from jsonb_object_keys(educador_guia(current_set
   'la guía trae sus 4 escenas');
 select is(educador_guia(current_setting('t.token'), current_setting('t.hoy')::bigint)->'bienvenida'->>'verb', 'Situar',
   'con las claves del contrato del runner');
+select is(educador_guia(current_setting('t.token'), current_setting('t.hoy')::bigint)->'descubrimiento'->>'order', '3',
+  'y el orden de cada escena, para mostrarla en la ficha (0015)');
+select is(educador_guia(current_setting('t.token'), current_setting('t.hoy')::bigint)->'origen'->>'title', 'origen',
+  'y su título en el idioma del taller');
 select throws_ok(
   format('select educador_guia(%L, %s)', current_setting('t.token'), current_setting('t.taller_pedro')),
   '42501', null, 'no puede leer la guía de un workshop que no es suyo');

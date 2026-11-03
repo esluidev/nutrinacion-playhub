@@ -54,7 +54,7 @@ Los seis pasos funcionan con Supabase local.
 - **App del hogar**: fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)); cuando toque, se diseña sobre el modelo de organización.
 
 - **Sesión del educador**: en marcha (decisiones [005](decisions/005-base-nueva-y-acceso-educador.md) y [007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)): correo y PIN que elige con el código de activación de Admin, token de sesión y funciones `educador_*`; ve sus workshops de todas sus organizaciones.
-- **Guía en la base**: Educators la lee con `educador_guia` (ya con las claves del runner) y se la pasa al runner con `iniciar` ([decisión 004](decisions/004-runner-incrustado.md)); Player no necesita leer nada. Los modos dispositivo y casa nunca la reciben.
+- **Guía en la base**: Educators la lee con `educador_guia` (ya con las claves del runner, más el orden y el título de cada escena que muestra su ficha) y se la pasa al runner con `iniciar` ([decisión 004](decisions/004-runner-incrustado.md)); Player no necesita leer nada. Los modos dispositivo y casa nunca la reciben.
 - **Sesión del taller con dispositivos**: un servicio real que sustituya al `BroadcastChannel` (unirse con código, escena, pausa y presencia).
 
 ## Límites de datos
