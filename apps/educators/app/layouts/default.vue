@@ -72,6 +72,6 @@ const route = useRoute()
 const pagina = computed<string | null>(() => {
   if (route.path === '/cuenta') return t('cuenta.titulo')
   const id = route.params.id
-  return typeof id === 'string' ? taller(id)?.storyboard.titulo ?? '' : null
+  return typeof id === 'string' ? taller(id)?.titulo ?? '' : null
 })
 </script>

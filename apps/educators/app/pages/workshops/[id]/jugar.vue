@@ -8,7 +8,7 @@
       v-if="taller && puedeIniciarse(taller)"
       :src="urlDelTaller(playerUrl, taller)"
       :guide="guiaDelTaller"
-      :title="taller.storyboard.titulo"
+      :title="taller.titulo"
       @ready="empezar"
       @finish="alTerminar"
       @exit="salir"
@@ -78,5 +78,5 @@ function salir() {
   else navigateTo('/', { replace: true })
 }
 
-useHead({ title: computed(() => taller.value?.storyboard.titulo ?? '') })
+useHead({ title: computed(() => taller.value?.titulo ?? '') })
 </script>

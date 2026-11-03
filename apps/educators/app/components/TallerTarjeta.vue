@@ -11,7 +11,7 @@
   >
     <span class="absolute inset-x-0 top-0 h-1.5 bg-(--tone-fill)" aria-hidden="true" />
     <EstadoBadge v-if="estado !== obvio" :estado="estado" class="mb-1.5" />
-    <p class="text-subtitle font-black leading-snug text-ink">{{ taller.storyboard.titulo }}</p>
+    <p class="text-subtitle font-black leading-snug text-ink">{{ taller.titulo }}</p>
     <ul class="mt-2 space-y-1 text-caption font-bold text-muted">
       <li class="flex items-center gap-1.5 text-(--tone-strong)">
         <UiIcon name="clock" class="size-3.5" />

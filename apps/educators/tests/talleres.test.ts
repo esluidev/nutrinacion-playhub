@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import datos from '~/fixtures/talleres.json'
-import { agenda, cierreCompleto, escenasDeLaGuia, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
+import { agenda, cierreCompleto, escenasDeLaGuia, escenasYDuracion, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
 import type { Cierre, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 const HOY = new Date(2026, 9, 14, 9, 30) // 14 de octubre de 2026
@@ -10,6 +10,7 @@ const CIERRE: Cierre = { calificacion: 4, asistentes: 3, participacion: 'media',
 function taller(parcial: Partial<Taller>): Taller {
   return {
     id: 't',
+    titulo: 'El huevo',
     storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
     organizacion: { id: 1, nombre: 'Fundación Centro' },
     jornada: null,
@@ -42,6 +43,7 @@ const FINALIZADO: WorkshopBase = {
   horaInicio: '10:00',
   iniciadoEn: '2026-10-13T16:00:00+00:00',
   organizacion: { id: 1, nombre: 'Fundación Centro' },
+  titulo: 'El huevo en el desayuno',
   storyboard: { eje: 'alimentacion', slug: 'el-huevo', titulo: 'El huevo', edicion: 'KIDS', escenas: 4, duracion: 30, categoria: 'ALIMENTACION' },
   terminadoEn: '2026-10-13T16:30:00+00:00',
   estadoWorkshop: 'finalizado',
@@ -53,6 +55,7 @@ const CANCELADO: WorkshopBase = {
   ...FINALIZADO,
   id: '12',
   fecha: '2026-10-21',
+  titulo: null,
   jornada: null,
   cierre: null,
   estado: 'pendiente',
@@ -66,6 +69,7 @@ describe('workshops de la base', () => {
   it('pasa una fila de educador_workshops a Taller, con su organización y su jornada', () => {
     expect(tallerDesdeBase(FINALIZADO)).toEqual({
       id: '9',
+      titulo: 'El huevo en el desayuno',
       storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
       organizacion: { id: 1, nombre: 'Fundación Centro' },
       jornada: { id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Sede central', fechaInicio: '2026-10-11', fechaFin: '2026-10-30' },
@@ -81,6 +85,11 @@ describe('workshops de la base', () => {
       motivoCancelacion: null,
       cierre: { calificacion: 4, asistentes: 23, participacion: 'alta', claridad: 'clara', costo: 'Ordenar el recorrido en el primer intento.', faltoMaterial: '' },
     })
+  })
+
+  it('sin título propio, el taller se llama como su storyboard', () => {
+    expect(tallerDesdeBase(CANCELADO).titulo).toBe('El huevo')
+    expect(tallerDesdeBase({ ...CANCELADO, titulo: '  ' }).titulo).toBe('El huevo')
   })
 
   it('conserva el estado del workshop, el motivo, el idioma y la modalidad', () => {
@@ -239,6 +248,15 @@ describe('textos del taller', () => {
     expect(grupoYAsistentes(taller({ grupo: '' }), asistentes)).toBe('20 previstos')
     expect(grupoYAsistentes(taller({ asistentesEstimados: null }), asistentes)).toBe('A')
     expect(grupoYAsistentes(taller({ grupo: '', asistentesEstimados: null }), asistentes)).toBe('')
+  })
+
+  it('resume el contenido en escenas y duración, sin la duración si no la tiene', () => {
+    const escenas = (n: number) => `${n} escenas`
+    const minutos = (n: number) => `${n} min`
+    expect(escenasYDuracion(taller({}), escenas, minutos)).toBe('4 escenas · 30 min')
+    const sinDuracion = taller({})
+    sinDuracion.storyboard = { ...sinDuracion.storyboard, duracion: null }
+    expect(escenasYDuracion(sinDuracion, escenas, minutos)).toBe('4 escenas')
   })
 })
 

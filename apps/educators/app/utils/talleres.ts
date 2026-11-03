@@ -32,6 +32,7 @@ export interface Jornada {
 
 export interface Taller {
   id: string
+  titulo: string // el que le puso la organización; si no tiene, el del storyboard
   storyboard: { titulo: string, eje: string, slug: string, edicion: string, escenas: number, duracion: number | null }
   organizacion: { id: number, nombre: string }
   jornada: Jornada | null
@@ -58,9 +59,10 @@ export interface CierreBase {
   faltoMaterial: string | null
 }
 
-/** Un workshop tal como lo devuelve educador_workshops (supabase/migrations/0006). */
+/** Un workshop tal como lo devuelve educador_workshops (supabase/migrations/0006; el título, 0016). */
 export interface WorkshopBase {
   id: string | number
+  titulo?: string | null
   storyboard: { titulo: string | null, eje: string, categoria?: string, slug: string, edicion: string, escenas: number, duracion: number | null }
   organizacion: { id: number, nombre: string }
   jornada: { id: number, nombre: string, ubicacion: string, fecha_inicio: string, fecha_fin: string } | null
@@ -112,6 +114,7 @@ export function tallerDesdeBase(w: WorkshopBase): Taller {
   const s = w.storyboard
   return {
     id: String(w.id),
+    titulo: w.titulo?.trim() || s.titulo || s.slug,
     storyboard: { titulo: s.titulo || s.slug, eje: s.eje, slug: s.slug, edicion: s.edicion, escenas: s.escenas, duracion: s.duracion ?? null },
     organizacion: { id: w.organizacion.id, nombre: w.organizacion.nombre },
     jornada: w.jornada
@@ -180,6 +183,12 @@ export function horario(taller: Taller): string {
 /** «2.º B · 24 asistentes previstos», sin las partes que falten. `asistentes` da el texto de la cifra. */
 export function grupoYAsistentes(taller: Taller, asistentes: (n: number) => string): string {
   return [taller.grupo, taller.asistentesEstimados !== null ? asistentes(taller.asistentesEstimados) : ''].filter(Boolean).join(' · ')
+}
+
+/** «4 escenas · 30 min», sin la duración si el storyboard no la tiene. `escenas` y `minutos` dan el texto de cada cifra. */
+export function escenasYDuracion(taller: Taller, escenas: (n: number) => string, minutos: (n: number) => string): string {
+  const sb = taller.storyboard
+  return [escenas(sb.escenas), sb.duracion ? minutos(sb.duracion) : ''].filter(Boolean).join(' · ')
 }
 
 export interface DiaAgenda {

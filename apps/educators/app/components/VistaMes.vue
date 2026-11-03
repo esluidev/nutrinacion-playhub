@@ -40,7 +40,7 @@
               >
                 <span class="size-2 shrink-0 rounded-full bg-(--tone-fill)" />
                 <span class="sr-only md:not-sr-only md:truncate md:text-caption md:font-bold md:text-ink">
-                  <span class="tabular-nums text-muted">{{ taller.horaInicio }}</span> {{ taller.storyboard.titulo }}
+                  <span class="tabular-nums text-muted">{{ taller.horaInicio }}</span> {{ taller.titulo }}
                   <span v-if="estadoDe(taller) === 'cancelado'" class="text-(--tone-strong)">· {{ t('estado.cancelado') }}</span>
                 </span>
               </button>

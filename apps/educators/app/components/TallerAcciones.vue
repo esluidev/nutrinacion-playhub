@@ -2,7 +2,7 @@
   <!-- Ventana de un taller: sus datos y siempre las mismas dos acciones, iniciar el taller y ver la
        guía. El feedback no es un botón: llega al terminar el taller en el runner. Un taller
        cancelado muestra el motivo y no se inicia. -->
-  <UiDialog :open="Boolean(taller)" :title="taller?.storyboard.titulo" @update:open="(v) => { if (!v) $emit('close') }">
+  <UiDialog :open="Boolean(taller)" :title="taller?.titulo" @update:open="(v) => { if (!v) $emit('close') }">
     <div v-if="taller" :data-area="taller.storyboard.eje">
       <EstadoBadge :estado="estado" />
       <ul class="mt-4 space-y-2 text-body font-bold text-muted">

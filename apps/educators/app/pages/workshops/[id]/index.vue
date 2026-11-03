@@ -8,7 +8,7 @@
       <!-- En el teléfono, la acción baja a su línea en vez de apretar la fecha -->
       <div class="min-w-0 flex-1 max-sm:basis-full">
         <div class="flex flex-wrap items-center gap-3">
-          <h1 class="ui-heading min-w-0">{{ taller.storyboard.titulo }}</h1>
+          <h1 class="ui-heading min-w-0">{{ taller.titulo }}</h1>
           <EstadoBadge :estado="estado" class="shrink-0" />
         </div>
         <p class="ui-text mt-1.5 first-letter:uppercase">{{ fechaLarga(taller.fecha, locale) }} · {{ horario(taller) }}</p>
@@ -111,7 +111,7 @@
 
 <script setup lang="ts">
 import { fechaLarga, rangoDeDias } from '~/utils/fechas'
-import { escenasDeLaGuia, estadoDe, grupoYAsistentes, horario } from '~/utils/talleres'
+import { escenasDeLaGuia, escenasYDuracion, estadoDe, grupoYAsistentes, horario } from '~/utils/talleres'
 import type { EscenaGuia, GuiaTaller } from '~/utils/talleres'
 
 const { t, locale } = useT()
@@ -121,11 +121,7 @@ const { taller: buscar, cargando, guia } = useTalleres()
 const taller = computed(() => buscar(String(route.params.id)))
 const estado = computed(() => (taller.value ? estadoDe(taller.value) : 'proximo'))
 // «4 escenas · 30 min», sin la duración si el storyboard no la tiene.
-const resumen = computed(() => {
-  const sb = taller.value?.storyboard
-  if (!sb) return ''
-  return [t('taller.escenas', { n: sb.escenas }), sb.duracion ? t('taller.minutos', { n: sb.duracion }) : ''].filter(Boolean).join(' · ')
-})
+const resumen = computed(() => (taller.value ? escenasYDuracion(taller.value, n => t('taller.escenas', { n }), n => t('taller.minutos', { n })) : ''))
 // Las ediciones con texto propio («Infantil · 4–8»); otra se muestra tal cual.
 const EDICIONES = ['KIDS', 'PREADOLESCENTES', 'ADOLESCENTES']
 const edicion = (codigo: string) => (EDICIONES.includes(codigo) ? t(`edicion.${codigo}`) : codigo)
@@ -133,6 +129,7 @@ const edicion = (codigo: string) => (EDICIONES.includes(codigo) ? t(`edicion.${c
 // Los datos del taller, sin la fecha ni la hora (están arriba); los que la organización no rellenó no se muestran.
 const datos = computed(() => taller.value
   ? [
+      { label: t('taller.storyboard'), valor: taller.value.storyboard.titulo },
       { label: t('taller.area'), valor: t(`area.${taller.value.storyboard.eje}`) },
       { label: t('taller.contenido'), valor: resumen.value },
       { label: t('taller.grupo'), valor: grupoYAsistentes(taller.value, n => t('taller.asistentes', { n })) },
@@ -181,5 +178,5 @@ function alternar(carpeta: string) {
   else abiertas.add(carpeta)
 }
 
-useHead({ title: computed(() => taller.value?.storyboard.titulo ?? '') })
+useHead({ title: computed(() => taller.value?.titulo ?? '') })
 </script>
