@@ -3,7 +3,8 @@ import type { Ref } from 'vue'
 // Espacio de diseño 1280 × 800 con zoom al área segura de la pantalla (PLAYER-DESIGN.md).
 // Mide la pantalla con una sonda (`probe`, con los insets de env(safe-area-*)) y fija en el
 // documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-*, la fila
-// de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1).
+// de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). `sinBandas` (la vista
+// previa) no reserva la barra ni el pie: la escena se encaja en todo el alto.
 
 const FRAME = { width: 1280, height: 800 }
 const SCENE = { width: 1280, height: 600 }
@@ -16,7 +17,7 @@ const GUTTER = 32
 const CONTROL = { large: 44 + 4, phone: 48 + 4 }
 const CONSIGNA = { large: 56, phone: 48 }
 
-export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void) {
+export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, sinBandas = false) {
   const compact = ref(false)
   const phone = ref(false)
   let observer: ResizeObserver | null = null
@@ -38,13 +39,14 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     const scale = Math.max(fitScale, Math.min(floor, width / UI_MIN_WIDTH), 0.1)
     const normal = { bar: EDGE.large + CONTROL.large, footer: 24 + CONTROL.large + EDGE.large, edge: EDGE.large }
     const isCompact = isCoarse || height / scale - normal.bar - normal.footer < SCENE.height * 0.9
-    const bars = isCompact
+    const conBandas = isCompact
       ? (() => {
           const edge = (isPhone ? EDGE.phone : EDGE.large) / scale
           const control = isPhone ? CONTROL.phone : CONTROL.large
           return { bar: edge + control, footer: (isPhone ? 16 : 24) + control + edge, edge }
         })()
       : normal
+    const bars = sinBandas ? { bar: 0, footer: 0, edge: conBandas.edge } : conBandas
     const pad = (inset: number, margin: number) => Math.max(inset / scale - margin, 0)
     const padTop = pad(top, bars.edge)
     const padBottom = pad(bottom, bars.edge)

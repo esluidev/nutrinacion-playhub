@@ -21,6 +21,7 @@ describe('mensajes del runner a la app', () => {
     expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, tipo: 'terminado' })).toBeNull()
     expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, v: 1, tipo: 'escena', indice: -1, carpeta: 'x' })).toBeNull()
     expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, v: 1, tipo: 'listo', storyboard: 'a/b', modo: 'admin', idioma: 'es', escenas: 1 })).toBeNull()
+    expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, v: 1, tipo: 'listo', storyboard: 'a/b', modo: 'preview', idioma: 'es', escenas: 1 })).toMatchObject({ modo: 'preview' })
     expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, v: 1, tipo: 'error', codigo: 'otro' })).toBeNull()
   })
 
@@ -31,6 +32,14 @@ describe('mensajes del runner a la app', () => {
 })
 
 describe('órdenes de la app al runner', () => {
+  it('la vista previa conduce: ir a una escena por número o por carpeta, y reiniciar', () => {
+    expect(parseRunnerCommand(runnerMessage({ tipo: 'ir', indice: 2 }))).toEqual({ tipo: 'ir', indice: 2 })
+    expect(parseRunnerCommand(runnerMessage({ tipo: 'ir', escena: 'origen' }))).toEqual({ tipo: 'ir', escena: 'origen' })
+    expect(parseRunnerCommand(runnerMessage({ tipo: 'reiniciar' }))).toEqual({ tipo: 'reiniciar' })
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'ir', indice: -1 })).toBeNull()
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'ir' })).toBeNull()
+  })
+
   it('iniciar con o sin guía', () => {
     expect(parseRunnerCommand(runnerMessage({ tipo: 'iniciar' }))).toEqual({ tipo: 'iniciar' })
     const guia = { bienvenida: { verb: 'Situar', objective: 'Que el grupo espere el recorrido.' } }

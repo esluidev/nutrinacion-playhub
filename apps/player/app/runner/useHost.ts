@@ -2,9 +2,10 @@ import { parseRunnerCommand, runnerMessage } from '@playhub/ui/app/utils/runner-
 import type { RunnerEvent, StoryboardGuide } from '@playhub/ui/app/utils/runner-contract'
 
 // El runner dentro de otra app (decisión 004, docs/runner.md). Si la página está en un iframe,
-// habla con la app que la contiene: le cuenta lo que pasa y recibe de ella la guía. Solo escucha
-// y responde a los orígenes de NUXT_PUBLIC_RUNNER_HOSTS. Abierta directamente, no hace nada.
-export function useRunnerHost(origins: string[]) {
+// habla con la app que la contiene: le cuenta lo que pasa y recibe de ella la guía y, en la vista
+// previa, a qué escena ir y cuándo reiniciar (`conducir`). Solo escucha y responde a los orígenes
+// de NUXT_PUBLIC_RUNNER_HOSTS. Abierta directamente, no hace nada.
+export function useRunnerHost(origins: string[], conducir?: { ir: (escena: number | string) => void, reiniciar: () => void }) {
   const embedded = import.meta.client && window.parent !== window
   const guide = shallowRef<StoryboardGuide | null>(null)
   let host: string | null = null
@@ -23,6 +24,8 @@ export function useRunnerHost(origins: string[]) {
     if (!command) return
     host = event.origin
     if (command.tipo === 'iniciar') guide.value = command.guia ?? null
+    else if (command.tipo === 'ir') conducir?.ir('indice' in command ? command.indice : command.escena)
+    else if (command.tipo === 'reiniciar') conducir?.reiniciar()
   }
 
   if (embedded) {

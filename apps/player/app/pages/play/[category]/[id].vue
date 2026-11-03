@@ -1,6 +1,7 @@
 <template>
   <RunnerFrame
     v-if="storyboard"
+    ref="marco"
     :storyboard="storyboard"
     :mode="mode"
     :locale="locale"
@@ -26,7 +27,8 @@ import RunnerFrame from '~/runner/RunnerFrame.vue'
 import { useRunnerHost } from '~/runner/useHost'
 
 // Runner público (`/play/**`; Player no tiene sesión). El contrato está en docs/runner.md.
-//   ?mode=educator|device|home  fija el marco (un modo desconocido vuelve a educator).
+//   ?mode=educator|device|home|preview  fija el marco (un modo desconocido vuelve a educator).
+//                               preview: solo el escenario; la app que lo incrusta conduce.
 //   ?lang=es                    idioma del contenido, entre los que declara el storyboard.
 //   ?escena=<carpeta>           escena con la que abre.
 // Dentro de un iframe de una app permitida (NUXT_PUBLIC_RUNNER_HOSTS), la app le da la guía y
@@ -34,7 +36,7 @@ import { useRunnerHost } from '~/runner/useHost'
 definePageMeta({ layout: false })
 
 const route = useRoute()
-const MODES: RunnerMode[] = ['educator', 'device', 'home']
+const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview']
 const requestedMode = String(route.query.mode ?? '')
 const mode: RunnerMode = MODES.includes(requestedMode as RunnerMode) ? requestedMode as RunnerMode : 'educator'
 if (requestedMode && requestedMode !== mode) console.warn(`Modo «${requestedMode}» no existe; se usa «${mode}».`)
@@ -51,7 +53,12 @@ const start = route.query.escena ? String(route.query.escena) : undefined
 // Los orígenes permitidos y, si este equipo se abrió por Tailscale, los mismos con su nombre:
 // en desarrollo Admin y Educators corren en el mismo equipo (equipo-local).
 const origenes = runnerOrigins(useRuntimeConfig().public.runnerHosts as string)
-const host = useRunnerHost([...new Set([...origenes, ...origenes.map(o => urlEnEsteEquipo(o))])])
+// En la vista previa, la app conduce: a qué escena ir y cuándo reiniciar la actual.
+const marco = ref<InstanceType<typeof RunnerFrame> | null>(null)
+const host = useRunnerHost(
+  [...new Set([...origenes, ...origenes.map(o => urlEnEsteEquipo(o))])],
+  mode === 'preview' ? { ir: escena => marco.value?.ir(escena), reiniciar: () => marco.value?.reiniciar() } : undefined,
+)
 
 // «listo» antes de montar el marco: así la app lo recibe antes que la primera escena.
 onBeforeMount(() => host.send(storyboard

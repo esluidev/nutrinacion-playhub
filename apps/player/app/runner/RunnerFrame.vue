@@ -6,7 +6,10 @@
        - device: el dispositivo de un participante. No navega: la sesión le manda escena, pausa y
          reinicios; la actividad y su feedback se quedan ahí.
        - home: uso autónomo en casa; la persona avanza.
-       La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo
+       - preview: solo el escenario (consigna, juego y su hoja de feedback), para mirar un storyboard
+         desde Admin: sin salir, escena, tiempo, puntos, ajustes, guía ni navegación, y sin sesión.
+         Conduce la app que lo incrusta (`ir` y `reiniciar`, docs/runner.md). Sin bandas: la escena
+         ocupa todo el alto y la hoja de feedback sube sobre ella (runner.css, useFrameFit).        La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo
        solo vuelve su presencia, nunca respuestas, intentos ni si terminó. -->
   <main
     ref="frame"
@@ -19,7 +22,7 @@
   >
     <header class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
       <div class="bar-start">
-        <template v-if="mode !== 'device'">
+        <template v-if="mode === 'educator' || mode === 'home'">
           <UiButton tone="neutral" icon="close" icon-only :label="txt('exit')" :title="txt('exit')" @click="askExit" />
           <!-- Dónde va el taller: esta escena del total, con un aro del progreso del taller. -->
           <div
@@ -40,7 +43,7 @@
             </svg>
           </div>
         </template>
-        <template v-else>
+        <template v-else-if="mode === 'device'">
           <!-- El icono del participante es su única identidad; no sobrevive a la sesión. -->
           <div class="participant">
             <span class="ui-symbol" :data-tone="me?.tono"><UiIcon name="user" /></span>
@@ -64,6 +67,7 @@
           <span class="counter-value"><output aria-live="off">{{ clock(activeState.elapsed) }}</output></span>
         </button>
         <button
+          v-if="mode !== 'preview'"
           ref="pointsButton"
           type="button"
           class="counter counter-compact hud-chip points-counter"
@@ -204,7 +208,7 @@
           </div>
         </div>
       </div>
-      <div v-if="mode !== 'device'" class="footer-end">
+      <div v-if="mode !== 'device' && mode !== 'preview'" class="footer-end">
         <div class="hud-group" role="group" :aria-label="txt('sceneActions')">
           <UiButton v-if="mode === 'educator'" tone="neutral" icon="arrow-left" icon-only :disabled="current === 0" :label="txt('previous')" :title="txt('previousKey')" @click="previous" />
           <UiButton tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="askRestart" />
@@ -523,6 +527,7 @@ function next() {
     goTo(current.value + 1)
     return
   }
+  if (props.mode === 'preview') return // en la vista previa no hay taller que terminar
   confirm({
     title: txt('finishTitle'),
     text: props.mode === 'home' ? txt('finishHome') : txt('closesEverywhere'),
@@ -871,11 +876,12 @@ function onKey(event: KeyboardEvent) {
   if ((event.target as HTMLElement).closest?.('input, select, textarea, [contenteditable], [role=tablist]')) return
   if (sheetOpen && ['ArrowRight', 'PageDown', 'ArrowLeft', 'PageUp'].includes(key)) closeFeedback(false)
   const educator = props.mode === 'educator'
+  const conduce = educator || props.mode === 'preview'
   const actions: Record<string, (() => void) | null> = {
     ArrowRight: next,
     PageDown: next,
-    ArrowLeft: educator ? previous : null,
-    PageUp: educator ? previous : null,
+    ArrowLeft: conduce ? previous : null,
+    PageUp: conduce ? previous : null,
     p: educator ? () => setPause('manual', !manualPause.value) : null,
     g: educator ? () => setGuide(!guideOpen.value) : null,
     m: toggleMute,
@@ -896,7 +902,7 @@ const onVisibility = () => { if (props.mode !== 'device') setPause('hidden', doc
 
 const frame = ref<HTMLElement | null>(null)
 const probe = ref<HTMLElement | null>(null)
-const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.())
+const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.(), props.mode === 'preview')
 
 onMounted(() => {
   BLOCKED.forEach(type => document.addEventListener(type, blockEvent))
@@ -906,7 +912,8 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', onFullscreen)
   document.addEventListener('visibilitychange', onVisibility)
 
-  channel = 'BroadcastChannel' in window ? new BroadcastChannel('playhub-taller-demo') : null
+  // La vista previa no es un taller: no abre la sesión con los dispositivos.
+  channel = props.mode !== 'preview' && 'BroadcastChannel' in window ? new BroadcastChannel('playhub-taller-demo') : null
   if (channel) channel.onmessage = onSessionMessage
 
   lastTick = performance.now()
@@ -957,6 +964,15 @@ onBeforeUnmount(() => {
   clearTimeout(noteTimer)
   channel?.close()
   cancelNarration()
+})
+
+// Vista previa: la app que lo incrusta conduce (docs/runner.md). Una carpeta que no existe no mueve nada.
+defineExpose({
+  ir: (escena: number | string) => goTo(typeof escena === 'number' ? escena : scenes.findIndex(s => s.folder === escena)),
+  reiniciar: () => {
+    cancelNarration()
+    restartScene(current.value)
+  },
 })
 
 useHead({ title: computed(() => `${active.value.title} · ${text(props.storyboard.json.title)} · PlayHub`) })

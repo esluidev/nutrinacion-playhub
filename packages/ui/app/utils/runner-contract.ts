@@ -2,7 +2,8 @@
 // decisión 004). Lo usan los dos lados: Player (el runner) y UiRunner (la app que lo muestra).
 //
 // - La URL dice qué cargar: storyboard, modo, idioma y escena.
-// - La app manda `iniciar` con lo que solo ella tiene (la guía del educador).
+// - La app manda `iniciar` con lo que solo ella tiene (la guía del educador). En la vista previa
+//   (`preview`), además conduce: `ir` a una escena y `reiniciar` la actual.
 // - El runner cuenta lo que pasa: listo, escena, terminado, salir y error.
 //
 // Los mensajes llevan canal y versión. Los cambios son aditivos: un campo nuevo es opcional y
@@ -11,7 +12,8 @@
 export const RUNNER_CHANNEL = 'playhub-runner'
 export const RUNNER_VERSION = 1
 
-export type RunnerMode = 'educator' | 'device' | 'home'
+/** `preview`: solo el escenario, para mirar un storyboard desde Admin; la app conduce con `ir` y `reiniciar`. */
+export type RunnerMode = 'educator' | 'device' | 'home' | 'preview'
 
 /** Guía del educador para una escena (decisión 002). Solo texto. */
 export interface SceneGuide {
@@ -42,6 +44,11 @@ export type RunnerEvent =
 /** App → runner. */
 export type RunnerCommand =
   | { tipo: 'iniciar', guia?: StoryboardGuide }
+  /** Vista previa: ir a una escena, por su número (desde 0) o por su carpeta. */
+  | { tipo: 'ir', indice: number }
+  | { tipo: 'ir', escena: string }
+  /** Vista previa: reiniciar la escena actual. */
+  | { tipo: 'reiniciar' }
 
 export type RunnerEnvelope<T> = T & { canal: typeof RUNNER_CHANNEL, v: number }
 
@@ -50,7 +57,7 @@ export function runnerMessage<T extends RunnerEvent | RunnerCommand>(message: T)
   return { ...message, canal: RUNNER_CHANNEL, v: RUNNER_VERSION }
 }
 
-const MODES: RunnerMode[] = ['educator', 'device', 'home']
+const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview']
 const GUIDE_FIELDS: (keyof SceneGuide)[] = ['verb', 'subtitle', 'description', 'objective', 'mechanic', 'pedagogy', 'questions', 'psychology', 'science', 'notDoing', 'tips']
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -109,6 +116,11 @@ export function parseRunnerCommand(data: unknown): RunnerCommand | null {
     const guia = parseGuide(m.guia)
     return guia ? { tipo: 'iniciar', guia } : null
   }
+  if (m.tipo === 'ir') {
+    if (isIndex(m.indice)) return { tipo: 'ir', indice: m.indice }
+    return isText(m.escena) ? { tipo: 'ir', escena: m.escena } : null
+  }
+  if (m.tipo === 'reiniciar') return { tipo: 'reiniciar' }
   return null
 }
 

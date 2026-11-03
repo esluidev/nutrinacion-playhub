@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { parseRunnerEvent, runnerMessage } from '../../utils/runner-contract'
-import type { RunnerEvent, StoryboardGuide } from '../../utils/runner-contract'
+import type { RunnerCommand, RunnerEvent, StoryboardGuide } from '../../utils/runner-contract'
 
 type Of<T extends RunnerEvent['tipo']> = Extract<RunnerEvent, { tipo: T }>
 
@@ -73,11 +73,21 @@ function retry() {
   wait()
 }
 
+function send(command: RunnerCommand) {
+  frame.value?.contentWindow?.postMessage(runnerMessage(command), origin.value)
+}
+
 // La guía viaja como datos planos: postMessage no clona los proxies reactivos.
 function start() {
   const guia = props.guide ? JSON.parse(JSON.stringify(props.guide)) as StoryboardGuide : undefined
-  frame.value?.contentWindow?.postMessage(runnerMessage({ tipo: 'iniciar', guia }), origin.value)
+  send({ tipo: 'iniciar', guia })
 }
+
+// En la vista previa (`preview`) conduce la app: a qué escena ir y reiniciar la actual.
+defineExpose({
+  ir: (escena: number | string) => send(typeof escena === 'number' ? { tipo: 'ir', indice: escena } : { tipo: 'ir', escena }),
+  reiniciar: () => send({ tipo: 'reiniciar' }),
+})
 
 function onMessage(message: MessageEvent) {
   if (message.origin !== origin.value || !frame.value || message.source !== frame.value.contentWindow) return

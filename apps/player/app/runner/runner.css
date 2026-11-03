@@ -54,6 +54,11 @@
   .player-frame[data-mode=educator] [data-modes]:not([data-modes~=educator]),
   .player-frame[data-mode=device] [data-modes]:not([data-modes~=device]),
   .player-frame[data-mode=home] [data-modes]:not([data-modes~=home]) { display: none !important; }
+  /* Preview (Admin): no bands. The scene takes the whole height (useFrameFit, sinBandas) and the feedback sheet still
+     rises from the bottom, over the stage; without feedback the empty footer neither shows nor takes taps. */
+  .player-frame[data-mode=preview] { grid-template-rows: minmax(0, 1fr); }
+  .player-frame[data-mode=preview] .player-bar { display: none; }
+  .player-frame[data-mode=preview] .player-footer { position: absolute; inset: auto 0 0; height: var(--footer-h); pointer-events: none; }
 
   /* ---- Bar: Salir and the scene on the left; Tiempo, Puntos and Ajustes on the right ----------------
      A white band: its controls sit centred in it, the same air above and below their base. */

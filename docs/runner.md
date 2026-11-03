@@ -21,11 +21,13 @@ educator.nutrinacion.com                         player.nutrinacion.com
 
 | Parámetro | Valores | Si falta o no vale |
 |---|---|---|
-| `mode` | `educator`, `device` o `home` | `educator` |
+| `mode` | `educator`, `device`, `home` o `preview` | `educator` |
 | `lang` | Un idioma que declare el storyboard | El idioma por defecto del storyboard |
 | `escena` | Carpeta de una escena | La primera escena |
 
 La URL no lleva nada sensible ni identificadores de la app: ni taller, ni sesión, ni datos personales. Se construye con `runnerUrl()`.
+
+`preview` es la vista previa de Admin: solo el escenario (la consigna, el juego y su hoja de feedback), sin las bandas del marco: la escena se encaja en todo el alto y la hoja de feedback sube sobre ella. No lleva los controles del taller (salir, escena, tiempo, puntos, ajustes, guía ni navegación) ni abre la sesión con los dispositivos, y nunca manda `terminado` ni `salir`. Conduce la app con `ir` y `reiniciar`.
 
 ## 2. Los mensajes
 
@@ -48,6 +50,8 @@ Nunca viajan puntos, respuestas ni datos de los participantes (constitución, «
 | `tipo` | Campos | Cuándo |
 |---|---|---|
 | `iniciar` | `guia?`: la guía del educador por carpeta de escena (`{ [carpeta]: { verb, objective, … } }`) | Al recibir `listo`, y de nuevo si la guía cambia |
+| `ir` | `indice` (desde 0) o `escena` (carpeta) | Solo en `preview`: la app pasa de escena. El runner responde con `escena` |
+| `reiniciar` | — | Solo en `preview`: la app reinicia la escena actual |
 
 ## 3. El saludo
 
@@ -89,7 +93,7 @@ En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 | App | Cómo | Estado |
 |---|---|---|
 | Educators | `/workshops/<id>/jugar`: pantalla completa con `UiRunner` en modo educador y la guía. `terminado` lleva al feedback del taller; `salir`, a donde estaba | Hecho, con Supabase (`educador_iniciar` con `listo`, `educador_terminar` con `terminado`) |
-| Admin | «Probar» con `UiRunner` y la guía de su base, para revisarla antes de publicar | Pendiente; hoy abre el runner en otra pestaña |
+| Admin | En el detalle de un storyboard de la organización, «Vista previa» con `UiRunner` en modo `preview`: Admin conduce con `ir` y `reiniciar` (anterior, siguiente, la escena de la lista) y lleva la cuenta con `listo` y `escena`. «Probar» de Platform sigue abriendo el modo educador en otra pestaña | Hecho |
 | App del hogar | `UiRunner` en modo casa | Fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
 | Dispositivos de participantes | Abren Player directamente (`?mode=device`), sin iframe | Sesión simulada entre pestañas |
 
@@ -107,5 +111,4 @@ En local, `localhost:3001` dentro de `localhost:3002` también es el mismo sitio
 En la [tarea 009](../tasks/009-runner-dentro-de-educators.md):
 - `preparar` para usar sin conexión;
 - voces desde el bucket;
-- Admin «Probar» con `UiRunner`;
 - prueba en iPad y Android.
