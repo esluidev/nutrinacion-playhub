@@ -5,7 +5,7 @@
 --   lucia@acc.test con su enlace de acceso pendiente, sin PIN todavía (Acceso Centro)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(65);
+select plan(67);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -92,6 +92,8 @@ update workshops set estado = 'CANCELADO', motivo_cancelacion = 'Feriado escolar
 insert into workshops (fecha, idioma_contenido, storyboard_id, organizacion_id)
 values (current_date + 20, 'es', current_setting('t.sb')::bigint, current_setting('t.centro')::bigint);
 select set_config('t.taller_pedro', pruebas.workshop(0, current_setting('t.norte')::bigint, current_setting('t.pedro')::bigint)::text, true);
+-- El título que escribió la organización (0016); los demás no tienen.
+update workshops set titulo = 'El huevo en el desayuno' where id = current_setting('t.hoy')::bigint;
 
 select pruebas.como_anon();
 
@@ -139,6 +141,13 @@ select is(
   (select t->'jornada'->>'nombre' || ' ' || (t->'jornada'->>'fecha_inicio') from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
     where t->>'id' = current_setting('t.hoy')),
   'Acceso Jornada ' || (current_date - 3)::text, 'con su nombre y sus fechas');
+select is(
+  (select t->>'titulo' from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
+    where t->>'id' = current_setting('t.hoy')),
+  'El huevo en el desayuno', 'trae el título que le puso la organización');
+select is(
+  (select count(*)::int from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t where t->'titulo' = 'null'),
+  6, 'y null si no tiene: Educators usa el del storyboard');
 select is(
   (select count(*)::int from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t where t->'cierre' <> 'null'),
   2, 'dos ya tienen su feedback');
