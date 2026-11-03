@@ -2,10 +2,10 @@ import { moverRango } from '~/utils/calendario'
 import type { VistaCalendario } from '~/utils/calendario'
 import { isoDia } from '~/utils/talleres'
 
-// Qué semana o mes mira el educador. Se conserva al ir y volver de un taller.
+// Qué día, semana o mes mira el educador; el día es la vista principal. Se conserva al ir y volver de un taller.
 export function useCalendario() {
   const fecha = useState('calendario-fecha', () => isoDia(new Date()))
-  const vista = useState<VistaCalendario>('calendario-vista', () => 'semana')
+  const vista = useState<VistaCalendario>('calendario-vista', () => 'dia')
 
   return {
     fecha,

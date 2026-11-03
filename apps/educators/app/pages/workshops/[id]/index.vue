@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { rangoDeDias } from '~/utils/calendario'
+import { rangoDeDias } from '~/utils/fechas'
 import { estadoDe, grupoYAsistentes, horario } from '~/utils/talleres'
 
 const { t, locale } = useT()

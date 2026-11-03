@@ -93,7 +93,7 @@ async function guardar() {
     return
   }
   toast.success(t('cierre.guardado'))
-  // Como en la app original: al finalizar se vuelve al calendario.
+  // Como en la app original: al finalizar se vuelve a Mis talleres.
   await navigateTo('/')
 }
 

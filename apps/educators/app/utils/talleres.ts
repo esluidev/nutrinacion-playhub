@@ -181,17 +181,40 @@ export function grupoYAsistentes(taller: Taller, asistentes: (n: number) => stri
   return [taller.grupo, taller.asistentesEstimados !== null ? asistentes(taller.asistentesEstimados) : ''].filter(Boolean).join(' · ')
 }
 
-/** Orden de trabajo: lo de hoy y lo pendiente de cerrar primero, luego lo próximo y lo cerrado. Los cancelados, aparte: nunca quedan por cerrar. */
-export function agruparTalleres(talleres: Taller[], hoy = new Date()) {
-  const porHora = (a: Taller, b: Taller) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`)
-  const de = (estado: EstadoTaller) => talleres.filter(t => estadoDe(t, hoy) === estado).sort(porHora)
-  return {
-    hoy: de('hoy'),
-    porCerrar: de('por_cerrar'),
-    proximos: de('proximo'),
-    cerrados: de('cerrado').reverse(),
-    cancelados: de('cancelado'),
+export interface DiaAgenda {
+  dia: string
+  talleres: Taller[]
+}
+
+/**
+ * La vista Día: los talleres de `dia` y, si es hoy, el siguiente (publicado y sin cierre) aparte,
+ * para mostrarlo en grande; lo que viene después, día por día; y lo que ya pasó sin cierre (contado
+ * desde hoy, mire el día que mire), del más reciente al más antiguo. Un cancelado sigue en su día y
+ * nunca queda por cerrar.
+ */
+export function agenda(talleres: Taller[], dia: string, hoy = new Date()) {
+  const orden = [...talleres].sort((a, b) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`))
+  const delDia = orden.filter(t => t.fecha === dia)
+  const siguiente = dia === isoDia(hoy) ? delDia.find(t => t.estadoWorkshop === 'publicado' && !t.cierre) : undefined
+  const despues: DiaAgenda[] = []
+  for (const t of orden.filter(t => t.fecha > dia)) {
+    const ultimo = despues.at(-1)
+    if (ultimo?.dia === t.fecha) ultimo.talleres.push(t)
+    else despues.push({ dia: t.fecha, talleres: [t] })
   }
+  return {
+    siguiente,
+    delDia: delDia.filter(t => t !== siguiente),
+    despues,
+    porCerrar: orden.filter(t => estadoDe(t, hoy) === 'por_cerrar').reverse(),
+  }
+}
+
+/** Talleres por día ('YYYY-MM-DD'), ordenados por hora. */
+export function talleresPorDia(talleres: Taller[]): Record<string, Taller[]> {
+  const mapa: Record<string, Taller[]> = {}
+  for (const t of [...talleres].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))) (mapa[t.fecha] ??= []).push(t)
+  return mapa
 }
 
 /** El PIN del educador o su código de activación: 6 dígitos (se ignoran espacios y guiones al escribirlo). */
@@ -211,13 +234,6 @@ export function correoValido(valor: string): boolean {
 export function cierreCompleto(c: Partial<Cierre>): c is Cierre {
   const calificada = typeof c.calificacion === 'number' && c.calificacion >= 1 && c.calificacion <= 5
   return calificada && typeof c.asistentes === 'number' && c.asistentes >= 0 && Boolean(c.participacion) && Boolean(c.claridad)
-}
-
-/** Talleres por día ('YYYY-MM-DD'), ordenados por hora. */
-export function talleresPorDia(talleres: Taller[]): Record<string, Taller[]> {
-  const mapa: Record<string, Taller[]> = {}
-  for (const t of [...talleres].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))) (mapa[t.fecha] ??= []).push(t)
-  return mapa
 }
 
 /** URL del runner de Player en modo educador, para incrustarlo (docs/runner.md), en el idioma del workshop. */

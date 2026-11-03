@@ -2,7 +2,7 @@
   <!-- Mes de la app original: lunes a domingo, cada día con sus talleres (punto del color del área y
        título). En tableta y escritorio ocupa el alto disponible y nunca lo pasa: si un día tiene más
        talleres de los que caben, muestra el primero y «+N más». En el teléfono solo caben los
-       puntos; tocar un día abre su semana. -->
+       puntos; tocar un día lo abre en la vista Día. -->
   <div class="ui-panel overflow-hidden md:flex md:min-h-0 md:flex-1 md:flex-col">
     <div class="grid shrink-0 grid-cols-7 border-b border-line bg-canvas">
       <span v-for="(d, i) in cabeceraSemana(locale)" :key="d" :class="['eyebrow py-2.5 text-center', i < 6 && 'border-r border-line']">{{ d }}</span>
@@ -18,14 +18,14 @@
             i < 6 && 'border-r border-line',
             dia.iso === hoy ? 'bg-(--tone-wash)' : !dia.delMes && 'bg-canvas',
           ]"
-          @click="$emit('verSemana', dia.iso)"
+          @click="$emit('verDia', dia.iso)"
         >
           <button
             type="button"
             :class="['ui-day ui-day-sm', !dia.delMes && 'is-outside']"
             :aria-current="dia.iso === hoy ? 'date' : undefined"
             :aria-label="fechaLarga(dia.iso, locale)"
-            @click.stop="$emit('verSemana', dia.iso)"
+            @click.stop="$emit('verDia', dia.iso)"
           >
             {{ aFecha(dia.iso).getDate() }}
           </button>
@@ -59,7 +59,7 @@ import { estadoDe, isoDia } from '~/utils/talleres'
 import type { Taller } from '~/utils/talleres'
 
 const props = defineProps<{ fecha: string, porDia: Record<string, Taller[]> }>()
-defineEmits<{ verSemana: [iso: string] }>()
+defineEmits<{ verDia: [iso: string] }>()
 
 const { t, locale } = useT()
 const { abrir } = useTallerAbierto()

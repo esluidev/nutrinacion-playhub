@@ -44,7 +44,7 @@ Las apps no comparten estado. El runner se incrusta con el contrato de [runner.m
 2. Un superadmin lo registra en la base desde Player: la metadata de su JSON (`clave`, slug, categoría, edición, enfoques, idiomas…) y sus escenas. Player avisa cuando el build cambia y hay que actualizarlo.
 3. En Admin/Platform se escribe la guía; desde Player se publica en sus países (Player muestra cuánta guía hay en cada idioma).
 4. Una organización programa un taller con un storyboard publicado en alguno de sus países (o personalizado para ella), suelto o dentro de una jornada.
-5. Educators muestra el taller en el calendario del educador; desde su ventana, «Iniciar taller» abre el runner incrustado en modo educador (Educators le da la guía) y «Ver guía» su preparación.
+5. Educators muestra el taller en Mis talleres del educador; desde su ventana, «Iniciar taller» abre el runner incrustado en modo educador (Educators le da la guía) y «Ver guía» su preparación.
 6. Al terminar el taller en el runner, Educators lleva al educador al feedback del taller (calificación, asistentes, participación, claridad y comentarios; solo del grupo). Al finalizarlo, el taller queda completado.
 
 Los seis pasos funcionan con Supabase local.

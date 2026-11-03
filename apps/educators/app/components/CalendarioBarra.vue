@@ -1,6 +1,6 @@
 <template>
   <!-- Barra de la app original: el rango con anterior/siguiente a la izquierda; Hoy, el calendario
-       y el cambio Semana/Mes a la derecha. Todo mide lo mismo y comparte la base del kit. -->
+       y el cambio Día/Semana/Mes a la derecha. Todo mide lo mismo y comparte la base del kit. -->
   <div class="mb-4 flex flex-wrap items-center gap-3">
     <div class="ui-group grow sm:grow-0">
       <button type="button" class="ui-group-item" :aria-label="t('calendario.anterior')" @click="anterior">
@@ -47,6 +47,7 @@ const { fecha, vista, anterior, siguiente, hoy, irA } = useCalendario()
 
 const rango = computed(() => textoDelRango(fecha.value, vista.value, locale.value))
 const vistas = computed(() => [
+  { value: 'dia', label: t('calendario.dia') },
   { value: 'semana', label: t('calendario.semana') },
   { value: 'mes', label: t('calendario.mes') },
 ])

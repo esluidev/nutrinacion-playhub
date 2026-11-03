@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import datos from '~/fixtures/talleres.json'
-import { agruparTalleres, cierreCompleto, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
+import { agenda, cierreCompleto, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
 import type { Cierre, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 const HOY = new Date(2026, 9, 14, 9, 30) // 14 de octubre de 2026
@@ -177,38 +177,67 @@ describe('fechas y estados', () => {
     expect(puedeIniciarse(taller({ estadoWorkshop: 'finalizado' }))).toBe(true)
   })
 
-  it('agrupa y ordena por fecha y hora', () => {
-    const grupos = agruparTalleres([
+  it('en el día de hoy, aparta el siguiente y ordena el resto por fecha y hora', () => {
+    const a = agenda([
       taller({ id: 'b', horaInicio: '12:00' }),
       taller({ id: 'a', horaInicio: '08:00' }),
-      taller({ id: 'p', fecha: '2026-10-20' }),
+      taller({ id: 'q', fecha: '2026-10-20', horaInicio: '11:00' }),
+      taller({ id: 'p', fecha: '2026-10-20', horaInicio: '09:00' }),
+      taller({ id: 'r', fecha: '2026-10-16' }),
       taller({ id: 'c', fecha: '2026-10-01' }),
-    ], HOY)
-    expect(grupos.hoy.map(t => t.id)).toEqual(['a', 'b'])
-    expect(grupos.proximos.map(t => t.id)).toEqual(['p'])
-    expect(grupos.porCerrar.map(t => t.id)).toEqual(['c'])
-    expect(grupos.cerrados).toEqual([])
-    expect(grupos.cancelados).toEqual([])
+      taller({ id: 'd', fecha: '2026-10-05' }),
+    ], '2026-10-14', HOY)
+    expect(a.siguiente?.id).toBe('a')
+    expect(a.delDia.map(t => t.id)).toEqual(['b'])
+    expect(a.despues.map(d => [d.dia, d.talleres.map(t => t.id)])).toEqual([['2026-10-16', ['r']], ['2026-10-20', ['p', 'q']]])
+    expect(a.porCerrar.map(t => t.id)).toEqual(['d', 'c'])
   })
 
-  it('los cancelados van aparte y nunca quedan por cerrar', () => {
-    const grupos = agruparTalleres([
+  it('el siguiente de hoy no es uno cancelado, cerrado ni finalizado', () => {
+    const a = agenda([
+      taller({ id: 'x', horaInicio: '08:00', estadoWorkshop: 'cancelado' }),
+      taller({ id: 'z', horaInicio: '09:00', cierre: CIERRE }),
+      taller({ id: 'f', horaInicio: '10:00', estadoWorkshop: 'finalizado' }),
+      taller({ id: 'b', horaInicio: '12:00' }),
+    ], '2026-10-14', HOY)
+    expect(a.siguiente?.id).toBe('b')
+    expect(a.delDia.map(t => t.id)).toEqual(['x', 'z', 'f'])
+    expect(agenda([taller({ estadoWorkshop: 'cancelado' })], '2026-10-14', HOY).siguiente).toBeUndefined()
+  })
+
+  it('en otro día no aparta ninguno, y lo que falta cerrar se cuenta desde hoy', () => {
+    const a = agenda([
+      taller({ id: 'p', fecha: '2026-10-20', horaInicio: '09:00' }),
+      taller({ id: 'q', fecha: '2026-10-21' }),
+      taller({ id: 'c', fecha: '2026-10-01' }),
+    ], '2026-10-20', HOY)
+    expect(a.siguiente).toBeUndefined()
+    expect(a.delDia.map(t => t.id)).toEqual(['p'])
+    expect(a.despues.map(d => d.dia)).toEqual(['2026-10-21'])
+    expect(a.porCerrar.map(t => t.id)).toEqual(['c'])
+  })
+
+  it('un cancelado sigue en su día y nunca queda por cerrar', () => {
+    const a = agenda([
       taller({ id: 'x', fecha: '2026-10-01', estadoWorkshop: 'cancelado' }),
-      taller({ id: 'y', fecha: '2026-10-14', estadoWorkshop: 'cancelado' }),
+      taller({ id: 'y', fecha: '2026-10-20', estadoWorkshop: 'cancelado' }),
       taller({ id: 'c', fecha: '2026-10-01' }),
       taller({ id: 'z', fecha: '2026-10-02', cierre: CIERRE }),
-    ], HOY)
-    expect(grupos.porCerrar.map(t => t.id)).toEqual(['c'])
-    expect(grupos.hoy).toEqual([])
-    expect(grupos.cancelados.map(t => t.id)).toEqual(['x', 'y'])
-    expect(grupos.cerrados.map(t => t.id)).toEqual(['z'])
+    ], '2026-10-14', HOY)
+    expect(a.porCerrar.map(t => t.id)).toEqual(['c'])
+    expect(a.despues.map(d => d.talleres.map(t => t.id))).toEqual([['y']])
   })
+})
 
-  it('agrupa las filas de la base', () => {
-    const grupos = agruparTalleres([FINALIZADO, CANCELADO].map(tallerDesdeBase), HOY)
-    expect(grupos.cerrados.map(t => t.id)).toEqual(['9'])
-    expect(grupos.cancelados.map(t => t.id)).toEqual(['12'])
-    expect(grupos.porCerrar).toEqual([])
+describe('talleres por día', () => {
+  it('agrupa por fecha y ordena por hora', () => {
+    const porDia = talleresPorDia([
+      taller({ id: 'b', fecha: '2026-10-14', horaInicio: '12:00' }),
+      taller({ id: 'a', fecha: '2026-10-14', horaInicio: '09:00' }),
+      taller({ id: 'c', fecha: '2026-10-15' }),
+    ])
+    expect(porDia['2026-10-14']!.map(t => t.id)).toEqual(['a', 'b'])
+    expect(porDia['2026-10-15']!.map(t => t.id)).toEqual(['c'])
   })
 })
 
@@ -248,18 +277,6 @@ describe('cierre del facilitador', () => {
     expect(cierreCompleto({ calificacion: 6, asistentes: 20, participacion: 'alta', claridad: 'clara' })).toBe(false)
     expect(cierreCompleto({ calificacion: 4, asistentes: 20, participacion: 'alta' })).toBe(false)
     expect(cierreCompleto({ calificacion: 4, participacion: 'alta', claridad: 'clara' })).toBe(false)
-  })
-})
-
-describe('talleres por día', () => {
-  it('agrupa por fecha y ordena por hora', () => {
-    const porDia = talleresPorDia([
-      taller({ id: 'b', fecha: '2026-10-14', horaInicio: '12:00' }),
-      taller({ id: 'a', fecha: '2026-10-14', horaInicio: '09:00' }),
-      taller({ id: 'c', fecha: '2026-10-15' }),
-    ])
-    expect(porDia['2026-10-14']!.map(t => t.id)).toEqual(['a', 'b'])
-    expect(porDia['2026-10-15']!.map(t => t.id)).toEqual(['c'])
   })
 })
 

@@ -1,7 +1,8 @@
 <template>
-  <!-- Tarjeta de un taller en el calendario, como en la app original: barra de color del área arriba,
+  <!-- Tarjeta de un taller en Mis talleres, como en la app original: barra de color del área arriba,
        estado, título, hora, grupo y lugar. Sin botones: toda la tarjeta abre la ventana del taller,
-       donde están sus acciones. Un taller cancelado sigue en su día, en coral y con el motivo. -->
+       donde están sus acciones. Un taller cancelado sigue en su día, en coral y con el motivo. El
+       estado que ya dice su lista (`obvio`) no se repite en cada tarjeta. -->
   <button
     type="button"
     class="ui-panel ui-panel-interactive relative w-full overflow-hidden rounded-control px-3 pb-3 pt-4 text-left"
@@ -9,7 +10,7 @@
     @click="abrir(taller.id)"
   >
     <span class="absolute inset-x-0 top-0 h-1.5 bg-(--tone-fill)" aria-hidden="true" />
-    <EstadoBadge :estado="estado" class="mb-1.5" />
+    <EstadoBadge v-if="estado !== obvio" :estado="estado" class="mb-1.5" />
     <p class="text-subtitle font-black leading-snug text-ink">{{ taller.storyboard.titulo }}</p>
     <ul class="mt-2 space-y-1 text-caption font-bold text-muted">
       <li class="flex items-center gap-1.5 text-(--tone-strong)">
@@ -34,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { rangoDeDias } from '~/utils/calendario'
+import { rangoDeDias } from '~/utils/fechas'
 import { estadoDe, horario } from '~/utils/talleres'
-import type { Taller } from '~/utils/talleres'
+import type { EstadoTaller, Taller } from '~/utils/talleres'
 
-const props = defineProps<{ taller: Taller }>()
+const props = defineProps<{ taller: Taller, obvio?: EstadoTaller }>()
 
 const { t, locale } = useT()
 const { abrir } = useTallerAbierto()

@@ -1,8 +1,9 @@
-// Calendario del educador (lógica pura, sin Nuxt; tests en tests/calendario.test.ts): semanas de
-// lunes a domingo, la cuadrícula del mes y el texto del rango, como en la app original.
+// Calendario del educador (lógica pura, sin Nuxt; tests en tests/calendario.test.ts): el día,
+// semanas de lunes a domingo, la cuadrícula del mes y el texto del rango, como en la app original.
+import { fechaLarga } from './fechas'
 import { isoDia } from './talleres'
 
-export type VistaCalendario = 'semana' | 'mes'
+export type VistaCalendario = 'dia' | 'semana' | 'mes'
 
 /** 'YYYY-MM-DD' → fecha local (sin desfases de zona horaria). */
 export function aFecha(iso: string): Date {
@@ -38,19 +39,19 @@ export function cuadriculaDelMes(iso: string): { iso: string, delMes: boolean }[
   return semanas
 }
 
-/** Avanza o retrocede una semana o un mes (anterior/siguiente de la barra). */
+/** Avanza o retrocede un día, una semana o un mes (anterior/siguiente de la barra). */
 export function moverRango(iso: string, vista: VistaCalendario, dir: 1 | -1): string {
   const d = aFecha(iso)
-  return vista === 'semana'
-    ? isoDia(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7 * dir))
-    : isoDia(new Date(d.getFullYear(), d.getMonth() + dir, 1))
+  if (vista === 'mes') return isoDia(new Date(d.getFullYear(), d.getMonth() + dir, 1))
+  return isoDia(new Date(d.getFullYear(), d.getMonth(), d.getDate() + (vista === 'semana' ? 7 : 1) * dir))
 }
 
 const intl = (locale: string) => (locale === 'en' ? 'en-US' : 'es-MX')
 
-/** «12 – 18 oct 2026» (semana; con los dos meses si cruza) u «octubre 2026» (mes). */
+/** «martes, 14 de octubre» (día), «12 – 18 oct 2026» (semana; con los dos meses si cruza) u «octubre 2026» (mes). */
 export function textoDelRango(iso: string, vista: VistaCalendario, locale: string): string {
   const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString(intl(locale), o).replace('.', '')
+  if (vista === 'dia') return fechaLarga(iso, locale)
   if (vista === 'mes') return fmt(aFecha(iso), { month: 'long', year: 'numeric' })
   const dias = diasDeSemana(iso)
   const ini = aFecha(dias[0]!)
@@ -58,24 +59,6 @@ export function textoDelRango(iso: string, vista: VistaCalendario, locale: strin
   const mesFin = fmt(fin, { month: 'short' })
   if (ini.getMonth() === fin.getMonth()) return `${ini.getDate()} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`
   return `${ini.getDate()} ${fmt(ini, { month: 'short' })} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`
-}
-
-/**
- * Los días de una jornada: «25 oct – 13 nov»; «12 – 16 oct» si es el mismo mes; «12 oct» si dura
- * un día; con el año si cambia. En inglés, el mes delante («Oct 25 – Nov 13»).
- */
-export function rangoDeDias(inicio: string, fin: string, locale: string): string {
-  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString(intl(locale), o).replace('.', '')
-  const ini = aFecha(inicio)
-  const end = aFecha(fin)
-  const mismoAnio = ini.getFullYear() === end.getFullYear()
-  const diaYMes = (d: Date) => fmt(d, mismoAnio ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' })
-  if (inicio === fin) return diaYMes(ini)
-  if (mismoAnio && ini.getMonth() === end.getMonth()) {
-    const mes = fmt(end, { month: 'short' })
-    return locale === 'en' ? `${mes} ${ini.getDate()} – ${end.getDate()}` : `${ini.getDate()} – ${end.getDate()} ${mes}`
-  }
-  return `${diaYMes(ini)} – ${diaYMes(end)}`
 }
 
 /** Nombre corto del día («lun») y del mes en el idioma de la interfaz. */

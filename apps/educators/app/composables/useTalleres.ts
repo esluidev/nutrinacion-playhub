@@ -1,7 +1,7 @@
 import type { StoryboardGuide } from '@playhub/ui/app/utils/runner-contract'
 import datos from '~/fixtures/talleres.json'
 import { sesionNoValida, useSupabaseClient } from '~/utils/supabase'
-import { agruparTalleres, cierreDesdeBase, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
+import { cierreDesdeBase, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
 import type { Cierre, CierreBase, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 // Talleres del educador en todas sus organizaciones (educador_workshops), la guía de cada uno
@@ -60,8 +60,6 @@ export function useTalleres() {
   /** La primera carga, sin datos todavía: las vistas muestran que esperan en vez de «sin talleres». */
   const cargando = computed(() => !carga.value.lista && !carga.value.error)
   const error = computed(() => carga.value.error)
-
-  const grupos = computed(() => agruparTalleres(talleres.value))
 
   function taller(id: string): Taller | undefined {
     return talleres.value.find(t => t.id === id)
@@ -123,5 +121,5 @@ export function useTalleres() {
     return !error
   }
 
-  return { talleres, grupos, cargando, error, cargar, taller, guardarCierre, guia, iniciar, terminar }
+  return { talleres, cargando, error, cargar, taller, guardarCierre, guia, iniciar, terminar }
 }
