@@ -1,6 +1,6 @@
 import type { Enums } from '~/utils/db'
 import type { Localized } from '~/utils/types'
-import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
+import { urlDePlayer } from '~/composables/useStoryboards'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catálogo de storyboards — consola del operador (Platform, solo superadmin).
@@ -145,15 +145,8 @@ export function usePlatformStoryboards() {
   }
 
   // La URL de Player vive en `configuracion` (clave `player_url`): Admin arma los enlaces de
-  // «Probar» con ella, sin acoplarse a un host.
-  async function getPlayerUrl(): Promise<string | null> {
-    if (!isSupabaseConfigured()) return null
-    const { data } = await supabase()
-      .from('configuracion').select('valor').eq('clave', 'player_url').maybeSingle()
-    const url = data?.valor ?? null
-    // En desarrollo vale localhost: compartida por Tailscale, se usa este equipo (equipo-local).
-    return url ? urlEnEsteEquipo(url.replace(/\/$/, '')) : null
-  }
+  // «Probar» con ella, sin acoplarse a un host (`urlDePlayer`, también en la vista previa).
+  const getPlayerUrl = urlDePlayer
 
   return {
     listStoryboards,

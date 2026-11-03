@@ -60,7 +60,7 @@
         <!-- Footer: dos acciones, mitad y mitad. Neutras: en una rejilla, un lima por tarjeta
              sería el lima repetido que el kit evita -->
         <div class="ui-panel-footer flex items-center gap-2">
-          <UiButton variant="outline" class="flex-1" @click="navigateTo(`/organizacion/storyboards/${sb.id}`)">
+          <UiButton variant="outline" icon="eye" class="flex-1" @click="navigateTo(`/organizacion/storyboards/${sb.id}`)">
             {{ t('storyboards.viewDetail') }}
           </UiButton>
           <UiButton variant="outline" icon="calendar" class="flex-1" @click="navigateTo(`/organizacion/workshops/new?storyboard=${sb.id}`)">

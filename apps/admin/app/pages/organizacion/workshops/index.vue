@@ -8,10 +8,14 @@
       </template>
     </UiPageHeader>
 
-    <!-- Toolbar -->
+    <!-- Toolbar, como en Storyboards: el filtro de estado, en un desplegable, a la izquierda; el
+         buscador, a la derecha. Siempre están, haya o no talleres: dicen qué se puede filtrar. -->
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <UiChips v-model="activeTab" :items="statusTabs" />
-      <UiSearchInput v-model="searchQuery" :placeholder="t('workshops.searchPh')" max-width="xs" />
+      <UiSelect v-model="activeTab" variant="toolbar" :prefix="t('workshops.filterState')" :options="statusOptions" />
+      <!-- Ocupa lo que queda de la línea, a la derecha; si no le quedan 320 px, baja a la suya. -->
+      <div class="flex min-w-0 grow basis-80 justify-end">
+        <UiSearchInput v-model="searchQuery" :placeholder="t('workshops.searchPh')" max-width="xs" class="min-w-0 flex-1" />
+      </div>
     </div>
 
     <!-- Agrupados por jornada cuando la hay (cabecera con su nombre, su lugar y sus días); los sueltos al final.
@@ -63,14 +67,14 @@
       </section>
     </div>
 
-    <!-- Empty State -->
+    <!-- Vacío: la organización aún no tiene talleres, o ninguno coincide con los filtros -->
     <div v-else class="ui-panel">
       <UiEmptyState
-        icon="search"
-        :title="t('common.noResults')"
-        :text="t('workshops.noResultsText')"
+        :icon="hayTalleres ? 'search' : 'calendar'"
+        :title="hayTalleres ? t('common.noResults') : t('workshops.noneTitle')"
+        :text="hayTalleres ? t('workshops.noResultsText') : t('workshops.noneText')"
       >
-        <UiButton variant="outline" size="sm" @click="resetFilters">
+        <UiButton v-if="hayTalleres" variant="outline" size="sm" @click="resetFilters">
           {{ t('common.clearFilters') }}
         </UiButton>
       </UiEmptyState>
@@ -116,19 +120,14 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-// «Todos» deja fuera los archivados (descartados): tienen su propia pestaña. Las que no tienen
-// talleres no se muestran, salvo «Todos».
-const cuenta = (status: string) => workshops.value.filter(w => w.status === status).length
-const statusTabs = computed(() => [
-  { label: t('common.all'), value: 'todos', count: workshops.value.filter(w => w.status !== 'archivado').length },
-  { label: t('workshops.tabs.programado'), value: 'programado', count: cuenta('programado') },
-  { label: t('workshops.tabs.completado'), value: 'completado', count: cuenta('completado') },
-  { label: t('workshops.tabs.sin_realizar'), value: 'sin_realizar', count: cuenta('sin_realizar') },
-  { label: t('workshops.tabs.revision'), value: 'revision', count: cuenta('revision') },
-  { label: t('workshops.tabs.borrador'), value: 'borrador', count: cuenta('borrador') },
-  { label: t('workshops.tabs.cancelado'), value: 'cancelado', count: cuenta('cancelado') },
-  { label: t('workshops.tabs.archivado'), value: 'archivado', count: cuenta('archivado') },
-].filter(x => x.value === 'todos' || x.count > 0))
+// Todos los estados, siempre: no dependen de los talleres que haya. «Todos» deja fuera los
+// archivados (descartados): tienen su propia opción.
+const ESTADOS = ['programado', 'completado', 'sin_realizar', 'revision', 'borrador', 'cancelado', 'archivado'] as const
+const statusOptions = computed(() => [
+  { value: 'todos', label: t('common.all') },
+  ...ESTADOS.map(estado => ({ value: estado, label: t(`workshops.tabs.${estado}`) })),
+])
+const hayTalleres = computed(() => workshops.value.length > 0)
 
 function goToWorkshop(id: number) {
   navigateTo('/organizacion/workshops/' + id)

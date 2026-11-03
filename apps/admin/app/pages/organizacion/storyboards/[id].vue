@@ -14,6 +14,40 @@
     <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <!-- Columna principal -->
       <div class="space-y-6 lg:col-span-2">
+        <!-- Vista previa: el storyboard en el runner de Player en modo `preview` (docs/runner.md): solo
+             el escenario, como lo ve el grupo, sin los controles del taller (salir, tiempo, puntos,
+             ajustes, guía). Conduce Admin, al pie: la escena, reiniciar, anterior y siguiente.
+             «Pantalla Completa» pone el panel entero, con esos controles, a pantalla completa. -->
+        <section
+          v-if="urlVista"
+          ref="vista"
+          :class="['ui-panel scroll-mt-20 overflow-hidden', pantallaCompleta && 'flex flex-col']"
+        >
+          <div class="ui-panel-header">
+            <div class="min-w-0">
+              <h3 class="ui-title">{{ t('storyboards.preview') }}</h3>
+              <p class="ui-caption mt-0.5">{{ t('storyboards.previewText') }}</p>
+            </div>
+            <UiButton tone="neutral" size="sm" :icon="pantallaCompleta ? 'compress' : 'expand'" @click="alternarPantallaCompleta">
+              {{ pantallaCompleta ? t('storyboards.exitFullScreen') : t('storyboards.fullScreen') }}
+            </UiButton>
+          </div>
+          <div :class="pantallaCompleta ? 'min-h-0 flex-1' : 'aspect-video'">
+            <UiRunner ref="runner" :src="urlVista" :title="storyboard.title" @ready="(e) => total = e.escenas" @scene="(e) => actual = e.indice" />
+          </div>
+          <!-- El pie en blanco, como la cabecera: el gris es el escenario del runner -->
+          <div class="ui-panel-footer flex flex-wrap items-center gap-3 bg-surface">
+            <p class="min-w-0 flex-1 truncate text-body font-bold text-muted">
+              <template v-if="total">
+                <span class="font-extrabold text-ink">{{ t('storyboards.sceneOf', { n: actual + 1, total }) }}</span><span v-if="tituloActual"> · {{ tituloActual }}</span>
+              </template>
+            </p>
+            <UiButton tone="neutral" icon="retry" :disabled="!total" @click="runner?.reiniciar()">{{ t('storyboards.restartScene') }}</UiButton>
+            <UiButton variant="outline" icon="arrow-left" :disabled="!total || actual === 0" @click="runner?.ir(actual - 1)">{{ t('common.previous') }}</UiButton>
+            <UiButton variant="outline" icon-right="arrow-right" :disabled="!total || actual >= total - 1" @click="runner?.ir(actual + 1)">{{ t('common.next') }}</UiButton>
+          </div>
+        </section>
+
         <!-- Descripción -->
         <section class="ui-panel p-6">
           <h3 class="ui-title mb-3">{{ t('storyboards.description') }}</h3>
@@ -39,22 +73,35 @@
 
           <div class="divide-y divide-line">
             <div v-for="(scene, index) in storyboard.scenes" :key="scene.id">
-              <!-- Fila de escena -->
-              <button
-                type="button"
-                class="flex w-full items-start gap-3 px-6 py-4 text-left transition-colors hover:bg-canvas"
-                @click="toggle(scene.id)"
-              >
-                <span class="ui-symbol ui-symbol-sm">{{ index + 1 }}</span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-body font-extrabold text-ink">
-                    {{ scene.title }}<span v-if="scene.subtitle" class="font-semibold text-muted">: {{ scene.subtitle }}</span>
-                  </p>
-                  <p v-if="scene.verb" class="eyebrow mt-1">{{ scene.verb }}</p>
-                  <p v-if="scene.description" class="ui-caption mt-1">{{ scene.description }}</p>
-                </div>
-                <UiIcon name="chevron-down" :class="['mt-1 size-4 shrink-0 text-subtle transition-transform duration-200', expandedSet.has(scene.id) ? 'rotate-180' : '']" />
-              </button>
+              <!-- Fila de escena: abre su guía; «Ver escena» la pone en la vista previa -->
+              <div class="flex items-start">
+                <button
+                  type="button"
+                  class="flex min-w-0 flex-1 items-start gap-3 py-4 pl-6 text-left transition-colors hover:bg-canvas"
+                  @click="toggle(scene.id)"
+                >
+                  <span class="ui-symbol ui-symbol-sm">{{ index + 1 }}</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-body font-extrabold text-ink">
+                      {{ scene.title }}<span v-if="scene.subtitle" class="font-semibold text-muted">: {{ scene.subtitle }}</span>
+                    </p>
+                    <p v-if="scene.verb" class="eyebrow mt-1">{{ scene.verb }}</p>
+                    <p v-if="scene.description" class="ui-caption mt-1">{{ scene.description }}</p>
+                  </div>
+                  <UiIcon name="chevron-down" :class="['mr-3 mt-1 size-4 shrink-0 text-subtle transition-transform duration-200', expandedSet.has(scene.id) ? 'rotate-180' : '']" />
+                </button>
+                <UiButton
+                  v-if="urlVista && scene.carpeta"
+                  tone="neutral"
+                  size="sm"
+                  icon="play"
+                  icon-only
+                  class="my-3 mr-6"
+                  :label="t('storyboards.viewScene')"
+                  :title="t('storyboards.viewScene')"
+                  @click="verEscena(scene.carpeta)"
+                />
+              </div>
 
               <!-- Guía pedagógica expandida (secciones reales de la escena) -->
               <div v-if="expandedSet.has(scene.id)" class="px-6 pb-5 pl-16">
@@ -137,21 +184,56 @@
 </template>
 
 <script setup lang="ts">
+import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
+import UiRunner from '@playhub/ui/app/components/ui/UiRunner.vue'
+import { urlDePlayer } from '~/composables/useStoryboards'
 import type { Storyboard, StoryboardScene } from '~/composables/useStoryboards'
 
 definePageMeta({ layout: 'dashboard' })
 
-const { t } = useT()
+const { t, locale } = useT()
 const route = useRoute()
 const { fetchDetalle } = useStoryboards()
 
 const storyboard = ref<Storyboard | null>(null)
 const loading = ref(true)
 
+const playerUrl = ref<string | null>(null)
+
 onMounted(async () => {
-  storyboard.value = await fetchDetalle(Number(route.params.id))
+  ;[storyboard.value, playerUrl.value] = await Promise.all([fetchDetalle(Number(route.params.id)), urlDePlayer()])
   loading.value = false
 })
+
+// La vista previa: el runner en modo `preview`, en el idioma de la interfaz si el storyboard lo
+// tiene; si no, en el primero de los suyos. Sin URL de Player (demo) o sin área, no se muestra.
+// Admin conduce: el runner dice cuántas escenas tiene (`listo`) y en cuál está (`escena`).
+const vista = ref<HTMLElement | null>(null)
+const runner = ref<InstanceType<typeof UiRunner> | null>(null)
+const total = ref(0)
+const actual = ref(0)
+const urlVista = computed(() => {
+  const sb = storyboard.value
+  if (!playerUrl.value || !sb?.area) return null
+  const idioma = sb.languages.includes(locale.value) ? locale.value : sb.languages[0]
+  return runnerUrl(playerUrl.value, { eje: sb.area, slug: sb.slug, modo: 'preview', idioma })
+})
+const tituloActual = computed(() => storyboard.value?.scenes[actual.value]?.title ?? '')
+
+function verEscena(carpeta: string) {
+  runner.value?.ir(carpeta)
+  vista.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Pantalla completa: el panel entero, con los controles de Admin.
+const pantallaCompleta = ref(false)
+function alternarPantallaCompleta() {
+  if (document.fullscreenElement) void document.exitFullscreen()
+  else void vista.value?.requestFullscreen()
+}
+const alCambiarPantalla = () => (pantallaCompleta.value = document.fullscreenElement === vista.value)
+onMounted(() => document.addEventListener('fullscreenchange', alCambiarPantalla))
+onBeforeUnmount(() => document.removeEventListener('fullscreenchange', alCambiarPantalla))
 
 // Pertenencia sin estado: público es el catálogo base (neutro); personalizado, informativo (cielo).
 const TONO_PERTENENCIA = { publico: 'neutral', personalizado: 'sky' } as const
