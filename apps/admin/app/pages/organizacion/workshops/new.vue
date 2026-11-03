@@ -14,42 +14,36 @@
       <WizardStepStoryboard v-if="currentStep === 1" key="step-1" />
       <WizardStepEducator v-else-if="currentStep === 2" key="step-2" />
       <WizardStepSchedule v-else-if="currentStep === 3" key="step-3" />
-      <WizardStepReview v-else-if="currentStep === 4" key="step-4" />
+      <WizardStepGroup v-else-if="currentStep === 4" key="step-4" />
+      <WizardStepReview v-else-if="currentStep === 5" key="step-5" />
     </Transition>
 
-    <!-- Navegación: «Siguiente / Guardar» es la acción principal de la vista -->
+    <!-- Navegación: «Siguiente» es la acción principal de cada paso. En el resumen se elige cómo se
+         guarda: «Publicar» (la principal), o como borrador o en revisión. -->
     <div
       v-if="!isSuccess"
       :class="[
-        'mt-6 flex items-center justify-between',
-        currentStep === 4 ? 'max-w-[760px] mx-auto' : '',
+        'mt-6 flex flex-wrap items-center justify-between gap-3',
+        currentStep === 5 ? 'max-w-[760px] mx-auto' : '',
       ]"
     >
       <UiButton variant="outline" @click="currentStep > 1 ? prevStep() : $router.back()">
         {{ currentStep > 1 ? t('wizard.prev') : t('common.cancel') }}
       </UiButton>
 
-      <div class="flex flex-wrap items-center justify-end gap-3">
-        <!-- Secundaria, solo si el taller va en una jornada: guarda y vuelve a empezar con ella -->
-        <UiButton
-          v-if="currentStep === 4 && jornadaEfectiva"
-          variant="outline"
-          icon="plus"
-          :disabled="isSubmitting"
-          :loading="isSubmitting && guardando === 'otro'"
-          @click="guardar('otro')"
-        >
-          {{ t('wizard.saveAndAnother') }}
-        </UiButton>
-        <UiButton :disabled="!canProceed || (isSubmitting && guardando === 'otro')" :loading="isSubmitting && guardando !== 'otro'" @click="onNext">
-          {{ currentStep < 4 ? t('wizard.next') : t('wizard.save') }}
-        </UiButton>
+      <div v-if="currentStep === 5" class="flex flex-wrap items-center justify-end gap-3">
+        <UiButton variant="outline" :disabled="isSubmitting" :loading="guardando === 'BORRADOR'" @click="guardar('BORRADOR')">{{ t('wizard.saveDraft') }}</UiButton>
+        <UiButton variant="outline" :disabled="isSubmitting" :loading="guardando === 'EN_REVISION'" @click="guardar('EN_REVISION')">{{ t('wizard.sendReview') }}</UiButton>
+        <UiButton icon="check" :disabled="isSubmitting" :loading="guardando === 'PUBLICADO'" @click="guardar('PUBLICADO')">{{ t('wizard.publish') }}</UiButton>
       </div>
+      <UiButton v-else :disabled="!canProceed" @click="nextStep">{{ t('wizard.next') }}</UiButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { WizardEstado } from '~/composables/useWorkshopWizard'
+
 definePageMeta({ layout: 'dashboard' })
 
 const { t } = useT()
@@ -60,7 +54,7 @@ const {
   canProceed,
   isSubmitting,
   isSuccess,
-  jornadaEfectiva,
+  state,
   goToStep,
   nextStep,
   prevStep,
@@ -72,28 +66,15 @@ const {
 // Los vigilantes de la jornada del asistente viven con la página.
 vigilarJornada()
 
-const guardando = ref<'uno' | 'otro' | null>(null)
-
-function onNext() {
-  if (currentStep.value < 4) nextStep()
-  else guardar('uno')
-}
-
-// «Guardar» termina en el aviso de éxito. «Crear y agregar otro a esta jornada» vuelve a empezar el
-// asistente con la jornada y la fecha del taller recién creado.
-async function guardar(modo: 'uno' | 'otro') {
-  guardando.value = modo
-  const nombre = jornadaEfectiva.value?.nombre ?? ''
+// Cómo se guarda, desde el resumen: publicado, en revisión o borrador. Termina en el aviso de
+// éxito, que ofrece agregar otro taller a la misma jornada.
+const guardando = ref<WizardEstado | null>(null)
+async function guardar(estado: WizardEstado) {
+  state.value.estado = estado
+  guardando.value = estado
   const r = await submit()
   guardando.value = null
-  if (!r) return
-  if (modo === 'otro' && r.jornadaId) {
-    await navigateTo({ path: '/organizacion/workshops/new', query: { jornada: String(r.jornadaId), fecha: r.fecha } })
-    resetWizard()
-    useToast().toast.success(t('wizard.createdNext', { nombre }))
-    return
-  }
-  isSuccess.value = true
+  if (r) isSuccess.value = true
 }
 
 onMounted(() => {

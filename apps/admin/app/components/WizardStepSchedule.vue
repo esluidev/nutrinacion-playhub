@@ -1,143 +1,70 @@
 <template>
-  <div class="ui-panel p-6">
-    <!-- Primero, si es parte de una jornada: suelto, una en curso o una nueva (se crea al guardar) -->
-    <JornadaSelector
-      id="wizard-jornada"
-      v-model="state.jornada"
-      :jornadas="jornadas"
-      :fecha="state.date"
-      class="mb-6 border-b border-line pb-6"
-    />
+  <!-- Paso «Cuándo y dónde»: primero si el taller va suelto o dentro de una jornada (JornadaSelector,
+       con la jornada en su propio diálogo, nunca mezclada con el taller); después su día, su hora y
+       su lugar. Dentro de una jornada, el día se elige entre los suyos y el lugar es el de la
+       jornada más un detalle opcional. El título, el grupo y la modalidad van en el paso siguiente. -->
+  <div class="ui-panel">
+    <div class="ui-panel-body">
+      <JornadaSelector id="wizard-jornada" v-model="state.jornada" :jornadas="jornadas" :fecha="state.date" />
 
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-      <div class="sm:col-span-2">
+      <div v-if="state.jornada.modo === 'suelto' || jornadaEfectiva" class="mt-6 grid grid-cols-1 gap-5 border-t border-line pt-6 sm:grid-cols-2">
+        <!-- Dentro de una jornada, el día es uno de los suyos. Una en curso se puede ampliar con
+             otro día; una nueva cambia sus días en su diálogo. -->
+        <div v-if="dias" class="sm:col-span-2">
+          <p class="field-label">{{ t('wizard.fDay') }} <span class="text-danger" aria-hidden="true">*</span></p>
+          <UiChips v-model="state.date" :items="dias" />
+          <p class="ui-caption mt-2">
+            <template v-if="selectedJornada">
+              <button type="button" class="ui-link" data-tone="sky" @click="otroDia = !otroDia">{{ t('wizard.otherDay') }}</button>
+            </template>
+            <template v-else>{{ t('wizard.otherDayNew') }}</template>
+          </p>
+        </div>
+
+        <!-- Suelto, su fecha. Dentro de una jornada larga (sus días no caben en botones) o para
+             otro día de una en curso, un campo de fecha. -->
         <UiInput
-          id="wizard-title"
-          v-model="state.title"
-          :label="t('wizard.fTitle')"
-          :placeholder="t('wizard.fTitlePh')"
+          v-if="!dias || otroDia"
+          id="wizard-date"
+          v-model="state.date"
+          :label="dias ? t('wizard.fOtherDay') : t('wizard.fDate')"
+          type="date"
+          :min="dateMin"
+          :max="dateMax"
+          :hint="dateHint"
+          :error="dateFueraDeJornada ? t('wizard.fDateOutside') : undefined"
           required
+          @focusout="alSalirDeFecha"
         />
-      </div>
-
-      <!-- Con una jornada nueva, la fecha vive entre sus días (min/max). Con una en curso, otro día
-           se comprueba al salir del campo (o al seguir) y ofrece ampliarla. -->
-      <UiInput
-        id="wizard-date"
-        v-model="state.date"
-        :label="t('wizard.fDate')"
-        type="date"
-        :min="dateMin"
-        :max="dateMax"
-        :hint="dateHint"
-        :error="dateFueraDeJornada ? t('wizard.fDateOutside') : undefined"
-        required
-        @focusout="alSalirDeFecha"
-      />
-      <UiInput
-        id="wizard-time-start"
-        :model-value="state.timeStart"
-        :label="t('wizard.fStart')"
-        type="time"
-        :hint="duracionHint"
-        required
-        @update:model-value="onTimeStartChange($event)"
-      />
-
-      <!-- Suelto, el lugar. Dentro de una jornada, el lugar es el suyo (encima) y aquí va el detalle -->
-      <div v-if="jornadaEfectiva" class="sm:col-span-2">
-        <p class="mb-2 flex items-center gap-2 text-body font-semibold text-muted">
-          <UiIcon name="map-pin" class="size-4 shrink-0 text-subtle" />
-          {{ t('wizard.jornadaPlace') }}:
-          <span class="font-extrabold text-ink">{{ jornadaEfectiva.ubicacion || '—' }}</span>
-        </p>
         <UiInput
+          id="wizard-time-start"
+          :model-value="state.timeStart"
+          :label="t('wizard.fStart')"
+          type="time"
+          :hint="duracionHint"
+          required
+          @update:model-value="onTimeStartChange($event)"
+        />
+
+        <!-- Suelto, el lugar. Dentro de una jornada, el lugar es el suyo y aquí va el detalle. -->
+        <UiInput
+          v-if="jornadaEfectiva"
           id="wizard-location"
           v-model="state.location"
           :label="t('wizard.fLocationDetail')"
           :placeholder="t('wizard.fLocationDetailPh')"
-          :hint="lugarEfectivo ? t('wizard.fLocationEffective', { lugar: lugarEfectivo }) : undefined"
+          :hint="t('wizard.fLocationEffective', { lugar: lugarEfectivo })"
           optional
+          :class="dias && !otroDia ? '' : 'sm:col-span-2'"
         />
-      </div>
-      <UiInput
-        v-else
-        id="wizard-location"
-        v-model="state.location"
-        :label="t('wizard.fLocation')"
-        :placeholder="t('wizard.fLocationPh')"
-      />
-      <UiInput
-        id="wizard-group"
-        v-model="state.group"
-        :label="t('wizard.fGroup')"
-        :placeholder="t('wizard.fGroupPh')"
-        :hint="t('wizard.fGroupHint')"
-      />
-      <UiInput
-        id="wizard-capacity"
-        v-model="state.capacity"
-        :label="t('wizard.fCapacity')"
-        type="number"
-        placeholder="25"
-      />
-      <UiSelect
-        v-if="idiomas.length > 1"
-        v-model="state.language"
-        :options="idiomas"
-        :label="t('wizard.fLanguage')"
-      />
-      <UiTextarea
-        id="wizard-notes"
-        v-model="state.notes"
-        :label="t('wizard.fNotes')"
-        optional
-        :rows="3"
-        :placeholder="t('wizard.fNotesPh')"
-        class="sm:col-span-2"
-      />
-    </div>
-
-    <!-- Modalidad: opción seleccionable, en cielo -->
-    <div class="mt-6">
-      <p class="field-label">{{ t('wizard.modality') }}</p>
-      <div class="grid grid-cols-3 gap-3 sm:max-w-lg">
-        <button
-          v-for="mod in MODALIDADES"
-          :key="mod"
-          type="button"
-          data-tone="sky"
-          class="select-card items-start justify-start px-4 py-3 pr-10 text-left text-body font-extrabold text-ink"
-          :aria-pressed="state.modalidad === mod"
-          @click="state.modalidad = mod"
-        >
-          <span class="selected-mark"><UiIcon name="check" /></span>
-          {{ t(`workshops.modality.${mod}`) }}
-        </button>
-      </div>
-      <p class="ui-caption mt-2">{{ t(`workshops.modalityDesc.${state.modalidad}`) }}</p>
-    </div>
-
-    <!-- Estado del taller: la selección en cielo; la etiqueta, con el tono de ese estado -->
-    <div class="mt-6">
-      <p class="field-label">{{ t('wizard.state') }}</p>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button
-          v-for="es in estados"
-          :key="es.value"
-          type="button"
-          data-tone="sky"
-          class="select-card items-start justify-start gap-1.5 px-4 py-4 pr-10 text-left"
-          :aria-pressed="state.estado === es.value"
-          @click="state.estado = es.value"
-        >
-          <span class="selected-mark"><UiIcon name="check" /></span>
-          <span class="flex items-center gap-2">
-            <span class="text-body font-extrabold text-ink">{{ t(`wizard.states.${es.value}`) }}</span>
-            <UiBadge :tone="es.tone" class="font-mono">{{ es.value }}</UiBadge>
-          </span>
-          <span class="ui-caption">{{ t(`wizard.statesDesc.${es.value}`) }}</span>
-        </button>
+        <UiInput
+          v-else
+          id="wizard-location"
+          v-model="state.location"
+          :label="t('wizard.fLocation')"
+          :placeholder="t('wizard.fLocationPh')"
+          class="sm:col-span-2"
+        />
       </div>
     </div>
 
@@ -165,9 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
-import { MODALIDADES } from '~/composables/useWorkshops'
-import type { WizardEstado } from '~/composables/useWorkshopWizard'
+import { diasParaElegir } from '~/utils/jornadas'
 
 const { t, locale } = useT()
 const {
@@ -224,14 +149,18 @@ const duracionHint = computed(() =>
     : undefined,
 )
 
-// El idioma del contenido sale de los que declara el storyboard; con uno solo, no se pregunta.
-const idiomas = computed(() => (selectedStoryboard.value?.languages ?? [])
-  .map(l => ({ value: l, label: t(`lang.${l}`) === `lang.${l}` ? l.toUpperCase() : t(`lang.${l}`) })))
-
-// Tono del estado, el mismo de las sesiones: lo que nadie ve aún, neutro; publicado, en cielo (próximo).
-const estados: { value: WizardEstado, tone: UiTone }[] = [
-  { value: 'BORRADOR', tone: 'neutral' },
-  { value: 'EN_REVISION', tone: 'neutral' },
-  { value: 'PUBLICADO', tone: 'sky' },
-]
+// Los días de la jornada para elegir uno (null: suelto, sin jornada aún o demasiados días).
+const dias = computed(() => {
+  const j = jornadaEfectiva.value
+  if (!j?.fecha_inicio) return null
+  const lista = diasParaElegir(j, hoyLocal())
+  return lista?.map(d => ({ value: d, label: diaCorto(d) })) ?? null
+})
+// «mar 4 nov», en el idioma de la UI.
+function diaCorto(iso: string) {
+  return aFecha(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')
+}
+// «¿Otro día?» en una jornada en curso: un campo de fecha que, fuera de sus días, ofrece ampliarla.
+const otroDia = ref(false)
+watch(() => state.value.jornada.modo, () => { otroDia.value = false })
 </script>

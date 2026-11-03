@@ -3,7 +3,7 @@
 // de la vista de semana del planificador.
 import { describe, expect, it } from 'vitest'
 import {
-  agruparPorJornada, ampliarJornada, bandasSemana, diasDeJornada, jornadasDelDia, jornadasEnCurso,
+  agruparPorJornada, ampliarJornada, bandasSemana, diasDeJornada, diasParaElegir, jornadasDelDia, jornadasEnCurso,
   lugarDelTaller, rangoJornada, sumarDias,
 } from '~/utils/jornadas'
 
@@ -61,6 +61,22 @@ describe('ampliarJornada', () => {
   it('si el día ya cabe (o no hay día), se queda como está', () => {
     expect(ampliarJornada(SEMANA, '2026-11-11')).toEqual({ fecha_inicio: '2026-11-09', fecha_fin: '2026-11-13' })
     expect(ampliarJornada(SEMANA, '')).toEqual({ fecha_inicio: '2026-11-09', fecha_fin: '2026-11-13' })
+  })
+})
+
+describe('diasParaElegir', () => {
+  const j = { fecha_inicio: '2026-11-04', fecha_fin: '2026-11-08' }
+  it('todos sus días si aún no empieza', () => {
+    expect(diasParaElegir(j, '2026-11-01')).toEqual(['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])
+  })
+  it('desde hoy si ya empezó', () => {
+    expect(diasParaElegir(j, '2026-11-06')).toEqual(['2026-11-06', '2026-11-07', '2026-11-08'])
+  })
+  it('un solo día', () => {
+    expect(diasParaElegir({ fecha_inicio: '2026-11-04', fecha_fin: '2026-11-04' }, '2026-11-01')).toEqual(['2026-11-04'])
+  })
+  it('null si son demasiados para elegirlos uno a uno', () => {
+    expect(diasParaElegir({ fecha_inicio: '2026-11-01', fecha_fin: '2026-11-30' }, '2026-10-01')).toBeNull()
   })
 })
 

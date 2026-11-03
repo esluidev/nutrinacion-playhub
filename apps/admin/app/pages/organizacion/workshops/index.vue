@@ -18,13 +18,13 @@
       </div>
     </div>
 
-    <!-- Agrupados por jornada cuando la hay (cabecera con su nombre, su lugar y sus días); los sueltos al final.
+    <!-- Agrupados por jornada cuando la hay (cabecera con su nombre, su lugar y sus días); los independientes al final.
          Cada tarjeta lleva el tono de su sesión (hoy en sol, próxima en cielo, completada en lima…) -->
     <div v-if="paginatedWorkshops.length > 0" class="space-y-8">
       <section v-for="g in grupos" :key="g.jornada?.id ?? 'sueltos'">
         <header v-if="grupos.length > 1 || g.jornada" class="mb-3 flex flex-wrap items-center gap-2.5">
           <UiSymbol v-if="g.jornada" size="sm" icon="calendar" tone="lime" />
-          <h2 class="ui-title">{{ g.jornada?.nombre ?? t('workshops.noJornada') }}</h2>
+          <h2 class="ui-title">{{ g.jornada?.nombre ?? t('workshops.independientes') }}</h2>
           <span v-if="g.jornada" class="text-body font-bold text-muted">· {{ g.jornada.ubicacion }} · {{ rangoJornada(g.jornada, locale) }}</span>
           <span class="filter-count">{{ g.workshops.length }}</span>
         </header>

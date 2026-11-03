@@ -1,7 +1,7 @@
 <template>
   <!-- Los datos de una jornada: nombre, lugar (sus talleres lo heredan), los días (desde/hasta; uno
-       solo si no se dice hasta cuándo) y una descripción. Los usan la «Nueva jornada» del
-       JornadaSelector y la edición desde su panel (JornadaDialog). -->
+       solo si no se dice hasta cuándo) y una descripción. Los usa JornadaDialog: la «Nueva Jornada»
+       al programar un taller y la edición desde su panel. -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <UiInput :id="`${id}-nombre`" v-model="datos.nombre" :label="t('planner.jName')" :placeholder="t('planner.jNamePh')" required />
     <UiInput :id="`${id}-lugar`" v-model="datos.ubicacion" :label="t('planner.jLocation')" :placeholder="t('planner.jLocationPh')" :hint="t('planner.jLocationHint')" required />

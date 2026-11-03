@@ -13,8 +13,12 @@
         <h2 class="ui-title mb-2">{{ t('wizard.successTitle') }}</h2>
         <p class="ui-text mb-8">{{ t('wizard.successText') }}</p>
 
-        <div class="mx-auto flex max-w-md flex-col items-center justify-center gap-3 sm:flex-row">
-          <UiButton class="w-full sm:w-auto" @click="navigateTo('/organizacion/planner')">
+        <div class="mx-auto flex max-w-3xl flex-col flex-wrap items-center justify-center gap-3 sm:flex-row">
+          <!-- Con jornada, lo siguiente suele ser otro taller de la misma jornada -->
+          <UiButton v-if="ultimo?.jornadaId" icon="plus" class="w-full sm:w-auto" @click="agregarOtro">
+            {{ t('wizard.addAnother') }}
+          </UiButton>
+          <UiButton :variant="ultimo?.jornadaId ? 'outline' : 'primary'" class="w-full sm:w-auto" @click="navigateTo('/organizacion/planner')">
             {{ t('wizard.goPlanner') }}
           </UiButton>
           <UiButton variant="outline" class="w-full sm:w-auto" @click="navigateTo('/organizacion/workshops')">
@@ -27,13 +31,12 @@
     <!-- Resumen -->
     <div v-if="!isSuccess" class="max-w-[760px] mx-auto">
       <div class="ui-panel overflow-hidden">
-        <!-- Header: el estado con el tono de la sesión que se va a crear -->
+        <!-- Header: el taller por su título; cómo queda se elige al guardar -->
         <div class="ui-panel-header">
-          <div>
-            <h3 class="ui-title">{{ t('wizard.summaryTitle') }}</h3>
+          <div class="min-w-0">
+            <h3 class="ui-title truncate">{{ state.title }}</h3>
             <p class="ui-caption mt-0.5">{{ t('wizard.summaryText') }}</p>
           </div>
-          <UiBadge :tone="tone" dot>{{ t(`wizard.states.${state.estado}`) }}</UiBadge>
         </div>
 
         <!-- Storyboard: su símbolo con el tono de su área educativa -->
@@ -86,7 +89,7 @@
         <!-- Horario y ubicación: la hora con el tono de la sesión -->
         <div class="border-t border-line px-6 py-5">
           <div class="mb-3.5 flex items-center justify-between">
-            <span class="eyebrow">{{ t('wizard.schedule') }}</span>
+            <span class="eyebrow">{{ t('wizard.stepWhen') }}</span>
             <button type="button" class="ui-link text-caption" data-tone="sky" @click="goToStep(3)">{{ t('common.edit') }}</button>
           </div>
           <div class="flex flex-col gap-3">
@@ -124,7 +127,7 @@
           </div>
         </div>
 
-        <!-- Footer strip -->
+        <!-- El grupo y cómo se da, con su «Editar» (paso 4) -->
         <div class="ui-panel-footer flex flex-wrap items-center gap-x-7 gap-y-2">
           <div class="flex items-baseline gap-2">
             <span class="text-caption font-bold text-subtle">{{ t('wizard.modality') }}</span>
@@ -150,13 +153,14 @@
             <span class="text-caption font-bold text-subtle">{{ t('wizard.duration') }}</span>
             <span class="text-caption font-extrabold text-muted">{{ selectedStoryboard.duration }}</span>
           </div>
+          <button type="button" class="ui-link ml-auto text-caption" data-tone="sky" @click="goToStep(4)">{{ t('common.edit') }}</button>
         </div>
       </div>
 
-      <!-- Nota según estado: publicado es información de lo próximo (cielo); lo demás, neutro -->
-      <div class="alert mt-4" :data-tone="state.estado === 'PUBLICADO' ? 'sky' : 'neutral'">
+      <!-- Cómo se puede guardar: los botones de abajo -->
+      <div class="alert mt-4" data-tone="neutral">
         <UiIcon name="info" />
-        <p>{{ t(`wizard.note.${state.estado}`) }}</p>
+        <p>{{ t('wizard.saveNote') }}</p>
       </div>
     </div>
   </div>
@@ -165,18 +169,24 @@
 <script setup lang="ts">
 const { t, locale } = useT()
 const { getGroupMembers } = useEducators()
-const { state, selectedStoryboard, selectedEducators, selectedGroups, selectedGroupsMembers, jornadaEfectiva, lugarEfectivo, isSuccess, goToStep, formatDateLong } = useWorkshopWizard()
+const { state, selectedStoryboard, selectedEducators, selectedGroups, selectedGroupsMembers, jornadaEfectiva, lugarEfectivo, isSuccess, ultimo, goToStep, formatDateLong, resetWizard } = useWorkshopWizard()
+
+// Otro taller en la misma jornada: el asistente de nuevo, con la jornada y el día del recién creado.
+async function agregarOtro() {
+  const u = ultimo.value
+  if (!u?.jornadaId) return
+  await navigateTo({ path: '/organizacion/workshops/new', query: { jornada: String(u.jornadaId), fecha: u.fecha } })
+  resetWizard()
+}
 
 // Un grupo genera una asignación por cada miembro.
 const assignmentCount = computed(() =>
   state.value.educatorMode === 'group' ? selectedGroupsMembers.value.length : selectedEducators.value.length,
 )
 
-// Tono de la sesión que se va a crear, igual que en la lista y el planner: programada hoy → sol,
-// programada otro día → cielo, borrador → neutro.
-const tone = computed(() =>
-  sessionTone(state.value.estado === 'PUBLICADO' ? 'programado' : 'borrador', state.value.date),
-)
+// Tono de la hora, el de una sesión programada, igual que en la lista y el planner: hoy → sol,
+// otro día → cielo. Cómo queda (publicado, en revisión o borrador) se elige al guardar.
+const tone = computed(() => sessionTone('programado', state.value.date))
 </script>
 
 <style scoped>

@@ -31,12 +31,14 @@ export interface WizardState {
   ampliacion: DiasJornada | null
 }
 
-// El asistente de un taller nuevo. Entra con `?storyboard=`, `?fecha=` (desde el planificador) o
-// `?jornada=<id>&fecha=` (desde el panel de la jornada o «Crear y agregar otro»). En «Programación»
-// se responde «¿Es parte de una jornada?»: suelto, una en curso o una nueva (se crea al guardar,
-// antes del taller). Dentro de una jornada, el lugar del taller es el detalle; la fecha de una
-// nueva vive en sus días, y la de una en curso, si se sale, ofrece ampliarla. No se propone
-// jornada por la fecha: dos jornadas la misma semana en lugares distintos lo harían equivocarse.
+// El asistente de un taller nuevo, en cinco pasos: storyboard, educadores, cuándo y dónde, grupo y
+// resumen (donde se elige cómo se guarda: publicado, en revisión o borrador). Entra con
+// `?storyboard=`, `?fecha=` (desde el planificador) o `?jornada=<id>&fecha=` (desde el panel de la
+// jornada o «Agregar otro taller a esta jornada»). En «Cuándo y dónde» va suelto o dentro de una
+// jornada: una en curso o una nueva (se escribe en su diálogo y se crea al guardar, antes del
+// taller). Dentro de una jornada, el día es uno de los suyos y el lugar del taller es el detalle; una
+// en curso se puede ampliar con otro día. No se propone jornada por la fecha: dos jornadas la misma
+// semana en lugares distintos lo harían equivocarse.
 export function useWorkshopWizard() {
   const route = useRoute()
   const { t, locale } = useT()
@@ -48,6 +50,8 @@ export function useWorkshopWizard() {
   const direction = useState<'forward' | 'backward'>('wizard-direction', () => 'forward')
   const isSubmitting = useState('wizard-submitting', () => false)
   const isSuccess = useState('wizard-success', () => false)
+  // Lo último guardado: su jornada y su fecha, para «Agregar otro taller a esta jornada».
+  const ultimo = useState<{ jornadaId: number | null, fecha: string } | null>('wizard-ultimo', () => null)
 
   // Las jornadas de la organización, para elegir una y limitar la fecha.
   const jornadas = useState<JornadaFila[]>('wizard-jornadas', () => [])
@@ -295,9 +299,9 @@ export function useWorkshopWizard() {
       case 2: return state.value.educatorMode === 'group'
         ? selectedGroupsMembers.value.length > 0
         : state.value.educatorIds.length > 0
-      case 3: return state.value.title.trim() !== '' && state.value.date !== '' && state.value.timeStart !== ''
-        && jornadaLista.value && !dateFueraDeJornada.value
-      case 4: return true
+      case 3: return state.value.date !== '' && state.value.timeStart !== '' && jornadaLista.value && !dateFueraDeJornada.value
+      case 4: return state.value.title.trim() !== ''
+      case 5: return true
       default: return false
     }
   })
@@ -305,8 +309,9 @@ export function useWorkshopWizard() {
   const steps = computed(() => [
     { id: 1, label: t('wizard.stepStoryboard') },
     { id: 2, label: t('wizard.stepEducators') },
-    { id: 3, label: t('wizard.stepDetails') },
-    { id: 4, label: t('wizard.stepSummary') },
+    { id: 3, label: t('wizard.stepWhen') },
+    { id: 4, label: t('wizard.stepGroup') },
+    { id: 5, label: t('wizard.stepSummary') },
   ])
 
   function goToStep(step: number) {
@@ -322,7 +327,7 @@ export function useWorkshopWizard() {
   }
 
   function nextStep() {
-    if (canProceed.value && currentStep.value < 4) {
+    if (canProceed.value && currentStep.value < 5) {
       if (currentStep.value === 3 && !comprobarFecha()) return
       direction.value = 'forward'
       currentStep.value++
@@ -412,7 +417,8 @@ export function useWorkshopWizard() {
       return null
     }
     isSubmitting.value = false
-    return { jornadaId, fecha: state.value.date }
+    ultimo.value = { jornadaId, fecha: state.value.date }
+    return ultimo.value
   }
 
   // Al abrir el asistente se vuelven a pedir las jornadas: una creada o ampliada en esta misma
@@ -423,6 +429,7 @@ export function useWorkshopWizard() {
     direction.value = 'forward'
     isSubmitting.value = false
     isSuccess.value = false
+    ultimo.value = null
     ampliarPendiente.value = null
     fechaAceptada.value = ''
     jornadas.value = []
@@ -445,6 +452,7 @@ export function useWorkshopWizard() {
     steps,
     isSubmitting,
     isSuccess,
+    ultimo,
     hasPreselectedStoryboard,
     hasPreselectedDate,
     jornadas,

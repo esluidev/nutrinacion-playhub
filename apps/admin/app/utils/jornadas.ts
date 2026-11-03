@@ -36,6 +36,18 @@ export function diasDeJornada(j: Pick<JornadaRango, 'fecha_inicio' | 'fecha_fin'
   return Math.round((aFecha(j.fecha_fin).getTime() - aFecha(j.fecha_inicio).getTime()) / 86_400_000) + 1
 }
 
+/**
+ * Los días de la jornada en los que se puede programar un taller, para elegirlos uno a uno: desde
+ * hoy si la jornada ya empezó (todos si aún no), hasta su fin. Con más de `max` días, null: se elige
+ * con un campo de fecha.
+ */
+export function diasParaElegir(j: Pick<JornadaRango, 'fecha_inicio' | 'fecha_fin'>, hoy: string, max = 14): string[] | null {
+  const desde = hoy > j.fecha_inicio && hoy <= j.fecha_fin ? hoy : j.fecha_inicio
+  const n = diasDeJornada({ fecha_inicio: desde, fecha_fin: j.fecha_fin })
+  if (n < 1 || n > max) return null
+  return Array.from({ length: n }, (_, i) => sumarDias(desde, i))
+}
+
 /** Sus días como texto: «16 nov 2026» si dura uno; «9 nov 2026 – 13 nov 2026» si dura varios. */
 export function rangoJornada(j: Pick<JornadaRango, 'fecha_inicio' | 'fecha_fin'>, locale: string): string {
   return j.fecha_inicio === j.fecha_fin
