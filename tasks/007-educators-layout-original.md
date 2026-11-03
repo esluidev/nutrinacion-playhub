@@ -1,6 +1,6 @@
 ---
 id: 007
-estado: revision
+estado: finalizada
 prioridad: media
 creada: 2026-10-14
 ---
@@ -36,7 +36,7 @@ Recuperar la estructura del original con las piezas del kit; ver el log.
 
 ## Pendientes y siguiente paso
 
-Aceptación de Luis. Fuera: el resumen de puntos del original (la constitución no admite puntos como evidencia).
+Finalizada el 2026-11-03 por Luis. Nada abierto. La vista Día como agenda (`6b19768`) está registrada en la tarea 010.
 
 ## Log
 
@@ -125,3 +125,10 @@ Aceptación de Luis. Fuera: el resumen de puntos del original (la constitución 
 - 2026-11-03 — Luis: «por qué razón el header de la aplicación de los educadores es tan distinto al del admin, es más grande, los botones también son distintos y hasta el menú de perfil».
   - Era la densidad: Educators es `touch` (controles de 48 + 4) y su cabecera la heredaba, sin la altura fija de la de Admin. Ahora la cabecera va en densidad `compact` y mide 60 (h-15), como en Admin: el botón de inicio y el menú de la cuenta, del mismo tamaño (40, el mínimo táctil de Educators). El comportamiento táctil del kit (sin zoom por doble toque ni selección) se mantiene: lo da el `html` en `touch`. Anotado en `DESIGN.md` («Estructura»: la cabecera es la misma en las tres apps).
   - Educators: check-ui **aprobado**. Navegador a 1440 y 375 px: la cabecera mide 61 con el borde, como en Admin.
+- 2026-11-03 15:05 — Commits autorizados por Luis y subidos a `master`, con `./scripts/verify.sh` **aprobado** antes de cada uno:
+  - `dc37dc4` (09:47): la cabecera con migas y la vista Día delante de Semana y Mes.
+  - `5a62e24` (11:22): la guía del educador trae el orden y el título de cada escena (migración 0015).
+  - `3ea5bef` (11:22): la ficha muestra la guía, los cards con encabezado y la cabecera igual que la de Admin.
+  - La vista Día como agenda (`TallerFila`) y el título del taller (0016) están en el log de la [tarea 010](010-pendientes-plataforma.md): `5699751` y `6b19768` (14:55).
+  - Las migraciones 0013–0016 solo están aplicadas en local; en la nube, cuando Luis lo autorice.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

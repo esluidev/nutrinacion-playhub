@@ -1,6 +1,6 @@
 ---
 id: 003
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -55,7 +55,7 @@ Reconstruir el runner de Player sobre el player de referencia y llevar su gesti�
 
 ## Pendientes y siguiente paso
 
-Técnicamente cerrada (typecheck, tests y build en `verify.sh`). Queda QA humano: el runner en modo casa y a tamaño de tableta; la gestión de Player con una sesión real de Supabase (desde este entorno no hay acceso), y la aceptación de Luis.
+Finalizada el 2026-11-03 por Luis. El QA del modo casa queda fuera del alcance (decisión 011: no hay app del hogar). La prueba a tamaño de tableta y en dispositivos pasa a la [tarea 013](013-runner-en-el-aula.md).
 
 ## Log
 - 2026-10-14 — Player reconstruido:
@@ -84,3 +84,4 @@ Técnicamente cerrada (typecheck, tests y build en `verify.sh`). Queda QA humano
   - `?taller=<id>` en el runner. Al terminar en modo educador se va a `NUXT_PUBLIC_EDUCATORS_URL/talleres/<id>/cierre`.
   - El id se valida (`utils/alTerminar.ts`, 3 tests) para no abrir una redirección arbitraria desde una ruta pública.
   - «Salir» conserva su comportamiento (vuelve atrás).
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

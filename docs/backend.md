@@ -50,7 +50,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 ### Lo que no está en la base
 
 - **El contenido del juego:** escenas, narración, consignas, feedback de las escenas, datos, Rive, SVG y efectos viven en los JSON del storyboard, en el build de Player.
-- **Las voces:** bucket `narracion`, de lectura pública, previsto (tarea 009); el runner todavía carga las del build.
+- **Las voces:** bucket `narracion`, de lectura pública, previsto (tarea 013); el runner todavía carga las del build.
 - **Personas:** ni participantes ni familias ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)). Un taller dice a qué grupo atiende (`grupo_asistente`, texto) y cuántos asistentes espera.
 
 ### Reglas del modelo

@@ -1,6 +1,6 @@
 ---
 id: 009
-estado: haciendo
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -302,7 +302,7 @@ La primera apertura descarga ≈ 1,1 MB más el contenido del storyboard (2–4 
 
 ## Pendientes y siguiente paso
 
-Ver «Pendiente» en «Decisión y avance». Siguiente paso: la prueba en iPad y Android con Educators incrustando Player en la red local. Después, el modo sin conexión (`preparar`) y Admin «Probar».
+Finalizada el 2026-11-03 por Luis. De «Pendiente»: la prueba en iPad y Android, el modo sin conexión, las voces en el bucket y el «Probar» de Platform pasan a la [tarea 013](013-runner-en-el-aula.md). El despliegue, a la [tarea 012](012-puesta-en-marcha-en-la-nube.md).
 
 ## Log
 
@@ -335,3 +335,5 @@ Ver «Pendiente» en «Decisión y avance». Siguiente paso: la prueba en iPad y
   - Navegador, contra los servidores que Luis levantó a mano: `/workshops/t-101/jugar` (runner `ready`) → «Terminar» → `/workshops/t-101/cierre`.
   - Typecheck y 13 tests de Educators.
   - check-ui y check-context en verde.
+- 2026-11-03 15:05 — Avance parcial de «Admin "Probar" con `UiRunner`»: el detalle del storyboard de la organización ya incrusta el runner en el modo `preview` del contrato (`3046d9a`, `3ebd861`). Admin lo conduce con `ir` y `reiniciar` desde el pie del panel, sin la guía. El «Probar» de cada escena en Platform sigue abriendo otra pestaña. Lo demás de «Pendiente» sigue igual.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

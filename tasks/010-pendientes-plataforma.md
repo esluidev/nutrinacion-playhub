@@ -1,6 +1,6 @@
 ---
 id: 010
-estado: backlog
+estado: finalizada
 prioridad: alta
 creada: 2026-10-28
 ---
@@ -56,14 +56,14 @@ Código contrastado con la base el 2026-10-28 (Admin; Player y Educators; base, 
 | A4 | Educador: no se edita (nombre, correo, teléfono) ni se da de baja, aunque la base lo permite (`deleted_at`). No hay lista por organización, solo por comunidad | `useEducators.ts:92,201`, `LayoutSidebar.vue:126-132`, `0005_rls.sql:268` | **Hecho el 2026-10-28** (editar y dar de baja desde la tarjeta; «Acceso y PIN» explica que el PIN se cambia generando otro código). Con la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md) la lista ya es de la organización: **cerrado** |
 | A5 | Un taller en modo grupo acepta un grupo vacío y se crea sin educadores; en modo individual, sin educadores no hay estado vacío. Los miembros del grupo se buscan por nombre, no por id | `useWorkshopWizard.ts:138,184`, `WizardStepEducator.vue:7-26`, `useEducators.ts:170-172` | **Hecho el 2026-10-28** (tarea 011): el grupo necesita al menos un educador activo; miembros por id |
 | A6 | En el detalle de un taller un grupo no se puede asignar: solo educadores de uno en uno (el grupo, solo al crearlo) | `useWorkshops.ts:309-315,380-395`, `workshops/[id].vue:243-256` | **Hecho el 2026-10-28** (tarea 011): «Asignar un grupo entero» en el detalle |
-| A7 | «Ver guía» en Educators lleva al detalle del taller, que no muestra la guía: solo los pasos «antes» y un texto fijo de materiales pendientes. `taller.antes2` promete «el código para unirse», que no existe | `TallerAcciones.vue:23`, `workshops/[id]/index.vue:46-69`, `i18n/messages.ts:70,180` | Mostrar ahí la guía de `educador_guia`; quitar la promesa del código |
+| A7 | «Ver guía» en Educators lleva al detalle del taller, que no muestra la guía: solo los pasos «antes» y un texto fijo de materiales pendientes. `taller.antes2` promete «el código para unirse», que no existe | `TallerAcciones.vue:23`, `workshops/[id]/index.vue:46-69`, `i18n/messages.ts:70,180` | **Hecho el 2026-11-03** (`5a62e24`, `3ea5bef`): la ficha muestra la guía escena por escena (0015) y ya no promete el código |
 | A8 | Un taller pasado sin cierre solo llega al feedback repitiendo el runner hasta «Terminar»; un cierre guardado no se puede corregir desde la vista | `TallerAcciones.vue:20-24`, `workshops/[id]/index.vue:32-44` | Acción «Cerrar taller» y «Corregir cierre» |
 | A9 | Un storyboard que está en la base pero no en el build de Player no aparece en su gestión: no se puede archivar ni cambiar su publicación. Hoy pasa con «El pan» y «La soda» del seed | `useCatalogoBase.ts:65` | **Hecho el 2026-10-28** (tarea 011, Player): sección «En la base, sin JSON en este build» con archivar |
 ### B. Admin: incompleto o engañoso
 
 | # | Qué pasa | Dónde | Propuesta |
 |---|---|---|---|
-| B1 | Temarios: la descripción solo se edita en español (al guardar se pierde la inglesa); nacen `PUBLICADO` y no se archivan. Publicaciones: no se edita `disponible_desde` | `ContenidoCasa.vue:206,227`, `usePublicaciones.ts:108,129-150` | Dos idiomas, archivar y editar la fecha |
+| B1 | Temarios: la descripción solo se edita en español (al guardar se pierde la inglesa); nacen `PUBLICADO` y no se archivan. Publicaciones: no se edita `disponible_desde` | `ContenidoCasa.vue:206,227`, `usePublicaciones.ts:108,129-150` | **Ya no aplica** desde la [decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md): los temarios salieron con el bloque del hogar y Admin no los tiene |
 | B2 | Desde la organización no hay camino a la operación de una comunidad (educadores, grupos, talleres): se entra haciendo clic en la fila, sin botón, y el inicio de una comunidad nueva no orienta | `comunidades/index.vue:26,163-166`, `dashboard/index.vue:320-341` | **Hecho el 2026-10-28** (tarea 011): ya no hay comunidades; el inicio de la organización trae primeros pasos |
 | B3 | Buscador «⌘K» de la cabecera: un `div` sin handler ni atajo (ya en la tarea 008) | `LayoutHeader.vue:37-41` | Implementar o quitar |
 | B4 | Vistas en español fijo fuera del i18n (ya en la tarea 008): inicio de comunidad, talleres (lista, detalle, nuevo), educadores (las tres), colaboradores (las dos), storyboards de comunidad, el planner y el asistente (5 componentes), y etiquetas visibles en `useWorkshops`, `useWorkshopWizard`, `useEducators`, `useColaboradores`, `useOrganizacion` y `usePlatform` | `apps/admin/app/**` | **Parcial el 2026-10-28** (tarea 011): las vistas movidas a la organización y el planificador pasaron a i18n; revisar el resto en la tarea 008 |
@@ -123,7 +123,14 @@ Código contrastado con la base el 2026-10-28 (Admin; Player y Educators; base, 
 
 ## Pendientes y siguiente paso
 
-Priorizar con Luis al terminar su QA manual. Propuesta de orden: A1 y A2 primero (sin ellos el QA de colaboradores no puede seguir), después A3–A9, y las decisiones (hallazgo 1, C3, E3, E5, F1) en una sesión de producto.
+Finalizada el 2026-11-03 por Luis. Lo abierto se reparte así:
+
+- **[tarea 012](012-puesta-en-marcha-en-la-nube.md):** F1–F4.
+- **[tarea 013](013-runner-en-el-aula.md):** C2, C3, C6 y C9.
+- **[tarea 014](014-guia-completa-para-el-educador.md):** C1, C4, C5, E5 y el hallazgo 1.
+- **[tarea 015](015-pendientes-de-admin-y-educators.md):** A8, B3, B4, D1 y F6.
+
+Quedan fuera del alcance por la decisión 011: E1–E3 y C7 (la app del hogar). El hallazgo 2 (crear un grupo) se resolvió al quitar las comunidades.
 
 ## Log
 
@@ -234,3 +241,12 @@ Priorizar con Luis al terminar su QA manual. Propuesta de orden: A1 y A2 primero
   - La columna principal es una agenda: una fila por taller en orden de hora (`TallerFila`, el patrón de «Próximos talleres» en Admin). Lleva el bloque de la hora en el tono de la sesión, el título del taller, «El huevo · 4 escenas · 30 min», el grupo y el lugar, y a la vista «Iniciar taller» y «Ver guía». Solo el primero de hoy lleva lima: una acción principal por vista. Tocar la fila abre la ficha; si la fila es estrecha (consulta de contenedor), las acciones bajan. «Falta el cierre» usa la misma fila, con el día en el bloque. «Próximos», Semana y Mes siguen con su tarjeta.
   - 0016: `educador_workshops` trae `titulo` (el del taller, o null), con su test pgTAP. Educators nombra el taller por su título en la agenda, la tarjeta, el mes, la ventana, la ficha, las migas y el runner; la ficha muestra el storyboard en sus datos. Aplicada en local; en la nube, cuando Luis lo diga.
   - Navegador a 1440 × 900, 1024 × 768, 768 × 1024 y 375 × 812 con una educadora y talleres temporales (ya borrados): hoy con título propio y sin él, uno en una jornada, un cancelado, uno sin cierre de ayer y uno de mañana; la ficha con el título del taller.
+- 2026-11-03 15:05 — Commits autorizados por Luis y subidos a `master`, con `./scripts/verify.sh` **aprobado** antes de cada uno:
+  - `a23afed` (07:56): los filtros de Storyboards en desplegables.
+  - `3046d9a` y `3ebd861` (11:22): el modo `preview` del runner y la vista previa del storyboard en Admin; el estado de Talleres en desplegable.
+  - `4b224fd` y `ea7ab4f` (14:20): las pestañas `fit` del kit no se salen de su sitio; el asistente para programar un taller en cinco pasos, con «Independiente | Parte de una jornada».
+  - `08c7d85` (14:34): las franjas de lado a lado de un panel van en blanco.
+  - `5699751` y `6b19768` (14:55): el título del taller llega al educador (0016) y la vista Día de Educators es una agenda.
+  - Sin hacer, por falta de autorización: migraciones 0013–0016 y la Edge Function `enviar-acceso-educador` en la nube.
+- 2026-11-03 15:05 — Revisión del inventario contra el repositorio. A7 queda hecho (la ficha con la guía, `3ea5bef`) y B1 ya no aplica (sin temarios desde la decisión 011). Comprobado en el código que siguen abiertos: A8 (no hay «Corregir cierre»), B3 (el «⌘K» de la cabecera de Admin sigue sin acción), C2 (el runner en Educators sigue mostrando 7 dispositivos de demostración), C4 (`material` no está en `runner-contract.ts`) y C5 (la cabecera de la guía no llega al educador).
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

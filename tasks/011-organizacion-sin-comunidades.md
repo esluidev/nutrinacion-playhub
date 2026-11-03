@@ -1,6 +1,6 @@
 ---
 id: 011
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-28
 ---
@@ -170,7 +170,7 @@ Lo listado en «Modelo propuesto» y «Qué cambia en las apps».
 
 ## Pendientes y siguiente paso
 
-Esperar las decisiones de Luis. Sin ellas no se toca la base.
+Finalizada el 2026-11-03 por Luis. El borrado no atómico de una jornada pasa a la [tarea 015](015-pendientes-de-admin-y-educators.md) (punto 4).
 
 ## Log
 
@@ -192,3 +192,5 @@ Esperar las decisiones de Luis. Sin ellas no se toca la base.
   - **Admin** (revisor): `JornadaSelector` («¿Es parte de una jornada?»: suelto, en curso o nueva, con `JornadaCampos`) en el asistente y en «Cambiar jornada» del detalle; «Crear y agregar otro a esta jornada»; ampliar la jornada si la fecha cae fuera (confirmación); sin propuesta automática por fecha; el lugar efectivo en listas, revisión y planificador; fuera «Nueva jornada» del planificador y del inicio y el filtro «Por jornada»; `JornadaDialog` solo edita. `utils/jornadas.ts`: `jornadasEnCurso`, `lugarDelTaller`, `ampliarJornada`, `rangoJornada`. Typecheck, 66 tests, build, check-ui y check-context: **aprobado**; recorrido en el navegador (suelto, nueva, crear otro, banda y panel, ampliar, cambiar jornada desde el detalle, jornada borrada sola al quitar el último taller).
   - **Verificación final:** `./scripts/verify.sh` **aprobado** (Admin 66, Player 50, Educators 33, pgTAP 244). Pasada propia: asistente con «Una jornada en curso» (Sede central, días y talleres) y Educators con «Sede central · Aula…» y la línea de la jornada. Base dejada **sin seed**: 10 migraciones, 21 tablas, 0 organizaciones, 0 usuarios.
   - **Pendiente menor** (anotado por el revisor): «Eliminar jornada» compone el lugar de sus talleres en Admin con un update por taller antes de borrarla (no atómico; iría mejor en un trigger); si la ampliación se guarda y el alta del taller falla, la jornada queda ampliada; con una jornada en curso la fecha no se limita en el calendario para poder ofrecer ampliarla.
+- 2026-11-03 15:05 — Corrección de «Pendientes y siguiente paso», que aún decía «esperar las decisiones». El selector de jornada descrito arriba lo sustituyó hoy el asistente en cinco pasos, con «Independiente | Parte de una jornada» y «Nueva Jornada» en su diálogo (`ea7ab4f`; detalle en la [tarea 010](010-pendientes-plataforma.md)).
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

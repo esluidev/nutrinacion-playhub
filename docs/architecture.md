@@ -34,8 +34,8 @@ Las apps no comparten estado. El runner se incrusta con el contrato de [runner.m
 | Educators → Player | «Iniciar taller» abre `/workshops/<id>/jugar`, que incrusta `NUXT_PUBLIC_PLAYER_URL/play/<eje>/<slug>?mode=educator&lang=<idioma>` con `UiRunner` | Por URL, el storyboard y el idioma. Por mensaje (`iniciar`), la guía. Ningún dato personal ni sesión |
 | Player → Educators | El runner manda `escena`, `terminado` y `salir`. Con `terminado`, Educators pasa al feedback del taller; con `salir`, vuelve a donde estaba. Solo responde a los orígenes de `NUXT_PUBLIC_RUNNER_HOSTS` | Índice y carpeta de la escena. Nunca puntos ni respuestas |
 | Runner educador ↔ dispositivos | Simulado entre pestañas del mismo navegador (`BroadcastChannel`). El educador manda escena, pausa, reinicios y puntos; del dispositivo solo vuelve su presencia. El código para unirse («PH · 4821») es de prueba | Sin servicio de sesión real todavía |
-| App → runner: guía | La app que incrusta el runner se la pasa con `iniciar`. Educators la toma de `app/fixtures/guia-<slug>.json` (datos de prueba) hasta la tarea 006 | Texto de la guía por escena, saneado al llegar |
-| Admin → Player | «Probar» abre el runner en otra pestaña con la URL de `configuracion` (clave `player_url`). Pasará a `UiRunner` (tarea 009) | Storyboard y escena |
+| App → runner: guía | La app que incrusta el runner se la pasa con `iniciar`. Educators la pide a la base con `educador_guia` (en el modo demo, `app/fixtures/guia-<slug>.json`) | Texto de la guía por escena, saneado al llegar |
+| Admin → Player | El detalle del storyboard de la organización incrusta el runner con `UiRunner` en modo `preview` y lo conduce desde su pie. El «Probar» de Platform aún abre otra pestaña con la URL de `configuracion` (clave `player_url`); pasará a `UiRunner` (tarea 013) | Storyboard y escena |
 | Player → Supabase → Admin | «Registrar/Actualizar en la base» (`sincronizar_storyboard`) y «Publicación» (`publicar_storyboard`) en la gestión de Player (decisiones [006](decisions/006-modelo-y-catalogo-desde-player.md) y [007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)); Admin lo lee de la base | La metadata del JSON y las escenas; el estado, los países y la organización |
 
 ## Flujo de punta a punta
@@ -61,6 +61,6 @@ Los seis pasos funcionan con Supabase local.
 
 - `organizacion`: la unidad de operación ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)): países donde opera, licencia, administradores, colaboradores, educadores, jornadas y talleres.
 - Build de Player: la verdad del juego, en sus JSON (`clave`, slug, título, taxonomía y enfoques, idiomas, escenas, narración, consignas, contenido ejecutable, efectos, Rive y SVG).
-- Bucket de Supabase (previsto, tarea 009): las voces de narración, que es lo que pesa.
+- Bucket de Supabase (previsto, tarea 013): las voces de narración, que es lo que pesa.
 - Supabase: la copia de la metadata del JSON para filtrar y buscar y la publicación (las registra Player), la guía, la operación y las relaciones. Nada del contenido del juego ni de personas (participantes).
 - La `clave` UUID une build y catálogo.

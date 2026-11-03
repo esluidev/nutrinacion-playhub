@@ -1,6 +1,6 @@
 ---
 id: 005
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -54,7 +54,7 @@ Sustituir el prototipo Flutter por una app web con el UI Kit, pensada para usars
 
 ## Pendientes y siguiente paso
 
-Pendiente de la aceptación de Luis. El regreso al layout original (semana, mes y navegación por fechas) está en la tarea 007; datos y auth reales, en la 006; PWA y modo sin conexión, aparte.
+Finalizada el 2026-11-03 por Luis. El modo sin conexión pasa a la [tarea 013](013-runner-en-el-aula.md).
 
 ## Log
 - 2026-10-14 — Inventario Flutter: login, inicio (semana y mes), ejecución (lienzo, HUD, guía, recompensas, Nutribot), resumen y feedback. En la web, la ejecución es el runner de Player en modo educador (guía, dispositivos, puntos y pausa ya están ahí); Educators conserva entrar, ver talleres, preparar, abrir y el cierre. Nutribot no tiene respaldo en la constitución y no se porta.
@@ -69,3 +69,4 @@ Pendiente de la aceptación de Luis. El regreso al layout original (semana, mes 
   - Navegador a 768×1024 (tableta en vertical): pestañas arriba, una columna, y el taller cerrado en la prueba anterior aparece en «Cerrados».
 - 2026-10-14 — Coherencia con el kit: la navegación actual (pestañas y barra inferior) usa `--nav-current`, como Admin y Player; la cuenta muestra `UiAvatar`; `UiSymbol` ya no necesita `!m-0`. Revisado a 375 px.
 - 2026-10-14 — Forma única del kit: botones, pestañas y barra inferior como rectángulos redondeados (medido: 48 px, radio 12; tarjetas radio 16), igual que Admin.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

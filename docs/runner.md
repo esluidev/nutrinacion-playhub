@@ -108,7 +108,11 @@ En local, `localhost:3001` dentro de `localhost:3002` también es el mismo sitio
 
 ## 9. Pendiente
 
-En la [tarea 009](../tasks/009-runner-dentro-de-educators.md):
+En la [tarea 013](../tasks/013-runner-en-el-aula.md):
+- sin dispositivos de demostración dentro de un taller real;
 - `preparar` para usar sin conexión;
 - voces desde el bucket;
-- prueba en iPad y Android.
+- prueba en iPad y Android;
+- «Probar» de Platform con `UiRunner`.
+
+El `material` de cada escena, en la [tarea 014](../tasks/014-guia-completa-para-el-educador.md).

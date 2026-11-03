@@ -9,7 +9,7 @@ PlayHub (marca Nutrinación) es educación nutricional y de cuidado de la salud 
 
 Este repositorio (`playhub-applications/`, remoto `esluidev/nutrinacion-playhub`) contiene las aplicaciones. Vive dentro del proyecto PlayHub (`../`), que no es un repositorio Git y reúne producto, storyboards, assets, UI Kit y el player de referencia; su entrada es `../AGENTS.md`.
 
-Objetivo actual: simplificar la plataforma alrededor de la organización como única unidad de operación ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md), tarea 011): sin comunidades, participantes ni hogar; las jornadas viven en el planificador. Después, el QA manual de Luis desde cero.
+Estado: las tareas 001–011 están finalizadas (2026-11-03). La plataforma gira alrededor de la organización como única unidad de operación ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md)): sin comunidades, participantes ni hogar. Lo abierto está en las tareas 012–015, por prioridad: la nube, el runner en el aula, la guía completa para el educador y los pendientes menores. El siguiente objetivo lo fija Luis.
 
 ## Componentes y stack
 
@@ -19,7 +19,7 @@ Objetivo actual: simplificar la plataforma alrededor de la organización como ú
 | Admin | `apps/admin` | Operación de la organización (educadores y grupos, colaboradores, talleres, jornadas, planificador, storyboards disponibles); consola Platform: organizaciones, licencias y la guía del catálogo | Nuxt 4 SPA, densidad compacta: `apps/admin/package.json` |
 | Player | `apps/player` | La app de la administración de Nutrinación para construir, probar y registrar el contenido en el catálogo (solo superadmin, con Supabase Auth), y el runner público `/play/**` que incrustan las demás apps (sin sesión ni Supabase). No es la app del hogar | Nuxt 4 SPA: `apps/player/package.json` |
 | Educators | `apps/educators` | El educador entra, prepara, juega el taller con el runner incrustado y hace el cierre. Supabase (funciones `educador_*`); sin variables, modo demo con `fixtures/` | Nuxt 4 SPA, densidad táctil: `apps/educators/package.json` |
-| Backend | `supabase/` | Esquema, RLS, funciones del educador, Storage y Edge Functions compartidos | Base `0001`–`0015` (reescrita el 2026-10-28 sin comunidades ni hogar ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md); modelo de [005](../docs/decisions/005-base-nueva-y-acceso-educador.md), [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)), seed y pruebas pgTAP autocontenidas; correo de invitaciones por Resend, [decisión 012](../docs/decisions/012-invitaciones-por-correo.md)) |
+| Backend | `supabase/` | Esquema, RLS, funciones del educador, Storage y Edge Functions compartidos | Base `0001`–`0016` (reescrita el 2026-10-28 sin comunidades ni hogar ([decisión 011](../docs/decisions/011-organizacion-como-unidad-de-operacion.md); modelo de [005](../docs/decisions/005-base-nueva-y-acceso-educador.md), [006](../docs/decisions/006-modelo-y-catalogo-desde-player.md) y [007](../docs/decisions/007-educador-hogar-y-ciclo-del-workshop.md)), seed y pruebas pgTAP autocontenidas; correo de invitaciones por Resend, [decisión 012](../docs/decisions/012-invitaciones-por-correo.md)) |
 
 Las apps comparten el kit por npm workspaces (`npm install` en la raíz, un solo lockfile) y cada una se despliega por separado, en su subdominio de `nutrinacion.com` (`admin.`, `educator.`, `player.`). Su `AGENTS.md` (con `CLAUDE.md` como symlink) tiene sus reglas, estructura y comandos, y manda dentro de su carpeta. Topología y flujo: [docs/architecture.md](../docs/architecture.md).
 
@@ -86,12 +86,11 @@ Requisitos: Node 22 y npm, dependencias instaladas con `npm install` en la raíz
 
 Heredados o detectados; cada uno pasa a una tarea cuando se aborde.
 
-- **Lo que falta para operar la plataforma completa** ([tarea 010](../tasks/010-pendientes-plataforma.md)): invitaciones de colaborador sin enlace que copiar, grupos de educadores sin gestión, la guía fuera del alcance del educador, la app del hogar por crear y el despliegue sin decidir, entre otros.
+- **Base y apps sin proyecto en la nube** ([tarea 012](../tasks/012-puesta-en-marcha-en-la-nube.md)): Admin, Player y Educators funcionan contra Supabase local, con las migraciones hasta `0016`. Falta decidir el hosting y, en el proyecto nuevo, pg_cron, la clave de Resend y el alta cerrada (`enable_signup = false`). El proyecto anterior de la nube tiene tablas abiertas a cualquier sesión (marcarse superadmin): es de prueba y se abandona.
+- **Runner sin probar en un aula real** ([tarea 013](../tasks/013-runner-en-el-aula.md)): iPad y Android (audio sin toque extra, almacenamiento del iframe), sin conexión, voces y dispositivos reales; dentro de Educators aún salen los dispositivos de demostración.
+- **La guía no llega completa al educador** ([tarea 014](../tasks/014-guia-completa-para-el-educador.md)): ni la cabecera de la guía ni el material de cada escena.
+- **Pendientes menores** ([tarea 015](../tasks/015-pendientes-de-admin-y-educators.md)): corregir un cierre, el buscador ⌘K, colores por decidir, el borrado de una jornada no atómico y pruebas de las Edge Functions.
 - **Catálogo sin QA de punta a punta:** registrar desde Player → escribir la guía en Admin → publicar → aparecer en los storyboards de la organización → crear un workshop desde el asistente. Probados por separado el registro, la edición y el wizard.
-- **Base sin proyecto en la nube** (tarea 006): Admin, Player y Educators funcionan contra Supabase local. Al crear el proyecto hace falta pg_cron (`0009`). El proyecto anterior de la nube tiene tablas abiertas a cualquier sesión (marcarse superadmin): es de prueba y se abandona.
-- **Decisiones de color por confirmar con Luis** (tarea 004): licencia suspendida neutra o coral, «titular» en cielo, «Sin administradores» en sol, cifras de Platform en neutro y «Usar en taller» neutro en el catálogo.
-- **Deuda de producto en Admin** (tarea 008): textos fijos en español en vistas antiguas, el buscador ⌘K solo visual y el cierre del menú de usuario.
-- **Runner incrustado sin probar en iPad ni Android** (tarea 009): audio sin toque extra, almacenamiento del iframe y sin conexión.
 - **Cobertura:** RLS y funciones de la base con pgTAP en local (`supabase/tests/`); sin E2E: el runner, Educators y los flujos entre apps se verifican en el navegador.
 
 ## Mantenimiento del contexto

@@ -1,6 +1,6 @@
 ---
 id: 008
-estado: backlog
+estado: finalizada
 prioridad: media
 creada: 2026-10-14
 ---
@@ -32,7 +32,7 @@ Cada punto se decide y se corrige por separado; ninguno bloquea la tarea 004.
 
 ## Pendientes y siguiente paso
 
-Priorizar con Luis.
+Finalizada el 2026-11-03 por Luis. El buscador «⌘K» y los textos fuera del i18n pasan a la [tarea 015](015-pendientes-de-admin-y-educators.md) (puntos 2 y 5). El cierre del menú de usuario ya no aplica: la cabecera usa `UiUserMenu` del kit. El resto de la tabla está corregido.
 
 ## Log
 
@@ -43,3 +43,4 @@ Priorizar con Luis.
 - 2026-10-18 — Fechas: `utils/fechas.ts` (fecha sin hora como día local, «hoy» local, días hasta, fin del día) en lugar de 11 copias. Las invitaciones vencían a las 18:00 del día anterior; ahora a las 23:59:59 del día elegido (comprobado en la base). De paso, el detalle de organización de Platform no cargaba: embebía `licencias` en vez de `organizacion_licencias` (PGRST200). Probadas contra la API local las 57 consultas de Admin y Player que se pueden comprobar sin variables, más las tres con variables a mano: ninguna rota.
 - 2026-10-19 — Detalle de organización en Platform: fuera la barra de uso de comunidades (las otras dos cifras no la tenían). La portada de la organización, que tiene barra en las tres, no cambia.
 - 2026-10-19 — Detalle de organización en Platform sin licencia: «Asignar Licencia» sale de la cabecera y pasa a la tarjeta de licencia como acción principal (lima), con un aviso en coral de lo que no puede hacer; «Invitar Administrador» queda neutro mientras falte la licencia.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

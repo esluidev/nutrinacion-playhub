@@ -1,6 +1,6 @@
 ---
 id: 006
-estado: haciendo
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -802,27 +802,7 @@ SQL: `simulacion/simulacion_v8.sql` en el scratchpad de la sesión.
 
 ## Pendientes y siguiente paso
 
-**Es el siguiente paso.** Las tareas 002–005 y 007 están en `revision`.
-
-Siguiente paso: QA manual de Luis, feature por feature, con Supabase local (Admin, Player y Educators conectados). La app del hogar es una app nueva sobre las funciones `hogar_*`.
-
-Pendientes anotados:
-- **`estructura.md`** (skill `playhub-storyboard-games`, fuera de este repositorio) no documenta `healthFocus`.
-- **Recuperar el PIN de una cuenta del hogar:** por correo, con una Edge Function que envíe el código. Necesita un SMTP; Admin no envía correos ([decisión 009](../docs/decisions/009-acceso-admin-sin-correo.md)), así que es ahí donde se configura por primera vez.
-- **Afirmaciones y fuentes:** sin sitio en la base; por confirmar si van en la guía.
-- **Material en el runner:** el contrato no tiene `material`. `educador_guia` ya lo manda y el runner lo ignora hasta añadirlo (cambio aditivo).
-- **Versión de Postgres:** `config.toml` usa la 17; hay que confirmar la del proyecto nuevo.
-
-Resuelto desde el 2026-10-14:
-- **Temarios, publicaciones y perfil público en Admin** («Para casa»), **jornadas** y **Educators conectado** (con `definir_pin` → `educador_activar`): 2026-10-16.
-- **La guía en el runner:** la pasa Educators con `iniciar` ([decisión 004](../docs/decisions/004-runner-incrustado.md)).
-- **Las columnas del feedback:** salen de la constitución y de `Cierre` en Educators (ver la propuesta).
-- **Admin «Probar» de una escena:** manda `?escena=` (tarea 009).
-
-Contexto ya decidido en tareas anteriores:
-- Estados de sesión y de publicación con tonos compartidos en el kit (`UI_SESSION_TONES`, `UI_PUBLICATION_TONES`).
-- Categoría desde `storyboards.categoria` (`uiAreaOf`).
-- El feedback es el paso final del taller: con `terminado` del runner incrustado, Educators lleva a `/workshops/<id>/cierre` ([docs/runner.md](../docs/runner.md)).
+Finalizada el 2026-11-03 por Luis. El QA manual feature por feature se hizo con Supabase local. De «Pendientes anotados»: afirmaciones, fuentes, `healthFocus` en `estructura.md` y `material` en el runner pasan a la [tarea 014](014-guia-completa-para-el-educador.md), y la versión de Postgres a la [tarea 012](012-puesta-en-marcha-en-la-nube.md). Recuperar el PIN del hogar queda fuera del alcance (decisión 011).
 
 ## Log
 - 2026-10-14 — Preparada para empezar: contexto de conexión entre apps en `docs/architecture.md`, plan propuesto y decisiones abiertas. Docker y la CLI comprobados; falta `supabase init`.
@@ -1072,3 +1052,4 @@ Contexto ya decidido en tareas anteriores:
     - Typecheck de las tres apps, tests de Admin (54) y check-ui: **aprobado**.
     - Navegador (Admin de Luis en `:3000`, con un superadmin temporal, borrado después; sin guardar nada): lista, nueva y editar licencia, detalle en Platform («1 de 5») e inicio de la organización («1 de 5» con su barra).
     - **No ejecutado:** pgTAP `01`–`05` (necesitan el seed).
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

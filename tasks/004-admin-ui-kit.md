@@ -1,6 +1,6 @@
 ---
 id: 004
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -47,14 +47,7 @@ Llevar Admin a Tailwind 4 y al UI Kit compartido, en densidad `compact`, sin per
 
 ## Pendientes y siguiente paso
 
-Técnicamente cerrada: Admin usa solo el kit y `check-ui.mjs` lo vigila en `verify.sh`. Queda:
-
-- Que Luis confirme las decisiones de color abiertas:
-  - licencia suspendida neutra o coral;
-  - «titular» en cielo; «Sin administradores» en sol;
-  - cifras de Platform en neutro; «Usar en taller» neutro en el catálogo.
-- QA con sesión real de Supabase.
-- La deuda de producto encontrada al rehacer las vistas está en la tarea 008.
+Finalizada el 2026-11-03 por Luis. Los colores sin decidir pasan a la [tarea 015](015-pendientes-de-admin-y-educators.md) (punto 3). El QA con sesión real de Supabase se hizo en local durante el QA de Luis.
 
 ## Log
 - 2026-10-14 — Fase A:
@@ -94,3 +87,4 @@ Técnicamente cerrada: Admin usa solo el kit y `check-ui.mjs` lo vigila en `veri
   - Selector de contexto con `ui-picker` (48 px; símbolo alineado con los iconos del menú).
   - Nombres antiguos fuera: `getStudioUrl` → `getPlayerUrl` (la clave `studio_url` de la base se renombra en la 006), paquete `nutrinacion-workshops` → `playhub-admin` (lockfile actualizado) y marca visible «Nutrinación Workshops» → «PlayHub» (es/en).
   - Typecheck aprobado. Pasa a `revision`.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

@@ -1,6 +1,6 @@
 ---
 id: 002
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -55,8 +55,7 @@ Llevar el PlayHub UI Kit al repositorio como fuente única de estilos y componen
 
 ## Pendientes y siguiente paso
 
-- Validar con Luis, a la vista, el relieve unificado, los roles de color y la escala compacta.
-- Revisión visual de Luis de la regla de relieve del 2026-11-02 (la base significa «se pulsa»). Está aplicada y sin commit.
+Finalizada el 2026-11-03 por Luis. La revisión visual del relieve y de los roles de color queda aceptada al finalizar.
 
 ## Log
 
@@ -167,3 +166,5 @@ Llevar el PlayHub UI Kit al repositorio como fuente única de estilos y componen
 - 2026-11-02 — Luis: el arreglo para teléfono lo empeoró en escritorio; el control entero se salía de la pantalla. El buscador había quedado fijo en 320 px y empujaba al filtro (a 1000 px: 86 px fuera). No lo había medido en escritorio después del cambio.
   - Corregido en Educadores y Storyboards de Admin. El grupo del buscador y el filtro ocupa lo que queda de la línea, a la derecha, y solo baja a la suya si no le quedan 320 px. El buscador se encoge hasta 320 y el filtro conserva su ancho.
   - Medido con datos temporales, ya borrados, en 10 rutas con barras de organización y Platform. Anchos: 375, 640 y 768; 1000 con la barra lateral abierta; 1100, 1280 y 1440 con la barra cerrada. Ninguna página se desborda y ningún control sale de la pantalla. A 1100 px, el filtro termina en el borde del contenido y su menú se abre alineado con él.
+- 2026-11-03 15:05 — Corrección del pendiente: la regla de relieve del 2026-11-02 no está sin commit, quedó en `3a11bdd`. Cambios de hoy al kit, autorizados y subidos: `4b224fd` (las pestañas `fit` no pasan del ancho de su contenedor; en el teléfono se estrechan y, si no caben, el texto va en dos líneas) y `08c7d85` (el pie de panel en blanco; regla en `DESIGN.md` «Roles de color»: una franja de lado a lado de un panel no va en el color de la página). `verify.sh` **aprobado** en los dos.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).

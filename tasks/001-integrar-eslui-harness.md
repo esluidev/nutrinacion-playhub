@@ -1,6 +1,6 @@
 ---
 id: 001
-estado: revision
+estado: finalizada
 prioridad: alta
 creada: 2026-10-14
 ---
@@ -67,7 +67,7 @@ Acordado con Luis el 2026-10-14:
 
 ## Pendientes y siguiente paso
 
-- Aceptación de Luis.
+Finalizada el 2026-11-03 por Luis. Nada abierto.
 
 ## Log
 
@@ -95,3 +95,4 @@ Acordado con Luis el 2026-10-14:
   - `.data/` entra en `.gitignore`: es el almacén local de Nitro, que reaparece con `nuxt dev`.
   - `../AGENTS.md` ya nombra `playhub-applications/` (cierra el pendiente) y apunta a la tarea 006 como siguiente paso.
   - Typecheck de las tres apps aprobado tras la limpieza.
+- 2026-11-03 15:06 — Luis: «finaliza todo y quita cosas del backlog, ordena las tareas». Finalizada; lo que quedaba abierto pasa a las tareas 012–015 (ver «Pendientes y siguiente paso»).
