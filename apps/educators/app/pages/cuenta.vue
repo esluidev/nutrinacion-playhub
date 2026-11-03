@@ -1,7 +1,8 @@
 <template>
-  <!-- Mi perfil, como el de Admin: quién es arriba y un panel por tema. Salir está en el menú de la
-       cuenta, igual que en Admin y Player. -->
-  <div class="mx-auto max-w-3xl">
+  <!-- Mi perfil, con el patrón de las fichas: quién es arriba y, debajo, lo que se cambia (idioma y
+       PIN) en dos tercios y sus organizaciones en el tercio de al lado. En el teléfono y la tableta
+       vertical, uno debajo de otro. Salir está en el menú de la cuenta, igual que en Admin y Player. -->
+  <div>
     <div class="mb-7 flex items-center gap-5">
       <UiAvatar :name="nombre" size="lg" />
       <div class="min-w-0">
@@ -10,7 +11,36 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-6">
+    <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div class="space-y-6 lg:col-span-2">
+        <!-- Preferencias: el idioma de la interfaz, recordado en este dispositivo -->
+        <section class="ui-panel">
+          <div class="ui-panel-header">
+            <div class="min-w-0">
+              <h2 class="ui-title">{{ t('cuenta.preferencias') }}</h2>
+              <p class="ui-caption mt-0.5">{{ t('cuenta.preferenciasTexto') }}</p>
+            </div>
+          </div>
+          <div class="ui-panel-body">
+            <UiSelect class="sm:max-w-xs" :model-value="locale" :options="IDIOMAS" :label="t('cuenta.idioma')" @update:model-value="(v) => setLocale(v as Locale)" />
+          </div>
+        </section>
+
+        <!-- Su PIN: se cambia en dos pasos (CambiarPin). Sin el actual, el enlace de la organización. -->
+        <section class="ui-panel">
+          <div class="ui-panel-header">
+            <div class="min-w-0">
+              <h2 class="ui-title">{{ t('pin.titulo') }}</h2>
+              <p class="ui-caption mt-0.5">{{ t('pin.tituloTexto') }}</p>
+            </div>
+          </div>
+          <div class="ui-panel-body">
+            <UiButton variant="outline" icon="key" @click="cambiando = true">{{ t('pin.cambiar') }}</UiButton>
+            <p class="ui-caption mt-3">{{ t('pin.olvido') }}</p>
+          </div>
+        </section>
+      </div>
+
       <!-- Sus organizaciones: una sesión puede abarcar varias -->
       <section v-if="educador?.organizaciones?.length" class="ui-panel">
         <div class="ui-panel-header">
@@ -25,33 +55,6 @@
             <UiSymbol size="md" :tone="uiToneFor(org.nombre)" class="text-body font-black">{{ org.nombre.charAt(0) }}</UiSymbol>
             <p class="min-w-0 flex-1 truncate text-body font-extrabold text-ink">{{ org.nombre }}</p>
           </div>
-        </div>
-      </section>
-
-      <!-- Preferencias: el idioma de la interfaz, recordado en este dispositivo -->
-      <section class="ui-panel">
-        <div class="ui-panel-header">
-          <div class="min-w-0">
-            <h2 class="ui-title">{{ t('cuenta.preferencias') }}</h2>
-            <p class="ui-caption mt-0.5">{{ t('cuenta.preferenciasTexto') }}</p>
-          </div>
-        </div>
-        <div class="ui-panel-body sm:max-w-xs">
-          <UiSelect :model-value="locale" :options="IDIOMAS" :label="t('cuenta.idioma')" @update:model-value="(v) => setLocale(v as Locale)" />
-        </div>
-      </section>
-
-      <!-- Su PIN: se cambia en dos pasos (CambiarPin). Sin el actual, el enlace de la organización. -->
-      <section class="ui-panel">
-        <div class="ui-panel-header">
-          <div class="min-w-0">
-            <h2 class="ui-title">{{ t('pin.titulo') }}</h2>
-            <p class="ui-caption mt-0.5">{{ t('pin.tituloTexto') }}</p>
-          </div>
-        </div>
-        <div class="ui-panel-body">
-          <UiButton variant="outline" icon="key" @click="cambiando = true">{{ t('pin.cambiar') }}</UiButton>
-          <p class="ui-caption mt-3">{{ t('pin.olvido') }}</p>
         </div>
       </section>
     </div>

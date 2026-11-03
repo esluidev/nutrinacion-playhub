@@ -28,10 +28,3 @@ export type RespuestaAcceso =
 export function nombreCompleto(educador: Educador): string {
   return [educador.nombre, educador.apellido].filter(Boolean).join(' ')
 }
-
-/** Dónde trabaja, en una línea bajo su nombre: la organización si es una sola; si no, cuántas. */
-export function lugarDeTrabajo(educador: Educador): { nombre: string } | { organizaciones: number } {
-  const organizaciones = educador.organizaciones ?? []
-  if (organizaciones.length === 1) return { nombre: organizaciones[0]!.nombre }
-  return { organizaciones: organizaciones.length }
-}

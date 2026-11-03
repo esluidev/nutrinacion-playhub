@@ -1,4 +1,5 @@
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
+import type { SceneGuide } from '@playhub/ui/app/utils/runner-contract'
 
 // Lógica pura de los talleres del educador (sin Nuxt): fechas, estados, agrupación y el
 // cierre del facilitador. Tiene tests en tests/talleres.test.ts.
@@ -187,15 +188,12 @@ export interface DiaAgenda {
 }
 
 /**
- * La vista Día: los talleres de `dia` y, si es hoy, el siguiente (publicado y sin cierre) aparte,
- * para mostrarlo en grande; lo que viene después, día por día; y lo que ya pasó sin cierre (contado
- * desde hoy, mire el día que mire), del más reciente al más antiguo. Un cancelado sigue en su día y
- * nunca queda por cerrar.
+ * La vista Día: los talleres de `dia`, por hora; lo que viene después, día por día; y lo que ya
+ * pasó sin cierre (contado desde hoy, mire el día que mire), del más reciente al más antiguo. Un
+ * cancelado sigue en su día y nunca queda por cerrar.
  */
 export function agenda(talleres: Taller[], dia: string, hoy = new Date()) {
   const orden = [...talleres].sort((a, b) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`))
-  const delDia = orden.filter(t => t.fecha === dia)
-  const siguiente = dia === isoDia(hoy) ? delDia.find(t => t.estadoWorkshop === 'publicado' && !t.cierre) : undefined
   const despues: DiaAgenda[] = []
   for (const t of orden.filter(t => t.fecha > dia)) {
     const ultimo = despues.at(-1)
@@ -203,8 +201,7 @@ export function agenda(talleres: Taller[], dia: string, hoy = new Date()) {
     else despues.push({ dia: t.fecha, talleres: [t] })
   }
   return {
-    siguiente,
-    delDia: delDia.filter(t => t !== siguiente),
+    delDia: orden.filter(t => t.fecha === dia),
     despues,
     porCerrar: orden.filter(t => estadoDe(t, hoy) === 'por_cerrar').reverse(),
   }
@@ -234,6 +231,24 @@ export function correoValido(valor: string): boolean {
 export function cierreCompleto(c: Partial<Cierre>): c is Cierre {
   const calificada = typeof c.calificacion === 'number' && c.calificacion >= 1 && c.calificacion <= 5
   return calificada && typeof c.asistentes === 'number' && c.asistentes >= 0 && Boolean(c.participacion) && Boolean(c.claridad)
+}
+
+/** Una escena de la guía como la da `educador_guia`: los campos del runner más su orden, su título y el material (0015). */
+export interface EscenaGuia extends SceneGuide {
+  order?: number
+  title?: string
+  material?: string
+}
+
+/** La guía de un taller, por carpeta de escena. Al runner se le pasa tal cual: descarta lo que no es de su contrato. */
+export type GuiaTaller = Record<string, EscenaGuia>
+
+/** Las escenas de la guía en su orden (sin orden, en el que llegan), con su número y su carpeta. */
+export function escenasDeLaGuia(guia: GuiaTaller): (EscenaGuia & { carpeta: string, numero: number })[] {
+  return Object.entries(guia)
+    .map(([carpeta, escena], i) => ({ ...escena, carpeta, i }))
+    .sort((a, b) => (a.order ?? a.i) - (b.order ?? b.i))
+    .map(({ i: _, ...escena }, n) => ({ ...escena, numero: n + 1 }))
 }
 
 /** URL del runner de Player en modo educador, para incrustarlo (docs/runner.md), en el idioma del workshop. */

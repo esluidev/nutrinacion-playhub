@@ -34,7 +34,7 @@ Un solo lenguaje de relieve en todas las apps, decidido por el papel de la pieza
 | Control | Botón (cualquier tono), filtro, grupo de controles (`ui-group`) y pestañas (`ui-tabs`). También las tarjetas que se pulsan o se eligen (`ui-panel-interactive`, `select-card`) y las piezas de la barra del reproductor | Cara de `--ph-control` y base debajo (`--color-depth` en los blancos, con contorno de 1 px; `--tone-edge` en los de color). Las pestañas son un carril gris con base; la activa es la cara blanca con su contorno |
 | Campo | Campo, área de texto, buscador y desplegable, en un formulario o en una barra | Plano: blanco, borde de 2 px `line`, sin sombra. Mide `--ph-control` más la base: ocupa con su borde la misma altura que un botón con su base. Al enfocarlo, el borde toma el tono con su halo |
 | Superficie | Lo que contiene o informa: panel, tabla, tarjeta informativa, cifra, bandeja (`ui-tray`) | Plana: cara blanca (gris la bandeja) y borde `line` |
-| Estructura | La cabecera (`ui-appbar`) y la barra lateral | Plana. Dentro, los controles van sin base y no se mueven al pulsar; sus campos miden `--ph-control` |
+| Estructura | La cabecera (`ui-appbar`) y la barra lateral | Plana. Dentro, los controles van sin base y no se mueven al pulsar; sus campos miden `--ph-control`. La cabecera es la misma en las tres apps: 60 de alto y densidad `compact`, también en Educators |
 | Marca | Lo actual dentro de un conjunto: pestaña activa, página actual, opción elegida, lugar de la navegación, día de hoy | Se marca con color, sin base propia |
 | Flotante | Menú, aviso, ventana | Sombra difusa (`--shadow-float`, `--shadow-dialog`), sin base |
 

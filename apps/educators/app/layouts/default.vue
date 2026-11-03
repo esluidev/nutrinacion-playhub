@@ -2,11 +2,12 @@
   <!-- En tableta y escritorio la app mide el alto del dispositivo: la cabecera queda fija y el
        contenido se desplaza dentro de main; la semana y el mes ocupan justo el alto restante. -->
   <div class="flex min-h-dvh flex-col bg-canvas md:h-dvh">
-    <!-- Una sola barra, con las piezas de la de Admin: el logo, dónde está y la cuenta. Las migas son
-         la navegación: «Mis talleres» lleva de vuelta. En el teléfono, dentro de una página, el
-         logo deja su sitio a la vuelta y al título. -->
-    <header class="ui-appbar app-topbar sticky top-0 z-30 shrink-0 border-b border-line bg-surface">
-      <div class="mx-auto flex max-w-[1440px] items-center gap-3 px-4 py-2 md:px-8">
+    <!-- Una sola barra, la misma de Admin: mismas piezas, misma altura (60) y en densidad compact,
+         aunque el resto de Educators sea touch; sus botones miden 40, el mínimo táctil, y siguen con
+         el comportamiento táctil del kit. Las migas son la navegación: «Mis talleres» lleva de vuelta.
+         En el teléfono, dentro de una página, el logo deja su sitio a la vuelta y al título. -->
+    <header data-density="compact" class="ui-appbar app-topbar sticky top-0 z-30 shrink-0 border-b border-line bg-surface">
+      <div class="mx-auto flex h-15 max-w-[1440px] items-center gap-3 px-4 md:px-8">
         <UiButton
           v-if="pagina !== null"
           to="/"
@@ -26,17 +27,29 @@
           </template>
           <span class="truncate font-extrabold text-ink" aria-current="page">{{ pagina ?? t('nav.talleres') }}</span>
         </nav>
-        <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators -->
-        <UiUserMenu
-          class="ml-auto"
-          :name="educador ? nombreCompleto(educador) : ''"
-          :short-name="educador?.nombre"
-          :detail="dondeTrabaja"
-          :items="[{ key: 'perfil', label: t('menu.perfil'), icon: 'user', to: '/cuenta' }]"
-          :sign-out-label="t('menu.salir')"
-          :menu-label="t('menu.cuenta')"
-          @sign-out="salir"
-        />
+        <div class="ml-auto flex items-center gap-3">
+          <!-- Inicio a la vista: no todos saben que el logo lleva ahí. En el teléfono, dentro de una
+               página, ya está el botón para volver. -->
+          <UiButton
+            to="/"
+            variant="outline"
+            icon="home"
+            icon-only
+            :label="t('nav.talleres')"
+            :title="t('nav.talleres')"
+            :class="pagina !== null && 'max-sm:hidden'"
+          />
+          <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators; bajo el nombre, el correo -->
+          <UiUserMenu
+            :name="educador ? nombreCompleto(educador) : ''"
+            :short-name="educador?.nombre"
+            :detail="educador?.correo"
+            :items="[{ key: 'perfil', label: t('menu.perfil'), icon: 'user', to: '/cuenta' }]"
+            :sign-out-label="t('menu.salir')"
+            :menu-label="t('menu.cuenta')"
+            @sign-out="salir"
+          />
+        </div>
       </div>
     </header>
 
@@ -47,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { lugarDeTrabajo, nombreCompleto } from '~/utils/sesion'
+import { nombreCompleto } from '~/utils/sesion'
 
 const { t } = useT()
 const { educador, salir } = useSesion()
@@ -60,13 +73,5 @@ const pagina = computed<string | null>(() => {
   if (route.path === '/cuenta') return t('cuenta.titulo')
   const id = route.params.id
   return typeof id === 'string' ? taller(id)?.storyboard.titulo ?? '' : null
-})
-
-// Bajo el nombre: su organización o, si trabaja en varias, cuántas.
-const dondeTrabaja = computed(() => {
-  if (!educador.value) return undefined
-  const lugar = lugarDeTrabajo(educador.value)
-  if ('nombre' in lugar) return lugar.nombre
-  return lugar.organizaciones ? t('sesion.organizaciones', { n: lugar.organizaciones }) : undefined
 })
 </script>

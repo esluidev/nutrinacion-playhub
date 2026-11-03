@@ -1,8 +1,7 @@
-import type { StoryboardGuide } from '@playhub/ui/app/utils/runner-contract'
 import datos from '~/fixtures/talleres.json'
 import { sesionNoValida, useSupabaseClient } from '~/utils/supabase'
 import { cierreDesdeBase, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
-import type { Cierre, CierreBase, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
+import type { Cierre, CierreBase, GuiaTaller, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 // Talleres del educador en todas sus organizaciones (educador_workshops), la guía de cada uno
 // (educador_guia, en el idioma del workshop), su ejecución (educador_iniciar y educador_terminar,
@@ -14,7 +13,7 @@ import type { Cierre, CierreBase, Taller, WorkshopBase, WorkshopFixture } from '
 
 const CIERRES_DEMO = 'playhub-educadores-cierres'
 
-const guiasDemo = import.meta.glob<{ escenas: StoryboardGuide }>('~/fixtures/guia-*.json', { eager: true, import: 'default' })
+const guiasDemo = import.meta.glob<{ escenas: GuiaTaller }>('~/fixtures/guia-*.json', { eager: true, import: 'default' })
 
 function talleresDemo(cierres: Record<string, Cierre>): Taller[] {
   return (datos.talleres as unknown as WorkshopFixture[]).map((w) => {
@@ -29,7 +28,7 @@ export function useTalleres() {
   // Ya cargados alguna vez, cargando ahora y si la última carga falló.
   const carga = useState('talleres-carga', () => ({ lista: false, cargando: false, error: false }))
   // La guía de cada workshop, una vez pedida.
-  const guias = useState<Record<string, StoryboardGuide>>('guias', () => ({}))
+  const guias = useState<Record<string, GuiaTaller>>('guias', () => ({}))
   const cierresDemo = useState<Record<string, Cierre>>('cierres', () => {
     if (!import.meta.client) return {}
     try { return JSON.parse(localStorage.getItem(CIERRES_DEMO) ?? '{}') }
@@ -87,10 +86,11 @@ export function useTalleres() {
     return true
   }
 
-  /** La guía del storyboard del taller, por carpeta de escena (la da Educators al runner). */
-  async function guia(t: Taller): Promise<StoryboardGuide | null> {
+  /** La guía del storyboard del taller, por carpeta de escena: la muestra la ficha y la da Educators al runner. */
+  async function guia(t: Taller): Promise<GuiaTaller | null> {
     if (t.id in guias.value) return guias.value[t.id]!
-    if (demo) return Object.entries(guiasDemo).find(([ruta]) => ruta.endsWith(`/guia-${t.storyboard.slug}.json`))?.[1].escenas ?? null
+    // En demo, un storyboard sin su fixture de guía no tiene guía (no es un error).
+    if (demo) return Object.entries(guiasDemo).find(([ruta]) => ruta.endsWith(`/guia-${t.storyboard.slug}.json`))?.[1].escenas ?? {}
     if (!token.value) return null
     const { data, error } = await useSupabaseClient().rpc('educador_guia', { p_token: token.value, p_workshop_id: Number(t.id) })
     if (sesionNoValida(error)) {
@@ -99,7 +99,7 @@ export function useTalleres() {
     }
     // Sin guía, el runner funciona igual: su panel «Guía» queda vacío.
     if (error || !data) return null
-    const escenas = data as unknown as StoryboardGuide
+    const escenas = data as unknown as GuiaTaller
     guias.value = { ...guias.value, [t.id]: escenas }
     return escenas
   }
