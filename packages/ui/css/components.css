@@ -101,9 +101,12 @@
      controls' height, radius and text size. The inactive ones keep the rail's grey; the active one is
      the white face with the white pieces' 1 px outline. */
   .ui-tabs { @apply flex; height: var(--ph-control); background: var(--color-sunken); border-radius: var(--ph-radius); box-shadow: 0 var(--ph-depth) 0 var(--color-depth); }
-  .ui-tabs-fit { @apply inline-flex; }
-  .ui-tabs-fit .ui-tab { @apply flex-none px-4; }
-  .ui-tab { @apply flex h-full min-w-0 flex-1 items-center justify-center gap-2 px-3 font-extrabold text-muted transition-colors hover:text-ink; font-size: var(--text-body); border-radius: var(--ph-radius); }
+  /* fit: each tab as wide as its label, never past its container. On a phone they narrow and, if they
+     still don't fit, the label wraps inside the control. */
+  .ui-tabs-fit { @apply inline-flex max-w-full; }
+  .ui-tabs-fit .ui-tab { @apply px-4; flex: 0 1 auto; }
+  @media (width < 40rem) { .ui-tabs-fit .ui-tab { @apply px-3; } }
+  .ui-tab { @apply flex h-full min-w-0 flex-1 items-center justify-center gap-2 px-3 text-center font-extrabold leading-tight text-muted transition-colors hover:text-ink; font-size: var(--text-body); border-radius: var(--ph-radius); }
   .ui-tab[aria-selected=true], .ui-tab[aria-pressed=true] { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-depth); }
   .ui-tab[aria-selected=true] .icon, .ui-tab[aria-pressed=true] .icon { color: var(--tone-icon); }
   .ui-navbar { @apply flex items-center justify-between gap-1 border border-line bg-surface p-2; border-radius: calc(var(--ph-radius) + 8px); }   /* radius + padding keeps the items concentric; navigation is flat */
