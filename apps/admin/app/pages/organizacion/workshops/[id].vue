@@ -73,7 +73,7 @@
     <!-- Panel principal -->
     <div class="ui-panel overflow-hidden">
       <!-- Barra de info: la hora lleva el tono de la sesión -->
-      <div class="border-b border-line bg-canvas px-6 py-5">
+      <div class="border-b border-line px-6 py-5">
         <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
           <div v-for="info in infoBar" :key="info.label" class="flex flex-col gap-1">
             <div class="flex items-center gap-1.5">

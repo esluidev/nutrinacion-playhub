@@ -36,7 +36,7 @@
             <UiRunner ref="runner" :src="urlVista" :title="storyboard.title" @ready="(e) => total = e.escenas" @scene="(e) => actual = e.indice" />
           </div>
           <!-- El pie en blanco, como la cabecera: el gris es el escenario del runner -->
-          <div class="ui-panel-footer flex flex-wrap items-center gap-3 bg-surface">
+          <div class="ui-panel-footer flex flex-wrap items-center gap-3">
             <p class="min-w-0 flex-1 truncate text-body font-bold text-muted">
               <template v-if="total">
                 <span class="font-extrabold text-ink">{{ t('storyboards.sceneOf', { n: actual + 1, total }) }}</span><span v-if="tituloActual"> · {{ tituloActual }}</span>

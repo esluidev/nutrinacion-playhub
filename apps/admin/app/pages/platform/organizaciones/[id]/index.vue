@@ -55,7 +55,7 @@
             <template v-if="lic">
               <!-- La licencia es el contrato (decisión 011): vigencia y notas. Sin cupos ni países:
                    los países donde opera son de la organización (abajo). -->
-              <div class="flex flex-wrap items-center gap-7 bg-canvas px-6 py-3.5">
+              <div class="flex flex-wrap items-center gap-7 px-6 py-3.5">
                 <div class="flex items-center gap-2 text-caption font-semibold text-muted">
                   <UiIcon name="calendar" class="size-3.5 text-subtle" />
                   {{ t('platform.orgDetail.validity') }}:

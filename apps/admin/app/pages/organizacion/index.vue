@@ -115,7 +115,7 @@
           </div>
           <!-- Sin licencia: le falta lo necesario para operar (coral) -->
           <p v-else class="px-6 py-4 text-body font-bold text-(--tone-strong)" data-tone="coral">{{ t('orgHome.noLicense') }}</p>
-          <div class="flex flex-wrap items-center gap-2 border-t border-line bg-canvas px-6 py-3.5">
+          <div class="flex flex-wrap items-center gap-2 border-t border-line px-6 py-3.5">
             <span class="text-caption font-semibold text-muted">{{ t('orgHome.countries') }}:</span>
             <UiBadge v-for="p in org?.paises ?? []" :key="p" tone="neutral">{{ etiquetaPais(p) }}</UiBadge>
           </div>

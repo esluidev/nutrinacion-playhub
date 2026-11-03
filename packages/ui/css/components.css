@@ -337,7 +337,9 @@
   .ui-panel-interactive:active:not(:has(:is(button, a, [role=button]):active)) { transform: translateY(var(--ph-press-offset)); box-shadow: 0 var(--ph-depth-pressed) 0 var(--color-depth); }
   .ui-panel-header { @apply flex items-center justify-between gap-4 px-6 py-4; border-bottom: 1px solid var(--color-line); }
   .ui-panel-body { @apply p-6; }
-  .ui-panel-footer { @apply px-6 py-4; border-top: 1px solid var(--color-line); background: var(--color-canvas); border-radius: 0 0 var(--radius-panel) var(--radius-panel); }
+  /* A band that runs edge to edge of a panel stays white: in the page colour (canvas) it meets the page
+     and reads as outside the panel. Boxes surrounded by white can be canvas. */
+  .ui-panel-footer { @apply px-6 py-4; border-top: 1px solid var(--color-line); }
 
   /* ---- Group (stepper, joined controls) -------------------------------- */
   /* Joined controls that act as one: date stepper, zoom… Raised like a neutral button. */

@@ -4,7 +4,7 @@
        talleres de los que caben, muestra el primero y «+N más». En el teléfono solo caben los
        puntos; tocar un día lo abre en la vista Día. -->
   <div class="ui-panel overflow-hidden md:flex md:min-h-0 md:flex-1 md:flex-col">
-    <div class="grid shrink-0 grid-cols-7 border-b border-line bg-canvas">
+    <div class="grid shrink-0 grid-cols-7 border-b border-line">
       <span v-for="(d, i) in cabeceraSemana(locale)" :key="d" :class="['eyebrow py-2.5 text-center', i < 6 && 'border-r border-line']">{{ d }}</span>
     </div>
     <div class="md:flex md:min-h-0 md:flex-1 md:flex-col">
