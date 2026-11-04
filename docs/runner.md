@@ -27,7 +27,7 @@ educator.nutrinacion.com                         player.nutrinacion.com
 
 La URL no lleva nada sensible ni identificadores de la app: ni taller, ni sesión, ni datos personales. Se construye con `runnerUrl()`.
 
-`preview` es la vista previa de Admin: solo el escenario (la consigna, el juego y su hoja de feedback), sin las bandas del marco: la escena se encaja en todo el alto y la hoja de feedback sube sobre ella. No lleva los controles del taller (salir, escena, tiempo, puntos, ajustes, guía ni navegación) ni abre la sesión con los dispositivos, y nunca manda `terminado` ni `salir`. Conduce la app con `ir` y `reiniciar`.
+`preview` es la vista previa de Admin: solo el escenario (la consigna, el juego y su hoja de feedback), sin las bandas del marco: la escena se encaja en todo el alto y la hoja de feedback sube sobre ella. No lleva la consola del taller (el avance, la escena actual, Ajustes · Reiniciar · Salir, la guía ni Siguiente) ni abre la sesión con los dispositivos, y nunca manda `terminado` ni `salir`. Conduce la app con `ir` y `reiniciar`.
 
 ## 2. Los mensajes
 

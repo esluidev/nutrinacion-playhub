@@ -46,7 +46,7 @@ Reglas:
 - La excepción es el hueco discontinuo para agregar (`ui-slot`): es un espacio vacío, no una pieza.
 - Una tecla dentro de otra baja sola: al pulsar «Editar» en una tarjeta clicable, la tarjeta no se hunde.
 - Una sola base por pieza: nada de sombras extra debajo.
-- El tablero de juego sigue la misma idea, con sus medidas y colores de `PLAYER-DESIGN.md`. Lo que se arrastra o se voltea (las fichas de Colocar, las cartas de Destapar) lleva una base de 6 en su color. Donde caen las fichas (las ranuras) y la tapa de una carta son huecos grises, planos. La cinta (`ribbon`) es una ilustración.
+- El tablero de juego sigue la misma idea, con sus medidas y colores de `PLAYER-DESIGN.md`. Lo que se arrastra o se voltea tiene cuerpo: las fichas de Colocar llevan el relieve en una sola tinta (`--color-ink`, contorno 2 y base 3) sobre una cara pastel apagada; las cartas de Destapar, una base de 8 en su color. Donde caen las fichas (las ranuras) son huecos planos, sin contorno, en un tono apagado del área; la que toca, en azul gris. La tapa de una carta va en el tono del área. La cinta (`ribbon`) es una ilustración.
 - Las sombras de Tailwind (`shadow-sm`, `shadow-md`…), los anillos (`ring-*`) y los radios sueltos no forman parte del lenguaje. `scripts/check-ui.mjs` los rechaza en las vistas.
 
 ## Roles de color

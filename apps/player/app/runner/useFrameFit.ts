@@ -3,8 +3,10 @@ import type { Ref } from 'vue'
 // Espacio de diseño 1280 × 800 con zoom al área segura de la pantalla (PLAYER-DESIGN.md).
 // Mide la pantalla con una sonda (`probe`, con los insets de env(safe-area-*)) y fija en el
 // documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-*, la fila
-// de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). `sinBandas` (la vista
-// previa) no reserva la barra ni el pie: la escena se encaja en todo el alto.
+// de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). En el marco fija la
+// altura de la barra (--bar-h: los controles flotantes a la distancia del borde) y la del pie
+// blanco (--footer-h, con el aire --footer-gap sobre sus botones). `sinBandas` (la vista previa)
+// no reserva la barra ni el pie: la escena se encaja en todo el alto.
 
 const FRAME = { width: 1280, height: 800 }
 const SCENE = { width: 1280, height: 600 }
@@ -13,8 +15,10 @@ const UI_MIN_WIDTH = 720
 const EDGE = { phone: 12, large: 20 }
 const PHONE_MAX = 600
 const GUTTER = 32
-// Controles del HUD más su base de 4: 44, el mínimo táctil (48 en teléfonos, que dibujan a 44/48).
-const CONTROL = { large: 44 + 4, phone: 48 + 4 }
+// Controles del HUD (44, el mínimo táctil; 48 en teléfonos) más su base de 4.
+const DEPTH = 4
+const CONTROL = { large: 44, phone: 48 }
+const GAP = { large: 24, phone: 16 }
 const CONSIGNA = { large: 56, phone: 48 }
 
 export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, sinBandas = false) {
@@ -37,25 +41,27 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     const isCoarse = coarse?.matches ?? false
     const floor = !isCoarse ? UI_FLOOR.mouse : isPhone ? UI_FLOOR.phone : UI_FLOOR.tablet
     const scale = Math.max(fitScale, Math.min(floor, width / UI_MIN_WIDTH), 0.1)
-    const normal = { bar: EDGE.large + CONTROL.large, footer: 24 + CONTROL.large + EDGE.large, edge: EDGE.large }
+    const bands = (edge: number, control: number, gap: number) => ({
+      bar: edge + control + DEPTH,
+      footer: gap + control + DEPTH + edge,
+    })
+    const normal = bands(EDGE.large, CONTROL.large, GAP.large)
     const isCompact = isCoarse || height / scale - normal.bar - normal.footer < SCENE.height * 0.9
-    const conBandas = isCompact
-      ? (() => {
-          const edge = (isPhone ? EDGE.phone : EDGE.large) / scale
-          const control = isPhone ? CONTROL.phone : CONTROL.large
-          return { bar: edge + control, footer: (isPhone ? 16 : 24) + control + edge, edge }
-        })()
-      : normal
-    const bars = sinBandas ? { bar: 0, footer: 0, edge: conBandas.edge } : conBandas
+    const usePhone = isCompact && isPhone
+    const edge = isCompact ? (isPhone ? EDGE.phone : EDGE.large) / scale : EDGE.large
+    const control = usePhone ? CONTROL.phone : CONTROL.large
+    // Sin bandas, la barra no ocupa nada; el pie tampoco, pero conserva su alto para la hoja de feedback.
+    const band = bands(edge, control, usePhone ? GAP.phone : GAP.large)
+    const bar = sinBandas ? 0 : band.bar
+    const footer = sinBandas ? 0 : band.footer
     const pad = (inset: number, margin: number) => Math.max(inset / scale - margin, 0)
-    const padTop = pad(top, bars.edge)
-    const padBottom = pad(bottom, bars.edge)
+    const padTop = pad(top, edge)
+    const padBottom = pad(bottom, edge)
     const padSide = pad(side, GUTTER)
     const frameWidth = box.width / scale
     const frameHeight = box.height / scale
-    const consigna = isPhone && isCompact ? CONSIGNA.phone : CONSIGNA.large
-    // La consigna y el tablero viajan juntos, centrados entre la barra y el pie.
-    const room = frameHeight - padTop - padBottom - bars.bar - bars.footer
+    const consigna = usePhone ? CONSIGNA.phone : CONSIGNA.large
+    const room = frameHeight - padTop - padBottom - bar - footer
     const stageWidth = frameWidth - 2 * padSide
     const sceneFit = Math.min(stageWidth / SCENE.width, (room - consigna) / SCENE.height, 1)
     const spare = Math.max(room - consigna - SCENE.height * sceneFit, 0) / 2
@@ -73,9 +79,12 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     root.setProperty('--scene-h', px(SCENE.height * sceneFit))
     root.setProperty('--scene-fit', sceneFit.toFixed(5))
     el.style.setProperty('--scene-top', px(spare + consigna))
-    el.style.setProperty('--edge', px(bars.edge))
+    el.style.setProperty('--edge', px(edge))
+    el.style.setProperty('--bar-h', px(bar))
+    el.style.setProperty('--footer-h', px(band.footer))
+    el.style.setProperty('--footer-gap', px(usePhone ? GAP.phone : GAP.large))
     compact.value = isCompact
-    phone.value = isCompact && isPhone
+    phone.value = usePhone
     document.body.toggleAttribute('data-phone', phone.value)
     requestAnimationFrame(onFit)
   }

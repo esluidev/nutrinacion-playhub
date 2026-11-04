@@ -7,10 +7,20 @@
          reinicios; la actividad y su feedback se quedan ahí.
        - home: uso autónomo en casa; la persona avanza.
        - preview: solo el escenario (consigna, juego y su hoja de feedback), para mirar un storyboard
-         desde Admin: sin salir, escena, tiempo, puntos, ajustes, guía ni navegación, y sin sesión.
-         Conduce la app que lo incrusta (`ir` y `reiniciar`, docs/runner.md). Sin bandas: la escena
-         ocupa todo el alto y la hoja de feedback sube sobre ella (runner.css, useFrameFit).        La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo
-       solo vuelve su presencia, nunca respuestas, intentos ni si terminó. -->
+         desde Admin: sin consola ni sesión. Conduce la app que lo incrusta (`ir` y `reiniciar`,
+         docs/runner.md). Sin bandas: la escena ocupa todo el alto y la hoja de feedback sube sobre ella
+         (runner.css, useFrameFit).
+       La consola flota sobre el escenario, un elemento por esquina, todos del alto de un control y sin
+       puntos ni tiempo:
+       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas) y la
+         escena actual en un bocadillo bajo él. En un dispositivo, el participante.
+       - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque (en casa, sin Ajustes). Ajustes
+         abre su riel: pausa, sonido, pantalla completa (donde se puede) y dispositivos.
+       - Abajo, en un pie blanco: Guía (educador) y Siguiente, que lleva el icono de reproducir (Terminar,
+         el check). Anterior queda en las teclas (← y Re Pág) y en la lista. La hoja de feedback sube
+         sobre el pie y, con la escena completa, lleva Siguiente.
+       La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo solo
+       vuelve su presencia, nunca respuestas, intentos ni si terminó. -->
   <main
     ref="frame"
     class="player-frame"
@@ -20,30 +30,9 @@
     :data-compact="compact || undefined"
     :aria-label="txt('workshop')"
   >
-    <header class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
+    <header v-if="mode !== 'preview'" class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
       <div class="bar-start">
-        <template v-if="mode === 'educator' || mode === 'home'">
-          <UiButton tone="neutral" icon="close" icon-only :label="txt('exit')" :title="txt('exit')" @click="askExit" />
-          <!-- Dónde va el taller: esta escena del total, con un aro del progreso del taller. -->
-          <div
-            class="counter counter-compact hud-chip scene-chip"
-            role="progressbar"
-            :aria-label="txt('workshopProgress')"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            :aria-valuenow="percent"
-            :aria-valuetext="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
-          >
-            <span class="counter-art"><UiIcon name="clapperboard" /></span>
-            <span class="counter-value">{{ current + 1 }}/{{ scenes.length }}</span>
-            <!-- ui-allow: dibujo del aro de progreso de la escena, no un icono -->
-            <svg class="scene-ring" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="ring-track" cx="12" cy="12" r="9" />
-              <circle class="ring-fill" cx="12" cy="12" r="9" pathLength="100" :style="{ strokeDashoffset: 100 - percent }" />
-            </svg>
-          </div>
-        </template>
-        <template v-else-if="mode === 'device'">
+        <template v-if="mode === 'device'">
           <!-- El icono del participante es su única identidad; no sobrevive a la sesión. -->
           <div class="participant">
             <span class="ui-symbol" :data-tone="me?.tono"><UiIcon name="user" /></span>
@@ -51,48 +40,63 @@
           </div>
           <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
         </template>
+        <template v-else>
+          <!-- La escena actual, en un bocadillo noche bajo el avance. Se esconde mientras la lista está
+               abierta, donde la escena actual ya va seleccionada. -->
+          <Transition name="scene-tab">
+            <span v-if="!scenesOpen" :key="active.folder" class="scene-tab" data-tone="night" aria-hidden="true"><span class="scene-tab-text">{{ active.title }}</span></span>
+          </Transition>
+          <!-- Dónde va el taller: la barra de avance del kit, del alto de un botón. En el educador es un
+               desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza da un
+               pequeño salto mientras la barra crece. -->
+          <button
+            v-if="mode === 'educator'"
+            ref="sceneCard"
+            type="button"
+            class="scene-card scenes-button"
+            aria-haspopup="listbox"
+            :aria-expanded="scenesOpen"
+            :aria-label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
+            :title="sceneCaption()"
+            @click="setScenes(!scenesOpen)"
+          >
+            <UiIcon name="clapperboard" class="scene-card-icon" aria-hidden="true" />
+            <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
+            <UiIcon name="chevron-down" class="scene-card-chevron" aria-hidden="true" />
+          </button>
+          <div v-else ref="sceneCard" class="scene-card" :title="sceneCaption()">
+            <UiIcon name="clapperboard" class="scene-card-icon" aria-hidden="true" />
+            <UiProgress
+              class="scene-card-bar"
+              :value="percent"
+              tone="lime"
+              :label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
+            />
+          </div>
+        </template>
       </div>
       <div class="bar-end">
-        <button
-          v-if="mode === 'educator'"
-          type="button"
-          class="counter counter-compact hud-chip time-counter"
-          :disabled="!isGame(active)"
-          :aria-pressed="manualPause"
-          :aria-label="manualPause ? txt('resume') : txt('pause')"
-          :title="manualPause ? txt('resumeKey') : txt('pauseKey')"
-          @click="setPause('manual', !manualPause)"
-        >
-          <span class="counter-art"><UiIcon :name="manualPause ? 'pause' : 'clock-solid'" /></span>
-          <span class="counter-value"><output aria-live="off">{{ clock(activeState.elapsed) }}</output></span>
-        </button>
-        <button
-          v-if="mode !== 'preview'"
-          ref="pointsButton"
-          type="button"
-          class="counter counter-compact hud-chip points-counter"
-          :aria-label="txt('points', { n: totalPoints })"
-          :title="txt('points', { n: totalPoints })"
-          @click="openPoints"
-        >
-          <span class="counter-art"><UiIcon name="ruby-solid" /></span>
-          <span class="counter-value">{{ totalPoints }}</span>
-        </button>
-        <UiButton
-          v-if="mode === 'educator'"
-          tone="sky"
-          :icon="railOpen ? 'close' : 'settings'"
-          icon-only
-          class="settings-button"
-          :aria-expanded="railOpen"
-          :label="railOpen ? txt('closeSettings') : txt('settings')"
-          :title="txt('settings')"
-          @click="setRail(!railOpen)"
-        />
+        <!-- Lo del taller en un solo bloque: Ajustes (educador), Reiniciar la escena y Salir (su icono en coral). -->
+        <div v-if="mode !== 'device'" class="hud-group hud-tools" role="group" :aria-label="txt('tools')">
+          <UiButton
+            v-if="mode === 'educator'"
+            tone="neutral"
+            :icon="railOpen ? 'close' : 'settings'"
+            icon-only
+            class="settings-button"
+            :aria-expanded="railOpen"
+            :label="railOpen ? txt('closeSettings') : txt('settings')"
+            :title="txt('settings')"
+            @click="setRail(!railOpen)"
+          />
+          <UiButton tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="askRestart" />
+          <UiButton tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" @click="askExit" />
+        </div>
       </div>
     </header>
 
-    <div ref="stage" class="player-stage" tabindex="-1" :inert="Boolean(overlay)">
+    <!-- El escenario y sus piezas toman el tono del área del storyboard (runner.css). -->
+    <div ref="stage" class="player-stage" tabindex="-1" :data-area="storyboard.category" :inert="Boolean(overlay)">
       <!-- La consigna: qué hacer en esta escena, fija. Se aparta mientras un panel la cubre. -->
       <div v-show="!guideOpen && !devicesOpen" class="consigna" :data-empty="!consigna">
         <button type="button" class="mini-action" data-tone="sky" :aria-label="txt('listenInstruction')" :title="txt('listen')" @click="listen(consigna)">
@@ -125,6 +129,11 @@
         </template>
       </template>
 
+      <!-- Chispas al completar un juego: salen del centro del tablero y caen. Sin texto. -->
+      <div v-if="burst" :key="burst" class="spark-burst" aria-hidden="true">
+        <span v-for="n in SPARKS" :key="n" class="spark" :data-tone="SPARK_TONES[n % SPARK_TONES.length]" :style="sparkStyle(n)" />
+      </div>
+
       <RunnerGuide
         v-if="guideOpen"
         :scene="active"
@@ -135,8 +144,42 @@
         @close="setGuide(false)"
       />
 
-      <!-- Riel de ajustes: cuelga del engranaje. -->
-      <div v-if="railOpen" ref="rail" class="quick-rail" role="toolbar" aria-orientation="vertical" :aria-label="txt('settings')">
+      <!-- Las escenas (educador): el menú del kit bajo el avance. Arriba, la cabecera de tarjeta con el
+           taller (su nombre en hasta dos líneas). Debajo, una fila por escena que lleva a ella; su insignia
+           dice cómo va: hecha (check en lima), la actual (su número en sol, lleno) o pendiente (su número,
+           neutro). -->
+      <div v-if="scenesOpen" class="ui-listbox scene-list" role="listbox" data-tone="sun" :aria-label="txt('workshopProgress')">
+        <div class="ui-panel-header scene-list-head">
+          <p class="panel-label">{{ txt('workshop') }}</p>
+          <p class="scene-list-title" :title="text(storyboard.json.title)">{{ text(storyboard.json.title) }}</p>
+        </div>
+        <div class="scene-list-rows">
+          <button
+            v-for="(scene, i) in scenes"
+            :key="scene.folder"
+            type="button"
+            role="option"
+            class="ui-option scene-option"
+            :data-state="sceneState(i)"
+            :aria-selected="i === current"
+            :aria-label="txt('announceScene', { n: i + 1, name: scene.title })"
+            :title="scene.title"
+            @click="jumpTo(i)"
+          >
+            <span class="scene-option-label">
+              <span class="ui-symbol ui-symbol-sm scene-option-num" :data-tone="SCENE_TONES[sceneState(i)]" aria-hidden="true">
+                <UiIcon v-if="sceneState(i) === 'done'" name="check" />
+                <template v-else>{{ i + 1 }}</template>
+              </span>
+              <span class="scene-option-name">{{ scene.title }}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Riel de ajustes (educador): cuelga del engranaje. La pausa, el sonido, la pantalla y los dispositivos. -->
+      <div v-if="railOpen" class="quick-rail" role="toolbar" aria-orientation="vertical" :aria-label="txt('settings')">
+        <UiButton tone="neutral" icon="pause" icon-only :label="txt('pause')" :title="txt('pauseKey')" @click="fromRail(() => setPause('manual', true))" />
         <UiButton
           tone="neutral"
           :icon="muted ? 'muted' : 'sound'"
@@ -147,6 +190,7 @@
           @click="toggleMute"
         />
         <UiButton
+          v-if="canFullscreen"
           tone="neutral"
           :icon="fullscreen ? 'compress' : 'expand'"
           icon-only
@@ -156,7 +200,7 @@
           @click="toggleFullscreen"
         />
         <UiButton
-          :tone="devicesOpen ? 'sky' : 'neutral'"
+          tone="neutral"
           icon="devices"
           icon-only
           class="rail-button-count"
@@ -202,18 +246,24 @@
             <p v-if="message?.body" class="sheet-text">{{ message.body }}</p>
           </div>
           <div class="feedback-actions">
-            <span v-if="message?.reward" class="badge feedback-reward" data-tone="lime"><UiIcon name="ruby-solid" /> +{{ message.reward }}</span>
             <UiButton tone="neutral" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen([message?.title, message?.body].filter(Boolean).join('. '))" />
-            <UiButton :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
+            <!-- Completa: la hoja lleva la siguiente acción. Si no, solo se cierra. -->
+            <UiButton v-if="sheetLeads" class="next-button" :icon-right="isLast ? 'check' : 'play'" :title="txt('nextKey')" @click="nextFromSheet">{{ nextLabel }}</UiButton>
+            <UiButton v-else :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
           </div>
         </div>
       </div>
-      <div v-if="mode !== 'device' && mode !== 'preview'" class="footer-end">
-        <div class="hud-group" role="group" :aria-label="txt('sceneActions')">
-          <UiButton v-if="mode === 'educator'" tone="neutral" icon="arrow-left" icon-only :disabled="current === 0" :label="txt('previous')" :title="txt('previousKey')" @click="previous" />
-          <UiButton tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="askRestart" />
-        </div>
-        <UiButton ref="nextButton" class="next-button" :aria-label="isLast ? txt('finishWorkshop') : nextLabel" :title="txt('nextKey')" @click="next">{{ nextLabel }}</UiButton>
+      <div v-if="leads" class="footer-end">
+        <UiButton
+          ref="nextButton"
+          class="next-button"
+          :icon-right="isLast ? 'check' : 'play'"
+          :aria-label="isLast ? txt('finishWorkshop') : `${nextLabel}: ${upcoming?.title ?? ''}`"
+          :title="txt('nextKey')"
+          @click="next"
+        >
+          {{ nextLabel }}
+        </UiButton>
       </div>
     </footer>
 
@@ -229,12 +279,6 @@
           <UiButton v-if="overlay.action" tone="neutral" size="sm" icon="close" icon-only :label="txt('continue')" @click="resume" />
         </div>
         <p class="window-text">{{ overlay.text }}</p>
-        <div v-if="overlay.action" class="window-stats">
-          <div class="window-box">
-            <p class="panel-label">{{ txt('sceneTime') }}</p>
-            <p class="window-figure">{{ clock(activeState.elapsed) }}</p>
-          </div>
-        </div>
         <div v-if="overlay.action" class="window-actions">
           <UiButton ref="overlayAction" icon="play" @click="resume">{{ txt('continue') }}</UiButton>
         </div>
@@ -242,18 +286,6 @@
     </div>
 
     <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
-
-    <RunnerWindow
-      v-model:open="pointsOpen"
-      :title="txt('pointsTitle')"
-      :caption="txt('pointsCaption')"
-      symbol="ruby-solid"
-      tone="rose"
-      :stats="pointsStats"
-      :close-label="txt('close')"
-    >
-      <p class="window-hint ui-caption"><UiIcon name="info" />{{ txt('pointsHint') }}</p>
-    </RunnerWindow>
 
     <RunnerWindow
       v-model:open="confirmOpen"
@@ -323,32 +355,33 @@ const router = useRouter()
 const scenes = props.storyboard.scenes
 const profile = profileOf(props.storyboard.json.audience)
 const isGame = (scene: RunnerScene) => scene.json.template !== 'anuncio'
-const pointsOf = (scene: RunnerScene) => scene.json.defaults.pointsOnComplete ?? (isGame(scene) ? 10 : 0)
+// Quien conduce desde la consola: el educador y la persona en casa (la vista previa la conduce su app).
+const leads = props.mode === 'educator' || props.mode === 'home'
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
 type FeedbackType = 'success' | 'info' | 'retry'
-interface Message { type: FeedbackType, title: string, body?: string, reward: number, sequence: number }
+interface Message { type: FeedbackType, title: string, body?: string, sequence: number }
 interface SceneState {
   visited: boolean
   generation: number
   fraction: number
   completed: boolean
-  credited: boolean
   ready: boolean
   message: Message | null
-  elapsed: number
-  reward: number
 }
 
 const states = reactive<SceneState[]>(scenes.map(() => ({
-  visited: false, generation: 0, fraction: 0, completed: false, credited: false, ready: false, message: null, elapsed: 0, reward: 0,
+  visited: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
 })))
 
-const current = ref(0)
+// Empieza ya en la escena pedida (?escena=), para que el bocadillo no muestre la primera un instante.
+const current = ref(props.mode === 'device' ? 0 : Math.max(0, scenes.findIndex(s => s.folder === props.start)))
 const active = computed(() => scenes[current.value]!)
 const activeState = computed(() => states[current.value]!)
 const isLast = computed(() => current.value === scenes.length - 1)
 const nextLabel = computed(() => (isLast.value ? txt('finish') : props.mode === 'home' ? txt('continue') : txt('next')))
+// La escena que viene, para el nombre accesible de Siguiente.
+const upcoming = computed(() => scenes[current.value + 1] ?? null)
 const percent = computed(() => Math.round(states.reduce((sum, s) => sum + s.fraction, 0) / scenes.length * 100))
 
 const instances = new Map<number, { fit?: () => void }>()
@@ -383,13 +416,13 @@ function templateProps(scene: RunnerScene, i: number) {
 const pauseReasons = reactive(new Set<string>())
 const manualPause = computed(() => pauseReasons.has('manual'))
 const guideOpen = ref(false)
+const scenesOpen = ref(false)
 const railOpen = ref(false)
 const devicesOpen = ref(false)
-const pointsOpen = ref(false)
 const confirmOpen = ref(false)
 
 // Lo que sabe el dispositivo del taller: solo las órdenes de la sesión.
-const session = reactive({ open: false, closed: false, removed: false, scene: null as string | null, paused: false, held: false, points: 0 })
+const session = reactive({ open: false, closed: false, removed: false, scene: null as string | null, paused: false, held: false })
 const finished = ref(false)
 
 const blocked = computed(() => {
@@ -400,11 +433,16 @@ const blocked = computed(() => {
 function setPause(reason: string, value: boolean) {
   if (value) pauseReasons.add(reason)
   else pauseReasons.delete(reason)
-  lastTick = performance.now()
   if (reason === 'manual') publish()
 }
 
 const resume = () => setPause('manual', false)
+
+// La pausa del riel de Ajustes lo cierra primero.
+function fromRail(action: () => void) {
+  setRail(false)
+  action()
+}
 
 interface OverlayLook { icon: UiIconName, tone: UiTone, title: string, caption: string, text: string, action?: boolean }
 const sceneCaption = () => txt('sceneCaption', { n: current.value + 1, total: scenes.length, name: active.value.title })
@@ -420,7 +458,7 @@ const overlay = computed<OverlayLook | null>(() => {
     if (session.paused || session.held) return { icon: 'pause', tone: 'sky', title: txt('pausedTitle'), caption: sceneCaption(), text: txt('pausedDevice') }
     return null
   }
-  if (manualPause.value && !guideOpen.value && !devicesOpen.value && !pointsOpen.value && !confirmOpen.value) {
+  if (manualPause.value && !guideOpen.value && !devicesOpen.value && !confirmOpen.value) {
     return { icon: 'pause', tone: 'sky', title: txt('pausedTitle'), caption: sceneCaption(), text: txt('pausedEducator'), action: props.mode === 'educator' }
   }
   return null
@@ -448,6 +486,8 @@ const typeOf = (kind: FeedbackPayload['kind']): FeedbackType =>
 const message = computed(() => (props.mode === 'device' && !session.open ? null : activeState.value.message))
 const look = computed(() => LOOKS[message.value?.type ?? 'success'])
 const feedbackType = computed(() => message.value?.type ?? 'none')
+// Con la escena completa, la hoja lleva Siguiente: quien conduce no tiene que cerrarla para avanzar.
+const sheetLeads = computed(() => leads && Boolean(message.value) && activeState.value.completed)
 const feedbackEl = ref<HTMLElement | null>(null)
 let sequence = 0
 
@@ -463,8 +503,13 @@ const stage = ref<HTMLElement | null>(null)
 function closeFeedback(focus = true) {
   activeState.value.message = null
   if (!focus) return
-  const target = props.mode === 'device' ? stage.value : (nextButton.value?.$el as HTMLElement | undefined)
+  const target = leads ? (nextButton.value?.$el as HTMLElement | undefined) : stage.value
   target?.focus({ preventScroll: true })
+}
+
+function nextFromSheet() {
+  closeFeedback(false)
+  next()
 }
 
 const announcement = ref('')
@@ -478,31 +523,41 @@ function onProgress(i: number, value: number) {
   state.fraction = state.completed ? 1 : value
 }
 
-const pointsButton = ref<HTMLElement | null>(null)
+// Chispas: una ráfaga por juego completado, en los tonos de las piezas y el lima.
+const SPARKS = 22
+const SPARK_TONES = ['sun', 'coral', 'sky', 'grape', 'rose', 'lime'] as const
+const burst = ref(0)
+let burstTimer: ReturnType<typeof setTimeout> | undefined
+function sparkStyle(n: number) {
+  const angle = (n / SPARKS) * Math.PI * 2 + ((n * 37) % 11) / 20
+  const reach = 300 + ((n * 53) % 7) * 34
+  return {
+    '--dx': `${Math.round(Math.cos(angle) * reach * 1.4)}px`,
+    '--dy': `${Math.round(Math.sin(angle) * reach * 0.6 + 140)}px`,
+    '--r': `${((n * 97) % 360) - 180}deg`,
+    '--delay': `${(n % 5) * 30}ms`,
+  }
+}
+
+const sceneCard = ref<HTMLElement | null>(null)
+
 function onComplete(i: number) {
   const state = states[i]!
+  if (!state.completed && i === current.value) {
+    burst.value += 1
+    clearTimeout(burstTimer)
+    burstTimer = setTimeout(() => { burst.value = 0 }, 1600)
+    replay(sceneCard.value, 'is-advancing')
+  }
   state.completed = true
   state.fraction = 1
   if (props.mode === 'device') state.ready = true // local: nadie se entera
-  else if (!state.credited) {
-    state.credited = true
-    state.reward = pointsOf(scenes[i]!)
-    if (i === current.value) replay(pointsButton.value, 'is-rewarded')
-  }
   publish()
 }
 
 function onFeedback(i: number, payload: FeedbackPayload) {
-  const state = states[i]!
-  state.message = { type: typeOf(payload.kind), title: payload.title, body: payload.body, reward: state.reward, sequence: ++sequence }
-  state.reward = 0
+  states[i]!.message = { type: typeOf(payload.kind), title: payload.title, body: payload.body, sequence: ++sequence }
 }
-
-const totalPoints = computed(() => (props.mode === 'device'
-  ? session.points
-  : scenes.reduce((sum, scene, i) => sum + (states[i]!.credited ? pointsOf(scene) : 0), 0)))
-const possiblePoints = computed(() => scenes.reduce((sum, scene) => sum + pointsOf(scene), 0))
-const pointsStats = computed<[string, string][]>(() => [[txt('total'), `${totalPoints.value} ${txt('of', { n: possiblePoints.value })}`]])
 
 // ── Navegación (educador y casa). Un dispositivo solo sigue a la sesión.
 function goTo(index: number, focus = true) {
@@ -510,8 +565,8 @@ function goTo(index: number, focus = true) {
   cancelNarration()
   current.value = index
   pauseReasons.delete('manual')
-  lastTick = performance.now()
   states[index]!.visited = true
+  burst.value = 0
   announce(txt('announceScene', { n: index + 1, name: active.value.title }))
   if (props.mode !== 'device') emit('scene', index, active.value.folder)
   nextTick(() => {
@@ -541,7 +596,7 @@ function next() {
 const previous = () => goTo(current.value - 1)
 
 function restartScene(i: number) {
-  Object.assign(states[i]!, { message: null, completed: false, ready: false, fraction: 0, elapsed: 0 })
+  Object.assign(states[i]!, { message: null, completed: false, ready: false, fraction: 0 })
   states[i]!.generation += 1
 }
 
@@ -626,22 +681,42 @@ function onConfirmClosed() {
   action?.()
 }
 
-function openPoints() {
-  pointsOpen.value = true
-}
+watch(confirmOpen, open => setPause('dialog', open))
 
-watch([pointsOpen, confirmOpen], ([points, confirming]) => setPause('dialog', points || confirming))
-
-// ── Guía, riel y dispositivos (educador) ──────────────────────────────────────
+// ── Guía, escenas, ajustes y dispositivos (educador) ──────────────────────────
 function setGuide(open: boolean) {
   guideOpen.value = open
-  if (open && devicesOpen.value) setDevices(false)
+  if (open) {
+    if (devicesOpen.value) setDevices(false)
+    if (railOpen.value) setRail(false)
+    if (scenesOpen.value) setScenes(false)
+  }
   setPause('guide', open)
 }
 
-const rail = ref<HTMLElement | null>(null)
+function setScenes(open: boolean) {
+  scenesOpen.value = open
+  if (open) {
+    if (railOpen.value) setRail(false)
+    if (guideOpen.value) setGuide(false)
+  }
+  setPause('scenes', open)
+}
+
+// Cómo va cada escena en la lista: la actual manda sobre hecha.
+type SceneListState = 'current' | 'done' | 'pending'
+const SCENE_TONES: Record<SceneListState, UiTone> = { current: 'sun', done: 'lime', pending: 'neutral' }
+const sceneState = (i: number): SceneListState => (i === current.value ? 'current' : states[i]!.fraction >= 1 ? 'done' : 'pending')
+
+// Saltar a una escena desde la lista: cambiar de escena conserva su estado, como Anterior.
+function jumpTo(index: number) {
+  setScenes(false)
+  if (index !== current.value) goTo(index)
+}
+
 function setRail(open: boolean) {
   railOpen.value = open
+  if (open && scenesOpen.value) setScenes(false)
   if (!open && devicesOpen.value) setDevices(false)
   setPause('rail', open)
 }
@@ -653,11 +728,11 @@ function setDevices(open: boolean) {
   setPause('devices', open)
 }
 
+// Un toque fuera de la lista o del riel los cierra (Ajustes sigue abierto mientras Dispositivos lo está).
 function onPointerDown(event: PointerEvent) {
-  if (!railOpen.value || devicesOpen.value) return
   const target = event.target as HTMLElement
-  if (target.closest('.quick-rail, .settings-button')) return
-  setRail(false)
+  if (scenesOpen.value && !target.closest('.scene-list, .scenes-button')) setScenes(false)
+  if (railOpen.value && !devicesOpen.value && !target.closest('.quick-rail, .settings-button')) setRail(false)
 }
 
 function toggleMute() {
@@ -665,6 +740,8 @@ function toggleMute() {
   if (muted.value) cancelNarration()
 }
 
+// Pantalla completa solo donde el navegador la permite (no en iPhone).
+const canFullscreen = ref(false)
 const fullscreen = ref(false)
 async function toggleFullscreen() {
   try {
@@ -684,7 +761,7 @@ function listen(value: string | undefined) {
 
 // ── Sesión entre pestañas (demostración del servicio de taller) ──────────────
 type SessionMessage =
-  | { tipo: 'estado', escena: string, pausa: boolean, puntos: number, reinicios: Record<string, number> }
+  | { tipo: 'estado', escena: string, pausa: boolean, reinicios: Record<string, number> }
   | { tipo: 'orden', id: string, accion: 'pausa' | 'libera' | 'reinicio' | 'quitar' }
   | { tipo: 'presencia', id: string, nombre: string, tono: DeviceView['tono'], escena: string | null, pausado: boolean }
   | { tipo: 'hola' }
@@ -694,14 +771,13 @@ type SessionMessage =
 let channel: BroadcastChannel | null = null
 const post = (msg: SessionMessage) => channel?.postMessage(msg)
 
-// Educador → dispositivos: escena, pausa, reinicios y puntos. Nada más.
+// Educador → dispositivos: escena, pausa y reinicios. Nada más.
 function publish() {
   if (props.mode !== 'educator') return
   post({
     tipo: 'estado',
     escena: active.value.folder,
     pausa: manualPause.value,
-    puntos: totalPoints.value,
     reinicios: Object.fromEntries(scenes.map((s, i) => [s.folder, states[i]!.generation])),
   })
 }
@@ -800,7 +876,6 @@ function applyState(state: Extract<SessionMessage, { tipo: 'estado' }>) {
   session.closed = false
   session.open = true
   session.paused = state.pausa
-  session.points = state.puntos
   scenes.forEach((scene, i) => {
     const generation = state.reinicios?.[scene.folder] ?? 0
     if (generation !== states[i]!.generation) {
@@ -848,24 +923,17 @@ function onSessionMessage({ data }: MessageEvent<SessionMessage>) {
   }
 }
 
-// ── Tiempo de la escena (educador): se detiene mientras el tablero está bloqueado.
-let lastTick = 0
-let ticker: ReturnType<typeof setInterval> | undefined
 let sweeper: ReturnType<typeof setInterval> | undefined
-
-function clock(ms: number) {
-  const total = Math.floor(ms / 1000)
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-}
 
 // ── Teclado: los presentadores inalámbricos mandan Av Pág / Re Pág. Un dispositivo no tiene teclas.
 function onKey(event: KeyboardEvent) {
   if (props.mode === 'device' || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return
   if (document.querySelector('dialog[open]')) return
   const key = event.key
-  const sheetOpen = Boolean(activeState.value.message) && !guideOpen.value && !devicesOpen.value && !railOpen.value
+  const sheetOpen = Boolean(activeState.value.message) && !guideOpen.value && !devicesOpen.value && !railOpen.value && !scenesOpen.value
   if (key === 'Escape') {
-    if (devicesOpen.value) setDevices(false)
+    if (scenesOpen.value) setScenes(false)
+    else if (devicesOpen.value) setDevices(false)
     else if (railOpen.value) setRail(false)
     else if (guideOpen.value) setGuide(false)
     else if (sheetOpen) closeFeedback()
@@ -911,19 +979,11 @@ onMounted(() => {
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('fullscreenchange', onFullscreen)
   document.addEventListener('visibilitychange', onVisibility)
+  canFullscreen.value = Boolean(document.fullscreenEnabled)
 
   // La vista previa no es un taller: no abre la sesión con los dispositivos.
   channel = props.mode !== 'preview' && 'BroadcastChannel' in window ? new BroadcastChannel('playhub-taller-demo') : null
   if (channel) channel.onmessage = onSessionMessage
-
-  lastTick = performance.now()
-  ticker = setInterval(() => {
-    const now = performance.now()
-    const delta = now - lastTick
-    lastTick = now
-    if (props.mode !== 'educator' || !isGame(active.value) || blocked.value || activeState.value.completed) return
-    activeState.value.elapsed += delta
-  }, 200)
 
   if (props.mode === 'educator') {
     // Un dispositivo real que deja de dar señales sale de la lista.
@@ -947,7 +1007,7 @@ onMounted(() => {
     presence()
   }
   else {
-    goTo(Math.max(0, scenes.findIndex(s => s.folder === props.start)), false)
+    goTo(current.value, false)
   }
 })
 
@@ -958,10 +1018,10 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('fullscreenchange', onFullscreen)
   document.removeEventListener('visibilitychange', onVisibility)
-  clearInterval(ticker)
   clearInterval(sweeper)
   clearInterval(presenceTimer)
   clearTimeout(noteTimer)
+  clearTimeout(burstTimer)
   channel?.close()
   cancelNarration()
 })

@@ -1,6 +1,8 @@
 # PlayHub player · el taller
 
-Versión 1.1 · 14 de octubre de 2026. El prototipo vive en `lab/player.html` y el runner de Player (`apps/player/app/runner/`) lo implementa en Vue: el taller en tres modos y tres ediciones. Una escena es una **plantilla de juego** más su **contenido** (`datos-<storyboard>.js`). Este documento recoge cómo se ve y se controla, y por qué.
+Versión 1.2 · 4 de noviembre de 2026. El runner de Player (`apps/player/app/runner/`) es el taller: cuatro modos y tres ediciones. Una escena es una **plantilla de juego** más su **contenido**. Este documento recoge cómo se ve y se controla, y por qué.
+
+La 1.2 cambia la consola (flota sobre el escenario, sin puntos ni tiempo), el escenario (el tono del área) y las piezas del tablero. El prototipo `lab/player.html`, del que se portó el runner, se queda en la 1.1: barra y pie blancos, tiempo y puntos.
 
 ## De dónde salen las decisiones
 
@@ -18,9 +20,9 @@ El player se diseña sobre **1280 × 800** y ocupa **toda la pantalla, sin caja 
 
 | Zona | Alto (diseño) | Contenido |
 | --- | --- | --- |
-| Barra | 68 | Salir · escena del total · tiempo · puntos · ajustes |
+| Barra | 68 | Sin banda: el avance del taller y el bloque Ajustes · Reiniciar · Salir flotan sobre el escenario |
 | Escenario | el resto | La consigna y el tablero de la escena (1280 × 600, a la escala del UI como máximo) |
-| Pie | 92 | Guía · feedback · Anterior y Reiniciar · Siguiente |
+| Pie | 92 | Una banda blanca: Guía · feedback · Siguiente |
 
 La barra y el pie abrazan sus controles con una sola regla en todos los modos: la distancia al borde (`--edge`), el control de 44 y su base de 4; el pie guarda además 24 encima para el feedback. El tablero se queda con el resto: en 16:10 y 16:9, el 73 % de la pantalla.
 
@@ -40,40 +42,42 @@ La barra y el pie abrazan sus controles con una sola regla en todos los modos: l
 
 ## Modos y ediciones
 
-El modo se fija al abrir con `?mode=` y queda en `data-mode` del marco; cada pieza declara en qué modos existe (`data-modes`). Un modo desconocido vuelve a `educator` con un aviso en consola. El modo cambia el marco, nunca la escena.
+El modo se fija al abrir con `?mode=` y queda en `data-mode` del marco; cada pieza de la consola se monta solo en los modos que la usan. Un modo desconocido vuelve a `educator` con un aviso en consola. El modo cambia el marco, nunca la escena.
 
 | Modo | Quién | Qué ve y qué puede hacer |
 | --- | --- | --- |
-| `educator` (predeterminado) | La pantalla del taller | Toda la consola: conduce, pausa, reinicia, abre la guía y ve quién está conectado. |
-| `device` | El dispositivo de un participante | Su icono y los puntos del grupo. No navega: la sesión le manda escena, pausa y reinicios. Su «Listo» es local. |
-| `home` | Uso autónomo en casa | Salir, la escena del total, los puntos y el pie sin Guía ni Anterior; avanza con Continuar. |
+| `educator` (predeterminado) | La pantalla del taller | Toda la consola: conduce, salta a una escena desde la lista, pausa, reinicia, abre la guía y ve quién está conectado. |
+| `device` | El dispositivo de un participante | Su icono y su «Listo», que es local. No navega: la sesión le manda escena, pausa y reinicios. El pie queda vacío hasta que sube el feedback. |
+| `home` | Uso autónomo en casa | El avance (sin la lista de escenas), Reiniciar · Salir y Continuar; sin Guía ni Ajustes. |
+| `preview` | La vista previa de Admin | Solo el escenario, sin consola ni sesión, a todo el alto. La conduce la app que lo incrusta (`ir`, `reiniciar`). |
 
 `?edicion=infantil|preadolescencia|adolescencia` elige el perfil de la audiencia (`PERFILES` en `plantillas.js`): si las piezas muestran su nombre escrito y cuánto andamiaje hay (guiado, pista en el primer error o en el segundo). La interfaz y las plantillas no cambian. En el dispositivo, la edición la manda la sesión. `?escena=<id>` abre una escena.
 
 ## La consola
 
-Una sola forma, la del resto del producto: rectángulos redondeados de 12 para los botones (cuadrados redondeados los de icono), las piezas de estado, el bloque de escena y el riel. Todo va en relieve con su base de 4; los botones neutros y las piezas de estado son blancos con el contorno de 1 px del kit. La escena y el participante solo informan, pero van en fila con teclas blancas: sin base se leen como una tecla rota («Profundidad» en `DESIGN.md`). **Activo** (un panel abierto, el tiempo en pausa) no hunde la pieza, porque una pieza sin su base se ve deformada: conserva su base y se tiñe de cielo (cara `sky-50`, contorno y base `sky-400`), el lenguaje de selección del kit. Solo la pulsación la hunde.
+Flota sobre el escenario como el HUD de un juego: un elemento por esquina, todos del alto de un control (44; 48 en teléfonos) y con la forma del resto del producto, rectángulos de 12 con su base de 4. Arriba va lo del taller y abajo lo de la escena. Las dos piezas de arriba miden lo mismo (168) y las dos de abajo también (140). Lo que se abre no cambia el botón: Guía sigue en cielo y Ajustes en blanco, con su base. Los paneles y listas temporales llevan la sombra flotante, el radio de las superficies (16) y 12 de aire bajo la base del control que los abre.
 
-### Barra
+### Arriba
 
 | Control | Pieza | Comportamiento |
 | --- | --- | --- |
-| **Salir** | Botón de icono neutral | Ventana de confirmación en coral con la escena en la que va el taller. |
-| **Escena** | Chip: claqueta de Lucide en `sky-700`, «2/4» y un anillo de 22 en `mint-600` | El anillo es el progreso del taller: cada escena aporta su parte y, dentro de un juego, avanza con cada acción resuelta. |
-| **Tiempo** | Chip, botón entero | Tiempo de la escena; se detiene con cualquier pausa. Tocarlo pausa o reanuda; en pausa muestra el signo de pausa y se tiñe de cielo. |
-| **Puntos** | Chip, botón entero | Puntos del grupo. Abre la ventana de puntos. |
-| **Ajustes** | Botón de icono en cielo | Abre el riel: sonido, pantalla completa y Dispositivos. El movimiento de la interfaz sigue la preferencia del sistema. |
+| **Avance** (izquierda) | Pieza blanca con base: claqueta de Lucide en `sky-700`, la barra de progreso del kit en lima y, en el educador, el chevron de un desplegable | La barra es el progreso del taller: cada escena aporta su parte y, dentro de un juego, avanza con cada acción resuelta. Al completar un juego la pieza da un pequeño salto. En el educador abre la lista de escenas. |
+| **Escena actual** | Bocadillo noche, plano, bajo el avance y centrado con él, con la flecha al centro | El nombre de la escena (hasta 240, con puntos suspensivos). Se esconde con la lista abierta. En teléfonos, donde la consigna empieza justo bajo la barra, va al lado del avance con la flecha hacia él. |
+| **Ajustes · Reiniciar · Salir** (derecha) | Un solo bloque de botones del kit, tres segmentos iguales; Salir con su icono en coral | Ajustes (solo el educador) abre su riel: pausa, sonido, pantalla completa (donde el navegador la permite) y Dispositivos. Reiniciar pide confirmación en sol. Salir, una ventana en coral con la escena en la que va el taller. En casa el bloque lleva solo Reiniciar y Salir. |
 
-En el dispositivo, la izquierda muestra al participante (su icono y un nombre de animal, su única identidad) y su «Listo».
+En el dispositivo, arriba a la izquierda va el participante (su icono y un nombre de animal, su única identidad) y su «Listo».
 
 ### Pie
 
+Una banda blanca de lado a lado que da base a sus botones y al feedback. Es un contenedor, así que se separa del escenario con una línea plana de 2 en el gris de las bases, no con una base («Profundidad» en `DESIGN.md`).
+
 | Control | Comportamiento |
 | --- | --- |
-| **Guía** (cielo) | Panel lateral izquierdo con la guía de la escena en cuatro pestañas (Escena, Conducir, Preguntas, Consejos). Pausa el juego; si se cambia de escena con el panel abierto, la guía cambia con ella. |
-| **Feedback** | Una hoja sube sobre el pie con el tono de su tipo (lima, cielo o sol) y los controles se apartan hasta cerrarla. Tiene escuchar y cerrar. |
-| **Anterior · Reiniciar** | Un solo bloque. Anterior no pide confirmación: cambiar de escena conserva su estado. Reiniciar pide confirmación en sol; los puntos ganados se conservan. |
-| **Siguiente** (lima, la acción principal, como en Admin y Educators) | Avanza. En la última escena es Terminar, con confirmación en lima. En casa dice Continuar. |
+| **Guía** (cielo, educador) | Panel lateral izquierdo con la guía de la escena en cuatro pestañas (Escena, Conducir, Preguntas, Consejos). Pausa el juego; si se cambia de escena con el panel abierto, la guía cambia con ella. |
+| **Feedback** | Una hoja sube sobre el pie con el tono de su tipo (lima, cielo o sol) y los controles se apartan hasta cerrarla. Tapa la línea del pie y trae la suya, del mismo grosor, en su tono 200. Tiene escuchar y cerrar; con la escena completa, en lugar de cerrar lleva Siguiente. |
+| **Siguiente** (lima, la acción principal, como en Admin y Educators) | Avanza, con el icono de reproducir de puntas suaves. En la última escena es Terminar, con el check y confirmación en lima. En casa dice Continuar. |
+
+Anterior no tiene botón: queda en las teclas (← y Re Pág) y en la lista de escenas. Cambiar de escena conserva su estado.
 
 ### Atajos de teclado
 
@@ -82,28 +86,29 @@ Funcionan sin mostrarse, pensados para los presentadores inalámbricos (Página 
 | Tecla | Acción |
 | --- | --- |
 | → · Av Pág | Siguiente escena (con el feedback abierto, lo cierra y avanza) |
-| ← · Re Pág | Escena anterior |
-| P | Pausar o reanudar |
-| G | Abrir o cerrar la guía |
+| ← · Re Pág | Escena anterior (educador y vista previa) |
+| P | Pausar o reanudar (educador) |
+| G | Abrir o cerrar la guía (educador) |
 | M | Silenciar o reactivar el sonido |
 | F | Pantalla completa |
-| Esc | Cierra Dispositivos, el riel, la guía, el feedback o la pausa, en ese orden |
+| Esc | Cierra la lista de escenas, Dispositivos, el riel, la guía, el feedback o la pausa, en ese orden |
 
 ## Paneles y ventanas
 
-**Paneles laterales** (Guía y Dispositivos): flotan sobre el escenario con la sombra flotante del kit, sin velo, y pausan la escena. Cabecera con contexto, título y cerrar; secciones con etiqueta; cajas en `canvas` para los datos. Con un panel abierto la consigna se oculta.
+**Paneles laterales** (Guía y Dispositivos): flotan sobre el escenario con la sombra flotante del kit, sin velo, y pausan la escena. Cabecera con contexto, título y cerrar; secciones con etiqueta; cajas en `canvas` para los datos. Con un panel abierto la consigna se oculta. Dispositivos se abre a la izquierda del riel de Ajustes, alineado arriba con él.
 
-**Ventanas** (pausa, puntos y confirmaciones): la misma anatomía y superficie que los paneles, centradas sobre el velo de las ventanas. Llevan solo lo necesario:
+**Lista de escenas** (educador): el menú de los desplegables del kit bajo el avance, de 264. Arriba, la cabecera de tarjeta con «Taller» y su nombre (hasta dos líneas). Debajo, una fila por escena, con una insignia de estado: hecha (check en lima), la actual (su número en sol lleno, la fila seleccionada) o pendiente (su número en neutro). Un nombre largo se corta con puntos suspensivos y se lee entero en su título. Pausa la escena mientras está abierta; un toque fuera la cierra.
 
-- **Pausa:** «En pausa», «Conversen con calma. Todo sigue donde quedó.», el tiempo de la escena y Continuar. También reanudan cerrar, Esc y P. Con G se abre la guía sin reanudar y la ventana vuelve al cerrarla.
-- **Puntos:** el total sobre lo posible y cómo se ganan. No lista escenas.
+**Ventanas** (pausa y confirmaciones): la misma anatomía y superficie que los paneles, centradas sobre el velo de las ventanas y a la escala de la consola: 400 de ancho y controles de 44, así sus dos botones miden lo que Siguiente. Llevan solo lo necesario:
+
+- **Pausa:** «En pausa», «Conversen con calma. Todo sigue donde quedó.» y Continuar. También reanudan cerrar, Esc y P. Con G se abre la guía sin reanudar y la ventana vuelve al cerrarla.
 - **Confirmaciones:** salir (con la escena en la que va el taller), terminar, reiniciar la escena y quitar un dispositivo.
 
 **Dispositivos:** el código para unirse, quién está conectado (siete de prueba que siguen la escena y obedecen ahí mismo, y cada pestaña con `?mode=device`) y, al tocar uno, su escena y las acciones pausar o liberar, reiniciar su escena o quitarlo. Nunca qué respondió ni si terminó.
 
 ## El escenario
 
-El escenario tiene su propio color, `--color-canvas`, de borde a borde, entre la barra y el pie blancos. Sobre el tablero va la **consigna**: qué hacer en la escena, fija durante toda la escena, con el botón pequeño de escuchar. Lo único que cambia con cada acción es el feedback, en el pie. Las insignias neutras van en blanco para no perderse en el canvas.
+El escenario toma el tono más suave del área del storyboard (`--tone-wash`; alimentación → sol), como el suelo de un juego, de borde a borde y hasta arriba, detrás de la consola. Sobre el tablero va la **consigna**: qué hacer en la escena, fija durante toda la escena, en `text-headline` con el botón de escuchar de 44. Lo único que cambia con cada acción es el feedback, en el pie. Al completar un juego salen chispas del centro del tablero, en los tonos de las piezas y el lima, sin texto (no salen con movimiento reducido). Las insignias neutras van en blanco para no perderse en el escenario.
 
 ## Plantillas de juego
 
@@ -117,17 +122,24 @@ Cada plantilla (`plantillas.js`) dibuja su tablero de 1280 × 600 con las piezas
 
 Un valor de contenido puede ser un texto o un objeto por edición (`{ infantil, preadolescencia, adolescencia }`); si falta una edición se usa infantil. Los personajes de las aves son `assets/aves.riv` (View Model `Aves`: `ave` y los triggers `aceptar`, `negar` y `volverIdle`).
 
-Las piezas de juego usan las caras suaves de la paleta (200, base 300, texto 800) de sol, coral, cielo, uva y rosa; lima y night son del UI. Sus esquinas son de 28 (la tapa de Destapar, 24).
+Las piezas de juego usan los tonos de sol, coral, cielo, uva y rosa (cara 200, contorno 300, base 400, texto 800); lima y night son del UI. Sus esquinas son de 28 (la tapa de Destapar, 24). En el runner, a partir de las cartas de Seedle, el tablero tiene su material y lo que se mueve tiene cuerpo:
 
-## Sesión y puntos
+- **Fichas de Colocar:** la cara en el pastel de su tono con el croma bajado (65 % del 200 con un gris neutro) y el relieve en una sola tinta para todas, `--color-ink`: contorno 2 y base 3 (1 al pulsar). La ficha cielo toma el azul gris de Seedle. En la bandeja van un poco giradas, como una mano de cartas; la que se toca se endereza y sube. Al caer en su destino rebota y al completar saltan en fila. Sin nombre escrito (infantil), el dibujo ocupa la ficha. No dejan pozo en la bandeja.
+- **Ranuras de Colocar:** huecos planos, sin contorno, en un tono medio muy apagado del área (arena en alimentación), con su número dentro como marca de agua, un paso más oscuro, igual que las flechas. La ranura que toca y la que recibe una ficha arrastrada van en azul gris, sin borde punteado; la que toca respira.
+- **Cartas de Destapar:** la tapa en el tono del área con su «?» blanco en relieve; abierta, el huevo con su nido llena la carta.
 
-La sesión del taller se simula entre pestañas del mismo navegador (BroadcastChannel). Del educador a los dispositivos van solo la escena, la pausa, los reinicios, los puntos y la edición. Del dispositivo vuelve solo su presencia (icono, escena y si está en pausa), nunca respuestas, intentos ni si terminó.
+Los colores del tablero se derivan con `color-mix` de los tokens del área y de un gris del kit (`runner.css`). Los dibujos siguen la regla de la skill `eslui-motion-design`: volumen con colores planos y sin sombra de apoyo; el suelo lo pone la ficha o la ranura.
 
-Cada juego completado suma 10 puntos para el grupo, una sola vez por sesión. Reiniciar o repetir una escena no vuelve a sumarlos. Recargar o salir reinicia la sesión.
+## Sesión
+
+La sesión del taller se simula entre pestañas del mismo navegador (BroadcastChannel). Del educador a los dispositivos van solo la escena, la pausa, los reinicios y la edición. Del dispositivo vuelve solo su presencia (icono, escena y si está en pausa), nunca respuestas, intentos ni si terminó. Recargar o salir reinicia la sesión.
+
+Desde la 1.2 el player no muestra puntos ni tiempo: la consola se queda con lo que el educador necesita para conducir. El contenido conserva `pointsOnComplete`, pero el runner no lo usa.
 
 ## Decisiones abiertas
 
 1. **Ventana de presentador.** Con un proyector en espejo, la sala ve la guía cuando se abre. La solución completa es una segunda ventana para el educador mientras el proyector muestra solo el marco.
 2. **Servicio de sesión.** El código, los dispositivos de prueba y la sesión entre pestañas son de demostración.
 3. **Audio.** Los botones de escuchar y el sonido solo se colocan; las grabaciones están pendientes.
-4. **Plantillas que faltan.** Existen Anuncio, Destapar y Colocar. El resto de las familias (Señalar, Simular, Beber, Repasar, Resumen…) no tiene plantilla todavía.
+4. **Puntos.** El hecho 5 sale de la constitución, pero desde la 1.2 el player no muestra puntos. Falta decidir si se ven en otro sitio o si la constitución cambia.
+5. **Plantillas que faltan.** Existen Anuncio, Destapar y Colocar. El resto de las familias (Señalar, Simular, Beber, Repasar, Resumen…) no tiene plantilla todavía.

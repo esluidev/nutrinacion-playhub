@@ -16,8 +16,6 @@
       </span>
     </template>
 
-    <div v-for="piece in pieces" :key="`well-${piece.item.id}`" class="tb-pozo" :style="box(piece.home.x, piece.home.y, TILE, TILE)" />
-
     <button
       v-for="piece in pieces"
       :key="piece.item.id"
