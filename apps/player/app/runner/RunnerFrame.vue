@@ -12,13 +12,13 @@
          (runner.css, useFrameFit).
        La consola flota sobre el escenario, un elemento por esquina, todos del alto de un control y sin
        puntos ni tiempo:
-       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas) y la
-         escena actual en un bocadillo bajo él. En un dispositivo, el participante.
+       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas). En un
+         dispositivo, el participante.
        - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque (en casa, sin Ajustes). Ajustes
          abre su riel: pausa, sonido, pantalla completa (donde se puede) y dispositivos.
-       - Abajo, en un pie blanco: Guía (educador) y Siguiente, que lleva el icono de reproducir (Terminar,
+       - Abajo, en un pie sin fondo (solo la hoja del feedback le da fondo): Guía (educador) y Siguiente, que lleva el icono de reproducir (Terminar,
          el check). Anterior queda en las teclas (← y Re Pág) y en la lista. La hoja de feedback sube
-         sobre el pie y, con la escena completa, lleva Siguiente.
+         sobre el pie, siempre con escuchar y cerrar: nunca lleva Siguiente.
        La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo solo
        vuelve su presencia, nunca respuestas, intentos ni si terminó. -->
   <main
@@ -34,18 +34,13 @@
       <div class="bar-start">
         <template v-if="mode === 'device'">
           <!-- El icono del participante es su única identidad; no sobrevive a la sesión. -->
-          <div class="participant">
+          <div class="hud-piece participant">
             <span class="ui-symbol" :data-tone="me?.tono"><UiIcon name="user" /></span>
             <span class="participant-name">{{ me?.nombre }}</span>
           </div>
           <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
         </template>
         <template v-else>
-          <!-- La escena actual, en un bocadillo noche bajo el avance. Se esconde mientras la lista está
-               abierta, donde la escena actual ya va seleccionada. -->
-          <Transition name="scene-tab">
-            <span v-if="!scenesOpen" :key="active.folder" class="scene-tab" data-tone="night" aria-hidden="true"><span class="scene-tab-text">{{ active.title }}</span></span>
-          </Transition>
           <!-- Dónde va el taller: la barra de avance del kit, del alto de un botón. En el educador es un
                desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza da un
                pequeño salto mientras la barra crece. -->
@@ -53,19 +48,19 @@
             v-if="mode === 'educator'"
             ref="sceneCard"
             type="button"
-            class="scene-card scenes-button"
+            class="hud-piece scene-card scenes-button"
             aria-haspopup="listbox"
             :aria-expanded="scenesOpen"
             :aria-label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
             :title="sceneCaption()"
             @click="setScenes(!scenesOpen)"
           >
-            <UiIcon name="clapperboard" class="scene-card-icon" aria-hidden="true" />
+            <UiIcon name="clapperboard" class="scene-card-icon" data-tone="sky" aria-hidden="true" />
             <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
             <UiIcon name="chevron-down" class="scene-card-chevron" aria-hidden="true" />
           </button>
-          <div v-else ref="sceneCard" class="scene-card" :title="sceneCaption()">
-            <UiIcon name="clapperboard" class="scene-card-icon" aria-hidden="true" />
+          <div v-else ref="sceneCard" class="hud-piece scene-card" :title="sceneCaption()">
+            <UiIcon name="clapperboard" class="scene-card-icon" data-tone="sky" aria-hidden="true" />
             <UiProgress
               class="scene-card-bar"
               :value="percent"
@@ -107,14 +102,8 @@
 
       <template v-for="(scene, i) in scenes" :key="`${scene.folder}-${states[i]!.generation}`">
         <template v-if="states[i]!.visited">
-          <component
-            :is="TEMPLATES.anuncio"
-            v-if="scene.json.template === 'anuncio'"
-            v-show="i === current"
-            :ref="(el: any) => setInstance(i, el)"
-            v-bind="templateProps(scene, i)"
-          />
-          <section v-else v-show="i === current" class="tb-scene" :aria-label="scene.title">
+          <!-- Toda escena, también la Bienvenida (Anuncio), se compone en el tablero de 1280 × 600. -->
+          <section v-show="i === current" class="tb-scene" :aria-label="scene.title" :data-sin-consigna="!showsConsigna(scene) || undefined">
             <div class="tb-board" :data-template="scene.json.template ?? 'propia'" :data-blocked="i !== current || blocked || undefined">
               <component
                 :is="sceneComponent(scene)"
@@ -230,6 +219,8 @@
       <div v-if="mode === 'educator'" class="footer-start">
         <UiButton tone="sky" icon="book" :aria-expanded="guideOpen" :title="txt('guideKey')" @click="setGuide(!guideOpen)">{{ txt('guide') }}</UiButton>
       </div>
+      <!-- La hoja del feedback: sube sobre el pie con el tinte del tono de su tipo. -->
+      <span class="feedback-sheet" :data-tone="look.tone" aria-hidden="true" />
       <div class="feedback-slot">
         <!-- El feedback sube sobre el pie, en el tono de su tipo; los controles se apartan hasta cerrarlo. -->
         <div
@@ -247,9 +238,7 @@
           </div>
           <div class="feedback-actions">
             <UiButton tone="neutral" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen([message?.title, message?.body].filter(Boolean).join('. '))" />
-            <!-- Completa: la hoja lleva la siguiente acción. Si no, solo se cierra. -->
-            <UiButton v-if="sheetLeads" class="next-button" :icon-right="isLast ? 'check' : 'play'" :title="txt('nextKey')" @click="nextFromSheet">{{ nextLabel }}</UiButton>
-            <UiButton v-else :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
+            <UiButton :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
           </div>
         </div>
       </div>
@@ -315,7 +304,7 @@ import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
 import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
 import { tr } from '~/types/i18n'
 import type { I18nText } from '~/types/i18n'
-import { cancelNarration, narrate } from './audio/narration'
+import { cancelNarration, narrate, NARRATOR_KEY } from './audio/narration'
 import { muted, setMuted } from './audio/settings'
 import { itemsOf } from './content'
 import { useRunnerText } from './i18n'
@@ -374,7 +363,7 @@ const states = reactive<SceneState[]>(scenes.map(() => ({
   visited: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
 })))
 
-// Empieza ya en la escena pedida (?escena=), para que el bocadillo no muestre la primera un instante.
+// Empieza ya en la escena pedida (?escena=), para que el avance y el título no muestren la primera un instante.
 const current = ref(props.mode === 'device' ? 0 : Math.max(0, scenes.findIndex(s => s.folder === props.start)))
 const active = computed(() => scenes[current.value]!)
 const activeState = computed(() => states[current.value]!)
@@ -470,9 +459,11 @@ watch(() => overlay.value?.action, (action) => {
 })
 
 // ── Consigna y feedback ───────────────────────────────────────────────────────
+// La consigna se ve sobre el tablero de todo juego que la trae; la Bienvenida no la muestra (es la frase que suena).
+const showsConsigna = (scene: RunnerScene) => isGame(scene) && Boolean(text(scene.json.meta.instruction))
 const consigna = computed(() => {
   if (props.mode === 'device' && !session.open) return ''
-  return isGame(active.value) ? text(active.value.json.meta.instruction) : ''
+  return showsConsigna(active.value) ? text(active.value.json.meta.instruction) : ''
 })
 
 const LOOKS: Record<FeedbackType, { tone: UiTone, icon: UiIconName }> = {
@@ -484,10 +475,11 @@ const typeOf = (kind: FeedbackPayload['kind']): FeedbackType =>
   kind === 'success' || kind === 'complete' ? 'success' : kind === 'retry' ? 'retry' : 'info'
 
 const message = computed(() => (props.mode === 'device' && !session.open ? null : activeState.value.message))
-const look = computed(() => LOOKS[message.value?.type ?? 'success'])
+// Al cerrarse, la hoja baja con el tono que tenía.
+const lastType = ref<FeedbackType>('success')
+watch(() => message.value?.type, (type) => { if (type) lastType.value = type })
+const look = computed(() => LOOKS[message.value?.type ?? lastType.value])
 const feedbackType = computed(() => message.value?.type ?? 'none')
-// Con la escena completa, la hoja lleva Siguiente: quien conduce no tiene que cerrarla para avanzar.
-const sheetLeads = computed(() => leads && Boolean(message.value) && activeState.value.completed)
 const feedbackEl = ref<HTMLElement | null>(null)
 let sequence = 0
 
@@ -505,11 +497,6 @@ function closeFeedback(focus = true) {
   if (!focus) return
   const target = leads ? (nextButton.value?.$el as HTMLElement | undefined) : stage.value
   target?.focus({ preventScroll: true })
-}
-
-function nextFromSheet() {
-  closeFeedback(false)
-  next()
 }
 
 const announcement = ref('')
@@ -758,6 +745,8 @@ function listen(value: string | undefined) {
   if (!value) return
   void narrate({ category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }, value)
 }
+// Las escenas narran por aquí (la Bienvenida, al tocar a sus protagonistas), con la voz del storyboard.
+provide(NARRATOR_KEY, (value, onState) => narrate({ category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }, value, onState))
 
 // ── Sesión entre pestañas (demostración del servicio de taller) ──────────────
 type SessionMessage =
@@ -891,6 +880,8 @@ function applyState(state: Extract<SessionMessage, { tipo: 'estado' }>) {
 }
 
 let presenceTimer: ReturnType<typeof setInterval> | undefined
+// Al irse, el dispositivo se despide. Se quita al desmontar: con el canal ya cerrado, despedirse falla.
+const sayGoodbye = () => { if (!session.removed && me.value) post({ tipo: 'adios', id: me.value.id }) }
 function obey(accion: Extract<SessionMessage, { tipo: 'orden' }>['accion']) {
   if (session.removed) return
   if (accion === 'pausa' || accion === 'libera') session.held = accion === 'pausa'
@@ -1002,7 +993,7 @@ onMounted(() => {
     me.value = deviceIdentity()
     states[0]!.visited = true
     presenceTimer = setInterval(presence, 2000)
-    window.addEventListener('pagehide', () => { if (!session.removed && me.value) post({ tipo: 'adios', id: me.value.id }) })
+    window.addEventListener('pagehide', sayGoodbye)
     post({ tipo: 'hola' })
     presence()
   }
@@ -1018,6 +1009,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('fullscreenchange', onFullscreen)
   document.removeEventListener('visibilitychange', onVisibility)
+  window.removeEventListener('pagehide', sayGoodbye)
   clearInterval(sweeper)
   clearInterval(presenceTimer)
   clearTimeout(noteTimer)

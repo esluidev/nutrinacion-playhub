@@ -4,7 +4,7 @@ import type { StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Contrato del contenido del runner (estructura.md) y de sus plantillas (PLAYER-DESIGN.md).
 
-export type TemplateName = 'anuncio' | 'destapar' | 'colocar'
+export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia'
 
 /** Caras suaves de la paleta reutilizable del kit. Lima y night son del UI. */
 export type PieceTone = 'sun' | 'coral' | 'sky' | 'grape' | 'rose'
@@ -43,6 +43,10 @@ export interface DatosItem {
   nest?: boolean
   /** Icono del kit como insignia de la pieza. */
   icon?: string
+  /** Historia: el suelo del lugar dentro de su tarjeta (una franja de la librería). */
+  backdrop?: string
+  /** Historia: el interior del lugar, que la tarjeta muestra mientras el huevo está ahí, con el cartón donde se posa. */
+  interior?: string
   description?: I18nText
   fact?: I18nText
   voice?: I18nText

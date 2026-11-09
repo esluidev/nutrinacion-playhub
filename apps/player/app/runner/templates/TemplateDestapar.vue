@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { tr } from '~/types/i18n'
-import type { I18nText } from '~/types/i18n'
+import { box, useSceneText } from '../board'
 import { libraryRive, librarySvg } from '../content'
 import { useRunnerText } from '../i18n'
 import RiveCharacter from '../RiveCharacter.vue'
@@ -52,10 +51,8 @@ const EGG_SCALE = 180
 const WINDOW = { x: 40, y: 18, w: 240, h: 196 }
 const NEST = { cx: CARD.w / 2, baseline: 440, width: 170, ratio: 660 / 1200 }
 
-const t = (value: I18nText | null | undefined) => (value ? tr(value, props.locale) : '')
+const { t } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
-const px = (v: number) => `${v}px`
-const box = (x: number, y: number, w: number, h: number) => ({ left: px(x), top: px(y), width: px(w), height: px(h) })
 const left = (i: number) => 640 - (props.items.length * CARD.w + (props.items.length - 1) * GAP) / 2 + i * (CARD.w + GAP)
 const nestUrl = computed(() => librarySvg('nido'))
 const riveOf = (item: DatosItem) => libraryRive(item.character?.rive)

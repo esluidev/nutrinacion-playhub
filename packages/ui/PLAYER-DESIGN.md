@@ -1,8 +1,8 @@
 # PlayHub player · el taller
 
-Versión 1.2 · 4 de noviembre de 2026. El runner de Player (`apps/player/app/runner/`) es el taller: cuatro modos y tres ediciones. Una escena es una **plantilla de juego** más su **contenido**. Este documento recoge cómo se ve y se controla, y por qué.
+Versión 1.3 · 9 de noviembre de 2026. El runner de Player (`apps/player/app/runner/`) es el taller: cuatro modos y tres ediciones. Una escena es una **plantilla de juego** más su **contenido**. Este documento recoge cómo se ve y se controla, y por qué.
 
-La 1.2 cambia la consola (flota sobre el escenario, sin puntos ni tiempo), el escenario (el tono del área) y las piezas del tablero. El prototipo `lab/player.html`, del que se portó el runner, se queda en la 1.1: barra y pie blancos, tiempo y puntos.
+La 1.2 cambia la consola (flota sobre el escenario, sin puntos ni tiempo), el escenario (el tono del área) y las piezas del tablero. La 1.3 fija un solo patrón para las piezas del tablero, igual en todos los storyboards, deja este documento sin reglas de ningún storyboard en particular y quita la banda del pie: sus controles flotan sobre el escenario y solo el feedback le da fondo. El prototipo `lab/player.html`, del que se portó el runner, se queda en la 1.1: barra y pie blancos, tiempo y puntos.
 
 ## De dónde salen las decisiones
 
@@ -22,7 +22,7 @@ El player se diseña sobre **1280 × 800** y ocupa **toda la pantalla, sin caja 
 | --- | --- | --- |
 | Barra | 68 | Sin banda: el avance del taller y el bloque Ajustes · Reiniciar · Salir flotan sobre el escenario |
 | Escenario | el resto | La consigna y el tablero de la escena (1280 × 600, a la escala del UI como máximo) |
-| Pie | 92 | Una banda blanca: Guía · feedback · Siguiente |
+| Pie | 92 | Sin banda: Guía y Siguiente flotan sobre el escenario; el feedback sube con su tinte |
 
 La barra y el pie abrazan sus controles con una sola regla en todos los modos: la distancia al borde (`--edge`), el control de 44 y su base de 4; el pie guarda además 24 encima para el feedback. El tablero se queda con el resto: en 16:10 y 16:9, el 73 % de la pantalla.
 
@@ -36,7 +36,7 @@ La barra y el pie abrazan sus controles con una sola regla en todos los modos: l
 
 **Tamaño táctil:** el HUD mide 44, el mínimo de toque, en todas las pantallas. En tabletas el zoom nunca baja de 1. En teléfonos el UI se dibuja a 44/48 de su tamaño, así que el HUD se dibuja a 48 para seguir midiendo 44 reales. Con ratón, en una ventana pequeña, el UI baja como mínimo a 40/48. En pantallas táctiles nada que se toque queda por debajo de 44 px reales: los botones pequeños toman el tamaño estándar, las pestañas la altura de un control y los mini-botones conservan su cara pequeña con un área de toque de 44.
 
-**Modo compacto:** en pantallas táctiles, y con ratón cuando la escena perdería más de una décima parte de su espacio, los controles se acercan a los bordes y la Bienvenida se compone a 1280 × 600 como un juego. En teléfonos el pie guarda 16 en vez de 24 y la consigna ocupa una fila de 48.
+**Modo compacto:** en pantallas táctiles, y con ratón cuando la escena perdería más de una décima parte de su espacio, los controles se acercan a los bordes. En teléfonos el pie guarda 16 en vez de 24 y la consigna ocupa una fila de 48.
 
 **Protección táctil:** el player es una superficie de juego, no un documento. No se selecciona texto, un toque largo no abre menús ni la lupa, no hay destello al tocar, las imágenes no se arrastran y no se hace zoom con los dedos ni con el trackpad. La guía sigue desplazándose y el tablero recibe todos sus toques. El zoom del navegador con el teclado sí se permite: el player vuelve a ajustarse.
 
@@ -51,7 +51,7 @@ El modo se fija al abrir con `?mode=` y queda en `data-mode` del marco; cada pie
 | `home` | Uso autónomo en casa | El avance (sin la lista de escenas), Reiniciar · Salir y Continuar; sin Guía ni Ajustes. |
 | `preview` | La vista previa de Admin | Solo el escenario, sin consola ni sesión, a todo el alto. La conduce la app que lo incrusta (`ir`, `reiniciar`). |
 
-`?edicion=infantil|preadolescencia|adolescencia` elige el perfil de la audiencia (`PERFILES` en `plantillas.js`): si las piezas muestran su nombre escrito y cuánto andamiaje hay (guiado, pista en el primer error o en el segundo). La interfaz y las plantillas no cambian. En el dispositivo, la edición la manda la sesión. `?escena=<id>` abre una escena.
+La edición sale de `audience` del storyboard (un storyboard es una edición) y llega a la plantilla como un perfil (`profiles.ts`): si las piezas muestran su nombre escrito y cuánto andamiaje hay (guiado, pista en el primer error o en el segundo). La interfaz y las plantillas no cambian. `?escena=<carpeta>` abre una escena.
 
 ## La consola
 
@@ -62,19 +62,18 @@ Flota sobre el escenario como el HUD de un juego: un elemento por esquina, todos
 | Control | Pieza | Comportamiento |
 | --- | --- | --- |
 | **Avance** (izquierda) | Pieza blanca con base: claqueta de Lucide en `sky-700`, la barra de progreso del kit en lima y, en el educador, el chevron de un desplegable | La barra es el progreso del taller: cada escena aporta su parte y, dentro de un juego, avanza con cada acción resuelta. Al completar un juego la pieza da un pequeño salto. En el educador abre la lista de escenas. |
-| **Escena actual** | Bocadillo noche, plano, bajo el avance y centrado con él, con la flecha al centro | El nombre de la escena (hasta 240, con puntos suspensivos). Se esconde con la lista abierta. En teléfonos, donde la consigna empieza justo bajo la barra, va al lado del avance con la flecha hacia él. |
-| **Ajustes · Reiniciar · Salir** (derecha) | Un solo bloque de botones del kit, tres segmentos iguales; Salir con su icono en coral | Ajustes (solo el educador) abre su riel: pausa, sonido, pantalla completa (donde el navegador la permite) y Dispositivos. Reiniciar pide confirmación en sol. Salir, una ventana en coral con la escena en la que va el taller. En casa el bloque lleva solo Reiniciar y Salir. |
+| **Ajustes · Reiniciar · Salir** (derecha) | Un solo bloque de botones del kit, tres segmentos iguales; Salir con su icono en coral. Es el grupo de controles del kit (`ui-group`) en su versión de la consola: flota sobre el escenario, así que sus iconos van un paso más oscuros (night-700) y cada segmento se tiñe al pasar y al pulsar | Ajustes (solo el educador) abre su riel: pausa, sonido, pantalla completa (donde el navegador la permite) y Dispositivos. Reiniciar pide confirmación en sol. Salir, una ventana en coral con la escena en la que va el taller. En casa el bloque lleva solo Reiniciar y Salir. |
 
 En el dispositivo, arriba a la izquierda va el participante (su icono y un nombre de animal, su única identidad) y su «Listo».
 
 ### Pie
 
-Una banda blanca de lado a lado que da base a sus botones y al feedback. Es un contenedor, así que se separa del escenario con una línea plana de 2 en el gris de las bases, no con una base («Profundidad» en `DESIGN.md`).
+Sin banda ni línea, como la barra: el escenario llega hasta abajo y Guía y Siguiente flotan sobre él. Solo el feedback le da fondo, mientras está abierto.
 
 | Control | Comportamiento |
 | --- | --- |
 | **Guía** (cielo, educador) | Panel lateral izquierdo con la guía de la escena en cuatro pestañas (Escena, Conducir, Preguntas, Consejos). Pausa el juego; si se cambia de escena con el panel abierto, la guía cambia con ella. |
-| **Feedback** | Una hoja sube sobre el pie con el tono de su tipo (lima, cielo o sol) y los controles se apartan hasta cerrarla. Tapa la línea del pie y trae la suya, del mismo grosor, en su tono 200. Tiene escuchar y cerrar; con la escena completa, en lugar de cerrar lleva Siguiente. |
+| **Feedback** | Una hoja sube sobre el pie con el tono de su tipo (lima, cielo o sol) y los controles se apartan hasta cerrarla. Es una hoja de lado a lado con el tinte del tono (`--tone-tint`, 100), sin línea ni sombra. Siempre lleva escuchar y cerrar, nunca Siguiente: avanzar es del pie. |
 | **Siguiente** (lima, la acción principal, como en Admin y Educators) | Avanza, con el icono de reproducir de puntas suaves. En la última escena es Terminar, con el check y confirmación en lima. En casa dice Continuar. |
 
 Anterior no tiene botón: queda en las teclas (← y Re Pág) y en la lista de escenas. Cambiar de escena conserva su estado.
@@ -108,31 +107,53 @@ Funcionan sin mostrarse, pensados para los presentadores inalámbricos (Página 
 
 ## El escenario
 
-El escenario toma el tono más suave del área del storyboard (`--tone-wash`; alimentación → sol), como el suelo de un juego, de borde a borde y hasta arriba, detrás de la consola. Sobre el tablero va la **consigna**: qué hacer en la escena, fija durante toda la escena, en `text-headline` con el botón de escuchar de 44. Lo único que cambia con cada acción es el feedback, en el pie. Al completar un juego salen chispas del centro del tablero, en los tonos de las piezas y el lima, sin texto (no salen con movimiento reducido). Las insignias neutras van en blanco para no perderse en el escenario.
+El escenario toma el tono más suave del área del storyboard (`--tone-wash`; alimentación → sol), como el suelo de un juego, de borde a borde, hasta arriba detrás de la consola y hasta abajo detrás del pie. Sobre el tablero va la **consigna**: qué hacer en la escena, fija durante toda la escena, en `text-headline` con el botón de escuchar de 44. Una escena sin consigna (la Bienvenida) no deja vacía esa fila: su tablero sube la mitad y queda centrado en todo el escenario. Lo único que cambia con cada acción es el feedback, en el pie. Al completar un juego salen chispas del centro del tablero, en los tonos de las piezas y el lima, sin texto (no salen con movimiento reducido). Las insignias neutras van en blanco para no perderse en el escenario.
 
 ## Plantillas de juego
 
-Cada plantilla (`plantillas.js`) dibuja su tablero de 1280 × 600 con las piezas de juego del kit (`src/plantillas.css`) y los objetos o personajes de Rive, y habla con el marco solo con eventos: `consigna`, `feedback`, `progreso` y `completo`. No sabe en qué modo corre ni para qué audiencia: la audiencia llega como un perfil de edición.
+Cada plantilla (`app/runner/templates/`) dibuja su tablero de 1280 × 600 con las piezas de juego (`runner.css`), los dibujos de la librería y los personajes de Rive, y habla con el marco solo con eventos: `feedback`, `progress` y `complete`. La consigna la pone el marco, desde `meta.instruction`. Lo que comparten las plantillas (la caja de cada pieza, el puntero en coordenadas del tablero, los textos de la escena y el movimiento reducido) está en `board.ts`. No sabe en qué modo corre ni para qué audiencia: la audiencia llega como un perfil de edición.
 
 | Plantilla | Familias | Datos |
 | --- | --- | --- |
-| `anuncio` | Anuncio (Situar) | La Bienvenida: área y edición, «Hoy vamos a conocer», el tema y su ilustración, en el tono del área |
-| `destapar` | Revelar, Contrastar | `elementos[{ seVe: { imagen, alto, descripcion }, seDescubre: { ave, etiqueta }, tono, feedback }]` y una síntesis |
-| `colocar` | Emparejar, Ordenar, Recorrido | `fichas[{ id, etiqueta, imagen, nido?, alto?, icono?, tono }]`, `orden`, `pista`, `reintento` y `completo` |
+| `anuncio` | Anuncio (Situar) | La Bienvenida, igual en todos los storyboards: una portada en el tablero. Arriba, de uno a tres protagonistas del tema (ítems de `datos.json`; el primero, el principal, y los demás delante y recostados) sobre un suelo plano en el tinte del área, con tres chispas en su tono; debajo, el título en grande (`--text-hero`, 120, en una línea: si no cabe, se reduce) y una línea que lo presenta. Sin área ni edición: el educador dice «Hoy vamos a conocer…». Los protagonistas aparecen uno tras otro; al tocarlos saltan y suena la frase de la escena (`instruction`). Todo va en una columna centrada en el tablero por su alto (con una línea, dos o ninguna) y, como la Bienvenida no muestra consigna, su tablero ocupa también esa fila: el grupo queda centrado entre la consola y el pie |
+| `destapar` | Revelar, Contrastar | `defaults.items`, una carta por ítem, y por ítem `svg` (lo que se ve), `sizeScale`, `tone`, `description`, `name`, `fact` (la hoja al destapar) y `character` (el personaje de Rive que aparece). Al destaparlas todas, `meta.completionFeedback` |
+| `colocar` | Emparejar, Ordenar | `defaults.items` en el orden correcto (las fichas nunca empiezan así) y por ítem `svg`, `tone`, `name`, `icon`, `nest` y `sizeScale`. En `strings`, `hint`, `retry` y `completeTitle`; al completar, `meta.completionFeedback` |
+| `historia` | Recorrido | `defaults.items` (el origen y los lugares), `defaults.traveler` (lo que viaja), `defaults.routes` (los recorridos válidos, cada uno con su cierre) y, por lugar, `svg`, `name`, `fact` y `backdrop` (su escenario); en el origen, `character` |
 
-Un valor de contenido puede ser un texto o un objeto por edición (`{ infantil, preadolescencia, adolescencia }`); si falta una edición se usa infantil. Los personajes de las aves son `assets/aves.riv` (View Model `Aves`: `ave` y los triggers `aceptar`, `negar` y `volverIdle`).
+Todo texto de contenido va por idioma (`{ "es": … }`), en los JSON del storyboard; la edición la da el storyboard. Los personajes son Rive de la librería (`content/library/rive/`, con su fuente en `assets/`): sus enums y triggers (por ejemplo `aceptar`, `negar` y `volverIdle`) se leen del archivo; no se suponen.
 
-Las piezas de juego usan los tonos de sol, coral, cielo, uva y rosa (cara 200, contorno 300, base 400, texto 800); lima y night son del UI. Sus esquinas son de 28 (la tapa de Destapar, 24). En el runner, a partir de las cartas de Seedle, el tablero tiene su material y lo que se mueve tiene cuerpo:
+### Piezas del tablero
 
-- **Fichas de Colocar:** la cara en el pastel de su tono con el croma bajado (65 % del 200 con un gris neutro) y el relieve en una sola tinta para todas, `--color-ink`: contorno 2 y base 3 (1 al pulsar). La ficha cielo toma el azul gris de Seedle. En la bandeja van un poco giradas, como una mano de cartas; la que se toca se endereza y sube. Al caer en su destino rebota y al completar saltan en fila. Sin nombre escrito (infantil), el dibujo ocupa la ficha. No dejan pozo en la bandeja.
-- **Ranuras de Colocar:** huecos planos, sin contorno, en un tono medio muy apagado del área (arena en alimentación), con su número dentro como marca de agua, un paso más oscuro, igual que las flechas. La ranura que toca y la que recibe una ficha arrastrada van en azul gris, sin borde punteado; la que toca respira.
-- **Cartas de Destapar:** la tapa en el tono del área con su «?» blanco en relieve; abierta, el huevo con su nido llena la carta.
+Un solo patrón en todas las plantillas y en todos los storyboards: **la cara dice qué es la pieza; el borde, en qué estado está.** Todas tienen la forma del tablero (`--radius-board`, 26: un poco más redonda que la del UI), son planas, sin base ni sombra, y llevan el contorno suave del kit, de 3. Nunca un contorno oscuro. Lima y night son del UI; en el tablero, lima solo va en la marca ✓ de lo resuelto.
 
-Los colores del tablero se derivan con `color-mix` de los tokens del área y de un gris del kit (`runner.css`). Los dibujos siguen la regla de la skill `eslui-motion-design`: volumen con colores planos y sin sombra de apoyo; el suelo lo pone la ficha o la ranura.
+| Pieza | Para qué | Cara y contorno |
+| --- | --- | --- |
+| Tarjeta | Un objeto o una idea que se toca o que recibe algo | Blanca, con el gris de toda pieza blanca (`--color-depth`) |
+| Tarjeta con escenario | Un lugar o un contexto | El mismo marco. El escenario es solo el suelo del lugar (una franja de la librería, sin cielo), abajo y a lo ancho dentro del margen blanco de 3; el cielo es el blanco de la tarjeta. El objeto, grande, centrado y apoyado en el suelo, siempre dentro de la tarjeta. Los colores del suelo son del asset: la tarjeta no los cambia |
+| Ficha | Lo que se mueve hasta un hueco | El tinte más suave de su tono (`--tone-wash`) con el contorno un paso más; mide lo mismo que su hueco, así al caer lo cubre |
+| Hueco | Donde cae una ficha | La arena del área, plana y sin contorno, con su número como marca de agua |
+
+| Estado | Cómo se ve, en cualquier pieza |
+| --- | --- |
+| Quieta | Su contorno suave |
+| Invita | Respira: crece y vuelve, sin ningún color nuevo. Si la plantilla demuestra la acción con la mano, nada respira: la mano ya invita, y las dos juntas recargan el tablero |
+| Activa | Elegida, tocada, arrastrada o con algo encima: contorno cielo de 4 (`--board-active`, la selección del kit) y un poco más grande; la ficha, además, sube |
+| Resuelta | Apagada, con su marca ✓: blanca, con el contorno y el icono en lima |
+| Descubierta | Solo Revelar y Contrastar: el tinte de su tono (`--tone-tint`) con su borde (`--tone-tint-edge`) |
+
+El tono de cada ítem (`tone`: sol, coral, cielo, uva o rosa) se elige en contraste suave con su dibujo, para que el protagonista sea siempre el objeto. Las insignias de una pieza (un icono del kit) son blancas y planas, con el contorno suave. Los dibujos siguen la regla de la skill `eslui-motion-design`: volumen con colores planos y sin sombra de apoyo; el suelo lo pone la pieza o su escenario. Los colores del tablero se derivan de los tokens con `color-mix` (`runner.css`); los grises `night` de la consola no van en el escenario, que es cálido: ahí se leen azules.
+
+**Arrastrar y soltar** se siente igual en todas las plantillas (`useDrag` en el runner). Se mueve con un dedo a la vez: otro dedo o la palma no lo cambian. Hasta pasar un umbral corto es un toque, y el toque hace lo mismo que con el teclado. Lo que se arrastra sube un poco sobre el dedo y marca como activa la zona válida que queda debajo. Al soltar sobre ella sale desde donde se soltó, sin saltos; fuera, o si el gesto se corta, vuelve deslizándose a su sitio, que es siempre el que tiene en la escena, nunca el punto donde se agarró. Agarrarlo mientras vuelve lo detiene ahí. Con movimiento reducido, la vuelta es inmediata.
+
+### Cómo juega cada plantilla
+
+- **Colocar:** los huecos arriba y las fichas abajo, un poco giradas, como una mano de cartas; la que se toca se endereza y sube. Tocar una ficha la lleva al siguiente hueco libre, y también se arrastra a uno concreto. El hueco que toca respira. Al caer, la ficha rebota; al completar, todas saltan en fila. Sin nombre escrito (infantil), el dibujo ocupa la ficha. Sin «Comprobar»: al llenarse los huecos, el juego responde.
+- **Destapar:** una carta por ítem. Lo que se ve queda a la vista y lo que se descubre espera bajo su tapa (radio 16, en el tono de la carta, con su «?» en relieve). Al tocarla, la tapa sube, aparece el personaje y la carta queda descubierta.
+- **Historia (Recorrido):** dos columnas que pesan lo mismo. A la izquierda, el origen como escena: su dibujo, su personaje y lo que viaja, uno por recorrido. A la derecha, una tarjeta por lugar, una encima de otra, lo más grandes que quepan en la columna, con su suelo si el ítem lo trae (`backdrop`); lo que llega se posa delante del lugar, sobre el suelo. Las tarjetas no respiran: lo que se puede hacer lo dice la mano. En cada tramo (del origen al primer lugar y de un lugar de paso al siguiente), si nadie toca, la mano puntero de la librería demuestra el arrastre: presiona lo que viaja, lleva una copia translúcida hasta una tarjeta, que se activa como al soltar encima, y se desvanece. Lo que viaja se arrastra hasta una tarjeta (activa mientras está encima; fuera, vuelve a su sitio) o se toca la tarjeta, y vuela hasta ella. Cada lugar al que llega dice en la hoja qué pasa ahí, con su nombre y su `fact`; en un lugar de paso, también adónde siguen (`strings.next`), y la mano demuestra el tramo que sigue. Si el lugar tiene interior (`interior`), la tarjeta se acerca mientras lo que viaja está ahí y muestra el interior, con un sitio donde se posa a su tamaño (el cartón de huevos, en dos capas: `carton` detrás y `carton-frente` delante); cuando lo que viaja se va, la tarjeta vuelve a su exterior. Sin interior, se posa delante del lugar, sobre el suelo. Al destino la hoja le suma el cierre del recorrido (`body`, o `meta.completionFeedback`) y se queda hasta que la cierran: nada cambia solo, así no le quita el ritmo al educador. Puede haber varios recorridos y ninguno es un error; un lugar de paso ya recorrido queda resuelto. Sin caminos dibujados.
 
 ## Sesión
 
-La sesión del taller se simula entre pestañas del mismo navegador (BroadcastChannel). Del educador a los dispositivos van solo la escena, la pausa, los reinicios y la edición. Del dispositivo vuelve solo su presencia (icono, escena y si está en pausa), nunca respuestas, intentos ni si terminó. Recargar o salir reinicia la sesión.
+La sesión del taller se simula entre pestañas del mismo navegador (BroadcastChannel). Del educador a los dispositivos van solo la escena, la pausa y los reinicios. Del dispositivo vuelve solo su presencia (icono, escena y si está en pausa), nunca respuestas, intentos ni si terminó. Recargar o salir reinicia la sesión.
 
 Desde la 1.2 el player no muestra puntos ni tiempo: la consola se queda con lo que el educador necesita para conducir. El contenido conserva `pointsOnComplete`, pero el runner no lo usa.
 
@@ -142,4 +163,5 @@ Desde la 1.2 el player no muestra puntos ni tiempo: la consola se queda con lo q
 2. **Servicio de sesión.** El código, los dispositivos de prueba y la sesión entre pestañas son de demostración.
 3. **Audio.** Los botones de escuchar y el sonido solo se colocan; las grabaciones están pendientes.
 4. **Puntos.** El hecho 5 sale de la constitución, pero desde la 1.2 el player no muestra puntos. Falta decidir si se ven en otro sitio o si la constitución cambia.
-5. **Plantillas que faltan.** Existen Anuncio, Destapar y Colocar. El resto de las familias (Señalar, Simular, Beber, Repasar, Resumen…) no tiene plantilla todavía.
+5. **Plantillas que faltan.** Existen Anuncio, Destapar, Colocar e Historia (Recorrido). El resto de las familias (Señalar, Simular, Beber, Repasar, Resumen…) no tiene plantilla todavía.
+6. **Plantillas atadas a su primer tema.** Destapar e Historia llevan fijos en el código algunos dibujos de la librería (el nido y su borde anterior) y la composición del origen. Para otro tema, eso tiene que pasar a los datos, o la escena a su propio `scene.vue`.

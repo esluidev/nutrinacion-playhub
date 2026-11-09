@@ -3,45 +3,46 @@
    src/plantillas.css). Diseño en PLAYER-DESIGN.md. Solo tokens del kit. */
 @reference "@playhub/ui/css/index.css";
 
-/* PlayHub player: the workshop's frame in its three modes (educator, device, home).
-   Design space: 1280 × 800, zoomed to the screen. player.js measures the screen and its safe area (notch, rounded
-   corners, home bar) with .safe-probe and sets --player-scale, --frame-w/-h (the whole screen) and --safe-t/r/b/l,
-   all in design pixels. The frame covers the whole screen, so colours reach the edges. --safe-* is only the part of
-   an inset that goes beyond the margins (--edge, --gutter): an inset replaces the margin instead of adding to it.
-   The console floats over the stage like a game's HUD, one piece per corner, all one control high: the workshop's
-   progress (top left), Ajustes · Reiniciar · Salir (top right), Guía and Siguiente (bottom). The stage, in the softest
-   tone of the storyboard's area, reaches the top edge behind the floating pieces; a white footer band gives Guía,
-   Siguiente and the feedback sheet their base. The board (1280 × 600, scaled by --scene-fit to the room left) sits
-   between them. Sizes in useFrameFit.ts. */
+/* El marco del taller en sus cuatro modos (educador, dispositivo, casa y vista previa).
+   Espacio de diseño de 1280 × 800 con zoom a la pantalla. useFrameFit.ts mide la pantalla y su área segura (notch,
+   esquinas redondeadas, barra de inicio) con .safe-probe y fija --player-scale, --frame-w/-h (la pantalla entera) y
+   --safe-t/r/b/l, todo en píxeles de diseño. El marco cubre toda la pantalla, así los colores llegan a los bordes.
+   --safe-* es solo la parte de un margen de seguridad que pasa del margen del UI (--edge, --gutter): lo sustituye en
+   vez de sumarse.
+   La consola flota sobre el escenario como el HUD de un juego, un elemento por esquina y todos del alto de un
+   control: el avance del taller (arriba a la izquierda), Ajustes · Reiniciar · Salir (arriba a la derecha), Guía y
+   Siguiente (abajo). El escenario, en el tono más suave del área del storyboard, llega hasta arriba por detrás de la
+   consola; un pie blanco da base a Guía, Siguiente y la hoja de feedback. El tablero (1280 × 600, encajado con
+   --scene-fit en lo que queda) va entre ellos. Medidas en useFrameFit.ts. */
 @layer components {
-  /* The page is the player, not a document. Pan only (the guide scrolls): no pinch or double-tap zoom.
-     Pull-to-refresh and the rubber band live on the root, so the root gets overscroll-behavior too. */
+  /* La página es el player, no un documento. Solo desplazamiento (la guía se desplaza): sin zoom con dos dedos ni con
+     doble toque. El tirar para recargar y el rebote viven en la raíz, así que la raíz también lleva overscroll-behavior. */
   html:has(> body.player-page) { overscroll-behavior: none; }
   .player-page { @apply m-0 overflow-hidden bg-surface; overscroll-behavior: none; touch-action: pan-x pan-y; }
-  /* Touch blockers on the whole player, dialogs included: no text selection or loupe on a long press,
-     no press-and-hold callout, no tap flash, no image ghost when dragging. The rest is in player.js. */
+  /* Bloqueos táctiles en todo el player, ventanas incluidas: sin seleccionar texto ni lupa con un toque largo, sin
+     menú al mantener pulsado, sin destello al tocar y sin fantasma de imagen al arrastrar. El resto está en RunnerFrame. */
   .player-page, .player-page * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
   .player-page img { -webkit-user-drag: none; }
-  /* Measures the screen and its safe-area insets in the same units CSS uses (read by player.js). */
+  /* Mide la pantalla y sus márgenes de seguridad en las mismas unidades que usa el CSS (lo lee useFrameFit). */
   .safe-probe { position: fixed; inset: 0; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   .player-frame {
-    /* --edge: distance from the screen edge (inside the safe area) to the bar's controls and, the same, to the bottom
-       of the footer's controls including their raised base (player.js: 20; 12 on phones). */
+    /* --edge: distancia del borde de la pantalla (dentro del área segura) a los controles de arriba y, la misma, al final
+       de los de abajo con su base (useFrameFit: 20; 12 en teléfonos). */
     --gutter: 32px; --edge: 20px; --footer-gap: 24px;
-    /* HUD: one size on every screen and pointer, 44, the touch minimum, and one shape, round: icon buttons are circles;
-       buttons with text, chips and the scene block are capsules. Phones draw the UI at 44/48 of its design size
-       (player.js), so there the control is 48 to stay at 44 real px. Only the bar, the footer and the rail: the board
-       and the panels keep the kit's scale. player.js uses the same sizes. */
+    /* HUD: un solo tamaño en toda pantalla y puntero, 44, el mínimo táctil, con la forma del kit (rectángulos de 12 con
+       su base). Los teléfonos dibujan el UI a 44/48 de su tamaño (useFrameFit), así que ahí el control mide 48 para
+       seguir midiendo 44 reales. Solo la barra, el pie, el riel, los paneles y las ventanas: el tablero conserva su
+       escala. useFrameFit usa las mismas medidas. */
     --hud-control: 44px;
-    --hud-base: 0 var(--ph-depth) 0 var(--color-depth);   /* the kit's one base, the cards' colour */
-    /* The two top pieces (the progress and the Ajustes · Reiniciar · Salir block) share one length. */
+    /* Las dos piezas de arriba (el avance y el bloque Ajustes · Reiniciar · Salir) miden lo mismo. */
     --hud-long: 168px;
-    /* The bands hug the controls with one rule in every mode: --edge plus the control and its base; the footer keeps
-       --footer-gap above them for the feedback (bar 68, footer 92). The board gains the rest. useFrameFit sets them. */
+    /* Las bandas abrazan los controles con una sola regla en todos los modos: --edge más el control y su base; el pie
+       guarda además --footer-gap encima para el feedback (barra 68, pie 92). El tablero se queda con el resto.
+       useFrameFit las fija. */
     --bar-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth));
     --footer-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth) + var(--footer-gap));
-    /* The footer keeps more air above its controls than the bar keeps below its own; the scene starts that much lower,
-       so it sits centred between them (player.js adds the consigna's row). */
+    /* El pie guarda más aire sobre sus controles que la barra bajo los suyos; la escena empieza eso más abajo, así queda
+       centrada entre ambos (useFrameFit suma la fila de la consigna). */
     --scene-top: calc(var(--footer-h) - var(--bar-h));
     --rail-gap: 4px;
     @apply fixed left-0 top-0 grid overflow-hidden bg-surface;
@@ -52,117 +53,93 @@
     zoom: var(--player-scale, 1);
   }
   .player-frame :is(.player-bar, .player-footer, .quick-rail) { --ph-control: var(--hud-control); }
-  /* Native dialogs live in the top layer, outside the frame: give them the same zoom. */
+  /* Las ventanas nativas viven en la capa superior, fuera del marco: llevan el mismo zoom. */
   .player-page dialog { zoom: var(--player-scale, 1); max-height: calc(var(--frame-h, 100vh) - var(--safe-t, 0px) - var(--safe-b, 0px) - 32px); overflow-y: auto; }
 
-  /* ---- Preview (Admin): no console and no bands. The scene takes the whole height (useFrameFit, sinBandas) and the
-     feedback sheet still rises from the bottom, over the stage; without feedback the empty footer neither shows nor
-     takes taps. ---- */
+  /* ---- Vista previa (Admin): sin consola ni bandas. La escena ocupa todo el alto (useFrameFit, sinBandas) y la hoja
+     de feedback sigue subiendo desde abajo, sobre el escenario; sin feedback, el pie vacío ni se ve ni recibe toques. ---- */
   .player-frame[data-mode=preview] { grid-template-rows: minmax(0, 1fr); }
   .player-frame[data-mode=preview] .player-footer { position: absolute; inset: auto 0 0; height: var(--footer-h); pointer-events: none; }
 
-  /* ---- Bar: no band. Its pieces float over the stage at --edge from the top, with their base under them ---------- */
+  /* ---- Barra: sin banda. Sus piezas flotan sobre el escenario a --edge del borde de arriba, con su base debajo ---- */
   .player-bar { @apply grid items-center gap-6; grid-template-columns: max-content minmax(0, 1fr) max-content; padding: var(--edge) var(--gutter) var(--ph-depth); }
   .bar-start, .bar-end { @apply flex items-center gap-3; }
   .bar-start { @apply relative; }
   .bar-end { grid-column: 3; }
 
-  /* The workshop's progress: the clapperboard, the kit's progress bar and, for the educator, the chevron of a
-     dropdown that lists the scenes. White with its base (DESIGN.md, «Profundidad»), built like the button (background
-     = edge, white face inset) so the line never snaps under the player's zoom. As a button it lifts and sinks like one. */
-  .scene-card { @apply relative isolate flex items-center; gap: 10px; width: var(--hud-long); height: var(--hud-control); padding: 0 12px; border: 0; border-radius: var(--ph-radius); font: inherit; appearance: none; background: var(--color-depth); box-shadow: 0 var(--card-depth, var(--ph-depth)) 0 var(--color-depth); transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
-  .scene-card::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
+  /* La pieza blanca del HUD (el avance y, en un dispositivo, el participante): blanca y con su base (DESIGN.md,
+     «Profundidad»), construida como el botón neutro del kit (el fondo es el borde y la cara blanca va dentro), así la
+     línea no baila con el zoom. */
+  .hud-piece { @apply relative isolate flex items-center; height: var(--hud-control); border-radius: var(--ph-radius); background: var(--color-depth); box-shadow: 0 var(--piece-depth, var(--ph-depth)) 0 var(--color-depth); }
+  .hud-piece::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
+
+  /* El avance del taller: la claqueta, la barra de progreso del kit y, en el educador, el chevron de un desplegable que
+     lista las escenas. Como botón, sube y se hunde como uno. */
+  .scene-card { gap: 10px; width: var(--hud-long); padding: 0 12px; border: 0; font: inherit; appearance: none; transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
   button.scene-card { cursor: pointer; }
   button.scene-card:hover { transform: translateY(-1px); }
-  button.scene-card:active { --card-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  button.scene-card:active { --piece-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
   button.scene-card:focus-visible { outline: none; }
   button.scene-card:focus-visible::after { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px; border-radius: var(--radius-pill); background: var(--color-focus); transform: translateX(-50%); }
-  /* Lucide's clapperboard in sky-700, the console's own hue (Guía); the bar as high as the chevron (18), so it weighs
-     like the icons beside it. */
-  .scene-card-icon { @apply shrink-0; width: 22px; height: 22px; stroke-width: 2.2; color: var(--color-sky-700); }
+  /* La claqueta de Lucide en el icono del cielo (data-tone=sky), el tono propio de la consola (Guía); la barra del alto
+     del chevron (18), para que pese como los iconos que la acompañan. */
+  .scene-card-icon { @apply shrink-0; width: 22px; height: 22px; stroke-width: 2.2; color: var(--tone-icon); }
   .scene-card .scene-card-bar { @apply min-w-0 flex-1; height: 18px; }
   .scene-card-chevron { @apply shrink-0; width: 18px; height: 18px; color: var(--color-muted); transition: rotate var(--ph-duration) var(--ease-playful); }
   .scene-card[aria-expanded=true] .scene-card-chevron { rotate: 180deg; }
-  /* A game completed: the piece gives a short hop while its bar grows (the bar animates its own width). */
+  /* Juego completado: la pieza da un salto corto mientras su barra crece (la barra anima su propio ancho). */
   .scene-card.is-advancing { animation: scene-advance 520ms var(--ease-playful); }
-  /* The current scene, in a night bubble under the progress: centred on the piece, its arrow in the middle with the
-     tip 3 under its base. A label that informs, so it stays flat (DESIGN.md, «Profundidad»); night on the area's tone
-     already parts it from the stage. On a scene change the bubble leaves and the new one grows from its arrow. */
-  .scene-tab { @apply absolute block font-extrabold whitespace-nowrap; left: calc(var(--hud-long) / 2); top: calc(var(--hud-control) + var(--ph-depth) + 10px); translate: -50% 0; max-width: 240px; padding: 6px 12px; border-radius: var(--radius-chip); font-size: var(--text-caption); line-height: 1.2; background: var(--tone-fill); color: var(--tone-on); transform-origin: 50% -8px; }
-  .scene-tab-text { @apply relative block truncate; }
-  /* The arrow: a turned square of the bubble's colour, in its middle; its tip shows 7.5 above it. */
-  .scene-tab::before { content: ''; position: absolute; left: calc(50% - 6px); top: -5px; width: 12px; height: 12px; border-radius: 2px; background: inherit; rotate: 45deg; pointer-events: none; }
-  /* On phones the consigna starts right under the bar, so the bubble goes beside the progress instead, centred on its
-     face, with the arrow pointing at it. */
-  .player-page[data-phone] .scene-tab { left: calc(var(--hud-long) + 12px); top: calc(var(--hud-control) / 2); translate: 0 -50%; transform-origin: -8px 50%; }
-  .player-page[data-phone] .scene-tab::before { left: -5px; top: calc(50% - 6px); }
-  .scene-tab-enter-active, .scene-tab-leave-active { transition: opacity 140ms ease, scale 200ms var(--ease-playful); }
-  .scene-tab-enter-from, .scene-tab-leave-to { opacity: 0; scale: .85; }
 
-  /* Ajustes · Reiniciar · Salir: the kit's button group (one block with its base and equal segments), three segments
-     as long as the progress (at home, without Ajustes, two of them). Salir carries its icon in coral. */
+  /* Ajustes · Reiniciar · Salir: el grupo de botones del kit (un bloque con su base y segmentos iguales), tres
+     segmentos del largo del avance (en casa, sin Ajustes, dos). Salir lleva su icono en coral. */
   .player-frame .hud-tools > .ui-button { flex: none; width: calc((var(--hud-long) - 2px) / 3); min-width: 0; }
   .player-frame .hud-tools > .exit-button { --tone-on: var(--color-coral-600); }
 
-  /* Device: the participant's icon, the only identity it has, on a white piece with its base like the progress.
-     "Listo" is local and never sent. */
-  .participant { @apply relative isolate flex items-center gap-2; height: var(--hud-control); padding: 0 18px 0 6px; border-radius: var(--ph-radius); background: var(--color-depth); box-shadow: var(--hud-base); }
-  .participant::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
+  /* Dispositivo: el icono del participante, su única identidad, en la pieza blanca del HUD, como el avance.
+     «Listo» es local y nunca se envía. */
+  .participant { @apply gap-2; padding: 0 18px 0 6px; }
   .participant .ui-symbol { @apply m-0; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); border-radius: var(--radius-chip); }
   .participant .ui-symbol > .icon { width: 20px; height: 20px; }
   .participant-name { @apply font-black; font-size: var(--text-counter); color: var(--color-ink); }
   .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
 
-  /* ---- Stage: the softest tone of the storyboard's area (data-area: alimentación → sun), like a game's floor. It
-     reaches the top edge, behind the floating console, and runs under the side safe areas. Below it, the footer is a
-     white band from side to side (the frame's background). The footer is a container, so it gets a line and not a base
-     (DESIGN.md, «Profundidad»): a flat 2 px line in the bases' grey, drawn under the stage so the sheet covers it.
-     Visible overflow so floating panels cast their full shadow onto the footer. ---- */
+  /* ---- Escenario: el tono más suave del área del storyboard (data-area: alimentación → sol), como el suelo de un
+     juego. Llega hasta arriba, por detrás de la consola, y hasta abajo, por detrás del pie, pasando bajo las áreas
+     seguras. El pie no tiene fondo ni línea: sus controles flotan sobre el escenario, como los de la consola, y solo
+     la hoja del feedback le da fondo, con el tinte de su tipo. Desborde visible para que los paneles flotantes
+     proyecten su sombra entera. ---- */
   .player-stage { @apply relative min-h-0 overflow-visible; }
-  .player-stage::before { content: ''; position: absolute; z-index: -1; inset: calc(-1 * (var(--bar-h) + var(--safe-t, 0px))) calc(-1 * var(--safe-r, 0px)) 0 calc(-1 * var(--safe-l, 0px)); background: var(--tone-wash); box-shadow: 0 2px 0 var(--color-depth); pointer-events: none; }
+  .player-stage::before { content: ''; position: absolute; z-index: -1; inset: calc(-1 * (var(--bar-h) + var(--safe-t, 0px))) calc(-1 * var(--safe-r, 0px)) calc(-1 * (var(--footer-h) + var(--safe-b, 0px))) calc(-1 * var(--safe-l, 0px)); background: var(--tone-wash); pointer-events: none; }
   .player-stage:focus { outline: none; }
-  /* On the canvas a neutral badge (sunken tint) would vanish: on the stage it takes the white surface. */
+  /* Sobre el escenario, una insignia neutra (tinte hundido) desaparecería: lleva la superficie blanca. */
   .player-stage .badge:not([data-tone]):not([data-area]) { background: var(--color-surface); }
 
-  /* ---- Consigna: the header of the board. What to do in this scene, fixed: it does not change with each action
-     (the feedback does). Text with the kit's small listen action, never an HUD button. The scene starts under it. ---- */
+  /* ---- Consigna: la cabecera del tablero. Qué hacer en esta escena, fija: no cambia con cada acción (eso lo hace el
+     feedback). Texto con la acción pequeña de escuchar del kit, nunca un botón del HUD. La escena empieza debajo. ---- */
   .consigna { @apply absolute inset-x-0 z-[5] flex items-center justify-center gap-3; top: var(--consigna-top, 0px); height: var(--consigna-h, 56px); padding: 0 var(--gutter); }
   .consigna[data-empty=true] { visibility: hidden; }
   .consigna .mini-action { @apply m-0; width: 44px; height: 44px; }
   .consigna .mini-action > .icon { width: 22px; height: 22px; }
   .consigna-text { @apply m-0 min-w-0 truncate; font-weight: var(--font-weight-black, 900); font-size: var(--text-headline); line-height: 1.2; letter-spacing: -.01em; color: var(--color-ink); }
 
-  /* ---- Anuncio (Situar): the welcome, drawn from data ------------------------------------------- */
-  .welcome { @apply absolute inset-x-0 bottom-0 mx-auto grid items-center; top: var(--scene-top); max-width: 1280px; grid-template-columns: minmax(0, 1fr) 460px; gap: 48px; padding: 0 88px 0 104px; }
-  .welcome-text { @apply flex flex-col items-start; }
-  .welcome-kicker { @apply mb-6 flex flex-wrap gap-2; }
-  .welcome-kicker .badge { font-size: var(--text-caption); @apply px-3 py-1.5; }
-  .welcome-lead { @apply font-extrabold text-muted; font-size: var(--text-headline); line-height: 1.2; }
-  .welcome-topic { @apply m-0 font-black; font-size: var(--text-hero); line-height: 1; letter-spacing: -.045em; color: var(--color-ink); text-wrap: balance; }
-  .welcome-topic:focus { outline: none; }
-  .welcome-subtitle { @apply mt-5 font-bold text-muted; font-size: var(--text-title); }
-  .welcome-art { @apply relative grid aspect-square w-full place-items-center rounded-full; background: var(--tone-tint); }
-  .welcome-art::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 17%; height: 5%; border-radius: 50%; background: var(--color-shade); }
-  .welcome-art img { @apply relative z-10 block object-contain; width: 64%; height: 64%; filter: drop-shadow(0 10px 0 var(--color-shade-soft)); }
-
-  /* ---- Side panels: guide (left, next to its button) and devices (right, next to the rail).
-     No scrim: the panels float over the scene with the kit's float shadow; the scene pauses. ---- */
+  /* ---- Paneles laterales: la guía (a la izquierda, junto a su botón) y los dispositivos (a la derecha, junto al
+     riel). Sin velo: los paneles flotan sobre la escena con la sombra flotante del kit; la escena se pausa. ---- */
   .side-panel { @apply absolute z-30 flex flex-col overflow-hidden bg-surface; top: 16px; bottom: 16px; width: 480px; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
   .side-panel[data-side=left] { left: var(--gutter); }
-  /* Dispositivos opens from the Ajustes rail: to its left, 12 apart and level with its top (the rail, one control
-     plus 16, centred under the gear). */
+  /* Dispositivos se abre desde el riel de Ajustes: a su izquierda, a 12, y alineado arriba con él (el riel, de un
+     control más 16, va centrado bajo el engranaje). */
   .side-panel[data-side=right] { top: 8px; right: calc(var(--gutter) + var(--hud-long) - (var(--hud-long) - 2px) / 6 + (var(--hud-control) + 16px) / 2 + 12px); }
   .panel-head { @apply flex items-start justify-between gap-4; }
   .panel-caption { @apply font-extrabold text-muted; font-size: var(--text-caption); }
   .panel-head .ui-heading { @apply mt-0.5; }
   .panel-row { @apply mt-5 flex items-center justify-between gap-3; }
   .panel-label { @apply font-black uppercase tracking-[.12em] text-muted; font-size: var(--text-micro); }
-  /* Scroll without a visible bar; a fade at the bottom says there is more. */
+  /* Desplazamiento sin barra visible; un desvanecido abajo indica que hay más. */
   .panel-scroll { @apply min-h-0 overflow-y-auto; scrollbar-width: none; }
   .panel-scroll::-webkit-scrollbar { display: none; }
   .panel-scroll[data-more=true] { mask-image: linear-gradient(to bottom, var(--color-black) calc(100% - 40px), transparent); }
 
-  /* Guide of the current scene. It takes the tone of the storyboard's area (data-area): sun, sky, grape or rose. */
+  /* Guía de la escena actual. Toma el tono del área del storyboard (data-area): sol, cielo, uva o rosa. */
   .guide-meta { @apply mb-1.5 flex flex-wrap items-center gap-2; }
   .guide-subtitle { @apply mt-1 font-bold text-muted; font-size: var(--text-body); }
   .guide-tabs { @apply mt-4; }
@@ -176,7 +153,7 @@
   .guide-questions { @apply m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0; }
   .guide-questions li { @apply rounded-control px-3 py-1.5 font-bold; font-size: var(--text-body); background: var(--tone-tint); color: var(--color-ink); }
 
-  /* Devices */
+  /* Dispositivos */
   .join-box { @apply mt-4 rounded-control bg-canvas px-4 py-3; }
   .join-code { @apply my-1 font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
   .device-list { @apply m-0 mt-2 grid list-none grid-cols-7 content-start gap-1.5 p-1.5; max-height: 120px; }
@@ -195,17 +172,18 @@
   .device-card-name { @apply font-black; font-size: var(--text-body); }
   .device-actions { @apply mt-3 grid grid-cols-3 gap-2; }
 
-  /* ---- Quick settings rail: it hangs from the gear (the block's first segment), 12 under its base, with the float
-     shadow (it is temporary) and the surfaces' radius (16). 8 px of air between the buttons (12 minus their 4 px base)
-     and the same 8 all round, 12 below for the base. On phones, if it does not fit, it scrolls. ---- */
+  /* ---- Riel de ajustes: cuelga del engranaje (el primer segmento del bloque), 12 bajo su base, con la sombra
+     flotante (es temporal) y el radio de las superficies (16). 8 de aire entre los botones (12 menos su base de 4) y los
+     mismos 8 alrededor, 12 abajo por la base. En teléfonos, si no cabe, se desplaza. ---- */
   .quick-rail { @apply absolute z-40 flex flex-col bg-surface; gap: 12px; padding: 8px 8px 12px; top: 8px; right: calc(var(--gutter) + var(--hud-long) - (var(--hud-long) - 2px) / 6 - (var(--hud-control) + 16px) / 2); border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 160ms ease-out; }
   .player-page[data-phone] .quick-rail { max-height: calc(100% - 16px); overflow-y: auto; scrollbar-width: none; }
 
-  /* ---- Scenes (educator): the kit's dropdown menu (ui-listbox, ui-option) under the progress. On top, the kit's card
-     header (ui-panel-header, with its line) with the workshop: the label and its name, which wraps to a second line and
-     is cut on the third. Below, the rows, which scroll (under the fixed header) if they do not fit. Each row carries a
-     state badge: done, a lime check; the current one, its number in solid sun and the row selected; pending, its
-     number in neutral. A long scene name is cut with an ellipsis and read whole in its title. ---- */
+  /* ---- Escenas (educador): el menú de los desplegables del kit (ui-listbox, ui-option) bajo el avance. Arriba, la
+     cabecera de tarjeta del kit (ui-panel-header, con su línea) con el taller: la etiqueta y su nombre, que baja a una
+     segunda línea y se corta en la tercera. Debajo, las filas, que se desplazan (con la cabecera fija) si no caben.
+     Cada fila lleva una insignia de estado: hecha, un check en lima; la actual, su número en sol lleno y la fila
+     seleccionada; pendiente, su número en neutro. Un nombre de escena largo se corta con puntos suspensivos y se lee
+     entero en su título. ---- */
   .player-frame .scene-list { @apply flex flex-col overflow-hidden; top: 8px; left: var(--gutter); width: 264px; max-height: calc(100% - 16px); margin: 0; padding: 0; border-radius: var(--radius-panel); animation: arrive 160ms ease-out; }
   .player-frame .scene-list-head { @apply shrink-0 flex-col items-stretch; gap: 2px; padding: 12px 16px; }
   .scene-list-head .panel-label { @apply m-0; }
@@ -215,18 +193,19 @@
   .player-frame .scene-option[aria-selected=true] { color: var(--color-ink); font-weight: 900; }
   .scene-option-label { @apply flex min-w-0 flex-1 items-center gap-3; }
   .scene-option-name { @apply min-w-0 truncate; }
-  /* The state badge: the kit's small symbol (28, radius 8), with the number or the check. */
+  /* La insignia de estado: el símbolo pequeño del kit (28, radio 8), con el número o el check. */
   .player-frame .scene-option-num { @apply m-0 tabular-nums; width: 28px; height: 28px; font-size: var(--text-caption); font-weight: 900; }
   .player-frame .scene-option-num > .icon { width: 16px; height: 16px; stroke-width: 3; }
   .scene-option[data-state=current] .scene-option-num { background: var(--tone-fill); color: var(--tone-on); }
   .scene-option[data-state=pending] .scene-option-num { color: var(--color-muted); }
   .rail-button-count > .ui-dot { position: absolute; top: -6px; right: -6px; }
 
-  /* ---- Windows: what interrupts the workshop (the pause, the confirmations) takes the side panels' anatomy:
-     panel-head (a tinted symbol, caption and title, close), a short text, canvas boxes with a micro label and a figure,
-     a hint with its icon and the actions at the bottom. The panels' surface, corner and float shadow, centred over a
-     scrim. Windows and panels are at the console's scale: their controls measure what the HUD's do (44; 48 on phones)
-     and the window is narrow and compact, so its two split buttons measure what Siguiente does. ---- */
+  /* ---- Ventanas: lo que interrumpe el taller (la pausa, las confirmaciones) toma la anatomía de los paneles
+     laterales: panel-head (un símbolo teñido, contexto y título, cerrar), un texto corto, cajas en canvas con una
+     etiqueta y una cifra, una pista con su icono y las acciones abajo. La superficie, el radio y la sombra flotante de
+     los paneles, centradas sobre un velo. Ventanas y paneles van a la escala de la consola: sus controles miden lo que
+     los del HUD (44; 48 en teléfonos) y la ventana es estrecha y compacta, así sus dos botones partidos miden lo que
+     Siguiente. ---- */
   .player-frame :is(.panel-window, .side-panel) { --ph-control: var(--hud-control); }
   .panel-window { @apply relative flex flex-col bg-surface text-left text-ink; width: calc(100% - 32px); max-width: 400px; padding: 20px 24px 24px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
   .panel-window .ui-heading { font-size: var(--text-title); }
@@ -246,82 +225,75 @@
   .window-hint { @apply mt-5 flex items-center gap-2; }
   .window-hint .icon { @apply shrink-0; width: 16px; height: 16px; }
   .window-actions { @apply mt-5 grid gap-3; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
-  /* The pause window and a device's states cover the whole frame, over the same scrim as the dialogs. */
+  /* La ventana de pausa y los estados de un dispositivo cubren todo el marco, sobre el mismo velo que las ventanas. */
   .scene-overlay { @apply absolute inset-0 flex items-center justify-center; z-index: 50; padding: 16px; background: var(--color-scrim); backdrop-filter: blur(5px); }
   .scene-overlay .panel-window { max-height: 100%; overflow-y: auto; }
 
-  /* ---- Footer: Guía on the left and Siguiente on the right, mirrored and equally wide, a little shorter than the top
-     pieces (which hold more). A white band with the feedback's air above them. The feedback sheet rises over it with
-     listen and close (or Siguiente, once the scene is complete), and the controls step aside until it is closed.
-     Flat: the sheet casts no shadow. Its tint follows the kit's alerts: success → lime · info → sky · warning → sun ·
-     danger → danger; the gentle retry → sun. ---- */
+  /* ---- Pie: Guía a la izquierda y Siguiente a la derecha, en espejo y del mismo ancho, algo más cortos que las piezas
+     de arriba (que llevan más dentro). Sin fondo: flotan sobre el escenario, con el aire del feedback encima. La hoja de feedback
+     sube sobre él siempre con escuchar y cerrar (nunca con Siguiente), y los controles se apartan hasta
+     cerrarla. Plana: la hoja no proyecta sombra. Su tinte sigue los avisos del kit: éxito → lima · información →
+     cielo; el reintento amable → sol. ---- */
   .player-footer { @apply relative grid items-center gap-6; grid-template-columns: 200px minmax(0, 1fr) auto; padding: var(--footer-gap) var(--gutter) calc(var(--edge) + var(--ph-depth)); }
-  .footer-end { @apply flex items-center gap-3; grid-column: 3; justify-self: end; } /* stays in its column; the feedback floats over the footer */
+  .footer-end { @apply flex items-center gap-3; grid-column: 3; justify-self: end; } /* se queda en su columna; el feedback flota sobre el pie */
   .player-frame :is(.footer-start .ui-button, .next-button) { min-width: 140px; }
-  /* The kit's play icon is a filled triangle with a 1 stroke: with a 3.5 stroke and round joins its tips soften, like
-     the other round-stroke icons; a little smaller so the stroke does not enlarge it. Only the filled triangle (the
-     check of Terminar keeps its stroke). */
+  /* El icono de reproducir del kit es un triángulo lleno con un trazo de 1: con un trazo de 3,5 y uniones redondas
+     sus puntas se suavizan, como el resto de iconos de trazo redondo; un poco más pequeño para que el trazo no lo
+     agrande. Solo el triángulo lleno (el check de Terminar conserva su trazo). */
   .player-frame .next-button .icon { width: 16px; height: 16px; }
   .player-frame .next-button .icon path[fill=currentColor] { stroke-width: 3.5; stroke-linejoin: round; }
-  /* Panel swap: one leaves, then the other enters. Opening: controls go down, then the sheet rises.
-     Closing: the sheet goes down, then the controls rise. The sheet reaches the screen edges, under the home bar and
-     beside the notch. */
-  .player-footer::before { content: ''; position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px)) calc(-1 * var(--safe-l, 0px)); background: var(--feedback-sheet, var(--color-canvas)); box-shadow: inset 0 2px 0 var(--feedback-edge, transparent); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); }
-  .player-frame:not([data-feedback=none]) .player-footer::before { transform: none; transition: transform 300ms var(--ease-playful) 140ms; }
-  .player-frame[data-feedback=success] { --feedback-sheet: var(--color-lime-100); }
-  .player-frame[data-feedback=info] { --feedback-sheet: var(--color-sky-100); }
-  .player-frame[data-feedback=retry] { --feedback-sheet: var(--color-sun-100); }
-  .player-frame[data-feedback=danger] { --feedback-sheet: var(--color-danger-bg); }
-  /* Rising over the footer, the sheet covers its line and brings its own in the same place and thickness, in its tone
-     one step darker than its face (200 on 100): visible, without standing out. */
-  .player-frame[data-feedback=success] { --feedback-edge: var(--color-lime-200); }
-  .player-frame[data-feedback=info] { --feedback-edge: var(--color-sky-200); }
-  .player-frame[data-feedback=retry] { --feedback-edge: var(--color-sun-200); }
+  /* Cambio de panel: uno sale y después entra el otro. Al abrir, los controles bajan y después sube la hoja. Al
+     cerrar, la hoja baja y después suben los controles. La hoja llega a los bordes de la pantalla, bajo la barra de
+     inicio y junto al notch. */
+  /* La hoja (.feedback-sheet) lleva el tono de su tipo (data-tone) y su tinte del kit. Al subir le da fondo al pie,
+     sin línea ni sombra: solo el tinte (100). Al cerrarse baja con su tono. */
+  .feedback-sheet { position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px)) calc(-1 * var(--safe-l, 0px)); background: var(--tone-tint); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); pointer-events: none; }
+  .player-frame:not([data-feedback=none]) .feedback-sheet { transform: none; transition: transform 300ms var(--ease-playful) 140ms; }
   .footer-start, .footer-end { @apply relative; transition: transform 300ms var(--ease-playful) 180ms, opacity 200ms ease 180ms, visibility 0s linear 180ms; }
   .player-frame:not([data-feedback=none]) :is(.footer-start, .footer-end) { transform: translateY(120%); opacity: 0; visibility: hidden; transition: transform 180ms cubic-bezier(.4, 0, 1, 1), opacity 160ms ease, visibility 0s linear 180ms; }
   .feedback-slot { @apply pointer-events-none absolute inset-0 z-10 flex items-center; padding: 0 var(--gutter); }
   .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 300ms var(--ease-playful) 160ms, visibility 0s linear 0s; }
   .feedback-slot .ui-feedback[data-visible=false] { opacity: 1; visibility: hidden; transform: translateY(130%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1), visibility 0s linear 220ms; }
-  /* Symbol and text keep the kit's feedback sizes (symbol 64, title text-title, description text-body). */
+  /* El símbolo y el texto conservan las medidas del feedback del kit (símbolo 64, título text-title, descripción
+     text-body). */
   .feedback-slot .ui-feedback-symbol { width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); box-shadow: none; }
   .feedback-slot .ui-feedback-symbol > .icon { width: 32px; height: 32px; stroke-width: 2.6; }
   .feedback-slot .ui-feedback strong { font-size: var(--text-title); color: var(--tone-strong); letter-spacing: 0; }
   .feedback-slot .ui-feedback .sheet-text { @apply mt-0.5 font-semibold text-muted; font-size: var(--text-body); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .feedback-actions { @apply ml-auto flex items-center gap-3; }
 
-  /* A button group (Ajustes · Reiniciar · Salir) as one block, raised like the buttons, with their 1 px outline. The
-     segments are white and fill it; the hairline between them is the block's own line colour showing through a 1 px
-     gap, so a missing segment (Ajustes at home) leaves no stray divider. The outline is painted over the segments, so
-     a hover or press tint never covers it. The segments never lift or sink: only their tint changes. An open control
-     (Ajustes, Guía) keeps its look. */
-  .hud-group { @apply relative flex shrink-0; gap: 1px; height: var(--ph-control); overflow: hidden; border-radius: var(--ph-radius); background: var(--color-line); box-shadow: var(--hud-base); }
+  /* Un grupo de botones (Ajustes · Reiniciar · Salir) como un solo bloque, en relieve como los botones y con su
+     contorno de 1. Es el grupo del kit (ui-group) en su versión de la consola, a propósito: flota sobre el escenario,
+     así que sus iconos son los del botón neutro (night-700, un paso más oscuros) y cada segmento se tiñe al pasar y al
+     pulsar. Los segmentos son blancos y lo llenan; la línea fina entre ellos es el color de línea del propio
+     bloque, que asoma por un hueco de 1, así un segmento que falta (Ajustes en casa) no deja un divisor suelto. El
+     contorno se pinta sobre los segmentos, así un tinte al pasar o pulsar nunca lo tapa. Los segmentos nunca suben ni
+     se hunden: solo cambia su tinte. Un control abierto (Ajustes, Guía) conserva su aspecto. */
+  .hud-group { @apply relative flex shrink-0; gap: 1px; height: var(--ph-control); overflow: hidden; border-radius: var(--ph-radius); background: var(--color-line); box-shadow: var(--shadow-raised); }
   .hud-group::after { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 var(--color-depth), inset 1px 0 0 var(--color-depth), inset -1px 0 0 var(--color-depth); pointer-events: none; }
   .player-frame .hud-group > .ui-button { height: 100%; min-height: 0; border-radius: 0; background: var(--color-surface); box-shadow: none; transform: none; filter: none; transition: background-color var(--ph-duration); }
   .player-frame .hud-group > .ui-button::before { display: none; }
   .player-frame .hud-group > .ui-button:hover:not(:disabled) { background: var(--color-sunken); transform: none; filter: none; }
   .player-frame .hud-group > .ui-button:active:not(:disabled) { background: var(--color-line); transform: none; }
   .player-frame .hud-group > .ui-button:disabled { background: var(--color-surface); color: var(--color-subtle); }
-  /* The kit's focus tick sits inside the block, which clips its edges. */
+  /* La marca de foco del kit va dentro del bloque, que recorta sus bordes. */
   .player-frame .hud-group > .ui-button:focus-visible::after { top: 4px; }
 
-  /* ---- Compact (touch screens, small windows): same pieces and sizes, less air around them ---- */
-  /* Phones: the HUD is drawn at 48 to stay at 44 real px (player.js), and the footer keeps less air above it. */
+  /* ---- Compacto (pantallas táctiles y ventanas pequeñas): las mismas piezas y medidas, con menos aire ---- */
+  /* Teléfonos: el HUD se dibuja a 48 para seguir midiendo 44 reales (useFrameFit), y el pie guarda menos aire encima. */
   .player-page[data-phone] .player-frame { --hud-control: var(--ph-control); --footer-gap: 16px; }
-  /* Touch screens: nothing tappable under 44 real px (the minimum touch target). Small buttons take
-     the standard size, tabs the control height, and mini-actions keep their small face with a halo
-     of 44 real px whatever the zoom. */
+  /* Pantallas táctiles: nada que se toque por debajo de 44 reales (el mínimo táctil). Los botones pequeños toman la
+     medida estándar, las pestañas la altura de un control y los mini-botones conservan su cara pequeña con un área de
+     toque de 44 reales, sea cual sea el zoom. */
   @media (pointer: coarse) {
     .player-page .ui-button-sm { min-height: var(--ph-control); }
     .player-page .ui-button-sm.ui-icon-button { width: var(--ph-control); height: var(--ph-control); }
     .player-page .ui-tab { min-height: var(--ph-control); }
     .player-page .mini-action::before { inset: min(-6px, calc(50% - 22px / var(--player-scale, 1))); }
   }
-  /* The welcome is laid out at 1280×600, like a game, scaled to the stage and centred the same way.
-     zoom also scales its own offsets, so the top offset is divided back by the zoom. */
-  .player-frame[data-compact] .welcome { inset: calc(var(--scene-top) / var(--scene-fit, 1)) 0 0; margin: auto; width: 1280px; height: 600px; max-width: none; zoom: var(--scene-fit, 1); }
   .player-frame[data-compact] .side-panel { top: 8px; bottom: 8px; }
 
-  /* ---- Sparks when a game is completed: they leave the board's centre and fall, in the pieces' tones and lime ---- */
+  /* ---- Chispas al completar un juego: salen del centro del tablero y caen, en los tonos de las piezas y el lima ---- */
   .spark-burst { position: absolute; z-index: 25; left: 50%; top: calc(var(--scene-top, 0px) + var(--scene-h, 600px) / 2); width: 0; height: 0; pointer-events: none; }
   .spark { position: absolute; left: -8px; top: -12px; width: 16px; height: 24px; border-radius: 5px; background: var(--tone-fill); opacity: 0; animation: spark-fall 1300ms cubic-bezier(.15, .7, .35, 1) var(--delay, 0ms) forwards; }
   .spark:nth-child(3n) { width: 18px; height: 18px; border-radius: var(--radius-pill); }
@@ -329,18 +301,20 @@
   @media (prefers-reduced-motion: reduce) {
     .spark-burst { display: none; }
     .scene-card.is-advancing { animation: none; }
-    .scene-tab-enter-active, .scene-tab-leave-active { transition: opacity 120ms ease; }
-    .scene-tab-enter-from, .scene-tab-leave-to { scale: 1; }
   }
 }
 
 @keyframes scene-advance { 35% { scale: 1.035; } 70% { scale: .99; } }
 @keyframes spark-fall { 0% { opacity: 1; translate: 0 0; rotate: 0deg; scale: .3; } 15% { opacity: 1; scale: 1; } 80% { opacity: 1; } 100% { opacity: 0; translate: var(--dx) var(--dy); rotate: var(--r); scale: .9; } }
 
-/* ---- Piezas de juego de las plantillas (Destapar, Colocar). Ninguna usa lima ni night como color propio: son del UI. */
+/* ---- Piezas de juego de las plantillas (Anuncio, Destapar, Colocar e Historia). Ninguna usa lima ni night como color
+   propio: son del UI. */
 @layer components {
   /* ---- Tablero: 1280 × 600, sin fondo, centrado entre la barra y el pie, a la escala del UI ------ */
   .tb-scene { @apply absolute; inset: var(--scene-top) 0 auto; height: var(--scene-h, 600px); }
+  /* Una escena sin consigna (la Bienvenida) no deja vacía esa fila: su tablero sube la mitad y queda centrado en todo
+     el escenario, entre la consola y el pie. */
+  .tb-scene[data-sin-consigna] { translate: 0 calc(var(--consigna-h, 56px) / -2); }
   .tb-board { position: absolute; left: 50%; top: 50%; width: 1280px; height: 600px; transform: translate(-50%, -50%) scale(var(--scene-fit, 1)); touch-action: none; }
   .tb-board[data-blocked] { pointer-events: none; }
   .tb-board img { display: block; pointer-events: none; -webkit-user-drag: none; }
@@ -348,40 +322,65 @@
   .tb-layer { position: absolute; inset: 0; }
   .tb-ave, .tb-nido, .tb-huevo { position: absolute; pointer-events: none; }
 
-  /* Soft faces of the reusable palette: face 200, outline 300, raised base 400, text 800. */
-  .tb-pieza[data-tone=sun] { --pz-face: var(--color-sun-200); --pz-line: var(--color-sun-300); --pz-edge: var(--color-sun-400); --pz-ink: var(--color-sun-800); }
-  .tb-pieza[data-tone=coral] { --pz-face: var(--color-coral-200); --pz-line: var(--color-coral-300); --pz-edge: var(--color-coral-400); --pz-ink: var(--color-coral-800); }
-  .tb-pieza[data-tone=sky] { --pz-face: var(--color-sky-200); --pz-line: var(--color-sky-300); --pz-edge: var(--color-sky-400); --pz-ink: var(--color-sky-800); }
-  .tb-pieza[data-tone=grape] { --pz-face: var(--color-grape-200); --pz-line: var(--color-grape-300); --pz-edge: var(--color-grape-400); --pz-ink: var(--color-grape-800); }
-  .tb-pieza[data-tone=rose] { --pz-face: var(--color-rose-200); --pz-line: var(--color-rose-300); --pz-edge: var(--color-rose-400); --pz-ink: var(--color-rose-800); }
+  /* ---- Las piezas del tablero: un solo patrón en todas las plantillas y en todos los storyboards. La cara dice qué es
+     la pieza; el borde, en qué estado está. Sin contornos oscuros: todas llevan el contorno suave del kit, de 3.
+     - Tarjeta: un objeto o una idea que se toca o que recibe algo. Blanca, con el gris de toda pieza blanca.
+     - Tarjeta con escenario: el mismo marco y, dentro de un margen blanco de 3, el escenario del asset, recortado con
+       la forma de la tarjeta y apoyado abajo. La tarjeta no cambia los colores del escenario.
+     - Ficha: la tarjeta que se mueve. El tinte más suave de su tono (50) y el contorno un paso más, para que el
+       protagonista sea siempre el dibujo.
+     - Hueco: donde cae una ficha. Arena plana, sin contorno.
+     Los mismos estados en todas: quieta; invita (respira); activa (elegida, tocada, arrastrada o con algo encima: el
+     cielo de selección del kit, de 4, --board-active); resuelta (apagada, con su marca ✓ en lima); descubierta
+     (Revelar: el tinte de su tono). Las caras salen del tono del ítem (data-tone): cara --tone-wash, contorno entre
+     --tone-wash y --tone-face, texto --tone-strong. ---- */
+  .tb-pieza[data-tone] { --pz-face: var(--tone-wash); --pz-line: color-mix(in oklab, var(--tone-face) 45%, var(--tone-wash)); --pz-edge: var(--tone-fill); --pz-ink: var(--tone-strong); }
 
-  /* The board's flat colours come from the storyboard's area, mixed with a neutral grey of the kit that lowers their
-     chroma without changing their hue (ideas from Seedle: the board has its own material and what moves has body):
-     - --board-slot: what gets filled (the slots), a very muted, light mid tone of the area (soft sand in
-       alimentación): it parts from the stage without darkening it. --board-slot-mark, its mark (the slot's number and
-       the arrows), one step darker.
-     - --board-next: the slot that is due now or receives a dragged piece, the grey blue of Seedle's cards (sky with
-       grape, muted); --board-next-mark, its number. The kit's info blue (sky) did not match the sand or the pieces. */
+  /* Los colores planos del tablero salen del lienzo, que es cálido (crema y arena, matiz 80), no de los grises del
+     kit: esos son de la consola (blanca) y van en el eje marino (matiz -100), así que sobre el crema se leen azules.
+     - --board-slot: lo que se rellena (los huecos), un tono medio del área muy apagado y claro (arena en
+       alimentación): se distingue del lienzo sin oscurecerlo.
+     - --board-slot-mark: su marca (el número del hueco y las flechas), un paso más oscura y con más color: se lee
+       como tinta propia, no como una capa translúcida, que solo puede oscurecer y apagar. */
   .player-stage {
-    --board-grey: color-mix(in oklab, var(--color-white) 86%, var(--color-black));
+    --board-active: var(--color-sky-400);
     --board-slot: color-mix(in oklab, var(--tone-mid) 26%, color-mix(in oklab, var(--color-white) 93%, var(--color-black)));
     --board-slot-mark: color-mix(in oklab, var(--tone-mid) 36%, color-mix(in oklab, var(--color-white) 86%, var(--color-black)));
-    --board-next: color-mix(in oklab, color-mix(in oklab, var(--color-sky-200) 40%, var(--color-grape-200)) 50%, color-mix(in oklab, var(--color-white) 93%, var(--color-black)));
-    --board-next-mark: color-mix(in oklab, color-mix(in oklab, var(--color-sky-300) 40%, var(--color-grape-300)) 80%, color-mix(in oklab, var(--color-white) 80%, var(--color-black)));
   }
-  .tb-pieza { -webkit-tap-highlight-color: transparent; }
-  .tb-pieza:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+  /* Las cartas del tablero (Destapar, Colocar e Historia): una sola forma en todas las escenas, la del kit
+     (--radius-board, 26: las esquinas un poco más redondas que las del UI), y planas, sin base ni sombra; al pulsar se
+     encogen un poco. Los huecos donde caen llevan la misma forma. */
+  .tb-pieza { padding: 0; border: 0; appearance: none; border-radius: var(--radius-board); -webkit-tap-highlight-color: transparent; }
+  /* El foco de todo lo que se toca en el tablero. */
+  :is(.tb-pieza, .tb-an-toque, .tb-hv-agarre):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
 
-  /* Text inside the board scales with it (to about 0.35 on the smallest phone): nothing under 28 board px.
-     Name of a piece: a white chip in the piece's ink (preadolescencia and adolescencia). */
-  .tb-etiqueta { @apply absolute rounded-control px-5 py-2 font-black whitespace-nowrap; left: 50%; translate: -50% -50%; font-size: var(--text-headline-lg); line-height: 1.2; color: var(--pz-ink, var(--color-ink)); background: var(--color-surface); box-shadow: 0 3px 0 var(--pz-edge, var(--color-depth-strong)); }
+  /* El texto dentro del tablero escala con él (hasta unos 0,35 en el teléfono más pequeño): nada por debajo de 28 px
+     del tablero. Nombre de una pieza: una etiqueta blanca en la tinta de la pieza (preadolescencia y adolescencia). */
+  .tb-etiqueta { @apply absolute rounded-control px-5 py-2 font-black whitespace-nowrap; left: 50%; translate: -50% -50%; font-size: var(--text-headline-lg); line-height: 1.2; color: var(--pz-ink, var(--color-ink)); background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); }
 
-  /* ---- Destapar: what is seen stays in view; what is discovered waits under its cover. The cover is what invites a
-     tap (in the area's tone, with its raised «?»), and the egg with its nest fills the card. ---- */
-  .tb-carta { @apply absolute overflow-hidden p-0; border: 0; appearance: none; cursor: pointer; border-radius: var(--radius-dialog); background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-line), 0 8px 0 var(--color-depth-strong); transition: translate 160ms var(--ease-playful), box-shadow 160ms ease, background 200ms ease; }
-  .tb-carta[data-state=tapada]:hover { translate: 0 -6px; }
-  .tb-carta[data-state=tapada]:active { translate: 0 5px; box-shadow: inset 0 0 0 3px var(--color-line), 0 3px 0 var(--color-depth-strong); }
-  .tb-carta[data-state=abierta] { background: var(--pz-face); box-shadow: inset 0 0 0 3px var(--pz-line), 0 8px 0 var(--pz-edge); }
+  /* ---- Anuncio (Situar): la Bienvenida como portada, en el tablero como cualquier juego (TemplateAnuncio.vue). Los
+     protagonistas aparecen uno tras otro sobre un suelo plano en el tinte del área y saltan al tocarlos; las chispas,
+     en el tono del área, brillan despacio. El título usa el tamaño del tema del día (--text-hero) y se reduce si no
+     cabe en una línea; la línea que lo presenta, el de la consigna, en el gris de apoyo. Todo va en una columna
+     centrada en el alto del tablero por lo que mide (con una línea, dos o ninguna). ---- */
+  .tb-an { position: absolute; inset: 50% 0 auto; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; }
+  .tb-an-protagonistas { position: relative; flex: none; width: 100%; }
+  .tb-an-suelo { position: absolute; border-radius: 50%; background: var(--tone-tint); }
+  .tb-an-figura { position: absolute; transform-origin: 50% 92%; animation: tb-aparece 420ms var(--ease-playful) var(--delay, 0ms) both; }
+  .tb-an-figura img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+  .tb-an-figura img.is-hopping { animation: tb-an-salto 700ms ease-out both; }
+  .tb-an-chispa { position: absolute; background: var(--tone-fill); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: tb-aparece 320ms var(--ease-playful) var(--delay, 0ms) both, tb-an-brillo 2400ms ease-in-out calc(var(--delay, 0ms) + 320ms) infinite; }
+  .tb-an-chispa.is-mid { background: var(--tone-mid); }
+  .tb-an-toque { position: absolute; z-index: 4; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .tb-an-titulo { @apply m-0 font-black whitespace-nowrap text-center; flex: none; height: 120px; font-size: calc(var(--text-hero) * var(--title-fit, 1)); line-height: 120px; letter-spacing: -.02em; color: var(--color-ink); }
+  .tb-an-linea { @apply m-0 font-bold text-center text-muted; flex: none; margin-top: 20px; font-size: var(--text-headline); line-height: 1.3; text-wrap: balance; }
+
+  /* ---- Destapar: lo que se ve queda a la vista; lo que se descubre espera bajo su tapa. La tapa es lo que invita a
+     tocar (en el tono de la carta, con su «?» en relieve), y lo que se ve llena la carta. Tapada, es una tarjeta
+     quieta; destapada, toma el tinte de su tono (--tone-tint) con su borde (--tone-tint-edge). ---- */
+  .tb-carta { @apply absolute overflow-hidden; cursor: pointer; background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-depth); transition: scale 160ms var(--ease-playful), box-shadow 160ms ease, background 200ms ease; }
+  .tb-carta[data-state=tapada]:active { scale: .97; }
+  .tb-carta[data-state=abierta] { background: var(--tone-tint); box-shadow: inset 0 0 0 3px var(--tone-tint-edge); }
   .tb-carta.is-nudging { animation: tb-nudge 900ms ease-in-out; }
   .tb-tapa { @apply absolute grid place-items-center; border-radius: var(--radius-panel); background: var(--tone-top); box-shadow: inset 0 0 0 3px var(--tone-fill), inset 0 -10px 0 var(--tone-fill); transition: opacity 300ms ease, translate 300ms var(--ease-playful); }
   .tb-tapa.is-opening { opacity: 0; translate: 0 -28px; }
@@ -390,45 +389,97 @@
   .tb-carta .tb-nido { scale: 1.3; transform-origin: 50% 52%; }
   .tb-carta .tb-huevo { scale: 1.3; transform-origin: 50% 100%; }
 
-  /* ---- Colocar: destinations above, flat slots in the area's sand with their number inside as a watermark; pieces
-     below. The slot that is due (guided) and the one receiving a dragged piece: the same flat slot in grey blue, no
-     dashed line, breathing. ---- */
-  .tb-numero { @apply absolute z-[1] flex items-center justify-center font-black; translate: 0 148px; pointer-events: none; font-size: 140px; line-height: 1; color: var(--board-slot-mark); }
-  .tb-numero:has(+ .tb-ranura:is(.is-next, .is-over)) { color: var(--board-next-mark); }
-  .tb-ranura { position: absolute; z-index: 0; border-radius: var(--radius-dialog); background: var(--board-slot); transition: background 160ms ease, box-shadow 160ms ease; }
-  .tb-ranura.is-next { background: var(--board-next); animation: tb-breathe 1600ms ease-in-out infinite; }
-  .tb-ranura.is-over { background: var(--board-next); box-shadow: inset 0 0 0 4px var(--board-next-mark); }
+  /* ---- Colocar: los destinos arriba, huecos planos en la arena del área con su número dentro como marca de agua; las
+     fichas abajo, del mismo tamaño que los destinos, así al colocarlas los cubren enteros.
+     El hueco que toca (guiado) respira; el que recibe una ficha arrastrada se marca en cielo, como toda pieza activa.
+     El número no cambia: todos los huecos lo llevan igual. Descartados: el azul de información del kit con borde
+     punteado, un lavanda pálido, el gris de Seedle, los grises night del kit y un gris neutro (un hueco gris se lee
+     desactivado, lo contrario de «aquí va»), un número blanco y el contorno de tinta (rompe el kit). ---- */
+  .tb-numero { @apply absolute z-[1] flex items-center justify-center font-black; pointer-events: none; font-size: 140px; line-height: 1; color: var(--board-slot-mark); }
+  .tb-ranura { position: absolute; z-index: 0; border-radius: var(--radius-board); background: var(--board-slot); transition: background 160ms ease, box-shadow 160ms ease; }
+  .tb-ranura.is-over { box-shadow: inset 0 0 0 4px var(--board-active); }
+  .tb-ranura.is-next { animation: tb-breathe 1600ms ease-in-out infinite; }
   .tb-ranura.is-wrong { animation: tb-wiggle 460ms ease; }
   .tb-flecha { @apply absolute grid place-items-center; color: var(--board-slot-mark); }
   .tb-flecha .icon { width: 40px; height: 40px; stroke-width: 3; }
-  /* The pieces, like Seedle's cards: the face in its tone's pastel with the chroma lowered (65 % of the 200 with the
-     neutral grey) and the relief in one ink for all, the text's (outline 2, base 3). The same frame on every piece
-     unifies the board; the faces can change colour. Pressed, the base drops to 1. The blue piece takes Seedle's grey
-     blue: sky alone read cold and loose on the sand. */
-  .tb-ficha { @apply absolute z-[2] flex flex-col items-center justify-center gap-1.5 p-0; border: 0; appearance: none; cursor: grab; touch-action: none; border-radius: var(--radius-dialog); background: color-mix(in oklab, var(--pz-face) 65%, var(--board-grey)); box-shadow: inset 0 0 0 2px var(--color-ink), 0 3px 0 var(--color-ink); transition: left 340ms var(--ease-playful), top 340ms var(--ease-playful), translate 160ms var(--ease-playful), rotate 240ms var(--ease-playful), box-shadow 120ms ease; }
-  .tb-ficha[data-tone=sky] { background: color-mix(in oklab, color-mix(in oklab, var(--color-sky-200) 40%, var(--color-grape-200)) 70%, color-mix(in oklab, var(--color-white) 88%, var(--color-black))); }
-  .tb-ficha:active:not(:disabled) { box-shadow: inset 0 0 0 2px var(--color-ink), 0 1px 0 var(--color-ink); }
-  .tb-ficha.is-dragging { z-index: 20; cursor: grabbing; transition: none; filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
-  /* The hand: in the tray the pieces are slightly turned, like cards; the one touched straightens and rises. */
+  /* Las fichas: la tarjeta que se mueve. La cara en el tinte más suave de su tono y su contorno suave (--pz-face,
+     --pz-line), sin base ni sombra; al pulsar se encoge un poco y, tocada o arrastrada, sube y se marca en cielo. El
+     tono de cada ítem se elige en contraste suave con su dibujo. Descartados: la cara pastel apagada con el contorno
+     de tinta, como las cartas de Seedle (rompía el kit y quitaba protagonismo al dibujo). Su dibujo se hizo para una
+     ficha de 192 y crece en proporción (--art-scale, TemplateColocar). */
+  .tb-ficha { @apply absolute z-[2] flex flex-col items-center justify-center gap-1.5; cursor: grab; touch-action: none; background: var(--pz-face, var(--color-surface)); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); transition: left 340ms var(--ease-playful), top 340ms var(--ease-playful), translate 160ms var(--ease-playful), rotate 240ms var(--ease-playful), scale 120ms ease, box-shadow 160ms ease; }
+  .tb-ficha:active:not(:disabled) { scale: .97; }
+  /* En un gesto (useDrag), la ficha se mueve con su desplazamiento: sin transición de posición, para que al soltar salga
+     del punto donde se soltó y no salte. */
+  .tb-ficha.is-held { z-index: 20; transition: rotate 240ms var(--ease-playful), scale 120ms ease, box-shadow 160ms ease; }
+  .tb-ficha.is-dragging { z-index: 20; cursor: grabbing; transition: none; box-shadow: inset 0 0 0 4px var(--board-active); filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
+  /* La mano: en la bandeja las fichas van un poco giradas, como cartas; la que se toca se endereza y sube. */
   .tb-ficha:not([data-state=colocada]):nth-of-type(3n+1) { rotate: -4deg; }
   .tb-ficha:not([data-state=colocada]):nth-of-type(3n+2) { rotate: 3deg; }
   .tb-ficha:not([data-state=colocada]):nth-of-type(3n) { rotate: -2deg; }
   .tb-ficha:not([data-state=colocada]):not(:disabled):hover, .tb-ficha.is-dragging { rotate: 0deg; translate: 0 -8px; }
-  /* Landing on its destination the piece bounces; on completing, all of them hop in a row. */
+  /* Al caer en su destino la ficha rebota; al completar, todas saltan en fila. */
   .tb-ficha[data-state=colocada] { z-index: 3; animation: tb-placed 420ms var(--ease-playful) 260ms both; }
   .tb-ficha:disabled { cursor: default; }
   .tb-ficha.is-celebrating { animation: tb-celebrate 720ms var(--ease-playful) var(--delay, 0ms) both; }
-  .tb-ficha-arte { @apply relative block; width: 140px; height: 120px; }
+  .tb-ficha-arte { @apply relative block; width: 140px; height: 120px; scale: var(--art-scale, 1); }
   .tb-ficha-img { position: absolute; inset: 0; margin: auto; width: auto; height: auto; max-width: 100%; max-height: 100%; }
-  .tb-insignia { @apply absolute grid place-items-center rounded-full; right: -12px; top: -8px; width: 60px; height: 60px; background: var(--color-surface); color: var(--pz-ink); box-shadow: inset 0 0 0 3px var(--pz-edge), 0 3px 0 var(--pz-edge); }
-  .tb-ficha .tb-insignia { color: var(--color-ink); box-shadow: inset 0 0 0 2px var(--color-ink), 0 2px 0 var(--color-ink); }
+  /* La insignia de una pieza: blanca y plana, con su contorno suave y el icono en el tono de la pieza. Con su propio
+     tono (data-tone; la marca de hecho, en lima), el icono y el contorno son los de ese tono. */
+  .tb-insignia { @apply absolute grid place-items-center rounded-full; right: -12px; top: -8px; width: 60px; height: 60px; background: var(--color-surface); color: var(--tone-icon); box-shadow: inset 0 0 0 3px var(--color-depth); }
+  .tb-insignia[data-tone] { box-shadow: inset 0 0 0 3px var(--tone-fill); }
   .tb-insignia .icon { width: 34px; height: 34px; stroke-width: 2.4; }
   .tb-ficha-etiqueta { @apply font-black whitespace-nowrap; font-size: var(--text-headline); line-height: 1.1; color: var(--pz-ink, var(--color-ink)); }
-  /* Without a written name (infantil), the drawing fills the piece. */
-  .tb-ficha:not(:has(.tb-ficha-etiqueta)) .tb-ficha-arte { scale: 1.22; }
+  /* Sin nombre escrito (infantil), el dibujo ocupa la ficha. */
+  .tb-ficha:not(:has(.tb-ficha-etiqueta)) .tb-ficha-arte { scale: calc(var(--art-scale, 1) * 1.22); }
+
+  /* ---- Historia (Recorrido). Cada lugar, en una tarjeta (con escenario, si su ítem lo trae) del patrón de las
+     piezas: quieta, activa en cielo con lo que viaja encima (y se agranda) y resuelta cuando ya se recorrió. No
+     respiran: la mano demuestra lo que se puede hacer, y las dos juntas recargan el tablero. El origen: su dibujo al fondo y, delante, su personaje y el nido
+     de lo que viaja; el borde anterior del nido va delante. Lo que viaja se agarra por una zona de 160 sobre él;
+     arrastrado va derecho, un poco más grande y con su sombra flotante. ---- */
+  .tb-hv-carta { position: absolute; z-index: 2; background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-depth); transition: scale 160ms var(--ease-playful), box-shadow 160ms ease; }
+  .tb-hv-carta img { position: absolute; pointer-events: none; transition: opacity 240ms ease; }
+  /* Con escenario: el contorno de 3, un margen blanco de 3 y, abajo, el suelo del lugar, con las esquinas de abajo de
+     la tarjeta (TemplateHistoria, LINE y STRIP). Arriba, el blanco de la tarjeta. */
+  .tb-hv-escena { border-radius: 0 0 calc(var(--radius-board) - 6px) calc(var(--radius-board) - 6px); object-fit: fill; }
+  /* Con interior: mientras el huevo está en el lugar, la tarjeta «se acerca» y muestra su interior (el exterior se va y
+     el interior entra creciendo un poco); el cartón, en dos capas sobre la tarjeta, deja el huevo entre ellas. */
+  .tb-hv-exterior { position: absolute; inset: 0; transition: opacity 260ms ease; }
+  .tb-hv-carta.is-inside .tb-hv-exterior { opacity: 0; }
+  .tb-hv-carta .tb-hv-interior { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; opacity: 0; scale: 1.12; transition: opacity 300ms ease, scale 420ms var(--ease-playful); }
+  .tb-hv-carta.is-inside .tb-hv-interior { opacity: 1; scale: 1; }
+  .tb-hv-carton { position: absolute; pointer-events: none; opacity: 0; scale: 1.12; transition: opacity 300ms ease, scale 420ms var(--ease-playful); }
+  .tb-hv-carton.is-inside { opacity: 1; scale: 1; }
+  .tb-hv-carton.is-inside.is-over { scale: 1.06; transition: scale 160ms var(--ease-playful); }
+  .tb-hv-carton img { position: absolute; }
+  .tb-hv-carton-fondo { z-index: 4; }
+  .tb-hv-carton-frente { z-index: 6; }
+  button.tb-hv-carta:not(:disabled) { cursor: pointer; }
+  button.tb-hv-carta:not(:disabled):active { scale: .97; }
+  button.tb-hv-carta:disabled { cursor: default; }
+  .tb-hv-carta.is-over { animation: none; scale: 1.06; box-shadow: inset 0 0 0 4px var(--board-active); }
+  .tb-hv-carta.is-landing { animation: tb-placed 420ms var(--ease-playful); }
+  .tb-hv-carta[data-done]:not(.is-inside) .tb-hv-exterior { opacity: .45; }
+  .tb-hv-granja, .tb-hv-gallina, .tb-hv-nido, .tb-hv-nido-frente { position: absolute; pointer-events: none; }
+  .tb-hv-granja { z-index: 1; }
+  .tb-hv-gallina, .tb-hv-nido { z-index: 3; }
+  .tb-hv-nido-frente { z-index: 7; }
+  .tb-hv-huevo { position: absolute; pointer-events: none; transform-origin: 50% 100%; }
+  .tb-hv-huevo.is-flying { animation: tb-hv-giro 520ms ease-in-out infinite; }
+  .tb-hv-huevo.is-hopping { animation: tb-hop 1100ms ease-in-out; }
+  .tb-hv-huevo.is-dragging { filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
+  /* La demostración del arrastre: la mano de guía, encima de todo, y la copia translúcida del huevo que lleva. */
+  .tb-hv-mano, .tb-hv-copia { position: absolute; pointer-events: none; }
+  .tb-hv-copia { z-index: 11; }
+  .tb-hv-mano { z-index: 12; }
+  .tb-hv-agarre { position: absolute; z-index: 10; padding: 0; border: 0; background: none; appearance: none; border-radius: 50%; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  .tb-hv-agarre.is-dragging { cursor: grabbing; }
 
   @media (prefers-reduced-motion: reduce) {
-    .tb-ficha[data-state=colocada], .tb-ficha.is-celebrating, .tb-ranura.is-next { animation: none; }
+    .tb-an-figura, .tb-an-figura img.is-hopping, .tb-an-chispa, .tb-ficha[data-state=colocada], .tb-ficha.is-celebrating, .tb-ranura.is-next { animation: none; }
+    .tb-hv-carta.is-landing, .tb-hv-huevo { animation: none !important; }
+    .tb-hv-exterior, .tb-hv-interior, .tb-hv-carton { transition: none; scale: 1; }
   }
 }
 
@@ -437,3 +488,8 @@
 @keyframes tb-placed { 0% { scale: 1; } 45% { scale: 1.1; } 100% { scale: 1; } }
 @keyframes tb-celebrate { 0% { translate: 0 0; scale: 1; rotate: 0deg; } 30% { translate: 0 -30px; scale: 1.08; rotate: -4deg; } 55% { translate: 0 -10px; rotate: 3deg; } 75% { translate: 0 -16px; rotate: -1deg; } 100% { translate: 0 0; scale: 1; rotate: 0deg; } }
 @keyframes tb-breathe { 50% { scale: 1.03; } }
+@keyframes tb-aparece { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
+@keyframes tb-hop { 0%, 72%, 100% { translate: 0 0; } 80% { translate: 0 -22px; } 88% { translate: 0 0; } 93% { translate: 0 -8px; } }
+@keyframes tb-an-salto { 0%, 55%, 86%, 100% { translate: 0 0; } 30% { translate: 0 -34px; } 72% { translate: 0 -10px; } }
+@keyframes tb-an-brillo { 0%, 100% { scale: 1; } 50% { scale: .6; } }
+@keyframes tb-hv-giro { 0%, 100% { rotate: -8deg; } 50% { rotate: 8deg; } }
