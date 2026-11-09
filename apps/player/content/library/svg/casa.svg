@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="580" height="520" viewBox="0 0 580 520" role="img" aria-labelledby="title desc">
   <title id="title">Casa</title>
-  <desc id="desc">Casa de frente en colores planos y formas gruesas: pared crema con su lado derecho y la franja bajo el techo en sombra, techo coral redondeado con el faldón derecho en sombra, chimenea, ventana redonda, dos ventanas con cruz y puerta de madera. Sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
+  <desc id="desc">Casa de frente en colores planos y formas gruesas: pared amarilla con su lado derecho y la franja bajo el techo en sombra (el crema se confundía con el lienzo del player; el amarillo sale de la paleta de la referencia de assets), techo coral redondeado con el faldón derecho en sombra, chimenea, ventana redonda y dos ventanas con cruz de cristal azul, alféizares crema y puerta de madera. Sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
   <defs>
     <clipPath id="casa-pared-forma">
-      <path d="M116 264 L290 130 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z"/>
+      <path d="M116 264 L290 120 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z"/>
     </clipPath>
   </defs>
 
@@ -15,9 +15,9 @@
     </g>
 
     <g id="pared">
-      <path d="M116 264 L290 130 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z" fill="#FFE6B5"/>
-      <g clip-path="url(#casa-pared-forma)" fill="#F5CC8A">
-        <path d="M100 282 L290 140 L480 282 V306 L290 164 L100 306 Z"/>
+      <path d="M116 264 L290 120 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z" fill="#FEC739"/>
+      <g clip-path="url(#casa-pared-forma)" fill="#EFA623">
+        <path d="M100 272 L290 118 L480 272 V296 L290 144 L100 296 Z"/>
         <rect x="444" y="100" width="36" height="400"/>
       </g>
     </g>
@@ -29,22 +29,25 @@
     </g>
 
     <g id="ventana-superior">
+      <circle cx="290" cy="216" r="40" fill="#FFF4DC"/>
       <circle cx="290" cy="216" r="35" fill="#6BC7F0"/>
       <path d="M270 219 Q270 198 290 196" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
     </g>
 
     <g id="ventana-izquierda">
+      <rect x="134" y="304" width="96" height="96" rx="21" fill="#FFF4DC"/>
       <rect x="138" y="308" width="88" height="88" rx="18" fill="#6BC7F0"/>
       <path d="M151 340 V331 Q151 321 161 321 H172" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
       <path d="M182 308 V396 M138 352 H226" stroke="#FFF4DC" stroke-width="11"/>
-      <rect x="130" y="392" width="104" height="16" rx="8" fill="#F5CC8A"/>
+      <rect x="130" y="392" width="104" height="16" rx="8" fill="#FFF4DC"/>
     </g>
 
     <g id="ventana-derecha">
+      <rect x="350" y="304" width="96" height="96" rx="21" fill="#FFF4DC"/>
       <rect x="354" y="308" width="88" height="88" rx="18" fill="#6BC7F0"/>
       <path d="M367 340 V331 Q367 321 377 321 H388" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
       <path d="M398 308 V396 M354 352 H442" stroke="#FFF4DC" stroke-width="11"/>
-      <rect x="346" y="392" width="104" height="16" rx="8" fill="#F5CC8A"/>
+      <rect x="346" y="392" width="104" height="16" rx="8" fill="#FFF4DC"/>
     </g>
 
     <g id="puerta">

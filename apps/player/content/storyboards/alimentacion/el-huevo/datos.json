@@ -31,24 +31,32 @@
       "character": { "rive": "aves", "enum": { "ave": "pata" } }
     },
     {
+      "id": "huevo",
+      "name": { "es": "Huevo" },
+      "svg": "huevo-gallina"
+    },
+    {
       "id": "granja",
       "name": { "es": "Granja" },
-      "tone": "grape",
-      "svg": "huevo-gallina",
-      "sizeScale": 0.68,
-      "nest": true
+      "svg": "granja",
+      "character": { "rive": "aves", "enum": { "ave": "gallina" } },
+      "fact": { "es": "En la granja se recogen." }
     },
     {
       "id": "tienda",
       "name": { "es": "Tienda" },
-      "tone": "rose",
-      "svg": "tienda"
+      "svg": "tienda",
+      "backdrop": "suelo-calle",
+      "interior": "mostrador",
+      "fact": { "es": "En la tienda se venden." }
     },
     {
       "id": "casa",
       "name": { "es": "Casa" },
-      "tone": "sky",
-      "svg": "casa"
+      "svg": "casa",
+      "backdrop": "suelo-jardin",
+      "interior": "cocina",
+      "fact": { "es": "A la casa llegan para preparar comida." }
     },
     {
       "id": "frio",

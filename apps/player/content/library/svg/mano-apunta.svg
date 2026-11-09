@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="206" height="212" viewBox="0 0 206 212" role="img" aria-labelledby="title desc">
+  <title id="title">Mano que apunta</title>
+  <desc id="desc">Mano derecha basada en la primera referencia de Luis: índice inclinado hacia arriba a la izquierda, tres nudillos bajos, pulgar recogido y manga azul intenso. Piel melocotón, contorno naranja cálido y sombras de color plano. Sin degradados, filtros ni fondo. Punto de contacto en (20, 11.5). Diseño estático editable para indicar pulsación o arrastre.</desc>
+  <metadata>Fuente maestra: mano-apunta.svg. La primera lámina de mano aportada por Luis gobierna forma, proporciones y colores; no sustituirlos por la paleta del UI Kit. No se permiten degradados. Anclaje de contacto: 20,11.5 en el viewBox. Conservar los IDs mano-apunta, mano y manga. Ondas opcionales: ondas-pulsar.svg, centradas en el contacto y dibujadas detrás de la mano.</metadata>
+  <defs>
+    <path id="mano-puno-forma" d="M114 134 C121 120 139 115 153 122 C165 128 173 140 181 153 L208 195 C218 178 241 173 256 185 C269 168 291 168 305 182 C318 173 335 178 346 193 C359 210 367 233 369 257 C372 282 366 307 351 326 L266 380 L247 364 C215 370 183 361 159 344 C138 329 127 309 132 288 C135 272 148 259 163 261 L122 192 C109 171 103 153 114 134Z"/>
+    <clipPath id="mano-piel-limite"><use href="#mano-puno-forma"/></clipPath>
+    <path id="mano-manga-forma" d="M221 371 C266 362 315 338 350 308 C358 301 367 299 376 305 C390 316 398 332 400 349 C403 370 392 388 375 400 C348 419 312 433 283 436 C262 439 246 431 237 416 C228 402 222 386 221 371Z"/>
+    <clipPath id="mano-manga-limite"><use href="#mano-manga-forma"/></clipPath>
+  </defs>
+  <!-- Coordenadas tomadas de la silueta grande de la referencia; encuadre propio del asset. -->
+  <g id="mano-apunta" transform="matrix(.62 0 0 .62 -60.6 -62.28)">
+    <g id="mano">
+      <use href="#mano-puno-forma" fill="#FBBD89"/>
+      <g clip-path="url(#mano-piel-limite)">
+        <!-- Borde iluminado y volumen resueltos únicamente con superficies planas. -->
+        <path d="M142 120 C124 120 112 133 113 150 C114 164 123 179 132 193 L184 277 L174 266 L121 191 C103 163 101 146 114 131 C121 122 131 118 142 120Z" fill="#FFD0A0"/>
+        <path d="M112 144 C111 162 120 180 132 197 L184 279 C188 285 184 287 180 281 L122 194 C109 174 102 156 112 144Z" fill="#F2A36B"/>
+        <path d="M135 281 C131 301 145 321 168 336 C192 352 221 357 244 350 C249 348 252 350 252 354 C253 359 259 364 267 366 L267 385 C231 381 187 368 158 349 C134 334 122 309 129 291Z" fill="#F2A36B"/>
+        <path d="M341 185 C358 210 364 236 363 260 C364 279 358 298 348 315 L355 329 C373 307 380 281 374 252 C370 224 358 197 341 185Z" fill="#F2A36B"/>
+      </g>
+      <use href="#mano-puno-forma" fill="none" stroke="#DF8B51" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M208 195 L220 214 M256 185 L263 193 M305 182 L308 186 M163 261 L185 282" fill="none" stroke="#DF8B51" stroke-width="5.5" stroke-linecap="round"/>
+    </g>
+    <g id="manga" transform="translate(10 -3)">
+      <use href="#mano-manga-forma" fill="#3186ED"/>
+      <g clip-path="url(#mano-manga-limite)">
+        <path d="M216 367 C266 359 317 332 352 302 L374 301 C384 309 369 327 357 337 C327 362 280 384 240 389 L231 382Z" fill="#4D9CF6"/>
+        <path d="M222 369 L242 366 C241 380 245 398 255 410 C264 423 281 422 297 419 C335 412 375 391 399 364 C395 386 380 401 358 412 C330 427 303 437 282 439 C258 442 243 432 234 414 C226 399 221 383 222 369Z" fill="#246FD0"/>
+      </g>
+      <use href="#mano-manga-forma" fill="none" stroke="#2B79DB" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

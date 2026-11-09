@@ -1,17 +1,24 @@
 {
   "id": "origen",
   "family": "recorrido",
-  "template": "colocar",
+  "template": "historia",
   "affirmations": ["A0"],
   "meta": {
-    "instruction": { "es": "Arma un recorrido posible del huevo" },
-    "completionFeedback": { "es": "Los huevos que conoceremos los ponen aves. En este ejemplo, antes de la tienda estaban en una granja." }
+    "instruction": { "es": "Vamos a seguir un recorrido posible" },
+    "completionFeedback": { "es": "En este ejemplo, antes de la tienda estaban en una granja, donde se recogen." }
   },
   "strings": {
-    "completeTitle": { "es": "Un recorrido posible" },
-    "hint": { "es": "¿Dónde estaban antes de llegar a la tienda?" },
-    "retry": { "es": "Ese orden no es. Prueba otra vez" }
+    "next": { "es": "Después llegan a la casa." },
+    "direct": { "es": "También pueden llegar directamente desde donde se recogen." }
   },
-  "library": { "rive": [], "svg": ["huevo-gallina", "nido", "tienda", "casa"], "sfx": [] },
-  "defaults": { "items": ["granja", "tienda", "casa"], "pointsOnComplete": 10 }
+  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "nido", "nido-frente", "granja", "tienda", "casa", "suelo-calle", "suelo-jardin", "mostrador", "cocina", "carton", "carton-frente", "mano-apunta"], "sfx": [] },
+  "defaults": {
+    "items": ["granja", "tienda", "casa"],
+    "traveler": "huevo",
+    "routes": [
+      { "stops": ["granja", "tienda", "casa"] },
+      { "stops": ["granja", "casa"], "body": "direct" }
+    ],
+    "pointsOnComplete": 10
+  }
 }

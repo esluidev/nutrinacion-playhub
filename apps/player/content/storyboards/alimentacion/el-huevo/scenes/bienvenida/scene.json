@@ -8,8 +8,9 @@
     "completionFeedback": null
   },
   "strings": {
-    "title": { "es": "Hoy vamos a conocer {{el huevo}}" }
+    "title": { "es": "El huevo" },
+    "subtitle": { "es": "Desde su origen hasta lo que aporta." }
   },
-  "library": { "rive": [], "svg": ["huevo"], "sfx": [] },
-  "defaults": { "pointsOnComplete": 0 }
+  "library": { "rive": [], "svg": ["huevo-gallina"], "sfx": [] },
+  "defaults": { "items": ["huevo", "huevo"], "pointsOnComplete": 0 }
 }

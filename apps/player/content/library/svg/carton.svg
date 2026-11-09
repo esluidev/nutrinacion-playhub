@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 112" width="240" height="112" role="img" aria-labelledby="carton-title carton-desc">
+  <title id="carton-title">Cartón de huevos (fondo)</title>
+  <desc id="carton-desc">Capa de atrás de un cartón de huevos abierto de dos huecos, de frente: la tapa abierta hacia atrás con sus dos cúpulas, la pared del fondo y el interior de los huecos. Va detrás de los huevos; su frente es carton-frente.svg, en el mismo lienzo. Cada huevo se centra en x 70 y x 170 con su base en y 98; el cartón se apoya en y 111. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="carton-fondo">
+    <g id="tapa">
+      <path id="tapa-base" d="M18 70 V34 C18 14 36 6 52 6 C64 6 72 12 78 18 C86 26 96 22 104 18 C112 14 128 14 136 18 C144 22 154 26 162 18 C168 12 176 6 188 6 C204 6 222 14 222 34 V70 Z" fill="#E8C392"/>
+      <path id="tapa-sombra" d="M180 7 C190 6 202 8 212 15 C219 21 222 27 222 34 V70 H196 C200 54 198 30 180 7 Z" fill="#D7AE7B"/>
+      <path id="tapa-luz" d="M28 30 C30 18 40 12 52 12 C60 12 66 16 70 20 C60 18 46 20 38 28 C34 32 30 34 28 30 Z M126 18 C132 17 138 18 142 21 C136 21 130 22 126 24 Z" fill="#F6DEB9"/>
+    </g>
+    <rect id="pared" x="16" y="54" width="208" height="28" rx="8" fill="#D6A670"/>
+    <ellipse id="hueco-izquierdo" cx="70" cy="64" rx="40" ry="9" fill="#BF8852"/>
+    <ellipse id="hueco-derecho" cx="170" cy="64" rx="40" ry="9" fill="#BF8852"/>
+  </g>
+</svg>

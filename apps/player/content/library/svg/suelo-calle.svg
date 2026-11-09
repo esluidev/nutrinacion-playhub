@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120" role="img" aria-labelledby="suelo-calle-title suelo-calle-desc">
+  <title id="suelo-calle-title">Suelo de calle</title>
+  <desc id="suelo-calle-desc">Franja de suelo de una calle para el fondo de una tarjeta: banqueta de losetas con dos jardineras, bordillo y calzada con su línea. Sin cielo. El edificio se apoya en y 36, al fondo de la banqueta. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: banqueta (atrás) → bordillo → calzada (delante) → jardineras a los lados. El centro (x 100–500) queda libre
+       para el edificio. Ancla del edificio: centro, y 36. -->
+  <g id="suelo-calle">
+    <g id="banqueta">
+      <rect id="banqueta-base" x="0" y="26" width="600" height="42" fill="#F2E5CF"/>
+      <rect id="banqueta-luz" x="0" y="26" width="600" height="6" fill="#FAF3E6"/>
+      <g id="juntas" fill="#E4D3B7">
+        <rect x="0" y="47" width="600" height="3"/>
+        <rect x="73" y="32" width="4" height="36"/>
+        <rect x="148" y="32" width="4" height="36"/>
+        <rect x="223" y="32" width="4" height="36"/>
+        <rect x="298" y="32" width="4" height="36"/>
+        <rect x="373" y="32" width="4" height="36"/>
+        <rect x="448" y="32" width="4" height="36"/>
+        <rect x="523" y="32" width="4" height="36"/>
+      </g>
+    </g>
+    <g id="bordillo">
+      <rect id="bordillo-arista" x="0" y="68" width="600" height="5" fill="#FDF8EF"/>
+      <rect id="bordillo-cara" x="0" y="73" width="600" height="8" fill="#DCC6A4"/>
+    </g>
+    <g id="calzada">
+      <rect id="calzada-base" x="0" y="81" width="600" height="39" fill="#8E8A96"/>
+      <rect id="calzada-oclusion" x="0" y="81" width="600" height="6" fill="#7C7884"/>
+      <g id="linea" fill="#F7F2EA">
+        <rect x="-20" y="101" width="72" height="7" rx="3.5"/>
+        <rect x="104" y="101" width="72" height="7" rx="3.5"/>
+        <rect x="228" y="101" width="72" height="7" rx="3.5"/>
+        <rect x="352" y="101" width="72" height="7" rx="3.5"/>
+        <rect x="476" y="101" width="72" height="7" rx="3.5"/>
+      </g>
+    </g>
+    <g id="jardinera-izquierda">
+      <path id="jardinera-izquierda-mata" d="M42 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/>
+      <path id="jardinera-izquierda-mata-sombra" d="M58 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/>
+      <circle id="jardinera-izquierda-mata-luz" cx="35" cy="22" r="7.5" fill="#95DA7A"/>
+      <rect id="jardinera-izquierda-maceta" x="19" y="44" width="46" height="24" rx="6" fill="#EE9A72"/>
+      <path id="jardinera-izquierda-maceta-sombra" d="M52 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/>
+      <rect id="jardinera-izquierda-borde" x="15" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/>
+    </g>
+    <g id="jardinera-derecha">
+      <path id="jardinera-derecha-mata" d="M558 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/>
+      <path id="jardinera-derecha-mata-sombra" d="M574 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/>
+      <circle id="jardinera-derecha-mata-luz" cx="551" cy="22" r="7.5" fill="#95DA7A"/>
+      <rect id="jardinera-derecha-maceta" x="535" y="44" width="46" height="24" rx="6" fill="#EE9A72"/>
+      <path id="jardinera-derecha-maceta-sombra" d="M568 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/>
+      <rect id="jardinera-derecha-borde" x="531" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/>
+    </g>
+  </g>
+</svg>

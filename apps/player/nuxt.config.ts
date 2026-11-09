@@ -1,4 +1,5 @@
 import { networkInterfaces } from 'node:os'
+import { fileURLToPath } from 'node:url'
 
 // Apps que pueden incrustar el runner (docs/runner.md): Educators y Admin. Separadas por comas.
 // La misma lista vale para los mensajes (runtimeConfig) y para la cabecera frame-ancestors, que
@@ -27,6 +28,18 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   ssr: false,
+
+  // En desarrollo, Vite solo vigila app/ (su raíz) y los archivos que lee él mismo; los dibujos de la
+  // librería entran con `?url` y no los vigila: corregido uno, seguía sirviendo el de antes. Vigilando
+  // content/library, un dibujo modificado recarga la página como cualquier otro archivo.
+  vite: {
+    plugins: [{
+      name: 'playhub:vigilar-libreria',
+      configureServer(server) {
+        server.watcher.add(fileURLToPath(new URL('./content/library', import.meta.url)))
+      },
+    }],
+  },
 
   // Supabase solo para la entrada de la gestión (superadmin, decisión 005). El runner no lo usa.
   runtimeConfig: {

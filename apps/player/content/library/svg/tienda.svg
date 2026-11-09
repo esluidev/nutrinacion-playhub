@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="580" height="500" viewBox="0 0 580 500" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="520" viewBox="0 0 580 520" role="img" aria-labelledby="title desc">
   <title id="title">Tienda</title>
-  <desc id="desc">Tienda de barrio de frente en colores planos y formas gruesas: cornisa turquesa fina, toldo a rayas menta y crema con ondas, fachada crema con su lado derecho y la franja bajo el toldo en sombra, escaparate con una manzana y dos huevos, y puerta turquesa con cristal. Sin texto, para que sirva en cualquier idioma, y sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
+  <desc id="desc">Tienda de barrio de frente en colores planos y formas gruesas: cornisa turquesa fina, toldo a rayas menta y crema con ondas, fachada azul con su lado derecho y la franja bajo el toldo en sombra (la crema se confundía con el lienzo del player; el azul sale de la paleta de la referencia de assets), alféizar crema, escaparate con una manzana y dos huevos, y puerta turquesa con cristal. Sin texto, para que sirva en cualquier idioma, y sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
   <defs>
     <clipPath id="tienda-fachada-forma">
       <path d="M108 206 H472 V436 Q472 462 446 462 H134 Q108 462 108 436 Z"/>
@@ -10,28 +10,29 @@
   <!-- Escalada desde su base para ocupar el lienzo como la casa: apoyada en y 480. -->
   <g id="tienda" transform="translate(290 480) scale(1.2) translate(-290 -462)">
     <g id="fachada">
-      <path d="M108 206 H472 V436 Q472 462 446 462 H134 Q108 462 108 436 Z" fill="#FFF1D6"/>
-      <g clip-path="url(#tienda-fachada-forma)" fill="#F3D9AA">
+      <path d="M108 206 H472 V436 Q472 462 446 462 H134 Q108 462 108 436 Z" fill="#30A5F7"/>
+      <g clip-path="url(#tienda-fachada-forma)" fill="#1F88D6">
         <rect x="100" y="282" width="380" height="30"/>
         <rect x="446" y="200" width="30" height="270"/>
       </g>
     </g>
 
     <g id="escaparate">
+      <rect x="136" y="322" width="198" height="122" rx="20" fill="#FFF4DE"/>
       <rect x="140" y="326" width="190" height="114" rx="16" fill="#6BC7F0"/>
       <path d="M156 360 V350 Q156 342 164 342 H180" fill="none" stroke="#C2EBFB" stroke-width="7" stroke-linecap="round"/>
       <path d="M140 410 H330 V424 Q330 440 314 440 H156 Q140 440 140 424 Z" fill="#4FB0DD"/>
       <g id="productos">
-        <circle cx="196" cy="382" r="28" fill="#F0675A"/>
-        <path d="M204 356 Q226 366 224 386 Q221 406 200 410 Q216 398 215 383 Q214 368 204 356 Z" fill="#D9503F"/>
+        <path d="M196 359 C187 351 175 354 170 364 C162 380 171 401 182 408 C187 411 192 408 196 408 C201 408 205 411 211 407 C224 398 231 378 224 365 C218 353 205 351 196 359Z" fill="#F0675A"/>
+        <path d="M212 355 C222 364 224 379 217 391 C211 402 201 405 194 408 C200 407 205 411 211 407 C224 398 231 378 224 365 C222 360 217 356 212 355Z" fill="#D9503F"/>
         <path d="M196 356 L193 343" stroke="#8C613D" stroke-width="5" stroke-linecap="round"/>
         <path d="M198 353 Q204 337 220 338 Q216 354 198 353 Z" fill="#5DB86B"/>
-        <ellipse cx="262" cy="387" rx="18" ry="23" fill="#F8A264"/>
-        <path d="M268 365 Q282 374 280 390 Q278 406 264 409 Q273 398 273 387 Q273 375 268 365 Z" fill="#EB8649"/>
-        <ellipse cx="297" cy="389" rx="16" ry="21" fill="#FFF1DE"/>
-        <path d="M302 370 Q314 378 313 391 Q311 405 299 409 Q307 399 307 389 Q307 378 302 370 Z" fill="#EFDCC2"/>
+        <path d="M262 364 C252 364 244 380 244 390 C244 403 251 410 262 410 C273 410 280 403 280 390 C280 378 271 364 262 364Z" fill="#F8A264"/>
+        <path d="M268 366 C275 376 277 390 271 400 C268 406 262 409 257 410 C270 412 280 405 280 390 C280 380 274 370 268 366Z" fill="#EB8649"/>
+        <path d="M297 368 C288 368 281 382 281 392 C281 404 287 410 297 410 C307 410 313 404 313 392 C313 381 306 368 297 368Z" fill="#FFF1DE"/>
+        <path d="M302 370 C308 380 310 391 305 401 C302 406 298 409 293 410 C306 411 313 404 313 392 C313 382 307 373 302 370Z" fill="#EFDCC2"/>
       </g>
-      <rect x="132" y="438" width="206" height="14" rx="7" fill="#F3D9AA"/>
+      <rect x="132" y="438" width="206" height="14" rx="7" fill="#FFF4DE"/>
     </g>
 
     <g id="puerta">

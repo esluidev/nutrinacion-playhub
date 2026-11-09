@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 112" width="240" height="112" role="img" aria-labelledby="carton-frente-title carton-frente-desc">
+  <title id="carton-frente-title">Cartón de huevos (frente)</title>
+  <desc id="carton-frente-desc">Capa de delante de un cartón de huevos abierto de dos huecos: el frente abombado de cada hueco, con sus nervios de cartón, la unión del centro y la base. Va delante de los huevos, sobre carton.svg, en el mismo lienzo. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="carton-frente">
+    <rect id="base" x="18" y="101" width="204" height="10" rx="5" fill="#CF9E67"/>
+    <rect id="union" x="111" y="62" width="18" height="42" rx="6" fill="#D6A670"/>
+    <g id="hueco-izquierdo-frente">
+      <path d="M24 62 Q70 76 116 62 C116 80 112 96 104 102 Q98 106 90 106 H50 Q42 106 36 102 C28 96 24 80 24 62 Z" fill="#EDCA9A"/>
+      <path d="M92 70 Q106 67 116 62 C116 80 112 96 104 102 Q98 106 90 106 H86 C94 96 96 82 92 70 Z" fill="#D8AD77"/>
+      <path d="M32 70 Q46 74 60 76 L59 83 Q45 81 33 77 Z" fill="#F8E3C4"/>
+      <path d="M68 78 Q70 92 69 104 H72 Q73 92 71 78 Z" fill="#DDB582"/>
+    </g>
+    <g id="hueco-derecho-frente">
+      <path d="M124 62 Q170 76 216 62 C216 80 212 96 204 102 Q198 106 190 106 H150 Q142 106 136 102 C128 96 124 80 124 62 Z" fill="#EDCA9A"/>
+      <path d="M192 70 Q206 67 216 62 C216 80 212 96 204 102 Q198 106 190 106 H186 C194 96 196 82 192 70 Z" fill="#D8AD77"/>
+      <path d="M132 70 Q146 74 160 76 L159 83 Q145 81 133 77 Z" fill="#F8E3C4"/>
+      <path d="M168 78 Q170 92 169 104 H172 Q173 92 171 78 Z" fill="#DDB582"/>
+    </g>
+  </g>
+</svg>
