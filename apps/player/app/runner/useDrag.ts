@@ -1,5 +1,6 @@
-import { getCurrentScope, onScopeDispose, reactive, readonly } from 'vue'
-import { toBoard } from './board'
+import { reactive, readonly } from 'vue'
+import { easeOut, toBoard, useAnimation } from './board'
+import type { Point } from './board'
 
 // ---- Arrastrar y soltar en el tablero: el gesto, igual para todas las plantillas. La plantilla dice qué se puede
 // agarrar, dónde descansa cada pieza (`home`), qué zona queda debajo del dedo y qué pasa al soltar; esto se ocupa del
@@ -11,9 +12,8 @@ import { toBoard } from './board'
 //     soltar, si la plantilla la mueve de casa, el desplazamiento se recalcula para que salga del punto donde se soltó;
 //     si no, vuelve a su casa deslizándose. Agarrarla mientras vuelve la detiene donde está y sigue desde ahí.
 //   - Un gesto que se corta (cancelado por el sistema, sin captura o con la escena bloqueada) vuelve igual.
-//   - La vuelta termina siempre, aunque el navegador deje de pintar cuadros, y es inmediata con movimiento reducido. ----
-
-export interface Point { x: number, y: number }
+//   - La vuelta termina siempre, aunque el navegador deje de pintar cuadros (`useAnimation`, en board.ts), y es
+//     inmediata con movimiento reducido. ----
 
 /** Lo que el gesto necesita de un evento de puntero. */
 export type DragPointer = Pick<PointerEvent, 'pointerId' | 'clientX' | 'clientY' | 'button' | 'pointerType'> & {
@@ -49,7 +49,6 @@ export interface DragOptions<Id, Target> {
 
 const ZERO: Readonly<Point> = Object.freeze({ x: 0, y: 0 })
 const CLICK_AFTER_DRAG = 400
-const ease = (k: number) => 1 - (1 - k) ** 3
 
 export function useDrag<Id extends string | number, Target = string>(options: DragOptions<Id, Target>) {
   const threshold = options.threshold ?? 10
@@ -67,47 +66,31 @@ export function useDrag<Id extends string | number, Target = string>(options: Dr
   let fromRest = true
   let last: Point = { x: 0, y: 0 }
   let ignoreClicksUntil = 0
-  let raf = 0
-  let guard: ReturnType<typeof setTimeout> | null = null
+  const glide = useAnimation()
 
-  const now = () => (typeof performance === 'undefined' ? Date.now() : performance.now())
+  const now = () => performance.now()
   const point = (event: Pick<DragPointer, 'clientX' | 'clientY'>): Point => {
     const layer = options.layer.value
     return layer ? toBoard(layer, event) : { x: event.clientX, y: event.clientY }
   }
 
-  function stopReturn() {
-    if (raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf)
-    raf = 0
-    if (guard) clearTimeout(guard)
-    guard = null
-  }
-
   function rest() {
-    stopReturn()
+    glide.stop()
     const id = state.id
     Object.assign(state, { id: null, dragging: false, x: 0, y: 0, lifted: 0, over: null })
     if (id !== null) options.settle?.(id)
   }
 
-  // La vuelta a casa: el desplazamiento y lo levantada que está bajan a cero. Si el navegador no pinta cuadros (pestaña
-  // en segundo plano), el respaldo la termina al acabar su tiempo.
+  // La vuelta a casa: el desplazamiento y lo levantada que está bajan a cero.
   function glideHome() {
-    stopReturn()
     const from = { x: state.x, y: state.y, lifted: state.lifted }
     if (returnMs <= 0 || (Math.hypot(from.x, from.y) < 0.5 && from.lifted === 0)) { rest(); return }
-    const begin = now()
-    const tick = () => {
-      const k = Math.min((now() - begin) / returnMs, 1)
-      const e = ease(k)
+    glide.run(returnMs, (k) => {
+      const e = easeOut(k)
       state.x = from.x * (1 - e)
       state.y = from.y * (1 - e)
       state.lifted = from.lifted * (1 - e)
-      if (k < 1 && typeof requestAnimationFrame === 'function') raf = requestAnimationFrame(tick)
-      else rest()
-    }
-    if (typeof requestAnimationFrame === 'function') raf = requestAnimationFrame(tick)
-    guard = setTimeout(rest, returnMs + 120)
+    }, rest)
   }
 
   function onDown(id: Id, event: DragPointer) {
@@ -115,7 +98,7 @@ export function useDrag<Id extends string | number, Target = string>(options: Dr
     if (event.pointerType === 'mouse' && event.button !== 0) return
     if (options.canStart && !options.canStart(id)) return
     if (state.id !== null && state.id !== id) rest() // otra pieza que volvía: se queda en su casa
-    stopReturn()
+    glide.stop()
     fromRest = state.id === null || (Math.hypot(state.x, state.y) < 0.5 && state.lifted === 0)
     state.id = id
     pointer = event.pointerId
@@ -186,8 +169,6 @@ export function useDrag<Id extends string | number, Target = string>(options: Dr
   function cancel() {
     if (pointer !== null) end(false)
   }
-
-  if (getCurrentScope()) onScopeDispose(stopReturn)
 
   return {
     state: readonly(state) as Readonly<DragState>,

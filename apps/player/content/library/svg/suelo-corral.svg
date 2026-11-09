@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120" role="img" aria-labelledby="suelo-corral-title suelo-corral-desc">
+  <title id="suelo-corral-title">Suelo de corral</title>
+  <desc id="suelo-corral-desc">Franja de suelo de un corral para el fondo de una tarjeta: tierra con briznas de paja y un tramo de cerca de madera a cada lado. Sin cielo. Lo que se apoya va en y 36, en el centro. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: cercas (atrás) → tierra → manchas → paja → piedras. El centro (x 130–470) queda libre para lo que se
+       apoya. Ancla: centro, y 36. -->
+  <g id="suelo-corral">
+    <g id="cerca-izquierda">
+      <g id="postes-izquierda" fill="#C68752">
+        <path d="M12 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+        <path d="M58 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+        <path d="M104 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+      </g>
+      <g id="postes-izquierda-sombra" fill="#A96E3F">
+        <path d="M20 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+        <path d="M66 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+        <path d="M112 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+      </g>
+      <g id="tablas-izquierda">
+        <rect x="4" y="12" width="120" height="8" rx="2" fill="#DCA06A"/>
+        <rect x="4" y="18" width="120" height="2.5" rx="1" fill="#BF8350"/>
+        <rect x="4" y="26" width="120" height="8" rx="2" fill="#DCA06A"/>
+        <rect x="4" y="32" width="120" height="2.5" rx="1" fill="#BF8350"/>
+      </g>
+    </g>
+    <g id="cerca-derecha">
+      <g id="postes-derecha" fill="#C68752">
+        <path d="M484 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+        <path d="M530 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+        <path d="M576 42 V9 a6 5 0 0 1 12 0 V42 Z"/>
+      </g>
+      <g id="postes-derecha-sombra" fill="#A96E3F">
+        <path d="M492 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+        <path d="M538 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+        <path d="M584 42 V5.6 a6 5 0 0 1 4 3.4 V42 Z"/>
+      </g>
+      <g id="tablas-derecha">
+        <rect x="476" y="12" width="120" height="8" rx="2" fill="#DCA06A"/>
+        <rect x="476" y="18" width="120" height="2.5" rx="1" fill="#BF8350"/>
+        <rect x="476" y="26" width="120" height="8" rx="2" fill="#DCA06A"/>
+        <rect x="476" y="32" width="120" height="2.5" rx="1" fill="#BF8350"/>
+      </g>
+    </g>
+    <g id="tierra">
+      <path id="tierra-base" d="M0 34 C40 30 80 30 120 33 C160 36 200 35 240 32 C280 29 320 29 360 32 C400 35 440 35 480 32 C520 29 560 30 600 33 V120 H0 Z" fill="#E7BE86"/>
+      <path id="tierra-luz" d="M0 34 C40 30 80 30 120 33 C160 36 200 35 240 32 C280 29 320 29 360 32 C400 35 440 35 480 32 C520 29 560 30 600 33 V44 C560 43 520 45 480 45 C440 45 400 43 360 44 C320 45 280 46 240 45 C200 44 160 43 120 44 C80 45 40 44 0 44 Z" fill="#F1D3A2"/>
+      <path id="tierra-frente" d="M0 108 C80 105 160 107 240 106 C320 105 400 107 480 106 C540 105 570 106 600 105 V120 H0 Z" fill="#D5A66C"/>
+      <g id="manchas" fill="#DDB27A">
+        <ellipse cx="88" cy="78" rx="28" ry="6"/>
+        <ellipse cx="474" cy="86" rx="30" ry="6"/>
+        <ellipse cx="236" cy="96" rx="22" ry="5"/>
+        <ellipse cx="392" cy="62" rx="18" ry="4"/>
+      </g>
+    </g>
+    <g id="paja" fill="none" stroke-linecap="round" stroke-width="3">
+      <g stroke="#F5CE5C">
+        <path d="M58 60 L76 56"/>
+        <path d="M150 88 L170 93"/>
+        <path d="M204 62 L221 58"/>
+        <path d="M330 96 L350 92"/>
+        <path d="M420 70 L437 75"/>
+        <path d="M520 96 L540 92"/>
+        <path d="M108 104 L126 100"/>
+        <path d="M468 58 L486 55"/>
+      </g>
+      <g stroke="#E0A93C">
+        <path d="M68 92 L84 96"/>
+        <path d="M178 72 L194 68"/>
+        <path d="M290 84 L307 87"/>
+        <path d="M546 70 L562 66"/>
+        <path d="M386 108 L402 104"/>
+      </g>
+    </g>
+    <g id="piedras">
+      <ellipse cx="140" cy="52" rx="7" ry="3.5" fill="#C9A06A"/>
+      <ellipse cx="139" cy="51" rx="6" ry="2.5" fill="#DDBB88"/>
+      <ellipse cx="452" cy="100" rx="8" ry="4" fill="#C9A06A"/>
+      <ellipse cx="451" cy="99" rx="7" ry="3" fill="#DDBB88"/>
+    </g>
+  </g>
+</svg>

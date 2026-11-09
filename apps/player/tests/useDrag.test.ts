@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDrag } from '~/runner/useDrag'
-import type { Point } from '~/runner/useDrag'
+import type { Point } from '~/runner/board'
 
 // El gesto de arrastrar y soltar del tablero (app/runner/useDrag.ts), con punteros simulados sobre un tablero a escala 1.
 

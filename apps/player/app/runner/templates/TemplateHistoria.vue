@@ -36,7 +36,7 @@
       :key="card.item.id"
       :ref="(el) => { cardNodes[card.item.id] = el as HTMLElement | null }"
       type="button"
-      class="tb-pieza tb-hv-carta"
+      class="tb-pieza tb-tarjeta tb-hv-carta"
       :class="{ 'is-over': overCard === card.item.id, 'is-inside': isInside(card) }"
       :data-done="isDone(card) || undefined"
       :disabled="!canGo(card)"
@@ -45,7 +45,7 @@
       @click="tapCard(card)"
     >
       <span class="tb-hv-exterior">
-        <img v-if="card.item.backdrop" class="tb-hv-escena" :src="librarySvg(card.item.backdrop)" alt="" :style="box(LINE, STRIP_TOP, STRIP.w, STRIP.h)">
+        <img v-if="card.item.backdrop" class="tb-suelo" :src="librarySvg(card.item.backdrop)" alt="" :style="box(SCENERY.strip.x, SCENERY.strip.y, SCENERY.strip.w, SCENERY.strip.h)">
         <img :src="librarySvg(card.item.svg)" alt="" :style="box((CARD.w - ART.w) / 2, artTop(card.item), ART.w, ART.h)">
       </span>
       <img v-if="card.item.interior" class="tb-hv-interior" :src="librarySvg(card.item.interior)" alt="" :style="box(LINE, LINE, CARD.w - LINE * 2, CARD.h - LINE * 2)">
@@ -73,11 +73,8 @@
       :style="eggStyle(egg)"
     >
 
-    <!-- La demostración del arrastre: la mano y la copia del huevo que lleva. -->
-    <template v-if="demo.on">
-      <img class="tb-hv-copia" :src="librarySvg(traveler?.svg)" alt="" :style="{ ...box(demo.gx - EGG.w * demo.gs / 2, demo.gy - EGG.h * demo.gs / 2, EGG.w * demo.gs, EGG.h * demo.gs), opacity: demo.go }">
-      <img class="tb-hv-mano" :src="librarySvg('mano-apunta')" alt="" :style="{ ...box(demo.x - HAND.tipX, demo.y - HAND.tipY, HAND.w, HAND.h), opacity: demo.o, scale: demo.s, transformOrigin: `${HAND.tipX}px ${HAND.tipY}px` }">
-    </template>
+    <!-- La demostración del arrastre (useDemo): la mano y la copia del huevo que lleva. -->
+    <DemoHand :demo="demo.state" :copy="traveler?.svg" :size="EGG" />
 
     <!-- El agarre del huevo que toca: una zona de 160 sobre él para arrastrarlo (el gesto, en useDrag). -->
     <button
@@ -93,11 +90,14 @@
 </template>
 
 <script setup lang="ts">
-import { box, prefersReducedMotion, toBoard, useSceneText } from '../board'
+import { box, curve, easeInOut, prefersReducedMotion, sceneryCard, useAnimation, useSceneText } from '../board'
+import type { Point } from '../board'
 import { libraryRive, librarySvg } from '../content'
+import DemoHand from '../DemoHand.vue'
 import RiveCharacter from '../RiveCharacter.vue'
+import { useDemo } from '../useDemo'
 import { useDrag } from '../useDrag'
-import { replay, useTimers } from '../useTimers'
+import { replay } from '../useTimers'
 import type { DatosItem, FeedbackPayload, TemplateProps } from '../types'
 
 const props = defineProps<TemplateProps>()
@@ -105,7 +105,6 @@ const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [valu
 
 const { t, str } = useSceneText(props)
 
-interface Point { x: number, y: number }
 interface Route { stops: string[], body?: string }
 
 const routes = (props.scene.defaults.routes as Route[] | undefined) ?? [{ stops: props.items.map(item => item.id) }]
@@ -137,23 +136,19 @@ const inNest = (vx: number, vy: number): Point => ({ x: NEST.x + (vx - 170) * NE
 // Dónde se echa cada huevo (su centro, en el lienzo del nido) y cuánto se inclina, como caen en un nido de verdad: el
 // primero que vuela, a la derecha y delante; el otro, a la izquierda, recostado hacia el otro lado.
 const NEST_EGGS = [{ vx: 900, vy: 335, r: 18 }, { vx: 690, vy: 325, r: -20 }]
-// Dentro de la tarjeta, el marco (LINE: el contorno de 3 y un margen blanco de 3) y, abajo, el suelo del lugar (`backdrop`:
-// una franja de 600 × 120 en la que el edificio se apoya en y 36); arriba, el blanco de la tarjeta. El edificio (lienzo
-// 580 × 520, apoyado en 480) va centrado y apoyado en ese suelo, a 0,41 de su lienzo: así el más alto (la casa, de 73 a
-// 480) queda dentro con aire arriba. Sin suelo, centrado en la tarjeta según lo que ocupa su dibujo (de 90 a 480).
-const LINE = 6
+// Dentro de la tarjeta con escenario (`sceneryCard`, board.ts), el marco (LINE: el contorno de 3 y un margen blanco de
+// 3) y, abajo, el suelo del lugar (`backdrop`); arriba, el blanco de la tarjeta. El edificio (lienzo 580 × 520, apoyado
+// en 480) va centrado y apoyado en ese suelo, a 0,41 de su lienzo: así el más alto (la casa, de 73 a 480) queda dentro
+// con aire arriba. Sin suelo, centrado en la tarjeta según lo que ocupa su dibujo (de 90 a 480).
+const SCENERY = sceneryCard(CARD.w, CARD.h)
+const LINE = SCENERY.line
 const ART = { w: 580 * 0.41, h: 520 * 0.41 }
-const STRIP = { w: CARD.w - LINE * 2, h: (CARD.w - LINE * 2) * 120 / 600 }
-const STRIP_TOP = CARD.h - LINE - STRIP.h
-const SCENE_GROUND = STRIP_TOP + STRIP.h * 36 / 120
 const artTop = (item: DatosItem) => (item.backdrop
-  ? SCENE_GROUND - ART.h * 480 / 520
+  ? SCENERY.ground - ART.h * 480 / 520
   : CARD.h / 2 - ART.h * ((90 + 480) / 2) / 520)
 const EGG = { h: 104, w: 104 * 164 / 192 }
 const EGG_IN_CARD = 0.68
 const GRAB = 160
-// La mano puntero de la librería (`mano-apunta`: lienzo de 206 × 212, la yema del índice en 20, 11.5) a 120 de ancho.
-const HAND = { w: 120, h: 212 * 120 / 206, tipX: 20 * 120 / 206, tipY: 11.5 * 120 / 206 }
 
 const cards = others.map((item, i) => ({ item, x: COLUMN.right - CARD.w / 2, y: stackTop + i * (CARD.h + CARD.gap) }))
 type Card = typeof cards[number]
@@ -185,10 +180,6 @@ function spotOf(id: string, k = 0): Point {
 // vuelo del huevo. Entre columnas, en arco por arriba; entre dos tarjetas de la misma columna, por el aire entre
 // columnas; el que se salta lugares, en diagonal y un poco combado hacia arriba, por encima del granero y la gallina. ----
 interface Leg { key: string, from: string, to: string, a: Point, c: Point, b: Point }
-const quad = (leg: Pick<Leg, 'a' | 'b' | 'c'>, s: number): Point => ({
-  x: (1 - s) ** 2 * leg.a.x + 2 * (1 - s) * s * leg.c.x + s ** 2 * leg.b.x,
-  y: (1 - s) ** 2 * leg.a.y + 2 * (1 - s) * s * leg.c.y + s ** 2 * leg.b.y,
-})
 function makeLeg(from: string, to: string, skips: number): Leg {
   const a = from === origin.id ? farmSpot : spotOf(from)
   const b = spotOf(to)
@@ -229,7 +220,6 @@ type Phase = 'choose' | 'fly' | 'done'
 const phase = ref<Phase>('choose')
 const doneRoutes = ref<number[]>([])
 let completed = false
-const time = useTimers()
 
 // Los recorridos que siguen abiertos para el huevo: los que no se han contado y empiezan como lo que ya recorrió.
 const openRoutes = () => {
@@ -262,40 +252,14 @@ function progress() {
 }
 emit('progress', 0)
 
-const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2)
-// El vuelo, cuadro a cuadro. Termina siempre: si el navegador deja de pintar cuadros (pestaña en segundo plano), el
-// respaldo lo lleva a su final al acabar su tiempo, y el juego no se queda a medio vuelo.
-let raf = 0
-let rafGuard: ReturnType<typeof setTimeout> | undefined
-function stopTween() {
-  cancelAnimationFrame(raf)
-  clearTimeout(rafGuard)
-}
-function tween(ms: number, step: (k: number) => void, done: () => void) {
-  stopTween()
-  if (ms <= 0) { step(1); done(); return }
-  const start = performance.now()
-  const finish = () => {
-    stopTween()
-    step(1)
-    done()
-  }
-  const tick = (now: number) => {
-    const k = Math.min((now - start) / ms, 1)
-    if (k >= 1) { finish(); return }
-    step(k)
-    raf = requestAnimationFrame(tick)
-  }
-  raf = requestAnimationFrame(tick)
-  rafGuard = setTimeout(finish, ms + 120)
-}
-onBeforeUnmount(stopTween)
+// El vuelo, cuadro a cuadro (useAnimation: termina siempre, aunque el navegador deje de pintar cuadros).
+const flight = useAnimation()
 
 // Tocar una tarjeta: el huevo vuela hasta ella por su camino y se endereza al salir del nido.
 function tapCard(card: Card) {
   const egg = activeEgg.value
   if (!egg || !canGo(card) || drag.busy()) return
-  stopDemo()
+  demo.stop()
   launch(egg, card, false)
 }
 
@@ -309,16 +273,15 @@ function launch(egg: Egg, card: Card, dropped: boolean) {
   entering.value = card.item.id
   const start = { x: egg.x, y: egg.y }
   const c = dropped ? { x: (start.x + end.x) / 2, y: Math.min(start.y, end.y) - 60 } : leg.c
-  const flight = { a: start, c, b: end }
   const startScale = egg.s
   const startRotation = egg.r
   phase.value = 'fly'
   eggNodes[egg.key]?.classList.remove('is-hopping')
   if (egg.at === origin.id) henRef.value?.say('aceptar')
   egg.flying = true
-  tween(dur(dropped ? 420 : 1100), (s) => {
-    const e = ease(s)
-    Object.assign(egg, quad(flight, e))
+  flight.run(dur(dropped ? 420 : 1100), (s) => {
+    const e = easeInOut(s)
+    Object.assign(egg, curve(start, c, end, e))
     egg.s = startScale + (endScale - startScale) * e
     egg.r = startRotation * (1 - Math.min(e * 3, 1))
   }, () => {
@@ -376,7 +339,7 @@ const drag = useDrag<number, string>({
     const card = cardAt(p)
     return card && targets.value.includes(card.item.id) ? card.item.id : null
   },
-  press: () => stopDemo(),
+  press: () => demo.stop(),
   // Sobre una tarjeta a la que puede ir, el huevo se queda donde se soltó, tal como se ve, y salta desde ahí.
   drop: (key, target, { offset }) => {
     const egg = eggs[key]
@@ -389,7 +352,7 @@ const drag = useDrag<number, string>({
     launch(egg, card, true)
   },
   tap: (key) => { if (phase.value === 'choose') replay(eggNodes[key], 'is-hopping') },
-  settle: () => { idleSince = performance.now() },
+  settle: () => demo.stop(),
   lift: -12, // por encima del dedo
   returnMs: dur(320),
 })
@@ -412,82 +375,32 @@ function eggStyle(egg: Egg) {
   }
 }
 
+// ---- Demostrar el arrastre (la mano, en useDemo) en cada tramo: del nido al primer lugar y de un lugar de paso al
+// siguiente. La mano presiona el huevo que toca y lleva su copia por el camino del vuelo hasta una tarjeta a la que puede
+// ir (la siguiente vez, la otra). La primera de cada tramo, al poco: 1,5 s al empezar la escena, 2 s en un lugar de paso
+// y 6 s con un huevo nuevo (la hoja del recorrido anterior se está escuchando); luego, cada 6 s sin tocar. ----
+const demo = useDemo<string>({
+  ready: () => Boolean(activeEgg.value) && phase.value === 'choose' && !props.blocked && !drag.busy(),
+  step: () => `${activeEgg.value?.key}:${activeEgg.value?.path.length}`,
+  first: () => ((activeEgg.value?.path.length ?? 1) > 1 ? 2000 : doneRoutes.value.length ? 6000 : 1500),
+  move: (n) => {
+    const egg = activeEgg.value
+    const ids = targets.value
+    const card = egg && ids.length ? cardOf(ids[n % ids.length]!) : undefined
+    if (!egg || !card) return null
+    return {
+      from: { x: egg.x, y: egg.y },
+      to: spotOf(card.item.id),
+      via: legs.get(`${egg.at}>${card.item.id}`)?.c,
+      target: card.item.id,
+      scale: [egg.s, scaleAt(card.item.id)],
+    }
+  },
+  reduced,
+})
+
 // La tarjeta marcada: la que queda bajo el huevo arrastrado o, en la demostración, la que la mano elige.
-const demoOver = ref<string | null>(null)
-const overCard = computed(() => drag.state.over ?? demoOver.value)
-
-// ---- Demostrar el arrastre, el patrón de los juegos táctiles, en cada tramo: del nido al primer lugar y de un lugar de
-// paso al siguiente. Si nadie toca mientras se elige, la mano aparece con la punta del índice sobre el huevo que toca, lo
-// presiona, lleva una copia translúcida por el camino del vuelo hasta una tarjeta a la que puede ir (la siguiente vez,
-// la otra), que se marca como al soltar encima, la suelta y se desvanece. La primera de cada tramo, al poco: 1,5 s al
-// empezar la escena, 2 s en un lugar de paso y 6 s con un huevo nuevo (la hoja del recorrido anterior se está
-// escuchando); luego, cada 6 s sin tocar. No con la escena en pausa ni con movimiento reducido. Agarrar el huevo la
-// corta. ----
-const demo = reactive({ on: false, x: 0, y: 0, s: 1, o: 0, gx: 0, gy: 0, gs: 1, go: 0 })
-let idleSince = performance.now()
-let demos = 0
-// El tramo en el que está el huevo (cuál y cuántas paradas lleva) y cuántas veces se demostró en él.
-let step = ''
-let stepDemos = 0
-let demoRaf = 0
-
-function stopDemo() {
-  cancelAnimationFrame(demoRaf)
-  if (demo.on) demoOver.value = null
-  demo.on = false
-  idleSince = performance.now()
-}
-onBeforeUnmount(() => cancelAnimationFrame(demoRaf))
-
-function runDemo(egg: Egg, card: Card) {
-  const from = { x: egg.x, y: egg.y }
-  const to = spotOf(card.item.id)
-  const leg = legs.get(`${egg.at}>${card.item.id}`)
-  const path = { a: from, c: leg?.c ?? { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 80 }, b: to }
-  const clamp = (v: number) => Math.min(Math.max(v, 0), 1)
-  Object.assign(demo, { on: true, x: from.x, y: from.y, s: 1, o: 0, gx: from.x, gy: from.y, gs: egg.s, go: 0 })
-  const start = performance.now()
-  const tick = (now: number) => {
-    const t = now - start
-    if (props.blocked || phase.value !== 'choose' || drag.busy()) { stopDemo(); return }
-    // 0–300 aparece; 300–520 presiona; 520–1800 lleva; 1800–2000 suelta; 2000–2400 se va.
-    const travel = ease(clamp((t - 520) / 1280))
-    const p = quad(path, travel)
-    demo.o = t < 300 ? t / 300 : t > 2000 ? 1 - clamp((t - 2000) / 400) : 1
-    demo.s = t < 300 ? 1 : t < 520 ? 1 - 0.12 * clamp((t - 300) / 220) : t < 1800 ? 0.88 : 0.88 + 0.12 * clamp((t - 1800) / 200)
-    demo.go = t < 300 ? 0 : t < 520 ? 0.7 * clamp((t - 300) / 220) : t < 1800 ? 0.7 : 0.7 * (1 - clamp((t - 1800) / 200))
-    demo.x = p.x
-    demo.y = p.y
-    demo.gx = p.x
-    demo.gy = p.y - 10 * Math.sin(Math.PI * travel)
-    demo.gs = egg.s + (scaleAt(card.item.id) - egg.s) * travel
-    demoOver.value = t > 1450 && t < 2000 ? card.item.id : null
-    if (t < 2400) demoRaf = requestAnimationFrame(tick)
-    else stopDemo()
-  }
-  demoRaf = requestAnimationFrame(tick)
-}
-
-time.every(() => {
-  const egg = activeEgg.value
-  if (reduced || !egg || phase.value !== 'choose' || drag.busy() || props.blocked || demo.on) {
-    if (!demo.on) idleSince = performance.now()
-    return
-  }
-  const here = `${egg.key}:${egg.path.length}`
-  if (here !== step) {
-    step = here
-    stepDemos = 0
-  }
-  const first = egg.path.length > 1 ? 2000 : doneRoutes.value.length ? 6000 : 1500
-  if (performance.now() - idleSince < (stepDemos ? 6000 : first)) return
-  const ids = targets.value
-  const card = ids.length ? cardOf(ids[demos % ids.length]!) : undefined
-  if (!card) return
-  demos += 1
-  stepDemos += 1
-  runDemo(egg, card)
-}, 300)
+const overCard = computed(() => drag.state.over ?? demo.state.over)
 
 defineExpose({ fit: () => henRef.value?.fit() })
 </script>
