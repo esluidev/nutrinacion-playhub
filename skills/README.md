@@ -6,9 +6,8 @@ Este repositorio no tiene skills propias. Las de PlayHub viven en el proyecto pa
 
 | Skill | Cuándo usarla | Ruta o recurso real | Disponibilidad y requisitos |
 |---|---|---|---|
-| `playhub-storyboard-games` | Diseñar el juego de cada escena de un storyboard y escribirlo en Player (`scene.json`, `datos.json`, voces y `scene.vue`). Su `references/estructura.md` es el contrato de la estructura nueva | `../skills/playhub-storyboard-games/SKILL.md` | Instalada en Claude Code como `anthropic-skills:playhub-storyboard-games` (comprobado el 2026-10-14) |
+| `playhub-storyboard-games` | Diseñar el juego de cada escena de un storyboard, componerlo en el tablero y escribirlo en Player (`scene.json`, `datos.json`, voces y `scene.vue`). Su `references/estructura.md` es el contrato de la estructura nueva y `references/composicion.md`, el de la composición | `../skills/playhub-storyboard-games/SKILL.md` | Instalada en Claude Code como `anthropic-skills:playhub-storyboard-games` (comprobado el 2026-10-14) |
 | `playhub-guides-design` | Escribir la guía del educador de un storyboard | `../skills/playhub-guides-design/SKILL.md` | Instalada como `anthropic-skills:playhub-guides-design` |
-| `playhub-scenery-design` | Componer el juego de una escena a partir de su ficha | `../skills/playhub-scenery-design/SKILL.md` | No instalada en el entorno comprobado: leer el original |
 | `eslui-motion-design` | Dibujar y preparar assets vectoriales para animación | `../skills/eslui-motion-design/SKILL.md` | Instalada como `anthropic-skills:eslui-motion-design`. Genérica de ESLUI: nunca añadir referencias a PlayHub |
 | `eslui-motion-animation` | Animar e implementar interacción de assets con ESLUI Motion o Rive | `../skills/eslui-motion-animation/SKILL.md` | Instalada como `anthropic-skills:eslui-motion-animation`. Genérica de ESLUI: nunca añadir referencias a PlayHub |
 
