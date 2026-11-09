@@ -37,7 +37,7 @@ Instala todo desde la raíz con `npm install` (npm workspaces). Cada app usa su 
 Arranca cada app con `npm run dev`, sin `--host` ni `--port`. Con las apps y Supabase local en marcha, las abres en este equipo con `localhost` y desde cualquier equipo de tu tailnet con el nombre o la IP de este (`tailscale status`): `http://<equipo>.<tailnet>.ts.net:3000` o `http://100.x.y.z:3000` (Admin), `:3001` (Player) y `:3002` (Educators). No hace falta tocar los `.env.local`:
 - la capa `@playhub/ui` hace que las apps escuchen en todas las interfaces (`0.0.0.0`); cada app fija su puerto en su `nuxt.config.ts`;
 - Vite acepta las IP y, por la capa, los nombres `*.ts.net`; a cualquier otro nombre, como el corto sin `.ts.net`, le responde 403;
-- `urlEnEsteEquipo` (`packages/ui/app/utils/equipo-local.ts`) cambia `localhost` y `127.0.0.1` de Supabase y de Player por el nombre o la IP con que se abrió la app: la API va al mismo equipo, en `:54321`;
+- `urlEnEsteEquipo` (`packages/ui/app/utils/equipo-local.ts`) cambia `localhost` y `127.0.0.1` de Supabase y de Player por el nombre o la IP con que se abrió la app: la API va al mismo equipo, en `:54331`;
 - Player acepta que lo incrusten Admin y Educators abiertos con un nombre `*.ts.net` o con una IP de este equipo (las lee al arrancar: si cambia la IP, reinícialo);
 - Auth local admite volver a `*.ts.net:3000`.
 

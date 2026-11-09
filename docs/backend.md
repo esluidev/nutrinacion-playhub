@@ -173,7 +173,7 @@ npm run db:types        # regenera supabase/database.types.ts, que tipan Admin y
 python3 scripts/generar-seed.py   # regenera supabase/seed.sql; después, supabase db reset
 ```
 
-Con Supabase local levantado: API en `http://127.0.0.1:54321`, Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (Admin no usa el correo de Auth: las invitaciones salen por Resend y la recuperación es un enlace que se comparte a mano). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
+Con Supabase local levantado: API en `http://127.0.0.1:54331` (no en el 54321 por defecto: lo ocupa el monitor de salud de CleanMyMac), Studio en `http://127.0.0.1:54323` y correos de prueba en `http://127.0.0.1:54324` (Admin no usa el correo de Auth: las invitaciones salen por Resend y la recuperación es un enlace que se comparte a mano). La URL y la anon key para el `.env.local` de cada app salen de `supabase status`. Para el QA de punta a punta, la base local va sin seed, como el proyecto nuevo: `supabase db reset --no-seed` y los pasos de [supabase/README.md](../supabase/README.md#base-local-como-en-producción-sin-seed).
 
 Pruebas en `supabase/tests/database/`, **autocontenidas** (cada una crea sus datos en una transacción que se deshace, así que corren con o sin seed):
 - `01_rls.test.sql`: lo que ve y escribe cada identidad (superadmin, admin, colaborador, organización ajena y anon); las funciones `platform_*` y la baja de una organización.

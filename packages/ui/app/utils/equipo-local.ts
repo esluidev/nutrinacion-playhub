@@ -11,7 +11,7 @@ const LOCALES = new Set(['localhost', '127.0.0.1', '[::1]', '::1'])
 
 // El mismo reparto que `scripts/funnel.sh`: puerto local → puerto en Funnel.
 const PUERTOS_FUNNEL: Record<string, string> = { 3000: '443', 3001: '8443', 3002: '10000' }
-const PUERTO_SUPABASE = '54321'
+const PUERTO_SUPABASE = '54331' // la API de Supabase local (supabase/config.toml): el 54321 lo ocupa CleanMyMac
 
 type Pagina = Pick<Location, 'hostname' | 'protocol' | 'origin'>
 

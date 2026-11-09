@@ -7,7 +7,8 @@ project_id = "playhub-applications"
 [api]
 enabled = true
 # Port to use for the API URL.
-port = 54321
+# 54331 y no el 54321 por defecto: el monitor de salud de CleanMyMac ocupa el 54321.
+port = 54331
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
 schemas = ["public", "graphql_public"]
