@@ -186,7 +186,8 @@
   --radius-control: 0.875rem;   /* 14 · counters, alerts, toasts, time tiles */
   --radius-card: 1rem;          /* 16 · symbols, tiles */
   --radius-panel: 1rem;         /* 16 · cards, panels, tables, trays */
-  --radius-dialog: 1.25rem;     /* 20 · dialogs, board pieces */
+  --radius-dialog: 1.25rem;     /* 20 · dialogs */
+  --radius-board: 1.625rem;     /* 26 · las cartas del tablero del player y sus huecos: una sola forma */
   --radius-pill: 999px;         /* only what is round by nature: dots, switches, progress, count bubbles */
 
   /* Depth language: what you press has one base, --ph-depth (3 compact · 4 touch): buttons,
@@ -216,7 +217,7 @@
   --text-headline-lg: 2rem;     /* 32 · group question */
   --text-figure: 2.75rem;       /* 44 · join code */
   --text-figure-lg: 3rem;       /* 48 · point totals */
-  --text-hero: 5.5rem;          /* 88 · topic of the day */
+  --text-hero: 7.5rem;          /* 120 · topic of the day (Welcome cover) */
 }
 
 /* ---- 4 · Scale ----------------------------------------------------------
@@ -269,6 +270,7 @@
    --tone-tint / -tint-edge   soft background and its base
    --tone-strong              text on tint
    --tone-icon                icon on tint
+   --tone-face                cara suave de una pieza del tablero (200; solo lima y los tonos de juego)
    Educational areas map to a tone with data-area: alimentacion → sun,
    actividad-fisica → sky, cuidado-personal → grape, salud-emocional → rose.
    Components that need a default other than lime are listed next to the
@@ -279,7 +281,7 @@
   --tone-top: var(--color-lime-300); --tone-fill: var(--color-lime-400); --tone-edge: var(--color-lime-600);
   --tone-on: var(--color-lime-900); --tone-focus: var(--color-lime-800); --tone-mid: var(--color-lime-500);
   --tone-wash: var(--color-lime-50); --tone-tint: var(--color-lime-100); --tone-tint-edge: var(--color-lime-200);
-  --tone-strong: var(--color-lime-800); --tone-icon: var(--color-lime-700);
+  --tone-strong: var(--color-lime-800); --tone-icon: var(--color-lime-700); --tone-face: var(--color-lime-200);
 }
 /* Current place in any navigation: a clear tint of the tone it sits in (lime by default). */
 :root, [data-tone] { --nav-current: color-mix(in srgb, var(--tone-tint) 50%, var(--tone-tint-edge)); }
@@ -288,31 +290,31 @@
   --tone-top: var(--color-sun-300); --tone-fill: var(--color-sun-400); --tone-edge: var(--color-sun-600);
   --tone-on: var(--color-sun-900); --tone-focus: var(--color-sun-800); --tone-mid: var(--color-sun-500);
   --tone-wash: var(--color-sun-50); --tone-tint: var(--color-sun-100); --tone-tint-edge: var(--color-sun-200);
-  --tone-strong: var(--color-sun-800); --tone-icon: var(--color-sun-700);
+  --tone-strong: var(--color-sun-800); --tone-icon: var(--color-sun-700); --tone-face: var(--color-sun-200);
 }
 [data-tone=coral] {
   --tone-top: var(--color-coral-300); --tone-fill: var(--color-coral-400); --tone-edge: var(--color-coral-600);
   --tone-on: var(--color-coral-900); --tone-focus: var(--color-coral-800); --tone-mid: var(--color-coral-500);
   --tone-wash: var(--color-coral-50); --tone-tint: var(--color-coral-50); --tone-tint-edge: var(--color-coral-100);
-  --tone-strong: var(--color-coral-800); --tone-icon: var(--color-coral-700);
+  --tone-strong: var(--color-coral-800); --tone-icon: var(--color-coral-700); --tone-face: var(--color-coral-200);
 }
 [data-tone=sky], [data-kind=selection], [data-area=actividad-fisica] {
   --tone-top: var(--color-sky-300); --tone-fill: var(--color-sky-400); --tone-edge: var(--color-sky-600);
   --tone-on: var(--color-sky-900); --tone-focus: var(--color-sky-800); --tone-mid: var(--color-sky-500);
   --tone-wash: var(--color-sky-50); --tone-tint: var(--color-sky-100); --tone-tint-edge: var(--color-sky-200);
-  --tone-strong: var(--color-sky-800); --tone-icon: var(--color-sky-700);
+  --tone-strong: var(--color-sky-800); --tone-icon: var(--color-sky-700); --tone-face: var(--color-sky-200);
 }
 [data-tone=grape], [data-area=cuidado-personal] {
   --tone-top: var(--color-grape-300); --tone-fill: var(--color-grape-400); --tone-edge: var(--color-grape-600);
   --tone-on: var(--color-grape-900); --tone-focus: var(--color-grape-800); --tone-mid: var(--color-grape-500);
   --tone-wash: var(--color-grape-50); --tone-tint: var(--color-grape-100); --tone-tint-edge: var(--color-grape-200);
-  --tone-strong: var(--color-grape-800); --tone-icon: var(--color-grape-700);
+  --tone-strong: var(--color-grape-800); --tone-icon: var(--color-grape-700); --tone-face: var(--color-grape-200);
 }
 [data-tone=rose], [data-area=salud-emocional] {
   --tone-top: var(--color-rose-300); --tone-fill: var(--color-rose-400); --tone-edge: var(--color-rose-600);
   --tone-on: var(--color-rose-900); --tone-focus: var(--color-rose-800); --tone-mid: var(--color-rose-500);
   --tone-wash: var(--color-rose-50); --tone-tint: var(--color-rose-50); --tone-tint-edge: var(--color-rose-100);
-  --tone-strong: var(--color-rose-800); --tone-icon: var(--color-rose-700);
+  --tone-strong: var(--color-rose-800); --tone-icon: var(--color-rose-700); --tone-face: var(--color-rose-200);
 }
 [data-tone=night] {
   --tone-top: var(--color-night-800); --tone-fill: var(--color-night-850); --tone-edge: var(--color-night-950);
