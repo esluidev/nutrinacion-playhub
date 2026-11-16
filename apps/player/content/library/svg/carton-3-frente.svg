@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 170" width="600" height="170" role="img" aria-labelledby="carton-3-frente-title carton-3-frente-desc">
+  <title id="carton-3-frente-title">Cartón de tres huevos (frente)</title>
+  <desc id="carton-3-frente-desc">Capa de delante de un cartón de huevos abierto de tres huecos: el frente abombado de cada hueco, con sus nervios, las uniones y la base. Va delante de los huevos, sobre carton-3.svg, en el mismo lienzo. Dibujo de prueba. Lienzo de 600 × 170. Cada huevo se centra en x 108, x 300 y x 492 con su base en y 152; el cartón se apoya en y 169. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="carton-frente">
+    <rect id="base" x="20" y="156" width="560" height="13" rx="6.5" fill="#CF9E67"/>
+    <rect x="192" y="98" width="24" height="62" rx="8" fill="#D6A670"/>
+    <rect x="384" y="98" width="24" height="62" rx="8" fill="#D6A670"/>
+    <g>
+      <path d="M26 98 Q108 120 190 98 C190 124 184 148 170 156 Q160 162 148 162 H68 Q56 162 46 156 C32 148 26 124 26 98 Z" fill="#EDCA9A"/>
+      <path d="M152 110 Q176 105 190 98 C190 124 184 148 170 156 Q160 162 148 162 H140 C154 148 158 128 152 110 Z" fill="#D8AD77"/>
+      <path d="M40 110 Q64 116 88 119 L87 129 Q63 126 42 120 Z" fill="#F8E3C4"/>
+      <path d="M105 122 Q108 142 107 160 H112 Q113 142 110 122 Z" fill="#DDB582"/>
+    </g>
+    <g>
+      <path d="M218 98 Q300 120 382 98 C382 124 376 148 362 156 Q352 162 340 162 H260 Q248 162 238 156 C224 148 218 124 218 98 Z" fill="#EDCA9A"/>
+      <path d="M344 110 Q368 105 382 98 C382 124 376 148 362 156 Q352 162 340 162 H332 C346 148 350 128 344 110 Z" fill="#D8AD77"/>
+      <path d="M232 110 Q256 116 280 119 L279 129 Q255 126 234 120 Z" fill="#F8E3C4"/>
+      <path d="M297 122 Q300 142 299 160 H304 Q305 142 302 122 Z" fill="#DDB582"/>
+    </g>
+    <g>
+      <path d="M410 98 Q492 120 574 98 C574 124 568 148 554 156 Q544 162 532 162 H452 Q440 162 430 156 C416 148 410 124 410 98 Z" fill="#EDCA9A"/>
+      <path d="M536 110 Q560 105 574 98 C574 124 568 148 554 156 Q544 162 532 162 H524 C538 148 542 128 536 110 Z" fill="#D8AD77"/>
+      <path d="M424 110 Q448 116 472 119 L471 129 Q447 126 426 120 Z" fill="#F8E3C4"/>
+      <path d="M489 122 Q492 142 491 160 H496 Q497 142 494 122 Z" fill="#DDB582"/>
+    </g>
+  </g>
+</svg>

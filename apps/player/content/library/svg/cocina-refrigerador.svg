@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 616 536" width="616" height="536" role="img" aria-labelledby="cocina-refrigerador-title cocina-refrigerador-desc">
+  <title id="cocina-refrigerador-title">Cocina, junto al refrigerador</title>
+  <desc id="cocina-refrigerador-desc">La cocina de la casa junto al refrigerador: el refrigerador a la derecha, con su imán y un dibujo, y una licuadora sobre la mesa a la izquierda. Solo cosas de cocina, y pocas. La misma cocina de la casa (cocina.svg): pared clara, casi blanca, y mesa con mantel a cuadros. Interior de tarjeta de 616 × 536. La mesa empieza en y 340 y llega hasta abajo: lo que va sobre ella se apoya entre y 440 y y 530, centrado en x 308; el centro (x 120–500) queda libre para lo que la escena ponga encima. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="cocina-refrigerador">
+    <rect id="pared" x="0" y="0" width="616" height="536" fill="#FFF8E7"/>
+    <rect id="pared-sombra" x="0" y="0" width="616" height="22" fill="#FFEFCB"/>
+    <g id="refrigerador">
+      <rect id="refrigerador-cuerpo" x="492" y="62" width="118" height="290" rx="16" fill="#DDE8F1"/>
+      <path id="refrigerador-lado" d="M598 66.5 A16 16 0 0 1 610 78 V352 H598 Z" fill="#C4D6E4"/>
+      <rect id="refrigerador-junta" x="492" y="144" width="118" height="6" fill="#C4D6E4"/>
+      <rect id="refrigerador-asa-congelador" x="504" y="106" width="9" height="28" rx="4.5" fill="#9DB8CE"/>
+      <rect id="refrigerador-asa-puerta" x="504" y="162" width="9" height="56" rx="4.5" fill="#9DB8CE"/>
+      <g id="dibujo">
+        <rect x="544" y="174" width="40" height="46" rx="5" fill="#FFF4DC"/>
+        <circle cx="564" cy="193" r="8" fill="#FFD34B"/>
+        <rect x="549" y="209" width="30" height="5" rx="2.5" fill="#8DD06C"/>
+        <circle id="iman-dibujo" cx="564" cy="175" r="5.5" fill="#F26B5B"/>
+      </g>
+      <circle id="iman-congelador" cx="574" cy="98" r="6" fill="#6BC7F0"/>
+    </g>
+    <g id="mesa">
+      <rect id="mesa-superficie" x="0" y="340" width="616" height="196" fill="#F3F8FC"/>
+      <g id="mantel-cuadros" fill="#E2EEF8">
+        <rect x="22" y="340" width="44" height="196"/>
+        <rect x="110" y="340" width="44" height="196"/>
+        <rect x="198" y="340" width="44" height="196"/>
+        <rect x="286" y="340" width="44" height="196"/>
+        <rect x="374" y="340" width="44" height="196"/>
+        <rect x="462" y="340" width="44" height="196"/>
+        <rect x="550" y="340" width="44" height="196"/>
+        <rect x="0" y="376" width="616" height="36"/>
+        <rect x="0" y="464" width="616" height="46"/>
+      </g>
+      <g id="mantel-cruces" fill="#CFE2F3">
+        <rect x="22" y="376" width="44" height="36"/>
+        <rect x="22" y="464" width="44" height="46"/>
+        <rect x="110" y="376" width="44" height="36"/>
+        <rect x="110" y="464" width="44" height="46"/>
+        <rect x="198" y="376" width="44" height="36"/>
+        <rect x="198" y="464" width="44" height="46"/>
+        <rect x="286" y="376" width="44" height="36"/>
+        <rect x="286" y="464" width="44" height="46"/>
+        <rect x="374" y="376" width="44" height="36"/>
+        <rect x="374" y="464" width="44" height="46"/>
+        <rect x="462" y="376" width="44" height="36"/>
+        <rect x="462" y="464" width="44" height="46"/>
+        <rect x="550" y="376" width="44" height="36"/>
+        <rect x="550" y="464" width="44" height="46"/>
+      </g>
+      <rect id="mesa-fondo" x="0" y="334" width="616" height="9" fill="#C3DEF2"/>
+    </g>
+    <g id="licuadora">
+      <path d="M32 300 H88 L82 372 H38 Z" fill="#DCEFFB"/>
+      <path d="M72 300 H88 L82 372 H68 Z" fill="#B7DCF4"/>
+      <path d="M40 308 H50 L48 360 H42 Z" fill="#F3FAFE"/>
+      <rect x="28" y="290" width="64" height="12" rx="6" fill="#2F4868"/>
+      <rect x="50" y="278" width="20" height="14" rx="5" fill="#2F4868"/>
+      <path d="M30 372 H90 Q98 372 100 382 L104 408 Q105 420 94 420 H26 Q15 420 16 408 L20 382 Q22 372 30 372 Z" fill="#2F7BE0"/>
+      <path d="M78 372 H90 Q98 372 100 382 L104 408 Q105 420 94 420 H76 Q86 414 85 402 L82 382 Q81 374 78 372 Z" fill="#2462C0"/>
+      <circle cx="60" cy="398" r="9" fill="#FFFFFF"/>
+      <circle cx="60" cy="398" r="4" fill="#2462C0"/>
+    </g>
+  </g>
+</svg>

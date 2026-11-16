@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 56" width="150" height="56" role="img" aria-labelledby="huevo-frito-crudo-title huevo-frito-crudo-desc">
+  <title id="huevo-frito-crudo-title">Huevo recién abierto</title>
+  <desc id="huevo-frito-crudo-desc">Huevo crudo recién abierto, visto de frente y un poco desde arriba: la clara transparente, dibujada como un charco con brillos para verse sobre el fondo oscuro de una sartén, y la yema alta y brillante. Se apoya en el centro de su base (x 75, y 56). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-frito-crudo">
+    <path id="clara" d="M4 34 C2 22 22 12 50 9 C70 4 100 5 118 10 C138 14 149 24 146 36 C143 48 122 53 96 53 C74 56 44 55 26 50 C12 47 5 42 4 34 Z" fill="#5B7594"/>
+    <path id="clara-brillo" d="M18 30 C26 20 44 15 62 14 C46 18 32 24 25 34 Z M112 46 C124 44 134 40 139 34 C137 42 126 48 112 49 Z" fill="#9DB2C8"/>
+    <path id="yema" d="M52 24 C52 11 62 3 75 3 C88 3 98 11 98 24 C98 32 88 36 75 36 C62 36 52 32 52 24 Z" fill="#FFB81C"/>
+    <path id="yema-sombra" d="M88 7 C94 11 98 17 98 24 C98 32 88 36 75 36 C70 36 65 35.4 61 34.2 C76 34 89 24 88 7 Z" fill="#F39C12"/>
+    <ellipse id="yema-brillo" cx="66" cy="12.5" rx="6.5" ry="3.3" fill="#FFF3C4" transform="rotate(-20 66 12.5)"/>
+  </g>
+</svg>

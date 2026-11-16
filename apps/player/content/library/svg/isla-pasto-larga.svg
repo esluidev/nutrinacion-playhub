@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 166" width="1040" height="166" role="img" aria-labelledby="isla-pasto-larga-title isla-pasto-larga-desc">
+  <title id="isla-pasto-larga-title">Isla de pasto larga</title>
+  <desc id="isla-pasto-larga-desc">La isla del jardín (isla-pasto.svg) a lo ancho, para apoyar una fila de cosas sueltas en el tablero: la misma orilla de atrás apenas ondulada, las esquinas redondeadas del tablero (26) y el canto de delante más oscuro; una mata redonda en cada extremo, matitas y flores entre un apoyo y el siguiente y unas briznas de paja delante de cada uno. Lienzo de 1040 × 166, el ancho de la columna del juego: lo que se apoya va en y 128, centrado en x 160, 520 y 880 (una fila de tres columnas de 320 con 40 entre ellas); debajo de cada uno, el pasto queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → pasto → luz de la orilla de atrás → matitas → paja → flores → matas en los extremos. -->
+  <g id="isla-pasto-larga">
+    <g id="pasto">
+      <path id="pasto-canto" d="M28 48 C62.4 48 75.6 44 110 44 C144.4 44 157.6 52 192 52 C226.4 52 239.6 44 274 44 C308.4 44 321.6 52 356 52 C390.4 52 403.6 44 438 44 C472.4 44 485.6 52 520 52 C554.4 52 567.6 44 602 44 C636.4 44 649.6 52 684 52 C718.4 52 731.6 44 766 44 C800.4 44 813.6 52 848 52 C882.4 52 895.6 44 930 44 C964.4 44 977.6 48 1012 48 A26 26 0 0 1 1038 74 V137 A26 26 0 0 1 1012 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#77BE58"/>
+      <path id="pasto-base" d="M28 48 C62.4 48 75.6 44 110 44 C144.4 44 157.6 52 192 52 C226.4 52 239.6 44 274 44 C308.4 44 321.6 52 356 52 C390.4 52 403.6 44 438 44 C472.4 44 485.6 52 520 52 C554.4 52 567.6 44 602 44 C636.4 44 649.6 52 684 52 C718.4 52 731.6 44 766 44 C800.4 44 813.6 52 848 52 C882.4 52 895.6 44 930 44 C964.4 44 977.6 48 1012 48 A26 26 0 0 1 1038 74 V126 A26 26 0 0 1 1012 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z" fill="#8DD06C"/>
+      <path id="pasto-luz" d="M2 74 A26 26 0 0 1 28 48 C62.4 48 75.6 44 110 44 C144.4 44 157.6 52 192 52 C226.4 52 239.6 44 274 44 C308.4 44 321.6 52 356 52 C390.4 52 403.6 44 438 44 C472.4 44 485.6 52 520 52 C554.4 52 567.6 44 602 44 C636.4 44 649.6 52 684 52 C718.4 52 731.6 44 766 44 C800.4 44 813.6 52 848 52 C882.4 52 895.6 44 930 44 C964.4 44 977.6 48 1012 48 A26 26 0 0 1 1038 74 C1038 65 1026 59 1012 59 C977.6 59 964.4 55 930 55 C895.6 55 882.4 63 848 63 C813.6 63 800.4 55 766 55 C731.6 55 718.4 63 684 63 C649.6 63 636.4 55 602 55 C567.6 55 554.4 63 520 63 C485.6 63 472.4 55 438 55 C403.6 55 390.4 63 356 63 C321.6 63 308.4 55 274 55 C239.6 55 226.4 63 192 63 C157.6 63 144.4 55 110 55 C75.6 55 62.4 59 28 59 C14 59 2 65 2 74 Z" fill="#AEE08C"/>
+    </g>
+    <g id="matitas" fill="#77BE58">
+      <path d="M14 118 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M282 146 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M342 98 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M506 150 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M646 146 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M700 100 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M996 106 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+    </g>
+    <g id="paja" fill="none" stroke-linecap="round" stroke-width="3.5">
+      <g stroke="#F5CE5C"><path d="M120 138 L139 132"/><path d="M480 139 L499 134"/><path d="M842 138 L861 133"/></g>
+      <g stroke="#E0A93C"><path d="M184 139 L201 144"/><path d="M542 141 L559 146"/><path d="M902 140 L919 145"/></g>
+    </g>
+    <g id="flores">
+      <g transform="translate(26 136) scale(1.6)"><g fill="#FFFFFF"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g transform="translate(322 122) scale(1.6)"><g fill="#FF92AE"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g transform="translate(368 138) scale(1.6)"><g fill="#FFFFFF"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g transform="translate(686 124) scale(1.6)"><g fill="#FFFFFF"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g transform="translate(726 140) scale(1.6)"><g fill="#FF92AE"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g transform="translate(1014 134) scale(1.6)"><g fill="#FF92AE"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+    </g>
+    <g id="mata-izquierda" transform="translate(31 70) scale(1.2) translate(-40 -44)">
+      <path d="M40 6 a21 21 0 0 1 20.5 25.5 a14 14 0 0 1 -4.5 12.5 h-33 a14 14 0 0 1 -4.5 -12.5 a21 21 0 0 1 20.5 -25.5 Z" fill="#68BE56"/>
+      <path d="M56 44 a14 14 0 0 0 4.5 -12.5 a21 21 0 0 0 -5.2 -16.6 a19 19 0 0 1 -13.8 29.1 Z" fill="#52A845"/>
+      <circle cx="32" cy="19" r="8.5" fill="#8FD674"/>
+    </g>
+    <g id="mata-derecha" transform="translate(1010 68) scale(1.15) translate(-40 -44)">
+      <path d="M40 6 a21 21 0 0 1 20.5 25.5 a14 14 0 0 1 -4.5 12.5 h-33 a14 14 0 0 1 -4.5 -12.5 a21 21 0 0 1 20.5 -25.5 Z" fill="#68BE56"/>
+      <path d="M56 44 a14 14 0 0 0 4.5 -12.5 a21 21 0 0 0 -5.2 -16.6 a19 19 0 0 1 -13.8 29.1 Z" fill="#52A845"/>
+      <circle cx="32" cy="19" r="8.5" fill="#8FD674"/>
+    </g>
+  </g>
+</svg>

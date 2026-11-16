@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 704 536" width="704" height="536" role="img" aria-labelledby="cocina-alacena-ancha-title cocina-alacena-ancha-desc">
+  <title id="cocina-alacena-ancha-title">Cocina, junto a la alacena (ancha)</title>
+  <desc id="cocina-alacena-ancha-desc">La cocina de la casa junto a la alacena, en una vista más ancha y con la mesa despejada: la alacena de dos puertas en la pared, a la derecha, y nada más. Es cocina-alacena.svg con un cuadro más de mantel (88 de ancho) y sin el salero y el pimentero, para lo que ocupa la mesa de lado a lado (el huevo abierto en su plato, con las mitades de la cáscara a los lados) o llena el alto (el vaso de agua). La misma cocina de la casa (cocina.svg): pared clara, casi blanca, y mesa con mantel a cuadros. Interior de tarjeta de 704 × 536. La mesa empieza en y 340 y llega hasta abajo: lo que va sobre ella se apoya entre y 440 y y 530, centrado en x 352; el centro (x 0–600) queda libre para lo que la escena ponga encima. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="cocina-alacena-ancha">
+    <rect id="pared" x="0" y="0" width="704" height="536" fill="#FFF8E7"/>
+    <rect id="pared-sombra" x="0" y="0" width="704" height="22" fill="#FFEFCB"/>
+    <g id="alacena" transform="translate(92 0)">
+      <rect x="470" y="34" width="134" height="184" rx="14" fill="#EFDDB6"/>
+      <path d="M590 34 Q604 34 604 48 V204 Q604 218 590 218 H578 Q590 214 590 204 V48 Q590 38 590 34 Z" fill="#DCC59A"/>
+      <rect x="470" y="34" width="134" height="14" rx="7" fill="#F8ECCF"/>
+      <rect x="533" y="52" width="5" height="156" rx="2.5" fill="#DCC59A"/>
+      <rect x="482" y="60" width="42" height="140" rx="8" fill="#F8ECCF"/>
+      <rect x="546" y="60" width="34" height="140" rx="8" fill="#F8ECCF"/>
+      <circle cx="523" cy="134" r="5.5" fill="#C8804A"/>
+      <circle cx="548" cy="134" r="5.5" fill="#C8804A"/>
+    </g>
+    <g id="mesa">
+      <rect id="mesa-superficie" x="0" y="340" width="704" height="196" fill="#F3F8FC"/>
+      <g id="mantel-cuadros" fill="#E2EEF8">
+        <rect x="22" y="340" width="44" height="196"/>
+        <rect x="110" y="340" width="44" height="196"/>
+        <rect x="198" y="340" width="44" height="196"/>
+        <rect x="286" y="340" width="44" height="196"/>
+        <rect x="374" y="340" width="44" height="196"/>
+        <rect x="462" y="340" width="44" height="196"/>
+        <rect x="550" y="340" width="44" height="196"/>
+        <rect x="638" y="340" width="44" height="196"/>
+        <rect x="0" y="376" width="704" height="36"/>
+        <rect x="0" y="464" width="704" height="46"/>
+      </g>
+      <g id="mantel-cruces" fill="#CFE2F3">
+        <rect x="22" y="376" width="44" height="36"/>
+        <rect x="22" y="464" width="44" height="46"/>
+        <rect x="110" y="376" width="44" height="36"/>
+        <rect x="110" y="464" width="44" height="46"/>
+        <rect x="198" y="376" width="44" height="36"/>
+        <rect x="198" y="464" width="44" height="46"/>
+        <rect x="286" y="376" width="44" height="36"/>
+        <rect x="286" y="464" width="44" height="46"/>
+        <rect x="374" y="376" width="44" height="36"/>
+        <rect x="374" y="464" width="44" height="46"/>
+        <rect x="462" y="376" width="44" height="36"/>
+        <rect x="462" y="464" width="44" height="46"/>
+        <rect x="550" y="376" width="44" height="36"/>
+        <rect x="550" y="464" width="44" height="46"/>
+        <rect x="638" y="376" width="44" height="36"/>
+        <rect x="638" y="464" width="44" height="46"/>
+      </g>
+      <rect id="mesa-fondo" x="0" y="334" width="704" height="9" fill="#C3DEF2"/>
+    </g>
+    
+  </g>
+</svg>

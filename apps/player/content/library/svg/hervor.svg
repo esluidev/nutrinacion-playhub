@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 104" width="200" height="104" role="img" aria-labelledby="hervor-title hervor-desc">
+  <title id="hervor-title">Hervor</title>
+  <desc id="hervor-desc">El agua que hierve: burbujas en la superficie y tres hilos de vapor. Va sobre el agua de la olla: el centro de su base (x 100, y 104) coincide con la base de lo que se mete en el agua, que queda 28 por debajo de la superficie. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="hervor">
+    <g id="vapor" fill="#FFFFFF">
+      <path d="M68 46 C61 38 74 31 68 21 C63 14 70 8 73 4 C72 12 80 17 77 27 C75 34 80 39 75 46 Z"/>
+      <path d="M100 42 C92 32 108 26 100 14 C95 6 103 2 106 0 C104 8 114 14 110 26 C107 34 114 36 107 42 Z"/>
+      <path d="M132 46 C125 38 138 31 132 21 C127 14 134 8 137 4 C136 12 144 17 141 27 C139 34 144 39 139 46 Z"/>
+    </g>
+    <g id="burbujas" fill="#FFFFFF">
+      <circle cx="66" cy="60" r="6.5"/><circle cx="87" cy="65" r="5"/><circle cx="112" cy="59" r="7.5"/>
+      <circle cx="134" cy="64" r="5.5"/><circle cx="100" cy="53" r="4.5"/><circle cx="78" cy="52" r="3.4"/><circle cx="124" cy="51" r="3.8"/>
+    </g>
+    <g id="burbujas-fondo" fill="#B7E3FA">
+      <circle cx="67.5" cy="61.5" r="3.2"/><circle cx="113.5" cy="60.5" r="3.8"/><circle cx="135" cy="65" r="2.6"/><circle cx="88" cy="66" r="2.2"/>
+    </g>
+  </g>
+</svg>

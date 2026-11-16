@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 50" width="150" height="50" role="img" aria-labelledby="huevo-revuelto-crudo-title huevo-revuelto-crudo-desc">
+  <title id="huevo-revuelto-crudo-title">Huevo batido</title>
+  <desc id="huevo-revuelto-crudo-desc">Huevo crudo batido: un charco amarillo, liso y brillante. Se apoya en el centro de su base (x 75, y 50). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-revuelto-crudo">
+    <path id="mezcla" d="M4 28 C4 14 34 6 75 6 C116 6 146 14 146 28 C146 42 116 50 75 50 C34 50 4 42 4 28 Z" fill="#FFC93C"/>
+    <path id="mezcla-sombra" d="M146 28 C146 42 116 50 75 50 C50 50 28 47 16 42 C54 47 116 45 146 28 Z" fill="#F0AE22"/>
+    <path id="mezcla-brillo" d="M20 24 C32 15 52 12 72 12 C54 15.5 38 20 29 28 Z M98 14 C112 14 126 17 134 22 C124 19 110 17.5 98 17.5 Z" fill="#FFE89A"/>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="-30 -30 300 300" role="img" aria-labelledby="avatar-conejo-title avatar-conejo-desc">
+  <title id="avatar-conejo-title">Avatar · conejo</title>
+  <desc id="avatar-conejo-desc">Avatar de PlayHub: la cabeza de un conejo blanco: orejas largas y nariz rosa, de frente, para un círculo. El círculo y su fondo los pone quien lo coloca. Fuente maestra: avatar-conejo.svg. Colores planos, sin contorno, con la luz arriba a la izquierda; los ojos, como los de las aves de PlayHub. Las dos mitades son iguales: el eje está en x 120. El dibujo ocupa el cuadrado de 240 del centro del lienzo, con 30 de aire por cada lado.</desc>
+  <g id="avatar-conejo-orejas">
+    <path d="M72 116 C62 86 60 50 70 27 C75 16 89 16 94 27 C104 52 106 88 104 118 Z" fill="#FBF2E6" />
+    <path d="M168.0 116 C178.0 86 180.0 50 170.0 27 C165.0 16 151.0 16 146.0 27 C136.0 52 134.0 88 136.0 118 Z" fill="#FBF2E6" />
+    <path d="M81 106 C75 82 74 56 80 38 C82 32 87 32 89 38 C95 58 96 84 95 106 Z" fill="#F7BABA" />
+    <path d="M159.0 106 C165.0 82 166.0 56 160.0 38 C158.0 32 153.0 32 151.0 38 C145.0 58 144.0 84 145.0 106 Z" fill="#F7BABA" />
+  </g>
+  <g id="avatar-conejo-cabeza">
+    <ellipse cx="120" cy="156" rx="76" ry="62" fill="#FBF2E6" />
+    <path d="M188.88 129.8 A76 62 0 0 1 82.0 209.69 A82.08 66.96 0 0 0 188.88 129.8Z" fill="#EFE1CE" />
+  </g>
+  <g id="avatar-conejo-cara">
+    <ellipse cx="74" cy="172" rx="12" ry="8" fill="#FACFCB" />
+    <ellipse cx="166" cy="172" rx="12" ry="8" fill="#FACFCB" />
+    <ellipse cx="90" cy="150" rx="8" ry="11.5" fill="#333136" />
+    <ellipse cx="150" cy="150" rx="8" ry="11.5" fill="#333136" />
+    <path d="M111 159 Q120 154 129 159 Q127 169 120 170 Q113 169 111 159 Z" fill="#EF8E96" />
+    <path d="M120 170V177M108 179Q114 186 120 179Q126 186 132 179" fill="none" stroke="#D5C0A8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

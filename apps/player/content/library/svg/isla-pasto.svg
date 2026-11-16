@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 166" width="560" height="166" role="img" aria-labelledby="isla-pasto-title isla-pasto-desc">
+  <title id="isla-pasto-title">Isla de pasto</title>
+  <desc id="isla-pasto-desc">La isla del jardín: un trozo de pasto con cuerpo, el suelo del jardín de la casa en todo el taller. Sirve suelta o dentro de una tarjeta: la orilla de atrás ondulada, las esquinas redondeadas del tablero (26) y, delante, el canto del pasto más oscuro, que le da cuerpo. Una mata redonda a cada lado, matitas, flores y unas briznas de paja delante. El mismo pasto del jardín de la casa (suelo-jardin.svg). Lienzo de 560 × 166: lo que va al fondo (un edificio) se apoya en y 72; lo que va delante, entre y 120 y y 130; el centro (x 100–490) queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → pasto → luz de la orilla de atrás → matitas → paja → flores → matas a los lados. -->
+  <g id="isla-pasto">
+    <g id="pasto">
+      <path id="pasto-canto" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V137 A26 26 0 0 1 532 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#77BE58"/>
+      <path id="pasto-base" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z" fill="#8DD06C"/>
+      <path id="pasto-luz" d="M2 74 A26 26 0 0 1 28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 C558 65 546 59 532 59 C496.7 59 483.3 55 448 55 C412.7 55 399.3 63 364 63 C328.7 63 315.3 55 280 55 C244.7 55 231.3 63 196 63 C160.7 63 147.3 55 112 55 C76.7 55 63.3 59 28 59 C14 59 2 65 2 74 Z" fill="#AEE08C"/>
+    </g>
+    <g id="matitas" fill="#77BE58">
+      <path d="M14 114 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M62 98 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M184 146 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M440 144 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+      <path d="M510 100 l5 -14 l4 14 l4 -18 l4 18 l5 -13 l4 13 Z"/>
+    </g>
+    <g id="paja" fill="none" stroke-linecap="round" stroke-width="3.5">
+      <g stroke="#F5CE5C">
+        <path d="M268 140 L288 135"/>
+        <path d="M330 144 L350 148"/>
+        <path d="M388 138 L408 142"/>
+      </g>
+      <g stroke="#E0A93C">
+        <path d="M298 147 L316 143"/>
+        <path d="M362 136 L380 132"/>
+      </g>
+    </g>
+    <g id="flores">
+      <g id="flor-1" transform="translate(44 126) scale(1.6)"><g fill="#FFFFFF"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g id="flor-2" transform="translate(82 136) scale(1.6)"><g fill="#FF92AE"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g id="flor-3" transform="translate(486 138) scale(1.6)"><g fill="#FF92AE"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+      <g id="flor-4" transform="translate(520 122) scale(1.6)"><g fill="#FFFFFF"><circle cx="0" cy="-4.4" r="3.8"/><circle cx="4.2" cy="-1.4" r="3.8"/><circle cx="2.6" cy="3.6" r="3.8"/><circle cx="-2.6" cy="3.6" r="3.8"/><circle cx="-4.2" cy="-1.4" r="3.8"/></g><circle r="2.6" fill="#FFD34B"/></g>
+    </g>
+    <g id="mata-izquierda" transform="translate(56 68) scale(1.5) translate(-40 -44)">
+      <path d="M40 6 a21 21 0 0 1 20.5 25.5 a14 14 0 0 1 -4.5 12.5 h-33 a14 14 0 0 1 -4.5 -12.5 a21 21 0 0 1 20.5 -25.5 Z" fill="#68BE56"/>
+      <path d="M56 44 a14 14 0 0 0 4.5 -12.5 a21 21 0 0 0 -5.2 -16.6 a19 19 0 0 1 -13.8 29.1 Z" fill="#52A845"/>
+      <circle cx="32" cy="19" r="8.5" fill="#8FD674"/>
+    </g>
+    <g id="mata-derecha" transform="translate(512 66) scale(1.4) translate(-40 -44)">
+      <path d="M40 6 a21 21 0 0 1 20.5 25.5 a14 14 0 0 1 -4.5 12.5 h-33 a14 14 0 0 1 -4.5 -12.5 a21 21 0 0 1 20.5 -25.5 Z" fill="#68BE56"/>
+      <path d="M56 44 a14 14 0 0 0 4.5 -12.5 a21 21 0 0 0 -5.2 -16.6 a19 19 0 0 1 -13.8 29.1 Z" fill="#52A845"/>
+      <circle cx="32" cy="19" r="8.5" fill="#8FD674"/>
+    </g>
+  </g>
+</svg>

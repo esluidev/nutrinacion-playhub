@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 170" width="600" height="170" role="img" aria-labelledby="carton-3-title carton-3-desc">
+  <title id="carton-3-title">Cartón de tres huevos (fondo)</title>
+  <desc id="carton-3-desc">Capa de atrás de un cartón de huevos abierto de tres huecos, de frente: la tapa abierta hacia atrás, la pared del fondo y el interior de los huecos. Va detrás de los huevos; su frente es carton-3-frente.svg, en el mismo lienzo. Dibujo de prueba. Lienzo de 600 × 170. Cada huevo se centra en x 108, x 300 y x 492 con su base en y 152; el cartón se apoya en y 169. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="carton-fondo">
+    <g id="tapa">
+      <path id="tapa-base" d="M20 104 V60 C20 42 40 32 66 32 H150 C166 32 176 40 190 44 C204 48 216 40 232 34 C246 30 262 30 276 30 H324 C338 30 354 30 368 34 C384 40 396 48 410 44 C424 40 434 32 450 32 H534 C560 32 580 42 580 60 V104 Z" fill="#E8C392"/>
+      <path id="tapa-sombra" d="M520 32 H534 C560 32 580 42 580 60 V104 H540 C548 84 544 54 520 32 Z" fill="#D7AE7B"/>
+      <path id="tapa-luz" d="M34 58 C36 46 50 40 66 40 H124 C100 42 70 44 52 54 C44 58 36 62 34 58 Z M262 38 H300 C286 39 272 41 262 44 Z" fill="#F6DEB9"/>
+    </g>
+    <rect id="pared" x="18" y="86" width="564" height="34" rx="10" fill="#D6A670"/>
+    <ellipse cx="108" cy="100" rx="72" ry="13" fill="#BF8852"/>
+    <ellipse cx="300" cy="100" rx="72" ry="13" fill="#BF8852"/>
+    <ellipse cx="492" cy="100" rx="72" ry="13" fill="#BF8852"/>
+  </g>
+</svg>

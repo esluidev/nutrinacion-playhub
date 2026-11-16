@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 116" width="300" height="116" role="img" aria-labelledby="plato-hondo-title plato-hondo-desc">
+  <title id="plato-hondo-title">Plato hondo</title>
+  <desc id="plato-hondo-desc">Plato hondo azul visto de frente y un poco desde arriba, en el azul del plato de la casa y del tazón de la lámina de assets. Lo que se pone dentro descansa en su fondo, con el centro en x 150, y 62. Se apoya en el centro de su base (x 150, y 114). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="plato-hondo">
+    <ellipse id="bajo" cx="150" cy="64" rx="144" ry="50" fill="#2462C0"/>
+    <ellipse id="ala" cx="150" cy="56" rx="148" ry="52" fill="#2F7BE0"/>
+    <ellipse id="fondo" cx="150" cy="60" rx="118" ry="37" fill="#2A6FD0"/>
+    <path id="ala-luz" d="M8 50C20 24 76 8 144 5.5C92 11 42 26 18 56Z" fill="#5EA0F2"/>
+  </g>
+</svg>

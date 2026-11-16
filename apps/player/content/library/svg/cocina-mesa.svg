@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1028 488" width="1028" height="488" role="img" aria-labelledby="cocina-mesa-title cocina-mesa-desc">
+  <title id="cocina-mesa-title">Cocina, la mesa de cerca</title>
+  <desc id="cocina-mesa-desc">La mesa de la cocina de la casa vista de cerca, para una tarjeta grande de 1040 por 500: arriba, la pared clara con la ventana y sus cortinas verdes a la izquierda y, a la derecha, la alacena y el refrigerador, que queda detrás de la mesa; abajo, la mesa con su mantel a cuadros, que empieza en y 216. Lo que va sobre la mesa se apoya entre y 300 y y 470. El centro (x 380–650) queda libre de arriba abajo. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="cocina-mesa">
+    <rect id="pared" width="1028" height="488" fill="#FFF8E7"/>
+    <rect id="pared-sombra" width="1028" height="14" fill="#FFEFCB"/>
+    <g id="ventana" transform="translate(16 8) scale(0.6)">
+      <rect x="110" y="40" width="396" height="176" rx="30" fill="#F2DFB8"/>
+      <rect x="122" y="52" width="372" height="152" rx="22" fill="#6BC7F0"/>
+      <path d="M352 112 C352 100 362 92 374 94 C378 82 396 78 406 88 C418 82 434 90 432 104 C442 106 444 118 434 120 H360 C354 120 352 116 352 112 Z" fill="#FFFFFF"/>
+      <path d="M142 104 V86 Q142 70 158 70 H182 V80 H160 Q152 80 152 88 V104 Z" fill="#C2EBFB"/>
+      <rect x="303" y="52" width="10" height="152" fill="#F2DFB8"/>
+      <rect x="122" y="123" width="372" height="10" fill="#F2DFB8"/>
+      <rect x="96" y="208" width="424" height="18" rx="9" fill="#F2DFB8"/>
+      <rect x="46" y="24" width="524" height="10" rx="5" fill="#C8804A"/>
+      <path d="M62 32 H126 Q116 120 122 180 Q110 198 112 268 H76 Q80 184 68 160 Q54 96 62 32 Z" fill="#7CCB6E"/>
+      <path d="M100 32 H126 Q116 120 122 180 Q110 198 112 268 H98 Q100 190 106 160 Q94 96 100 32 Z" fill="#5FB354"/>
+      <path d="M70 42 H80 Q76 100 80 144 H73 Q66 96 70 42 Z" fill="#A9E29A"/>
+      <path d="M554 32 H490 Q500 120 494 180 Q506 198 504 268 H540 Q536 184 548 160 Q562 96 554 32 Z" fill="#7CCB6E"/>
+      <path d="M516 32 H490 Q500 120 494 180 Q506 198 504 268 H518 Q516 190 510 160 Q522 96 516 32 Z" fill="#5FB354"/>
+      <path d="M546 42 H536 Q540 100 536 144 H543 Q550 96 546 42 Z" fill="#A9E29A"/>
+    </g>
+    <g id="alacena" transform="translate(333 -6) scale(0.78)">
+      <rect x="470" y="34" width="134" height="184" rx="14" fill="#EFDDB6"/>
+      <path d="M590 34 Q604 34 604 48 V204 Q604 218 590 218 H578 Q590 214 590 204 V48 Q590 38 590 34 Z" fill="#DCC59A"/>
+      <rect x="470" y="34" width="134" height="14" rx="7" fill="#F8ECCF"/>
+      <rect x="533" y="52" width="5" height="156" rx="2.5" fill="#DCC59A"/>
+      <rect x="482" y="60" width="42" height="140" rx="8" fill="#F8ECCF"/>
+      <rect x="546" y="60" width="34" height="140" rx="8" fill="#F8ECCF"/>
+      <circle cx="523" cy="134" r="5.5" fill="#C8804A"/>
+      <circle cx="548" cy="134" r="5.5" fill="#C8804A"/>
+    </g>
+    <g id="refrigerador" transform="translate(384 -46)">
+      <rect id="refrigerador-cuerpo" x="492" y="62" width="118" height="290" rx="16" fill="#DDE8F1"/>
+      <path id="refrigerador-lado" d="M598 66.5 A16 16 0 0 1 610 78 V352 H598 Z" fill="#C4D6E4"/>
+      <rect id="refrigerador-junta" x="492" y="144" width="118" height="6" fill="#C4D6E4"/>
+      <rect id="refrigerador-asa-congelador" x="504" y="106" width="9" height="28" rx="4.5" fill="#9DB8CE"/>
+      <rect id="refrigerador-asa-puerta" x="504" y="162" width="9" height="56" rx="4.5" fill="#9DB8CE"/>
+      <g id="dibujo">
+        <rect x="544" y="174" width="40" height="46" rx="5" fill="#FFF4DC"/>
+        <circle cx="564" cy="193" r="8" fill="#FFD34B"/>
+        <rect x="549" y="209" width="30" height="5" rx="2.5" fill="#8DD06C"/>
+        <circle id="iman-dibujo" cx="564" cy="175" r="5.5" fill="#F26B5B"/>
+      </g>
+      <circle id="iman-congelador" cx="574" cy="98" r="6" fill="#6BC7F0"/>
+    </g>
+    <g id="mesa">
+      <rect x="0" y="216" width="1028" height="272" fill="#F3F8FC"/>
+      <g fill="#E2EEF8">
+        <rect x="46" y="216" width="84" height="272"/><rect x="214" y="216" width="84" height="272"/><rect x="382" y="216" width="84" height="272"/>
+        <rect x="550" y="216" width="84" height="272"/><rect x="718" y="216" width="84" height="272"/><rect x="886" y="216" width="84" height="272"/>
+        <rect x="0" y="246" width="1028" height="54"/><rect x="0" y="372" width="1028" height="80"/>
+      </g>
+      <g fill="#CFE2F3">
+        <rect x="46" y="246" width="84" height="54"/><rect x="214" y="246" width="84" height="54"/><rect x="382" y="246" width="84" height="54"/>
+        <rect x="550" y="246" width="84" height="54"/><rect x="718" y="246" width="84" height="54"/><rect x="886" y="246" width="84" height="54"/>
+        <rect x="46" y="372" width="84" height="80"/><rect x="214" y="372" width="84" height="80"/><rect x="382" y="372" width="84" height="80"/>
+        <rect x="550" y="372" width="84" height="80"/><rect x="718" y="372" width="84" height="80"/><rect x="886" y="372" width="84" height="80"/>
+      </g>
+      <rect id="mesa-fondo" x="0" y="210" width="1028" height="11" fill="#C3DEF2"/>
+    </g>
+  </g>
+</svg>

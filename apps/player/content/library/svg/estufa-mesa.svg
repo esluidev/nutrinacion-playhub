@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-labelledby="estufa-mesa-title estufa-mesa-desc">
+  <title id="estufa-mesa-title">Estufa de mesa</title>
+  <desc id="estufa-mesa-desc">Estufa de mesa de un quemador, de frente y un poco desde arriba, en el lenguaje de la lámina de assets: cuerpo gris azulado, tapa más clara, quemador y parrilla en azul marino y dos perillas. Se apoya en el centro de su base (x 120, y 80). Lo que se pone al fuego descansa sobre la parrilla, en x 120, y 4; la llama nace en el quemador, en x 120, y 30. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="estufa-mesa">
+    <g id="patas" fill="#263C58">
+      <rect x="24" y="70" width="28" height="10" rx="4"/>
+      <rect x="188" y="70" width="28" height="10" rx="4"/>
+    </g>
+    <path id="frente" d="M6 40 H234 V62 Q234 74 222 74 H18 Q6 74 6 62 Z" fill="#A9B7CC"/>
+    <path id="frente-sombra" d="M198 40 H234 V62 Q234 74 222 74 H186 Q198 60 198 40 Z" fill="#93A2B9"/>
+    <path id="tapa" d="M32 18 H208 Q218 18 222 25 L234 42 H6 L18 25 Q22 18 32 18 Z" fill="#C9D2E2"/>
+    <path id="tapa-luz" d="M32 18 H112 L104 24 H36 Q28 24 24 30 L16 42 H6 L18 25 Q22 18 32 18 Z" fill="#DDE4EE"/>
+    <rect id="canto" x="6" y="39" width="228" height="5" rx="2.5" fill="#BCC8DA"/>
+    <g id="quemador">
+      <ellipse cx="120" cy="30" rx="64" ry="9" fill="#2F4868"/>
+      <ellipse cx="120" cy="30" rx="44" ry="5.6" fill="#3E5A7E"/>
+      <ellipse cx="120" cy="30" rx="16" ry="2.4" fill="#263C58"/>
+    </g>
+    <g id="parrilla" fill="#263C58">
+      <rect x="58" y="4" width="9" height="26" rx="3"/>
+      <rect x="173" y="4" width="9" height="26" rx="3"/>
+      <rect x="50" y="2" width="140" height="6" rx="3"/>
+    </g>
+    <g id="perillas">
+      <circle cx="86" cy="57" r="10" fill="#2F4868"/>
+      <circle cx="154" cy="57" r="10" fill="#2F4868"/>
+      <path d="M79 55 A8 8 0 0 1 88 49.3 A10 10 0 0 0 79 55 Z M147 55 A8 8 0 0 1 156 49.3 A10 10 0 0 0 147 55 Z" fill="#5B7BA3"/>
+      <rect x="84.8" y="50" width="2.4" height="7" rx="1.2" fill="#C9D2E2"/>
+      <rect x="152.8" y="50" width="2.4" height="7" rx="1.2" fill="#C9D2E2"/>
+    </g>
+  </g>
+</svg>

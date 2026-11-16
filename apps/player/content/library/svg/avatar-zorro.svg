@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="-30 -30 300 300" role="img" aria-labelledby="avatar-zorro-title avatar-zorro-desc">
+  <title id="avatar-zorro-title">Avatar · zorro</title>
+  <desc id="avatar-zorro-desc">Avatar de PlayHub: la cabeza de un zorro: orejas en punta y mejillas blancas, de frente, para un círculo. El círculo y su fondo los pone quien lo coloca. Fuente maestra: avatar-zorro.svg. Colores planos, sin contorno, con la luz arriba a la izquierda; los ojos, como los de las aves de PlayHub. Las dos mitades son iguales: el eje está en x 120. El dibujo ocupa el cuadrado de 240 del centro del lienzo, con 30 de aire por cada lado.</desc>
+  <g id="avatar-zorro-orejas">
+    <path d="M40 108 C32 86 36 62 46 42 C50 34 58 33 64 38 C82 50 96 62 106 74 Z" fill="#F28C3A" />
+    <path d="M200.0 108 C208.0 86 204.0 62 194.0 42 C190.0 34 182.0 33 176.0 38 C158.0 50 144.0 62 134.0 74 Z" fill="#F28C3A" />
+    <path d="M52 94 C48 80 50 66 54 56 C66 62 77 71 86 80 Z" fill="#F3E2CC" />
+    <path d="M188.0 94 C192.0 80 190.0 66 186.0 56 C174.0 62 163.0 71 154.0 80 Z" fill="#F3E2CC" />
+  </g>
+  <g id="avatar-zorro-cabeza">
+    <path d="M120 54 C156 54 188 76 200 112 C204 124 216 132 224 142 C216 156 198 162 188 176 C172 200 146 212 120 212 C94 212 68 200 52 176 C42 162 24 156 16 142 C24 132 36 124 40 112 C52 76 84 54 120 54Z" fill="#F28C3A" />
+    <path d="M190.5 92.1 C194.4 98.2 197.6 104.8 200 112 C204 124 216 132 224 142 C212 139 200 132 193 120 C189 111 189 101 190.5 92.1 Z" fill="#E17C2D" />
+    <ellipse cx="92" cy="88" rx="20" ry="10" fill="#F8A85B" transform="rotate(-24 92 88)" />
+  </g>
+  <g id="avatar-zorro-cara">
+    <path d="M16 142 C50 134 84 140 104 160 Q112 168 120 168 Q128 168 136 160 C156 140 190 134 224 142 C216 156 198 162 188 176 C172 200 146 212 120 212 C94 212 68 200 52 176 C42 162 24 156 16 142 Z" fill="#FFF4E4" />
+    <path d="M224 142 C216 156 198 162 188 176 C172 200 146 212 120 212 C148 206 174 190 190 160 C202 156 214 150 224 142 Z" fill="#F3E2CC" />
+    <ellipse cx="86" cy="118" rx="8.5" ry="12" fill="#333136" />
+    <ellipse cx="154" cy="118" rx="8.5" ry="12" fill="#333136" />
+    <ellipse cx="120" cy="170" rx="11" ry="8" fill="#4A3530" />
+    <path d="M120 178V185M108 187Q120 197 132 187" fill="none" stroke="#D9BC9C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

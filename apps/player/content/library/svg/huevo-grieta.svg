@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 192" width="164" height="192" role="img" aria-labelledby="huevo-grieta-title huevo-grieta-desc">
+  <title id="huevo-grieta-title">Grieta de la cáscara del huevo</title>
+  <desc id="huevo-grieta-desc">Grieta en zigzag que cruza la cáscara de huevo-gallina por la mitad, con dos ramas cortas. Tiene el mismo lienzo que huevo-gallina y se pone encima, sin moverla. Se destapa desde el centro (x 82) hacia los lados: el tramo central va de x 56 a x 102 y la grieta entera, de x 20 a x 141. Color plano, del matiz de la cáscara y más oscuro.</desc>
+  <g id="huevo-grieta" fill="#B5622E">
+    <path id="grieta" d="M20 98.6L34 94.6L42 99.4L56 93.4L65 100.4L80 96.4L91 102.4L102 95.4L113 99.4L126 94.4L141 99L126 97.6L113 102.6L102 98.6L91 105.6L80 99.6L65 103.6L56 96.8L42 102.8L34 98L20 98.6Z"/>
+    <path id="rama-izquierda" d="M56 93.4L51 85.4L52.6 84.6L58.4 94.4Z"/>
+    <path id="rama-derecha" d="M113 102.2L118.4 110.4L116.8 111.2L111 103Z"/>
+  </g>
+</svg>

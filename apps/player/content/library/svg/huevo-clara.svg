@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 82" width="236" height="82" role="img" aria-labelledby="huevo-clara-title huevo-clara-desc">
+  <title id="huevo-clara-title">Clara de huevo cruda</title>
+  <desc id="huevo-clara-desc">Clara cruda recién salida de la cáscara, vista de frente y un poco desde arriba. Es transparente: se dibuja con el azul del plato hondo de la casa aclarado, para que se vea el plato a través de ella, con su grosor en un tono más oscuro abajo, la parte espesa donde descansa la yema y tres brillos blancos. Va siempre sobre ese plato. Cruda es transparente; cocida es blanca (huevo-frito). La yema se apoya con el centro de su base en x 96, y 60. La clara se apoya en el centro de su base (x 118, y 79). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <defs>
+    <clipPath id="huevo-clara-forma"><path d="M17.9 43.9C7.2 32.2 23.2 20.5 46.5 19C62.6 8.8 93 5.9 119.8 8.8C143 2.9 182.4 7.3 198.5 19C223.5 22 234.2 36.6 227.1 49.8C234.2 64.4 211 76.1 184.2 73.2C166.3 82 134.1 79.1 114.4 74.7C93 80.5 62.6 79.1 48.3 70.3C25 71.8 5.4 58.6 17.9 43.9Z"/></clipPath>
+  </defs>
+  <g id="huevo-clara">
+    <path id="clara-grosor" d="M17.9 43.9C7.2 32.2 23.2 20.5 46.5 19C62.6 8.8 93 5.9 119.8 8.8C143 2.9 182.4 7.3 198.5 19C223.5 22 234.2 36.6 227.1 49.8C234.2 64.4 211 76.1 184.2 73.2C166.3 82 134.1 79.1 114.4 74.7C93 80.5 62.6 79.1 48.3 70.3C25 71.8 5.4 58.6 17.9 43.9Z" fill="#5A8FDC"/>
+    <g clip-path="url(#huevo-clara-forma)">
+      <path id="clara" d="M17.9 43.9C7.2 32.2 23.2 20.5 46.5 19C62.6 8.8 93 5.9 119.8 8.8C143 2.9 182.4 7.3 198.5 19C223.5 22 234.2 36.6 227.1 49.8C234.2 64.4 211 76.1 184.2 73.2C166.3 82 134.1 79.1 114.4 74.7C93 80.5 62.6 79.1 48.3 70.3C25 71.8 5.4 58.6 17.9 43.9Z" fill="#8DB4EA" transform="translate(118 14) scale(0.978 0.92) translate(-119.4 -15.4)"/>
+    </g>
+    <path id="clara-espesa" d="M46.5 42.5C50.1 26.4 78.7 19 109.1 20.5C139.5 19 166.3 29.3 166.3 43.9C166.3 58.6 137.7 65.9 105.5 65.9C73.3 67.4 42.9 58.6 46.5 42.5Z" fill="#A9C7F0" transform="translate(-10 0)"/>
+    <ellipse id="clara-brillo" cx="30" cy="45" rx="12" ry="4" fill="#FFFFFF" transform="rotate(-10 30 45)"/>
+    <ellipse id="clara-brillo-derecha" cx="196" cy="37" rx="9" ry="3.4" fill="#FFFFFF" transform="rotate(14 196 37)"/>
+    <ellipse id="clara-brillo-abajo" cx="150" cy="68" rx="9" ry="2.2" fill="#FFFFFF" transform="rotate(4 150 68)"/>
+  </g>
+</svg>

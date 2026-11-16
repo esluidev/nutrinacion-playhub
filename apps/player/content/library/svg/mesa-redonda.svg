@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 172" width="720" height="172" role="img" aria-labelledby="mesa-redonda-title mesa-redonda-desc">
+  <title id="mesa-redonda-title">Mesa redonda con mantel</title>
+  <desc id="mesa-redonda-desc">La mesa de la cocina de la casa, suelta: la base de algo que se toca y no va dentro de una tarjeta (el vaso de la pausa de agua). Una mesa redonda vista de frente y un poco desde arriba, cubierta con el mantel a cuadros de la cocina (cocina-mesa.svg), que cae por delante con sus pliegues y su orilla ondulada; en el centro, un posavasos redondo de madera (la madera de la tabla de cortar). Lienzo de 720 × 172: el posavasos tiene su centro en x 360, y 52, y lo que va encima queda centrado en él, con su punto más bajo en x 360, y 71. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: caída del mantel (delante, abajo) → franjas y pliegues de la caída → tablero → franjas y cruces → posavasos. -->
+  <defs>
+    <clipPath id="mesa-caida"><path d="M10 52 C10 92 20 130 36 146 C76 168 126 168 165.6 150 C206 132 256 132 295.2 150 C335 168 385 168 424.8 150 C465 132 515 132 554.4 150 C594 168 644 168 684 146 C700 130 710 92 710 52 Z"/></clipPath>
+    <clipPath id="mesa-tablero"><ellipse cx="360" cy="52" rx="350" ry="46"/></clipPath>
+  </defs>
+  <g id="mesa-redonda">
+    <g id="caida" clip-path="url(#mesa-caida)">
+      <rect x="0" y="40" width="720" height="140" fill="#D5E5F4"/>
+      <g id="caida-franjas" fill="#C2D9EE">
+        <rect x="74" y="40" width="52" height="140"/><rect x="178" y="40" width="52" height="140"/><rect x="282" y="40" width="52" height="140"/>
+        <rect x="386" y="40" width="52" height="140"/><rect x="490" y="40" width="52" height="140"/><rect x="594" y="40" width="52" height="140"/>
+        <rect x="0" y="112" width="720" height="16"/>
+      </g>
+      <g id="caida-cruces" fill="#AFCBE8">
+        <rect x="74" y="112" width="52" height="16"/><rect x="178" y="112" width="52" height="16"/><rect x="282" y="112" width="52" height="16"/>
+        <rect x="386" y="112" width="52" height="16"/><rect x="490" y="112" width="52" height="16"/><rect x="594" y="112" width="52" height="16"/>
+      </g>
+      <!-- Los pliegues: una sombra que baja hasta cada entrante de la orilla. -->
+      <g id="pliegues" fill="#B9D2EC">
+        <path d="M226 92 C223 110 214 126 200 140 C220 134 242 134 262 140 C248 126 239 110 236 92 Z"/>
+        <path d="M485 92 C482 110 473 126 459 140 C479 134 501 134 521 140 C507 126 498 110 495 92 Z"/>
+        <path d="M14 70 C16 100 24 128 36 146 C44 150 52 153 60 156 C46 132 38 104 36 78 Z"/>
+        <path d="M706 70 C704 100 696 128 684 146 C676 150 668 153 660 156 C674 132 682 104 684 78 Z"/>
+      </g>
+    </g>
+    <g id="tablero" clip-path="url(#mesa-tablero)">
+      <rect x="0" y="0" width="720" height="110" fill="#F3F8FC"/>
+      <g id="tablero-franjas" fill="#E2EEF8">
+        <rect x="74" y="0" width="52" height="110"/><rect x="178" y="0" width="52" height="110"/><rect x="282" y="0" width="52" height="110"/>
+        <rect x="386" y="0" width="52" height="110"/><rect x="490" y="0" width="52" height="110"/><rect x="594" y="0" width="52" height="110"/>
+        <rect x="0" y="22" width="720" height="12"/><rect x="0" y="70" width="720" height="14"/>
+      </g>
+      <g id="tablero-cruces" fill="#CFE2F3">
+        <rect x="74" y="22" width="52" height="12"/><rect x="178" y="22" width="52" height="12"/><rect x="282" y="22" width="52" height="12"/><rect x="386" y="22" width="52" height="12"/><rect x="490" y="22" width="52" height="12"/><rect x="594" y="22" width="52" height="12"/>
+        <rect x="74" y="70" width="52" height="14"/><rect x="178" y="70" width="52" height="14"/><rect x="282" y="70" width="52" height="14"/><rect x="386" y="70" width="52" height="14"/><rect x="490" y="70" width="52" height="14"/><rect x="594" y="70" width="52" height="14"/>
+      </g>
+    </g>
+    <g id="posavasos">
+      <ellipse cx="360" cy="60" rx="176" ry="30" fill="#C9803A"/>
+      <ellipse cx="360" cy="52" rx="176" ry="30" fill="#E59A4E"/>
+      <path d="M190 46 C206 30 280 22.6 352 22 C290 26 232 34 204 52 Z" fill="#F2B272"/>
+    </g>
+  </g>
+</svg>

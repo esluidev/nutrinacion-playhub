@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 166" width="560" height="166" role="img" aria-labelledby="isla-estanque-title isla-estanque-desc">
+  <title id="isla-estanque-title">Isla de estanque</title>
+  <desc id="isla-estanque-desc">Un trozo de orilla con su estanque: la forma de las islas (isla-pasto.svg), con la orilla de atrás ondulada, las esquinas redondeadas del tablero (26) y el canto de delante más oscuro, y el suelo del estanque de las tarjetas (suelo-estanque.svg): el pasto de la orilla, el agua delante con su borde de arena y sus ondas, y juncos a cada lado. Sirve suelta o dentro de una tarjeta. Lienzo de 560 × 166: lo que va al fondo se apoya en y 72; quien está de pie, en y 100, en la orilla; el agua, delante, de y 108 a y 150; el centro (x 110–450) queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → pasto → luz de la orilla de atrás → arena → agua y ondas → juncos a los lados. -->
+  <defs><clipPath id="estanque-arriba"><path d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z"/></clipPath></defs>
+  <g id="isla-estanque">
+    <g id="orilla">
+      <path id="orilla-canto" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V137 A26 26 0 0 1 532 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#77BE58"/>
+      <path id="orilla-base" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z" fill="#8DD06C"/>
+      <path id="orilla-luz" d="M2 74 A26 26 0 0 1 28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 C558 65 546 59 532 59 C496.7 59 483.3 55 448 55 C412.7 55 399.3 63 364 63 C328.7 63 315.3 55 280 55 C244.7 55 231.3 63 196 63 C160.7 63 147.3 55 112 55 C76.7 55 63.3 59 28 59 C14 59 2 65 2 74 Z" fill="#AEE08C"/>
+    </g>
+    <g id="estanque" clip-path="url(#estanque-arriba)">
+      <ellipse id="arena" cx="280" cy="127" rx="172" ry="22" fill="#E9CF97"/>
+      <ellipse id="agua-base" cx="280" cy="128" rx="160" ry="17" fill="#7CC6EA"/>
+      <path id="agua-frente" d="M128 133 C160 141 220 145 280 145 C340 145 400 141 432 133 C400 138 340 141 280 141 C220 141 160 138 128 133 Z" fill="#64B6DF"/>
+      <path id="agua-luz" d="M170 117 C204 112.5 242 111 280 111 C318 111 356 112.5 390 117 C354 114.6 318 114 280 114 C242 114 206 114.6 170 117 Z" fill="#A6DCF2"/>
+      <g id="ondas" fill="none" stroke="#D3EFFA" stroke-width="3.4" stroke-linecap="round">
+        <path d="M196 128 q14 -5 28 0"/><path d="M326 134 q16 -5 32 0"/><path d="M262 123 q12 -4 24 0"/><path d="M380 124 q10 -4 20 0"/>
+      </g>
+    </g>
+    <g id="juncos-izquierda" transform="translate(4 30) scale(1.05)">
+      <path d="M26 46 C22 32 18 18 10 4 C20 16 28 30 32 46 Z" fill="#5FA548"/>
+      <path d="M84 46 C86 32 92 20 102 10 C96 24 92 34 92 46 Z" fill="#5FA548"/>
+      <rect x="46" y="10" width="3.5" height="36" fill="#4F9140"/>
+      <rect x="64" y="18" width="3.5" height="28" fill="#4F9140"/>
+      <rect x="43.25" y="2" width="9" height="21" rx="4.5" fill="#A5673A"/>
+      <rect x="45.25" y="4.5" width="3" height="12" rx="1.5" fill="#C2834F"/>
+      <rect x="61.25" y="11" width="9" height="17" rx="4.5" fill="#A5673A"/>
+      <rect x="63.25" y="13.5" width="3" height="9" rx="1.5" fill="#C2834F"/>
+      <path d="M52 46 C50 36 44 28 36 22 C46 26 54 34 58 46 Z" fill="#6DB352"/>
+    </g>
+    <g id="juncos-derecha" transform="translate(-74 28) scale(1.05)">
+      <path d="M574 46 C578 32 582 18 590 4 C580 16 572 30 568 46 Z" fill="#5FA548"/>
+      <path d="M516 46 C514 32 508 20 498 10 C504 24 508 34 508 46 Z" fill="#5FA548"/>
+      <rect x="550.5" y="10" width="3.5" height="36" fill="#4F9140"/>
+      <rect x="532.5" y="18" width="3.5" height="28" fill="#4F9140"/>
+      <rect x="547.75" y="2" width="9" height="21" rx="4.5" fill="#A5673A"/>
+      <rect x="549.75" y="4.5" width="3" height="12" rx="1.5" fill="#C2834F"/>
+      <rect x="529.75" y="11" width="9" height="17" rx="4.5" fill="#A5673A"/>
+      <rect x="531.75" y="13.5" width="3" height="9" rx="1.5" fill="#C2834F"/>
+      <path d="M548 46 C550 36 556 28 564 22 C554 26 546 34 542 46 Z" fill="#6DB352"/>
+    </g>
+  </g>
+</svg>

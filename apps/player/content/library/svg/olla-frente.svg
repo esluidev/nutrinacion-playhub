@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 126" width="200" height="126" role="img" aria-labelledby="olla-frente-title olla-frente-desc">
+  <title id="olla-frente-title">Olla con agua (frente)</title>
+  <desc id="olla-frente-desc">Capa de delante de la olla roja: el agua de este lado, que tapa la parte de abajo de lo que se mete, y el cuerpo de la olla con su borde. Va sobre olla.svg. Lienzo de 200 × 126, compartido por las dos capas. Se apoya en el centro de su base (x 100, y 124). Lo que se mete en el agua va entre las dos capas, con su base en x 100, y 80: queda medio hundido y asoma por encima del agua. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="olla-frente">
+    <path id="agua-frente" d="M30 34 A70 16 0 0 0 170 34 Z" fill="#79C6F1"/>
+    <path id="onda" d="M70 37 A30 7 0 0 0 130 37 A30 4.5 0 0 1 70 37 Z" fill="#B7E3FA"/>
+    <path id="cuerpo" d="M20 28 A80 22 0 0 0 180 28 C180 70 178 100 160 116 Q150 124 136 124 H64 Q50 124 40 116 C22 100 20 70 20 28 Z" fill="#E8382F"/>
+    <path id="cuerpo-sombra" d="M150 46 C162 42 172 36 180 28 C180 70 178 100 160 116 Q150 124 136 124 H118 C146 112 158 84 150 46 Z" fill="#C92C2A"/>
+    <path id="cuerpo-luz" d="M31 52 C36 55 41 57 46 58 V98 C46 107 35 102 33 92 C31 78 31 64 31 52 Z" fill="#F4635A"/>
+    <path id="labio" d="M20 28 A80 22 0 0 0 180 28 V35 A80 22 0 0 1 20 35 Z" fill="#F25B52"/>
+  </g>
+</svg>

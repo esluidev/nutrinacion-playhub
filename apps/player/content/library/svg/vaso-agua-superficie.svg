@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 152 32" width="152" height="32" role="img" aria-labelledby="vaso-agua-superficie-title vaso-agua-superficie-desc">
+  <title id="vaso-agua-superficie-title">Superficie del agua del vaso</title>
+  <desc id="vaso-agua-superficie-desc">La superficie del agua, vista un poco desde arriba: una elipse del ancho de la boca del hueco del vaso (152). Va centrada en el nivel del agua y se estrecha a lo ancho conforme baja, porque el vaso es más angosto abajo: en el fondo mide 108. Colores planos.</desc>
+  <g id="vaso-agua-superficie">
+    <ellipse id="superficie" cx="76" cy="16" rx="76" ry="16" fill="#97D6FB"/>
+  </g>
+</svg>

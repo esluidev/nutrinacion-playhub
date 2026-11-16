@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="200" height="220" role="img" aria-labelledby="vaso-agua-title vaso-agua-desc">
+  <title id="vaso-agua-title">Agua del vaso</title>
+  <desc id="vaso-agua-desc">El cuerpo del agua dentro del vaso: una columna más ancha y más alta que su hueco, que se recorta con la forma del hueco y sube o baja entera para marcar el nivel. Su borde de arriba (y 0) va en el centro de la superficie (vaso-agua-superficie). Colores planos.</desc>
+  <g id="vaso-agua">
+    <rect id="agua" x="0" y="0" width="200" height="220" fill="#4BB1F2"/>
+    <rect id="agua-sombra" x="138" y="0" width="62" height="220" fill="#3A9FE6"/>
+  </g>
+</svg>

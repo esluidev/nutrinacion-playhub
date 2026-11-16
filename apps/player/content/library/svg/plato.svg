@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 52" width="210" height="52" role="img" aria-labelledby="plato-title plato-desc">
+  <title id="plato-title">Plato</title>
+  <desc id="plato-desc">Plato azul visto de frente y un poco desde arriba, en el azul del tazón de la lámina de assets. Se apoya en el centro de su base (x 105, y 52). Lo que se sirve descansa en el fondo, con su base en x 105, y 37. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="plato">
+    <ellipse id="bajo" cx="105" cy="30" rx="100" ry="21" fill="#2462C0"/>
+    <ellipse id="ala" cx="105" cy="25" rx="104" ry="22" fill="#2F7BE0"/>
+    <ellipse id="fondo" cx="105" cy="27" rx="76" ry="14.5" fill="#2A6FD0"/>
+    <path id="ala-luz" d="M8 22 C20 10 60 4 100 3.4 C66 6.4 34 12 16 24.5 Z" fill="#5EA0F2"/>
+  </g>
+</svg>

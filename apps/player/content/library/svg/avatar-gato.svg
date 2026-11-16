@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="-30 -30 300 300" role="img" aria-labelledby="avatar-gato-title avatar-gato-desc">
+  <title id="avatar-gato-title">Avatar · gato</title>
+  <desc id="avatar-gato-desc">Avatar de PlayHub: la cabeza de un gato gris: orejas en punta, rayas en la frente y bigotes, de frente, para un círculo. El círculo y su fondo los pone quien lo coloca. Fuente maestra: avatar-gato.svg. Colores planos, sin contorno, con la luz arriba a la izquierda; los ojos, como los de las aves de PlayHub. Las dos mitades son iguales: el eje está en x 120. El dibujo ocupa el cuadrado de 240 del centro del lienzo, con 30 de aire por cada lado.</desc>
+  <g id="avatar-gato-orejas">
+    <path d="M40 108 C34 86 38 64 47 46 C51 38 59 37 65 42 C83 53 97 64 107 76 Z" fill="#A9B5C4" />
+    <path d="M200.0 108 C206.0 86 202.0 64 193.0 46 C189.0 38 181.0 37 175.0 42 C157.0 53 143.0 64 133.0 76 Z" fill="#A9B5C4" />
+    <path d="M52 94 C49 80 51 68 55 59 C66 65 77 72 86 80 Z" fill="#F4A9AD" />
+    <path d="M188.0 94 C191.0 80 189.0 68 185.0 59 C174.0 65 163.0 72 154.0 80 Z" fill="#F4A9AD" />
+  </g>
+  <g id="avatar-gato-cabeza">
+    <ellipse cx="120" cy="140" rx="90" ry="72" fill="#A9B5C4" />
+    <path d="M201.57 109.57 A90 72 0 0 1 75.0 202.35 A97.2 77.76 0 0 0 201.57 109.57Z" fill="#98A5B6" />
+    <path d="M120 68 C125 68 127 72 126 78 L123 96 C122 100 118 100 117 96 L114 78 C113 72 115 68 120 68 Z" fill="#8593A6" />
+    <path d="M97 74 C102 73 105 76 105 82 L106 98 C106 102 102 103 101 99 L94 82 C92 78 93 75 97 74 Z" fill="#8593A6" />
+    <path d="M143.0 74 C138.0 73 135.0 76 135.0 82 L134.0 98 C134.0 102 138.0 103 139.0 99 L146.0 82 C148.0 78 147.0 75 143.0 74 Z" fill="#8593A6" />
+  </g>
+  <g id="avatar-gato-cara">
+    <path d="M68 164L46 159M68 174L46 179" fill="none" stroke="#8593A6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M172 164L194 159M172 174L194 179" fill="none" stroke="#8593A6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+    <ellipse cx="105" cy="172" rx="21" ry="16" fill="#F8FAFC" />
+    <ellipse cx="135" cy="172" rx="21" ry="16" fill="#F8FAFC" />
+    <ellipse cx="86" cy="132" rx="8.5" ry="12" fill="#333136" />
+    <ellipse cx="154" cy="132" rx="8.5" ry="12" fill="#333136" />
+    <path d="M111 158 Q120 153 129 158 Q127 168 120 169 Q113 168 111 158 Z" fill="#F4A9AD" />
+  </g>
+</svg>

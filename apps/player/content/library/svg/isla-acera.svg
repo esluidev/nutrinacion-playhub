@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 166" width="560" height="166" role="img" aria-labelledby="isla-acera-title isla-acera-desc">
+  <title id="isla-acera-title">Isla de acera</title>
+  <desc id="isla-acera-desc">La isla de la calle: el suelo de la tienda en todo el taller. Sirve suelta o dentro de una tarjeta: la forma de las islas (isla-pasto.svg, isla-corral.svg), con las esquinas redondeadas del tablero (26) y el canto de delante más oscuro, pero con la orilla de atrás recta, porque es suelo hecho. Atrás, la banqueta de losetas con una jardinera a cada lado; delante, el bordillo y la calzada con su línea. Es la calle de suelo-calle.svg con las losetas en gris claro: el crema de la franja se perdía sobre el lienzo del player. Lienzo de 560 × 166: el edificio se apoya en y 72, al fondo de la banqueta; lo que va delante, entre y 120 y y 130; el centro (x 100–460) queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → banqueta → juntas → bordillo → calzada y su línea → jardineras a los lados. -->
+  <defs>
+    <clipPath id="acera-arriba"><path d="M28 48 H532 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z"/></clipPath>
+  </defs>
+  <g id="isla-acera">
+    <path id="calle-canto" d="M28 48 H532 A26 26 0 0 1 558 74 V137 A26 26 0 0 1 532 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#6E6A77"/>
+    <g clip-path="url(#acera-arriba)">
+      <rect id="banqueta-base" x="0" y="44" width="560" height="64" fill="#D9DDE8"/>
+      <rect id="banqueta-luz" x="0" y="44" width="560" height="13" fill="#EBEEF4"/>
+      <g id="juntas" fill="#C2C7D5">
+        <rect x="0" y="80" width="560" height="3"/>
+        <rect x="68" y="57" width="4" height="50"/><rect x="138" y="57" width="4" height="50"/><rect x="208" y="57" width="4" height="50"/><rect x="278" y="57" width="4" height="50"/>
+        <rect x="348" y="57" width="4" height="50"/><rect x="418" y="57" width="4" height="50"/><rect x="488" y="57" width="4" height="50"/>
+      </g>
+      <rect id="bordillo-arista" x="0" y="106" width="560" height="5" fill="#F5F6FA"/>
+      <rect id="bordillo-cara" x="0" y="111" width="560" height="8" fill="#B9BECD"/>
+      <rect id="calzada-base" x="0" y="119" width="560" height="50" fill="#8E8A96"/>
+      <rect id="calzada-oclusion" x="0" y="119" width="560" height="5" fill="#7C7884"/>
+      <g id="linea" fill="#F7F2EA">
+        <rect x="64" y="134" width="62" height="6.5" rx="3.25"/><rect x="166" y="136" width="62" height="6.5" rx="3.25"/><rect x="268" y="137" width="62" height="6.5" rx="3.25"/>
+        <rect x="370" y="136" width="62" height="6.5" rx="3.25"/><rect x="472" y="134" width="62" height="6.5" rx="3.25"/>
+      </g>
+    </g>
+    <g id="jardinera-izquierda" transform="translate(-2 -8) scale(1.25)">
+      <path d="M42 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/>
+      <path d="M58 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/>
+      <circle cx="35" cy="22" r="7.5" fill="#95DA7A"/>
+      <rect x="19" y="44" width="46" height="24" rx="6" fill="#EE9A72"/>
+      <path d="M52 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/>
+      <rect x="15" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/>
+    </g>
+    <g id="jardinera-derecha" transform="translate(-187 -8) scale(1.25)">
+      <path d="M558 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/>
+      <path d="M574 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/>
+      <circle cx="551" cy="22" r="7.5" fill="#95DA7A"/>
+      <rect x="535" y="44" width="46" height="24" rx="6" fill="#EE9A72"/>
+      <path d="M568 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/>
+      <rect x="531" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/>
+    </g>
+  </g>
+</svg>

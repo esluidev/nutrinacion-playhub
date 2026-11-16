@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="200" height="250" role="img" aria-labelledby="vaso-frente-title vaso-frente-desc">
+  <title id="vaso-frente-title">Vaso, la capa de delante</title>
+  <desc id="vaso-frente-desc">Lo que va delante del agua, en el mismo lienzo del vaso: el labio de la boca por delante y los dos brillos del vidrio, a la izquierda. Colores planos.</desc>
+  <g id="vaso-frente">
+    <path id="labio" d="M16 30 A84 20 0 0 0 184 30 L176 30 A76 16 0 0 1 24 30 Z" fill="#D6ECFA"/>
+    <path id="brillo" d="M42 58 L55 60 L64 192 L56 192 Z" fill="#F4FBFF"/>
+    <path id="brillo-fino" d="M62 62 L67.5 62.6 L72 132 L68.6 132 Z" fill="#F4FBFF"/>
+  </g>
+</svg>

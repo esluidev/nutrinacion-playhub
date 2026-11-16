@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 166" width="560" height="166" role="img" aria-labelledby="isla-campo-title isla-campo-desc">
+  <title id="isla-campo-title">Isla de campo</title>
+  <desc id="isla-campo-desc">Un trozo de campo: la forma de las islas (isla-pasto.svg), con la orilla de atrás ondulada, las esquinas redondeadas del tablero (26) y el canto de delante más oscuro, y el suelo del campo de las tarjetas (suelo-campo.svg): hierba de un verde amarillento, matitas, semillas y, a cada lado, una mata de hierba alta con sus espigas. Sirve suelta o dentro de una tarjeta. Lienzo de 560 × 166: lo que va al fondo se apoya en y 72; quien está de pie, en y 100; lo que va delante, entre y 120 y y 130; el centro (x 110–450) queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → hierba → luz de la orilla de atrás → matitas → semillas → hierba alta y espigas a los lados. -->
+  <g id="isla-campo">
+    <g id="hierba">
+      <path id="hierba-canto" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V137 A26 26 0 0 1 532 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#9BC15A"/>
+      <path id="hierba-base" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z" fill="#B5D46B"/>
+      <path id="hierba-luz" d="M2 74 A26 26 0 0 1 28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 C558 65 546 59 532 59 C496.7 59 483.3 55 448 55 C412.7 55 399.3 63 364 63 C328.7 63 315.3 55 280 55 C244.7 55 231.3 63 196 63 C160.7 63 147.3 55 112 55 C76.7 55 63.3 59 28 59 C14 59 2 65 2 74 Z" fill="#CBE58E"/>
+    </g>
+    <g id="matitas" fill="#9BC15A">
+      <path d="M150 104 l4 -12 l3 12 l3 -15 l3 15 l4 -11 l3 11 Z"/>
+      <path d="M196 144 l4 -12 l3 12 l3 -15 l3 15 l4 -11 l3 11 Z"/>
+      <path d="M352 142 l3 -10 l3 10 l3 -12 l3 12 l3 -9 l2 9 Z"/>
+      <path d="M404 108 l4 -12 l3 12 l3 -15 l3 15 l4 -11 l3 11 Z"/>
+      <path d="M30 118 l3 -10 l3 10 l3 -12 l3 12 l3 -9 l2 9 Z"/>
+      <path d="M506 122 l3 -10 l3 10 l3 -12 l3 12 l3 -9 l2 9 Z"/>
+    </g>
+    <g id="semillas" fill="#E6C66B">
+      <circle cx="96" cy="132" r="2.8"/><circle cx="252" cy="138" r="2.6"/><circle cx="308" cy="118" r="2.6"/>
+      <circle cx="454" cy="134" r="2.8"/><circle cx="174" cy="122" r="2.4"/><circle cx="388" cy="130" r="2.4"/>
+    </g>
+    <g id="hierba-alta-izquierda" transform="translate(14 34) scale(1.1)">
+      <path d="M0 44 L6 10 L12 44 L17 2 L25 44 L31 14 L37 44 L43 6 L51 44 L57 18 L63 44 L71 8 L79 44 L85 20 L92 44 Z" fill="#93C257"/>
+      <path d="M8 44 L15 22 L21 44 L28 16 L36 44 L44 24 L50 44 L58 18 L66 44 L74 26 L80 44 Z" fill="#7DAE47"/>
+      <g id="espiga-1"><path d="M101 42 C100 30 99 20 97 12" fill="none" stroke="#93C257" stroke-width="3" stroke-linecap="round"/><ellipse cx="97" cy="9" rx="4.5" ry="9" fill="#E6C66B"/><ellipse cx="95.5" cy="6" rx="1.6" ry="3.5" fill="#F3DC92"/></g>
+      <g id="espiga-2"><path d="M112 42 C112 33 113 26 115 20" fill="none" stroke="#93C257" stroke-width="3" stroke-linecap="round"/><ellipse cx="115.5" cy="17" rx="4" ry="8" fill="#E6C66B"/><ellipse cx="114" cy="14" rx="1.4" ry="3" fill="#F3DC92"/></g>
+    </g>
+    <g id="hierba-alta-derecha" transform="translate(-114 32) scale(1.1)">
+      <path d="M600 44 L594 10 L588 44 L583 2 L575 44 L569 14 L563 44 L557 6 L549 44 L543 18 L537 44 L529 8 L521 44 L515 20 L508 44 Z" fill="#93C257"/>
+      <path d="M592 44 L585 22 L579 44 L572 16 L564 44 L556 24 L550 44 L542 18 L534 44 L526 26 L520 44 Z" fill="#7DAE47"/>
+            <g id="espiga-3"><path d="M499 42 C500 30 501 20 503 12" fill="none" stroke="#93C257" stroke-width="3" stroke-linecap="round"/><ellipse cx="503" cy="9" rx="4.5" ry="9" fill="#E6C66B"/><ellipse cx="501.5" cy="6" rx="1.6" ry="3.5" fill="#F3DC92"/></g>
+      <g id="espiga-4"><path d="M488 42 C488 33 487 26 485 20" fill="none" stroke="#93C257" stroke-width="3" stroke-linecap="round"/><ellipse cx="484.5" cy="17" rx="4" ry="8" fill="#E6C66B"/><ellipse cx="483" cy="14" rx="1.4" ry="3" fill="#F3DC92"/></g>
+    </g>
+  </g>
+</svg>

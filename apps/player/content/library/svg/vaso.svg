@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="200" height="250" role="img" aria-labelledby="vaso-title vaso-desc">
+  <title id="vaso-title">Vaso</title>
+  <desc id="vaso-desc">Un vaso de vidrio vacío, de frente y visto un poco desde arriba: la capa de atrás. Encima van el agua (vaso-agua y vaso-agua-superficie, recortadas a su hueco) y los brillos (vaso-frente), en este mismo lienzo. El hueco por dentro va de x 24 a x 176 en la boca (y 30) a x 46 a x 154 en el fondo (y 204, con el piso curvo hasta y 215). El vaso se apoya en x 100, y 236. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="vaso">
+    <path id="vidrio" d="M16 30 A84 20 0 0 1 184 30 L160 222 A60 14 0 0 1 40 222 Z" fill="#C9E6F8"/>
+    <path id="vidrio-sombra" d="M184 30 L160 222 A60 14 0 0 1 132 233.6 L156 34 Z" fill="#B3D9F3"/>
+    <ellipse id="base" cx="100" cy="222" rx="60" ry="14" fill="#B3D9F3"/>
+    <path id="hueco" d="M24 30 A76 16 0 0 1 176 30 L154 204 A54 11 0 0 1 46 204 Z" fill="#E4F3FD"/>
+    <ellipse id="piso" cx="100" cy="204" rx="54" ry="11" fill="#D6ECFA"/>
+    <ellipse id="boca-borde" cx="100" cy="30" rx="84" ry="20" fill="#D6ECFA"/>
+    <ellipse id="boca" cx="100" cy="30" rx="76" ry="16" fill="#EEF8FE"/>
+  </g>
+</svg>

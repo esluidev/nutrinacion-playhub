@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 126" width="200" height="126" role="img" aria-labelledby="olla-title olla-desc">
+  <title id="olla-title">Olla con agua (fondo)</title>
+  <desc id="olla-desc">Capa de atrás de una olla roja con agua, sin tapa, vista de frente y un poco desde arriba, en el lenguaje de la lámina de assets: las asas, el interior y el agua. Su frente es olla-frente.svg. Lienzo de 200 × 126, compartido por las dos capas. Se apoya en el centro de su base (x 100, y 124). Lo que se mete en el agua va entre las dos capas, con su base en x 100, y 80: queda medio hundido y asoma por encima del agua. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="olla-fondo">
+    <g id="asas">
+      <path d="M26 42 C12 38 1 44 2 55 C3 64 14 67 28 62 Z" fill="#D9322E"/>
+      <path d="M174 42 C188 38 199 44 198 55 C197 64 186 67 172 62 Z" fill="#D9322E"/>
+      <path d="M198 55 C197 64 186 67 172 62 L173 56 C182 59 192 58 198 55 Z M2 55 C3 64 14 67 28 62 L27 57 C18 60 8 59 2 55 Z" fill="#B4262A"/>
+    </g>
+    <ellipse id="interior" cx="100" cy="28" rx="80" ry="22" fill="#B4262A"/>
+    <ellipse id="agua" cx="100" cy="34" rx="70" ry="16" fill="#79C6F1"/>
+    <path id="agua-luz" d="M38 30 C46 23 66 19.5 90 19 C70 22 52 27 44 34 Z" fill="#B7E3FA"/>
+  </g>
+</svg>

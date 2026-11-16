@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="-30 -30 300 300" role="img" aria-labelledby="avatar-oso-title avatar-oso-desc">
+  <title id="avatar-oso-title">Avatar · oso</title>
+  <desc id="avatar-oso-desc">Avatar de PlayHub: la cabeza de un oso pardo: orejas redondas y hocico claro, de frente, para un círculo. El círculo y su fondo los pone quien lo coloca. Fuente maestra: avatar-oso.svg. Colores planos, sin contorno, con la luz arriba a la izquierda; los ojos, como los de las aves de PlayHub. Las dos mitades son iguales: el eje está en x 120. El dibujo ocupa el cuadrado de 240 del centro del lienzo, con 30 de aire por cada lado.</desc>
+  <g id="avatar-oso-orejas">
+    <circle cx="60" cy="70" r="30" fill="#B47C52" />
+    <circle cx="180" cy="70" r="30" fill="#B47C52" />
+    <circle cx="60" cy="70" r="16" fill="#EACBA5" />
+    <circle cx="180" cy="70" r="16" fill="#EACBA5" />
+  </g>
+  <g id="avatar-oso-cabeza">
+    <ellipse cx="120" cy="134" rx="88" ry="78" fill="#B47C52" />
+    <path d="M199.76 101.04 A88 78 0 0 1 76.0 201.55 A95.04 84.24 0 0 0 199.76 101.04Z" fill="#A26D45" />
+    <ellipse cx="86" cy="90" rx="22" ry="11" fill="#C28C61" transform="rotate(-28 86 90)" />
+  </g>
+  <g id="avatar-oso-cara">
+    <ellipse cx="120" cy="168" rx="40" ry="30" fill="#EACBA5" />
+    <ellipse cx="86" cy="126" rx="8.5" ry="12" fill="#333136" />
+    <ellipse cx="154" cy="126" rx="8.5" ry="12" fill="#333136" />
+    <ellipse cx="120" cy="153" rx="13" ry="9" fill="#4A3530" />
+    <path d="M120 162V171M106 172Q113 181 120 172Q127 181 134 172" fill="none" stroke="#B98F68" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

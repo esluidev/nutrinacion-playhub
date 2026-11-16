@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 56" width="150" height="56" role="img" aria-labelledby="huevo-frito-title huevo-frito-desc">
+  <title id="huevo-frito-title">Huevo frito</title>
+  <desc id="huevo-frito-desc">Huevo frito bien cocido, visto de frente y un poco desde arriba: la clara blanca y opaca y la yema firme, sin brillo. Se apoya en el centro de su base (x 75, y 56). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-frito">
+    <path id="clara" d="M4 34 C2 22 22 12 50 9 C70 4 100 5 118 10 C138 14 149 24 146 36 C143 48 122 53 96 53 C74 56 44 55 26 50 C12 47 5 42 4 34 Z" fill="#FFFDF7"/>
+    <path id="clara-sombra" d="M146 36 C143 48 122 53 96 53 C74 56 44 55 26 50 C18 48.5 12 46 8 43 C40 50 100 50 126 44 C138 41 144 38 146 36 Z" fill="#E6DFCB"/>
+    <path id="yema" d="M50 27 C50 16 61 10 75 10 C89 10 100 16 100 27 C100 35 89 39 75 39 C61 39 50 35 50 27 Z" fill="#F7C143"/>
+    <path id="yema-sombra" d="M90 14 C96 17 100 22 100 27 C100 35 89 39 75 39 C70 39 65 38.4 61 37.4 C76 37 90 29 90 14 Z" fill="#E5A82E"/>
+    <path id="yema-luz" d="M57 22 C60 16 67 13.5 75 13.5 C68 15.5 62 19 60 24.5 Z" fill="#FBD877"/>
+  </g>
+</svg>

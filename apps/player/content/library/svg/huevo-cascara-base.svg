@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 144" width="142" height="144" role="img" aria-labelledby="huevo-cascara-base-title huevo-cascara-base-desc">
+  <title id="huevo-cascara-base-title">Media cáscara de huevo, la de la base</title>
+  <desc id="huevo-cascara-base-desc">Mitad de abajo de la cáscara de un huevo de gallina recién abierto, con la boca hacia la izquierda: por fuera naranja, con su sombra abajo; por dentro clara, con el borde roto en picos por donde se partió y curvo donde sigue el perfil del huevo. Es la mitad «cascara-derecha» del huevo abierto (huevo-roto.svg), con su misma geometría, en colores planos y a la escala de huevo-gallina. El centro de su boca está en x 43.3, y 68.1; se apoya en su punto más bajo (y 141). Luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-cascara-base" transform="translate(-234.88 -19.93) scale(0.27629)">
+    <g transform="translate(0 -14)">
+      <path id="cascara" fill="#F8A264" d="M1042 98 C1181 109 1292 217 1338 349 C1373 449 1343 522 1270 568 C1185 622 1050 590 959 557 C926 545 914 521 903 481 L954 355 L984 203Z"/>
+      <path id="cascara-sombra" fill="#EB8649" d="M1304 272 C1318 310 1327 351 1317 397 C1300 488 1235 544 1158 550 C1095 553 1042 537 1010 514 L903 481 C914 521 926 545 959 557 C1050 590 1185 622 1270 568 C1343 522 1373 449 1338 349 C1329 322 1317 296 1304 272Z"/>
+      <g id="motas" fill="#F09253">
+        <ellipse cx="1235" cy="275" rx="10" ry="11.5" transform="rotate(-23 1235 275)"/>
+        <ellipse cx="1263" cy="349" rx="10.5" ry="12"/>
+      </g>
+      <path id="dentro" fill="#F2CDAC" d="M1043 102 C1074 114 1094 140 1116 168 L1110 208 L1148 284 L1129 327 L1110 369 L1115 421 L1070 465 L1055 524 L1006 555 C991 565 978 564 959 557 C926 545 914 521 903 481 L882 441 L892 415 L878 386 L866 354 L884 334 L875 301 L891 242 L940 208 L970 147 L1013 134Z"/>
+      <path id="dentro-luz" fill="#F8D9BF" d="M1137 310 L1129 327 L1110 369 L1115 421 L1070 465 L1055 524 L1006 555 C991 565 978 564 959 557 C926 545 914 521 903 481 L890 458 C942 347 1046 286 1137 310Z"/>
+      <path id="borde" fill="none" stroke="#FFEBDA" stroke-width="10" stroke-linejoin="round" d="M1043 102 C1074 114 1094 140 1116 168 L1110 208 L1148 284 L1129 327 L1110 369 L1115 421 L1070 465 L1055 524 L1006 555 C991 565 978 564 959 557 C926 545 914 521 903 481 L882 441 L892 415 L878 386 L866 354 L884 334 L875 301 L891 242 L940 208 L970 147 L1013 134Z"/>
+    </g>
+  </g>
+</svg>

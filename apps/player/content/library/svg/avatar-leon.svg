@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="-30 -30 300 300" role="img" aria-labelledby="avatar-leon-title avatar-leon-desc">
+  <title id="avatar-leon-title">Avatar · león</title>
+  <desc id="avatar-leon-desc">Avatar de PlayHub: la cabeza de un león: la melena alrededor de la cara, de frente, para un círculo. El círculo y su fondo los pone quien lo coloca. Fuente maestra: avatar-leon.svg. Colores planos, sin contorno, con la luz arriba a la izquierda; los ojos, como los de las aves de PlayHub. Las dos mitades son iguales: el eje está en x 120. El dibujo ocupa el cuadrado de 240 del centro del lienzo, con 30 de aire por cada lado.</desc>
+  <g id="avatar-leon-melena">
+    <circle cx="120" cy="123" r="84" fill="#D9822E" />
+    <circle cx="120.0" cy="43.0" r="25" fill="#D9822E" />
+    <circle cx="160.0" cy="53.7" r="25" fill="#D9822E" />
+    <circle cx="189.3" cy="83.0" r="25" fill="#C97526" />
+    <circle cx="200.0" cy="123.0" r="25" fill="#C97526" />
+    <circle cx="189.3" cy="163.0" r="25" fill="#C97526" />
+    <circle cx="160.0" cy="192.3" r="25" fill="#C97526" />
+    <circle cx="120.0" cy="203.0" r="25" fill="#D9822E" />
+    <circle cx="80.0" cy="192.3" r="25" fill="#D9822E" />
+    <circle cx="50.7" cy="163.0" r="25" fill="#D9822E" />
+    <circle cx="40.0" cy="123.0" r="25" fill="#D9822E" />
+    <circle cx="50.7" cy="83.0" r="25" fill="#D9822E" />
+    <circle cx="80.0" cy="53.7" r="25" fill="#D9822E" />
+  </g>
+  <g id="avatar-leon-orejas">
+    <circle cx="68" cy="71" r="19" fill="#FFCB5E" />
+    <circle cx="172" cy="71" r="19" fill="#FFCB5E" />
+    <circle cx="68" cy="71" r="10" fill="#EFA63F" />
+    <circle cx="172" cy="71" r="10" fill="#EFA63F" />
+  </g>
+  <g id="avatar-leon-cabeza">
+    <ellipse cx="120" cy="129" rx="64" ry="60" fill="#FFCB5E" />
+    <path d="M178.0 103.64 A64 60 0 0 1 88.0 180.96 A69.12 64.8 0 0 0 178.0 103.64Z" fill="#F6BD4D" />
+    <ellipse cx="98" cy="96" rx="16" ry="8" fill="#FFDA83" transform="rotate(-26 98 96)" />
+  </g>
+  <g id="avatar-leon-cara">
+    <ellipse cx="107" cy="157" rx="18" ry="14" fill="#FFF2D8" />
+    <ellipse cx="133" cy="157" rx="18" ry="14" fill="#FFF2D8" />
+    <ellipse cx="95" cy="123" rx="7.5" ry="11" fill="#333136" />
+    <ellipse cx="145" cy="123" rx="7.5" ry="11" fill="#333136" />
+    <path d="M111 144 Q120 140 129 144 Q127 153 120 154 Q113 153 111 144 Z" fill="#7A4A2C" />
+    <path d="M120 154V159M111 161Q116 166 120 161Q124 166 129 161" fill="none" stroke="#E2C49A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

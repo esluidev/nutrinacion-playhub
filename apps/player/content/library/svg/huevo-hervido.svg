@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 86" width="150" height="86" role="img" aria-labelledby="huevo-hervido-title huevo-hervido-desc">
+  <title id="huevo-hervido-title">Huevo hervido partido</title>
+  <desc id="huevo-hervido-desc">Huevo hervido bien cocido, partido en dos mitades: la clara blanca y la yema firme en el centro de cada una. Se apoya en el centro de su base (x 75, y 86). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-hervido">
+    <g transform="rotate(-9 40 84)">
+      <path d="M40 8 C16 8 6 36 6 54 C6 72 21 84 40 84 C59 84 74 72 74 54 C74 36 64 8 40 8 Z" fill="#FFFDF7"/>
+      <path d="M57 14 C68 24 74 42 74 54 C74 72 59 84 40 84 C32 84 24 81.6 18 77.6 C42 81.6 65 66 65 44 C65 32 62 22 57 14 Z" fill="#E6DFCB"/>
+      <circle cx="40" cy="56" r="17" fill="#F7C143"/>
+      <path d="M49.6 42 A17 17 0 0 1 30.4 70 A17 17 0 0 0 49.6 42 Z" fill="#E5A82E"/>
+      <path d="M29 52 A12 12 0 0 1 39 44.4 A14 14 0 0 0 31.4 55 Z" fill="#FBD877"/>
+    </g>
+    <g transform="rotate(9 110 84)">
+      <path d="M110 8 C86 8 76 36 76 54 C76 72 91 84 110 84 C129 84 144 72 144 54 C144 36 134 8 110 8 Z" fill="#FFFDF7"/>
+      <path d="M127 14 C138 24 144 42 144 54 C144 72 129 84 110 84 C102 84 94 81.6 88 77.6 C112 81.6 135 66 135 44 C135 32 132 22 127 14 Z" fill="#E6DFCB"/>
+      <circle cx="110" cy="56" r="17" fill="#F7C143"/>
+      <path d="M119.6 42 A17 17 0 0 1 100.4 70 A17 17 0 0 0 119.6 42 Z" fill="#E5A82E"/>
+      <path d="M99 52 A12 12 0 0 1 109 44.4 A14 14 0 0 0 101.4 55 Z" fill="#FBD877"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 166" width="560" height="166" role="img" aria-labelledby="isla-corral-title isla-corral-desc">
+  <title id="isla-corral-title">Isla de corral</title>
+  <desc id="isla-corral-desc">La isla del corral: el suelo de la granja en todo el taller. Sirve suelta (bajo el granero, con su gallina y su nido) o dentro de una tarjeta: la misma forma de la isla de pasto (isla-pasto.svg), con la orilla de atrás ondulada, las esquinas redondeadas del tablero (26) y, delante, el canto más oscuro, que le da cuerpo; y el mismo suelo del corral de las tarjetas (suelo-corral.svg): tierra, manchas, briznas de paja, unas piedras y un tramo de cerca de madera a cada lado. Lienzo de 560 × 166: lo que va al fondo (un edificio) se apoya en y 72; lo que va delante, entre y 120 y y 130; el centro (x 100–460) queda libre. Colores planos, luz desde arriba a la izquierda.</desc>
+  <!-- Orden: canto (delante, abajo) → tierra → luz de la orilla de atrás → manchas → cercas (al fondo, a los lados) → paja → piedras. -->
+  <g id="isla-corral">
+    <g id="tierra">
+      <path id="tierra-canto" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V137 A26 26 0 0 1 532 163 H28 A26 26 0 0 1 2 137 V74 A26 26 0 0 1 28 48 Z" fill="#CC9A5E"/>
+      <path id="tierra-base" d="M28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 V126 A26 26 0 0 1 532 152 H28 A26 26 0 0 1 2 126 V74 A26 26 0 0 1 28 48 Z" fill="#E7BE86"/>
+      <path id="tierra-luz" d="M2 74 A26 26 0 0 1 28 48 C63.3 48 76.7 44 112 44 C147.3 44 160.7 52 196 52 C231.3 52 244.7 44 280 44 C315.3 44 328.7 52 364 52 C399.3 52 412.7 44 448 44 C483.3 44 496.7 48 532 48 A26 26 0 0 1 558 74 C558 65 546 59 532 59 C496.7 59 483.3 55 448 55 C412.7 55 399.3 63 364 63 C328.7 63 315.3 55 280 55 C244.7 55 231.3 63 196 63 C160.7 63 147.3 55 112 55 C76.7 55 63.3 59 28 59 C14 59 2 65 2 74 Z" fill="#F1D3A2"/>
+      <g id="manchas" fill="#DDB27A">
+        <ellipse cx="74" cy="118" rx="30" ry="7"/>
+        <ellipse cx="486" cy="112" rx="32" ry="7"/>
+        <ellipse cx="212" cy="140" rx="26" ry="5.5"/>
+        <ellipse cx="418" cy="140" rx="24" ry="5"/>
+      </g>
+    </g>
+    <!-- La cerca: un tramo a cada lado, clavado en la tierra del fondo. Los postes y las tablas de suelo-corral, a 1,35. -->
+    <g id="cerca-izquierda" transform="translate(14 8) scale(1.35)">
+      <g fill="#C68752"><path d="M4 46 V9 a6 5 0 0 1 12 0 V46 Z"/><path d="M44 44 V9 a6 5 0 0 1 12 0 V44 Z"/></g>
+      <g fill="#A96E3F"><path d="M12 46 V5.6 a6 5 0 0 1 4 3.4 V46 Z"/><path d="M52 44 V5.6 a6 5 0 0 1 4 3.4 V44 Z"/></g>
+      <rect x="-2" y="13" width="64" height="8" rx="2" fill="#DCA06A"/><rect x="-2" y="19" width="64" height="2.5" rx="1" fill="#BF8350"/>
+      <rect x="-2" y="27" width="64" height="8" rx="2" fill="#DCA06A"/><rect x="-2" y="33" width="64" height="2.5" rx="1" fill="#BF8350"/>
+    </g>
+    <g id="cerca-derecha" transform="translate(465 6) scale(1.35)">
+      <g fill="#C68752"><path d="M4 44 V9 a6 5 0 0 1 12 0 V44 Z"/><path d="M44 46 V9 a6 5 0 0 1 12 0 V46 Z"/></g>
+      <g fill="#A96E3F"><path d="M12 44 V5.6 a6 5 0 0 1 4 3.4 V44 Z"/><path d="M52 46 V5.6 a6 5 0 0 1 4 3.4 V46 Z"/></g>
+      <rect x="-2" y="13" width="64" height="8" rx="2" fill="#DCA06A"/><rect x="-2" y="19" width="64" height="2.5" rx="1" fill="#BF8350"/>
+      <rect x="-2" y="27" width="64" height="8" rx="2" fill="#DCA06A"/><rect x="-2" y="33" width="64" height="2.5" rx="1" fill="#BF8350"/>
+    </g>
+    <g id="paja" fill="none" stroke-linecap="round" stroke-width="3.5">
+      <g stroke="#F5CE5C">
+        <path d="M36 98 L56 93"/>
+        <path d="M268 140 L288 135"/>
+        <path d="M330 144 L350 148"/>
+        <path d="M388 138 L408 142"/>
+        <path d="M500 132 L520 127"/>
+        <path d="M120 142 L140 147"/>
+      </g>
+      <g stroke="#E0A93C">
+        <path d="M298 147 L316 143"/>
+        <path d="M362 136 L380 132"/>
+        <path d="M70 134 L88 138"/>
+        <path d="M528 104 L544 100"/>
+      </g>
+    </g>
+    <g id="piedras">
+      <ellipse cx="160" cy="128" rx="9" ry="4.5" fill="#C9A06A"/>
+      <ellipse cx="159" cy="127" rx="8" ry="3.4" fill="#DDBB88"/>
+      <ellipse cx="462" cy="150" rx="10" ry="4.5" fill="#B98C54"/>
+      <ellipse cx="461" cy="149" rx="9" ry="3.5" fill="#DDBB88"/>
+      <ellipse cx="22" cy="112" rx="7" ry="3.5" fill="#C9A06A"/>
+      <ellipse cx="21" cy="111" rx="6" ry="2.6" fill="#DDBB88"/>
+    </g>
+  </g>
+</svg>

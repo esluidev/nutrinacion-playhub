@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 200" width="60" height="200" role="img" aria-labelledby="cuchara-title cuchara-desc">
+  <title id="cuchara-title">Cuchara de madera</title>
+  <desc id="cuchara-desc">Cuchara de madera naranja, con la pala arriba, en el lenguaje de la lámina de assets. El centro de su pala está en x 30, y 40: ahí se apoya y sobre ese punto gira. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="cuchara">
+    <path id="mango" d="M22 68 H38 L36.5 188 Q36 197 30 197 Q24 197 23.5 188 Z" fill="#F08C3A"/>
+    <path id="mango-sombra" d="M32 68 H38 L36.5 188 Q36 197 30 197 Q33 194 33 188 Z" fill="#D9772B"/>
+    <ellipse id="pala" cx="30" cy="40" rx="27" ry="37" fill="#F08C3A"/>
+    <path id="pala-sombra" d="M42 7 C52 14 57 26 57 40 C57 60 45 77 30 77 C26 77 22 76 19 74 C36 72 48 58 48 38 C48 26 46 15 42 7 Z" fill="#D9772B"/>
+    <ellipse id="pala-hueco" cx="29" cy="41" rx="19" ry="28" fill="#D9772B"/>
+    <path id="pala-luz" d="M13 28 C16 17 23 10 31 9 C22 14 17 22 15 32 Z" fill="#F6A55C"/>
+  </g>
+</svg>

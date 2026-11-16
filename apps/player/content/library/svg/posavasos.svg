@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 76" width="360" height="76" role="img" aria-labelledby="posavasos-title posavasos-desc">
+  <title id="posavasos-title">Posavasos</title>
+  <desc id="posavasos-desc">Un posavasos redondo de madera, visto de frente y un poco desde arriba, para poner bajo el vaso sobre la mesa: la madera de la tabla de cortar de la cocina, con su canto más oscuro delante y un brillo arriba a la izquierda. Lienzo de 360 × 76: su centro está en x 180, y 34, y lo que lleva queda centrado en él, con su punto más bajo en x 180, y 53. Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <!-- Orden: canto (delante, abajo) → cara → brillo. -->
+  <g id="posavasos">
+    <ellipse id="posavasos-canto" cx="180" cy="42" rx="176" ry="30" fill="#C9803A"/>
+    <ellipse id="posavasos-cara" cx="180" cy="34" rx="176" ry="30" fill="#E59A4E"/>
+    <path id="posavasos-brillo" d="M10 28 C26 12 100 4.6 172 4 C110 8 52 16 24 34 Z" fill="#F2B272"/>
+  </g>
+</svg>
