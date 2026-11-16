@@ -19,7 +19,7 @@
         @click="touch(i)"
       >
         <img decoding="sync" v-if="card.item.exterior" class="tb-exterior" :src="librarySvg(card.item.exterior)" alt="" :style="box(SCENERY.art.x, SCENERY.art.y, SCENERY.art.w, SCENERY.art.h)">
-        <span class="tb-incognita" :class="{ 'is-gone': card.open }" aria-hidden="true" :style="box(0, SCENERY.line, CARD.w, MARK_H)">?</span>
+        <span class="tb-incognita" :class="{ 'is-gone': card.open, 'is-sky': card.item.exterior }" aria-hidden="true" :style="box(0, SCENERY.line, CARD.w, MARK_H)">?</span>
         <RiveCharacter
           v-if="card.open && riveOf(card.item)"
           :ref="(el) => { characters[i] = el as InstanceType<typeof RiveCharacter> | null }"

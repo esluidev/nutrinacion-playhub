@@ -423,9 +423,13 @@
      - --board-slot: lo que se rellena (los huecos), un tono medio del área muy apagado y claro (arena en
        alimentación): se distingue del lienzo sin oscurecerlo.
      - --board-slot-mark: su marca (el número del hueco y las flechas), un paso más oscura y con más color: se lee
-       como tinta propia, no como una capa translúcida, que solo puede oscurecer y apagar. */
+       como tinta propia, no como una capa translúcida, que solo puede oscurecer y apagar.
+     - --board-sky-mark: una marca discreta sobre el cielo de un exterior (el «?» de Destapar). El cielo de los
+       exteriores es sky-50; sky-200 guarda con él el contraste que tiene el gris del contorno sobre el blanco (1,2 a
+       1), en el mismo matiz: el gris se perdía en el cielo. */
   .player-stage {
     --board-active: var(--color-sky-400);
+    --board-sky-mark: var(--color-sky-200);
     --board-slot: color-mix(in oklab, var(--tone-mid) 26%, color-mix(in oklab, var(--color-white) 93%, var(--color-black)));
     --board-slot-mark: color-mix(in oklab, var(--tone-mid) 36%, color-mix(in oklab, var(--color-white) 86%, var(--color-black)));
   }
@@ -484,6 +488,7 @@
      (--color-depth): se nota sin competir con los dibujos ni con el color de la pantalla. Al destaparla se va y lo
      que escondía aparece. */
   .tb-incognita { @apply absolute grid place-items-center font-black; pointer-events: none; font-size: 72px; line-height: 1; color: var(--color-depth); transition: opacity 180ms ease, scale 180ms ease; }
+  .tb-incognita.is-sky { color: var(--board-sky-mark); }
   .tb-incognita.is-gone { opacity: 0; scale: .6; }
   /* El ave entra cuando ya está pintada (data-loaded, RiveCharacter): nunca aparece de golpe ni a medio cargar. */
   .tb-tarjeta .tb-ave { opacity: 0; }
