@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 616 456" width="616" height="456" role="img" aria-labelledby="exterior-acera-title exterior-acera-desc">
+  <title id="exterior-acera-title">Calle, por fuera</title>
+  <desc id="exterior-acera-desc">La calle de la tienda al aire libre, para el interior de una tarjeta: cielo claro, casi blanco, con dos nubes; la banqueta de losetas grises (la de isla-acera) de lado a lado, con una jardinera a cada lado; el bordillo; y la calzada abajo, con su línea discontinua. Exterior de tarjeta de 616 × 456: el horizonte en y 334; un edificio se apoya en y 352, centrado en x 308; quien está de pie, en y 382; lo que llega, delante, sobre la banqueta, en y 408. Colores planos, luz desde arriba a la izquierda.</desc>
+  <g id="exterior-acera">
+    <rect id="cielo" x="0" y="0" width="616" height="456" fill="#EAF6FC"/>
+    <g id="nube-izquierda" transform="translate(26 40) scale(1.0)"><path d="M0 34 C0 22 10 14 22 16 C26 4 44 0 54 10 C66 4 82 12 80 26 C90 28 92 40 82 42 H8 C2 42 0 38 0 34 Z" fill="#FFFFFF"/><path d="M1 36 C14 38.5 74 38.5 90 36 C89.5 40 86.5 42 82 42 H8 C4 42 1.5 40 1 36 Z" fill="#D9EEF9"/></g>
+    <g id="nube-derecha" transform="translate(510 104) scale(0.74)"><path d="M0 34 C0 22 10 14 22 16 C26 4 44 0 54 10 C66 4 82 12 80 26 C90 28 92 40 82 42 H8 C2 42 0 38 0 34 Z" fill="#FFFFFF"/><path d="M1 36 C14 38.5 74 38.5 90 36 C89.5 40 86.5 42 82 42 H8 C4 42 1.5 40 1 36 Z" fill="#D9EEF9"/></g>
+    <rect id="banqueta-base" x="0" y="334" width="616" height="78" fill="#D9DDE8"/>
+    <rect id="banqueta-luz" x="0" y="334" width="616" height="14" fill="#EBEEF4"/>
+    <g id="juntas" fill="#C2C7D5"><rect x="0" y="378" width="616" height="3"/><rect x="54" y="348" width="4" height="64"/><rect x="142" y="348" width="4" height="64"/><rect x="230" y="348" width="4" height="64"/><rect x="318" y="348" width="4" height="64"/><rect x="406" y="348" width="4" height="64"/><rect x="494" y="348" width="4" height="64"/><rect x="582" y="348" width="4" height="64"/></g>
+    <rect id="bordillo-arista" x="0" y="412" width="616" height="6" fill="#F5F6FA"/>
+    <rect id="bordillo-cara" x="0" y="418" width="616" height="8" fill="#B9BECD"/>
+    <rect id="calzada-base" x="0" y="426" width="616" height="30" fill="#8E8A96"/>
+    <rect id="calzada-oclusion" x="0" y="426" width="616" height="5" fill="#7C7884"/>
+    <g id="linea" fill="#F7F2EA"><rect x="-20" y="440" width="72" height="7" rx="3.5"/><rect x="104" y="440" width="72" height="7" rx="3.5"/><rect x="228" y="440" width="72" height="7" rx="3.5"/><rect x="352" y="440" width="72" height="7" rx="3.5"/><rect x="476" y="440" width="72" height="7" rx="3.5"/><rect x="600" y="440" width="72" height="7" rx="3.5"/></g>
+    <g id="jardinera-izquierda" transform="translate(58 398) scale(1.5) translate(-42 -68)"><path d="M42 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/><path d="M58 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/><circle cx="35" cy="22" r="7.5" fill="#95DA7A"/><rect x="19" y="44" width="46" height="24" rx="6" fill="#EE9A72"/><path d="M52 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/><rect x="15" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/></g>
+    <g id="jardinera-derecha" transform="translate(558 398) scale(1.5) translate(-42 -68)"><path d="M42 10 a19 19 0 0 1 18.4 23.7 a12 12 0 0 1 -2.4 9.3 h-32 a12 12 0 0 1 -2.4 -9.3 a19 19 0 0 1 18.4 -23.7 Z" fill="#6FC35B"/><path d="M58 43 a12 12 0 0 0 2.4 -9.3 a19 19 0 0 0 -4.3 -14.5 a17 17 0 0 1 -12.1 23.8 Z" fill="#58AE48"/><circle cx="35" cy="22" r="7.5" fill="#95DA7A"/><rect x="19" y="44" width="46" height="24" rx="6" fill="#EE9A72"/><path d="M52 44 h7 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-7 Z" fill="#D97F57"/><rect x="15" y="40" width="54" height="9" rx="4.5" fill="#F6B392"/></g>
+  </g>
+</svg>
