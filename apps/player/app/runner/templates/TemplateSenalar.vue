@@ -1,7 +1,7 @@
 <template>
   <!-- Señalar · Conectar, Localizar. Plano cuerpo, en dos columnas. A la izquierda, una tarjeta por cada cosa que se
        busca (los ítems de la escena: lo que trae el huevo), con su dibujo y, si la escena lo trae, el escenario donde
-       está (`defaults.cards`: un interior de la librería, o la isla de su lugar). A la derecha, el personaje
+       está (`defaults.cards`: un interior o un exterior de la librería, que llena la tarjeta). A la derecha, el personaje
        (`defaults.character`, un Rive de la librería), suelto: es lo que se toca, así que no va en tarjeta, y está de
        pie en la isla de su lugar (`defaults.ground`), su base. El niño elige una tarjeta, en el orden que quiera: se
        marca y, al momento, la mano demuestra que ahora se toca al personaje: sobre una zona y otra, sin decir cuál.
@@ -26,8 +26,7 @@
     >
       <!-- Lo de dentro está medido para la tarjeta entera (300 × 262) y se encoge con ella si hay más de dos. -->
       <span class="tb-se-dentro" :style="{ width: `${PART.w}px`, height: `${PART.h}px`, scale: `${FIT}` }">
-        <img v-if="card.spec.interior" class="tb-se-interior" :src="librarySvg(card.spec.interior)" alt="" decoding="sync" :style="box(LINE, LINE, PART.w - LINE * 2, PART.h - LINE * 2)">
-        <img v-else-if="card.spec.ground" class="tb-isla" :src="librarySvg(card.spec.ground)" alt="" decoding="sync" :style="box(SCENERY.island.x, SCENERY.island.y, SCENERY.island.w, SCENERY.island.h)">
+        <img v-if="card.spec.interior || card.spec.exterior" class="tb-se-vista" :src="librarySvg(card.spec.interior ?? card.spec.exterior)" alt="" decoding="sync" :style="box(LINE, LINE, PART.w - LINE * 2, PART.h - LINE * 2)">
         <img
           v-for="(piece, k) in card.spec.pieces ?? []"
           :key="k"
@@ -68,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { box, ISLAND, prefersReducedMotion, sceneryCard, useSceneText } from '../board'
+import { box, ISLAND, prefersReducedMotion, useSceneText } from '../board'
 import type { Point } from '../board'
 import { libraryRive, librarySvg } from '../content'
 import DemoHand from '../DemoHand.vue'
@@ -90,11 +89,11 @@ type Pair = [number, number]
 /** Un dibujo de la tarjeta de una cosa: apoyado por el centro de su base en un punto de la tarjeta, a su escala. */
 interface Drawing { svg: string, at: Pair, scale?: number }
 /**
- * Lo que lleva la tarjeta de una cosa: sus dibujos (`pieces`) y, si la escena lo trae, el escenario donde está: bajo
- * techo, un interior de la librería que llena la tarjeta (`interior`, de 616 × 536); al aire libre, la isla de su
- * lugar (`ground`). En una escena, todas de una clase.
+ * Lo que lleva la tarjeta de una cosa: sus dibujos (`pieces`) y, si la escena lo trae, el escenario donde está, que
+ * llena la tarjeta (616 × 536): bajo techo, un interior de la librería (`interior`); al aire libre, un exterior
+ * (`exterior`). En una escena, todas de una clase.
  */
-interface CardSpec { interior?: string, ground?: string, pieces?: Drawing[] }
+interface CardSpec { interior?: string, exterior?: string, pieces?: Drawing[] }
 /**
  * El personaje: su Rive, el enum de su View Model que dice qué muestra (`pose`) y el valor de reposo (`rest`); el
  * booleano que acerca la vista a lo que muestra (`close`: el personaje va suelto, sin marco que lo recorte, así que
@@ -136,8 +135,6 @@ const stackH = count * PART.h * FIT + (count - 1) * GAP
 const BASE_W = 500
 const PART_X = (1280 - (PART.w * FIT + BETWEEN + BASE_W)) / 2
 const partY = (i: number) => 300 - stackH / 2 + i * (PART.h * FIT + GAP)
-// La tarjeta de una cosa que está al aire libre lleva la isla de su lugar (`sceneryCard`, board.ts).
-const SCENERY = sceneryCard(PART.w, PART.h)
 const K = BASE_W / ISLAND.w
 const BASE = { w: BASE_W, x: PART_X + PART.w * FIT + BETWEEN, y: STACK.bottom - ISLAND.foot * K }
 // Dónde pisa el personaje y cuánto mide su lienzo, un cuadrado centrado en su base.

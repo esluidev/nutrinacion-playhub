@@ -441,15 +441,15 @@
   .tb-etiqueta { @apply absolute rounded-control px-5 py-2 font-black whitespace-nowrap; left: 50%; translate: -50% -50%; font-size: var(--text-headline-lg); line-height: 1.2; color: var(--pz-ink, var(--color-ink)); background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); }
 
   /* ---- Anuncio (Situar): la Bienvenida como portada, en el tablero como cualquier juego (TemplateAnuncio.vue). Arriba,
-     una tarjeta con su escenario (el interior de un lugar, la isla de un lugar al aire libre o, sin lugar, el suelo
-     plano en el tinte del área) y, dentro, los protagonistas, que aparecen uno tras otro y saltan al tocar la tarjeta.
+     una tarjeta con su escenario (la vista de un lugar, su interior o su exterior, que la llena o, sin lugar, el
+     suelo plano en el tinte del área) y, dentro, los protagonistas, que aparecen uno tras otro y saltan al tocar la tarjeta.
      Debajo, el título (el tamaño del tema del día, --text-hero, a 0,8: 96), que se reduce si no cabe en una línea, y
      la línea que lo presenta, del tamaño de la consigna y en el gris de apoyo. Todo va en una columna centrada en el
      alto del tablero por lo que mide (con una línea, dos o ninguna). ---- */
   .tb-an { position: absolute; inset: 50% 0 auto; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; }
   .tb-an-protagonistas { position: relative; flex: none; width: 100%; }
   .tb-an-escena { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); pointer-events: none; }
-  .tb-an-interior { inset: 0; width: 100%; height: 100%; object-fit: fill; }
+  .tb-an-vista { inset: 0; width: 100%; height: 100%; object-fit: fill; }
   .tb-an-suelo { position: absolute; border-radius: 50%; background: var(--tone-tint); }
   .tb-an-figura { position: absolute; transform-origin: 50% 92%; animation: tb-aparece 420ms var(--ease-playful) var(--delay, 0ms) both; }
   .tb-an-figura img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
@@ -458,9 +458,10 @@
   .tb-an-linea { @apply m-0 font-bold text-center text-muted; flex: none; margin-top: 6px; font-size: var(--text-headline); line-height: 1.3; text-wrap: balance; }
 
   /* ---- La tarjeta y la tarjeta con escenario (Destapar e Historia): blanca y plana, con el contorno suave; activa (algo
-     encima), el cielo de 4 y un poco más grande; al recibir algo, rebota. El suelo del lugar es su isla (`sceneryCard`,
-     board.ts): la misma pieza que va suelta bajo lo que se toma, aquí dentro de la tarjeta, abajo y sin tocar el
-     marco; arriba, el blanco de la tarjeta es el cielo. La tarjeta no cambia los colores de la isla. ---- */
+     encima), el cielo de 4 y un poco más grande; al recibir algo, rebota. Con escenario, la vista del lugar la llena
+     por dentro del margen blanco (`sceneryCard`, board.ts), recortada a su esquina: al aire libre, su exterior
+     (`tb-exterior`: el cielo arriba y el suelo del lugar abajo); bajo techo, su interior. La tarjeta no cambia sus
+     colores. La isla (`tb-isla`) solo va en la ficha que es un lugar (Repasar). ---- */
   .tb-tarjeta { position: absolute; z-index: 2; background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-depth); transition: scale 160ms var(--ease-playful), box-shadow 160ms ease; }
   .tb-tarjeta img { position: absolute; pointer-events: none; }
   button.tb-tarjeta:not(:disabled) { cursor: pointer; }
@@ -468,11 +469,12 @@
   button.tb-tarjeta:disabled { cursor: default; }
   .tb-tarjeta.is-over { animation: none; scale: 1.06; box-shadow: inset 0 0 0 4px var(--board-active); }
   .tb-tarjeta.is-landing { animation: tb-placed 420ms var(--ease-playful); }
+  .tb-exterior { max-width: none; border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
   .tb-isla { position: absolute; max-width: none; pointer-events: none; }
 
-  /* ---- Destapar (Revelar): por ítem, arriba su tarjeta (con escenario, si el ítem trae la isla de su lugar) y debajo
+  /* ---- Destapar (Revelar): por ítem, arriba su tarjeta (con escenario, si el ítem trae el exterior de su lugar) y debajo
      lo que se ve, asentado en el apoyo que nombra la escena (un nido: detrás y, por delante, su capa de delante), todos
-     a una escala. Al tocar lo que se ve, o su tarjeta, lo que escondía aparece en la tarjeta, de pie en su isla, y la
+     a una escala. Al tocar lo que se ve, o su tarjeta, lo que escondía aparece en la tarjeta, de pie en su suelo, y la
      tarjeta rebota. Lo que se ve es lo que se toca: sin caja ni contorno, salta un poco al tocarlo; si nadie toca, la
      mano pulsa el primero por destapar. ---- */
   .tb-objeto { position: absolute; z-index: 3; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -667,8 +669,8 @@
     .tb-es-carta[data-state=servida] .tb-es-servido { transition: none; }
   }
   /* ---- Señalar (Conectar, Localizar; TemplateSenalar.vue). A la izquierda, una tarjeta por cada cosa que se busca, con
-     su dibujo apoyado por el centro de su base y, si la escena lo trae, su escenario (un interior, que llena la
-     tarjeta dentro del marco, o la isla de su lugar); lo de dentro se encoge con la tarjeta. A la derecha, el
+     su dibujo apoyado por el centro de su base y, si la escena lo trae, su escenario (un interior o un exterior, que
+     llena la tarjeta dentro del marco); lo de dentro se encoge con la tarjeta. A la derecha, el
      personaje, suelto: de pie en la isla de su lugar (`tb-base`), entero y sin marco. Las tarjetas siguen el patrón de
      las piezas: quieta; activa (la elegida), en cielo y un poco más grande; resuelta, apagada, sin marca. Si se toca
      al personaje sin haber elegido, la mano demuestra al momento un toque sobre una de las que faltan; al elegir una,
@@ -676,7 +678,7 @@
      entra cuando ya está pintado. ---- */
   .tb-se-dentro { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
   .tb-se-parte img { max-width: none; transition: opacity 240ms ease; }
-  .tb-se-interior { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
+  .tb-se-vista { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
   .tb-se-pieza { translate: -50% -100%; transform-origin: 50% 100%; }
   .tb-se-parte.is-found img { opacity: .45; }
   .tb-se-personaje { position: absolute; pointer-events: none; opacity: 0; }

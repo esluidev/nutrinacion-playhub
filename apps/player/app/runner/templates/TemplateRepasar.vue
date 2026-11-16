@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { box, prefersReducedMotion, sceneryCard, useSceneText } from '../board'
+import { box, islandTile, prefersReducedMotion, useSceneText } from '../board'
 import { libraryRive, librarySvg } from '../content'
 import { useWorld } from '../engine/world'
 import RiveCharacter from '../RiveCharacter.vue'
@@ -124,7 +124,7 @@ const MAGNET = 60
 const SLOT_Y = (600 - (TILE * 2 + 56)) / 2
 const TRAY_Y = SLOT_Y + TILE + 56
 const slotX = (i: number) => 640 - (count * TILE + (count - 1) * GAP) / 2 + i * (TILE + GAP)
-const SCENERY = sceneryCard(TILE, TILE)
+const SCENERY = islandTile(TILE, TILE)
 // Lo que tarda un personaje en quedar en la pose que piden sus valores: entra ya en ella.
 const SETTLE_MS = 700
 // Al completarse, el recorrido armado baja al centro del tablero y crece: de la columna del juego al ancho que ocupan

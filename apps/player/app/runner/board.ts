@@ -31,8 +31,9 @@ export function boardPoint(layer: Pick<HTMLElement, 'getBoundingClientRect'>): (
 
 /**
  * La isla de un lugar: su único suelo, una pieza de la librería que es la misma en todo el taller (`isla-corral`,
- * `isla-pasto`, `isla-acera`…). Va suelta en el tablero cuando de ese lugar se toma algo (el origen de un recorrido) y
- * dentro de una tarjeta cuando ahí llega o se muestra algo. Todas comparten forma (la de las piezas del tablero: un
+ * `isla-pasto`, `isla-cancha`…). Va suelta en el tablero, bajo lo que se toma o se toca (el origen de un recorrido, una
+ * fila de nidos, el personaje que se toca), y en la ficha que es un lugar (`islandTile`). En una tarjeta, el lugar no
+ * lleva su isla: lleva su exterior (`sceneryCard`). Todas comparten forma (la de las piezas del tablero: un
  * rectángulo con las esquinas de `--radius-board`, 26, y su canto delante), lienzo y apoyos: lo que va al fondo (un
  * edificio) se apoya en `back`; quien está de pie, en `stand`; lo que va delante, en `front`. Su canto termina en
  * `foot`.
@@ -62,11 +63,40 @@ export const ISLAND_ROW = { w: 1040, h: 166, rest: 128, front: 35 }
 
 /**
  * La tarjeta con escenario (PLAYER-DESIGN, «Piezas del tablero»): dentro del contorno de 3 y un margen blanco de 3
- * (`line`), la isla del lugar (`island`, con la clase `tb-isla`), abajo y centrada, con aire a los lados y debajo: no
- * toca el marco. Sobre ella, las líneas donde se apoya lo que la tarjeta muestra (`back`, `stand` y `front`, las de
- * `ISLAND`). Arriba, el blanco de la tarjeta. En coordenadas de la tarjeta.
+ * (`line`), la vista del lugar llena la tarjeta (`art`, con la clase `tb-exterior`). Un lugar al aire libre lleva su
+ * exterior (`exterior` del ítem: `exterior-corral`, `exterior-acera`…): el cielo claro arriba y el suelo del lugar
+ * abajo, de lado a lado; uno bajo techo, su interior (`interior`). Los dos tienen 616 de ancho y la proporción de su
+ * tarjeta: 616 × 536 para una de 320 × 280 y 616 × 456 para una de 352 × 264. En un exterior el horizonte va en y 334
+ * (`EXTERIOR.horizon`; lo de arriba es cielo) y lo que la tarjeta muestra se apoya a la misma distancia del pie del
+ * dibujo en las dos medidas: lo que va al fondo (un edificio), a 104 (`back`); quien está de pie, a 74 (`stand`); lo
+ * que llega, delante, a 48 (`front`). Devuelve, en coordenadas de la tarjeta, la caja del dibujo, su escala (`k`), el
+ * horizonte (`sky`) y esas tres líneas.
  */
+export const EXTERIOR = { w: 616, horizon: 334, back: 104, stand: 74, front: 48 }
+
 export function sceneryCard(w: number, h: number) {
+  const line = 6
+  const k = (w - line * 2) / EXTERIOR.w
+  const foot = h - line
+  return {
+    line,
+    k,
+    art: { x: line, y: line, w: w - line * 2, h: h - line * 2 },
+    sky: line + EXTERIOR.horizon * k,
+    back: foot - EXTERIOR.back * k,
+    stand: foot - EXTERIOR.stand * k,
+    front: foot - EXTERIOR.front * k,
+  }
+}
+
+/**
+ * La ficha que es un lugar (Repasar): dentro del contorno de 3 y un margen blanco de 3 (`line`), la isla del lugar
+ * (`island`, con la clase `tb-isla`), la misma que va suelta en el tablero, abajo y centrada, con 12 de aire a los
+ * lados y 8 debajo. Una ficha se mueve entera: lleva el lugar como se ve suelto, sobre su base, no como una tarjeta con
+ * escenario. Sobre la isla, las líneas donde se apoya lo que la ficha muestra (`back`, `stand` y `front`, las de
+ * `ISLAND`). En coordenadas de la ficha.
+ */
+export function islandTile(w: number, h: number) {
   const line = 6
   const side = 12
   const below = 8

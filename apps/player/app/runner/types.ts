@@ -44,12 +44,17 @@ export interface DatosItem {
   /** Icono del kit como insignia de la pieza. */
   icon?: string
   /**
-   * El suelo del lugar: su isla, una pieza de la librería de 560 × 166 (`isla-corral`, `isla-acera`…; sus apoyos, en
-   * `ISLAND`, board.ts), la misma en todo el taller. Va suelta en el tablero cuando de ese lugar se toma algo (el
-   * origen de un recorrido: su dibujo al fondo y su personaje y el nido delante) y dentro de su tarjeta cuando ahí
-   * llega o se muestra algo (el destino de un recorrido, lo que se destapa).
+   * La base del lugar: su isla, una pieza de la librería de 560 × 166 (`isla-corral`, `isla-cancha`…; sus apoyos, en
+   * `ISLAND`, board.ts), suelta en el tablero bajo lo que se toma o se toca (el origen de un recorrido: su dibujo al
+   * fondo y su personaje y el nido delante) o en la ficha que es un lugar (el repaso).
    */
   ground?: string
+  /**
+   * La tarjeta de un lugar al aire libre: su exterior, que la llena (`exterior-corral`, `exterior-acera`…; 616 × 536 o
+   * 616 × 456, con sus apoyos en `EXTERIOR`, board.ts). El cielo arriba y el suelo del lugar abajo, de lado a lado, como
+   * un interior bajo techo (el destino de un recorrido, lo que se destapa).
+   */
+  exterior?: string
   /**
    * Historia: el interior del lugar, que la tarjeta muestra mientras el huevo está ahí, con el cartón donde se posa.
    * Estaciones: el escenario de la tarjeta de la estación (616 × 536), siempre a la vista.

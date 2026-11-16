@@ -1,8 +1,8 @@
 <template>
   <!-- Destapar · Revelar. Plano fila, una columna por ítem: arriba su tarjeta (una tarjeta con escenario si el ítem trae
-       la isla de su lugar, `ground`) y, debajo, lo que se ve (su dibujo, asentado en el apoyo de la escena, `defaults.support`:
+       el exterior de su lugar, `exterior`) y, debajo, lo que se ve (su dibujo, asentado en el apoyo de la escena, `defaults.support`:
        un nido), todos a una sola escala para que se comparen. Mientras esconde algo, la tarjeta lleva un «?» en su
-       blanco. El grupo dice qué cree que esconde y un niño toca lo que se ve (o su tarjeta): el «?» se va, lo que
+       cielo. El grupo dice qué cree que esconde y un niño toca lo que se ve (o su tarjeta): el «?» se va, lo que
        escondía (el personaje de Rive) aparece en la tarjeta, apoyado en su suelo, y la tarjeta rebota. Si nadie toca,
        la mano demuestra un toque sobre el primero por destapar. Las piezas siguen el patrón del tablero (runner.css):
        la tarjeta, blanca y plana con el contorno suave; lo que se ve, sin caja. -->
@@ -18,7 +18,7 @@
         :style="box(columnX(i), CARD_Y, CARD.w, CARD.h)"
         @click="touch(i)"
       >
-        <img decoding="sync" v-if="card.item.ground" class="tb-isla" :src="librarySvg(card.item.ground)" alt="" :style="box(SCENERY.island.x, SCENERY.island.y, SCENERY.island.w, SCENERY.island.h)">
+        <img decoding="sync" v-if="card.item.exterior" class="tb-exterior" :src="librarySvg(card.item.exterior)" alt="" :style="box(SCENERY.art.x, SCENERY.art.y, SCENERY.art.w, SCENERY.art.h)">
         <span class="tb-incognita" :class="{ 'is-gone': card.open }" aria-hidden="true" :style="box(0, SCENERY.line, CARD.w, MARK_H)">?</span>
         <RiveCharacter
           v-if="card.open && riveOf(card.item)"
@@ -81,12 +81,12 @@ const columnX = (i: number) => 640 - (props.items.length * CARD.w + (props.items
 // El personaje (el lienzo de Rive de las aves: las patas al 85 % de su alto) grande y apoyado en el suelo de la
 // tarjeta; sin suelo, apoyado cerca del borde de abajo.
 const CHARACTER = { size: 250, feet: 0.85 }
-const groundOf = (item: DatosItem) => (item.ground ? SCENERY.stand : CARD.h - 30)
+const groundOf = (item: DatosItem) => (item.exterior ? SCENERY.stand : CARD.h - 30)
 const characterBox = (item: DatosItem) =>
   box((CARD.w - CHARACTER.size) / 2, groundOf(item) - CHARACTER.size * CHARACTER.feet, CHARACTER.size, CHARACTER.size)
 
-// El «?» de la tarjeta que esconde algo: pequeño y discreto, centrado en su blanco, encima del suelo.
-const MARK_H = SCENERY.island.y - SCENERY.line
+// El «?» de la tarjeta que esconde algo: pequeño y discreto, centrado en su cielo, encima del horizonte.
+const MARK_H = SCENERY.sky - SCENERY.line
 
 // Lo que se ve: el dibujo (lienzo de 164 × 192; lo dibujado va de y 16 a 176) a una sola escala para todos, 170 por
 // `sizeScale`: los tamaños relativos son contenido, nunca se igualan. Va asentado en el apoyo de la escena

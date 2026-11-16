@@ -11,7 +11,7 @@
     "next": { "es": "Después llegan a la casa." },
     "direct": { "es": "También pueden llegar directamente desde donde se recogen." }
   },
-  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "nido", "nido-frente", "granja", "isla-corral", "tienda", "casa", "isla-acera", "isla-pasto", "mostrador", "cocina", "carton", "carton-frente", "mano-apunta"], "sfx": [] },
+  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "nido", "nido-frente", "granja", "isla-corral", "tienda", "casa", "exterior-acera", "exterior-jardin", "mostrador", "cocina", "carton", "carton-frente", "mano-apunta"], "sfx": [] },
   "defaults": {
     "items": ["granja", "tienda", "casa"],
     "traveler": "huevo",

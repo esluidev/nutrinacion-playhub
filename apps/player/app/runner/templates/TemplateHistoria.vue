@@ -18,8 +18,9 @@
        cualquiera (el más cercano al dedo); el que ya salió termina su camino antes de que salga otro.
        Un lugar de paso ya recorrido queda apagado, por dentro si tiene interior, sin ninguna marca: su estado basta. La escena se completa con todos los caminos de
        `defaults.routes`. Las tarjetas son las del patrón de las piezas del tablero
-       (runner.css): blancas e iguales, planas, con el contorno suave del kit; con escenario (`ground` del ítem: la
-       isla del lugar), el mismo marco con la isla dentro, sin tocarlo, y el edificio centrado y apoyado en ella. -->
+       (runner.css): blancas e iguales, planas, con el contorno suave del kit; con escenario (`exterior` del ítem: el
+       lugar al aire libre), el mismo marco con el exterior llenándola por dentro y el edificio centrado y apoyado en
+       su suelo. -->
   <div ref="layer" class="tb-layer tb-hv">
 
     <!-- La base del origen: el suelo donde se apoyan el granero, la gallina y el nido. -->
@@ -54,7 +55,7 @@
       @click="tapCard(card)"
     >
       <span class="tb-hv-exterior">
-        <img v-if="card.item.ground" class="tb-isla" :src="librarySvg(card.item.ground)" alt="" decoding="sync" :style="box(SCENERY.island.x, SCENERY.island.y, SCENERY.island.w, SCENERY.island.h)">
+        <img v-if="card.item.exterior" class="tb-exterior" :src="librarySvg(card.item.exterior)" alt="" decoding="sync" :style="box(SCENERY.art.x, SCENERY.art.y, SCENERY.art.w, SCENERY.art.h)">
         <img :src="librarySvg(card.item.svg)" alt="" decoding="sync" :style="box((CARD.w - ART.w) / 2, artTop(card.item), ART.w, ART.h)">
       </span>
       <img v-if="card.item.interior" class="tb-hv-interior" :src="librarySvg(card.item.interior)" alt="" decoding="sync" :style="box(LINE, LINE, CARD.w - LINE * 2, CARD.h - LINE * 2)">
@@ -175,17 +176,17 @@ const NEST = nest ? { x: WAIT.x - NEST_W / 2, y: WAIT.y - NEST_W * nest.h / nest
 // granero y el nido juntos (15 a la derecha del centro del granero).
 const GROUND = { w: ISLAND.w, x: FARM.cx + 15 - ISLAND.w / 2, y: FARM.bottom - ISLAND.back }
 // Dentro de la tarjeta con escenario (`sceneryCard`, board.ts), el marco (LINE: el contorno de 3 y un margen blanco de
-// 3) y, abajo, la isla del lugar (`ground` del ítem), que no toca el marco; arriba, el blanco de la tarjeta. El edificio
-// (lienzo 580 × 520, apoyado en 480) va centrado y apoyado al fondo de la isla, a 0,40 de su lienzo: así el más alto (la
-// casa, de 73 a 480) queda dentro con aire arriba. Sin isla, centrado en la tarjeta según lo que ocupa su dibujo (de 90
-// a 480).
+// 3) y, por dentro, el exterior del lugar (`exterior` del ítem, de 616 × 456), que la llena: el cielo arriba y el suelo
+// abajo. El edificio (lienzo 580 × 520, apoyado en 480) va centrado y apoyado al fondo del suelo, a 0,40 de su lienzo:
+// así el más alto (la casa, de 73 a 480) queda dentro con aire arriba. Sin exterior, centrado en la tarjeta según lo
+// que ocupa su dibujo (de 90 a 480).
 const SCENERY = sceneryCard(CARD.w, CARD.h)
 const LINE = SCENERY.line
 // Lo de dentro de la tarjeta está medido para una de 320 × 240 (308 de ancho por dentro) y crece con ella: el
 // edificio, el cartón del interior y el huevo que se posa en el lugar.
 const K = (CARD.w - LINE * 2) / 308
 const ART = { w: 580 * 0.40 * K, h: 520 * 0.40 * K }
-const artTop = (item: DatosItem) => (item.ground
+const artTop = (item: DatosItem) => (item.exterior
   ? SCENERY.back - ART.h * 480 / 520
   : CARD.h / 2 - ART.h * ((90 + 480) / 2) / 520)
 // Lo que viaja mide 120 de alto: es lo único que se agarra y no baja del mínimo de un dibujo jugable.
@@ -243,7 +244,7 @@ function spotOf(id: string, k = 0): Point {
   if (card.holder) return cupOf(card, card.holder, k)
   // Con suelo, el huevo se posa delante del edificio, sobre el suelo, a un lado de la entrada (el siguiente, al otro);
   // sin él, abajo a la derecha en la tarjeta.
-  if (card.item.ground) return { x: card.x + CARD.w * (k % 2 ? 0.36 : 0.64), y: card.y + SCENERY.front - EGG.h * EGG_IN_CARD / 2 }
+  if (card.item.exterior) return { x: card.x + CARD.w * (k % 2 ? 0.36 : 0.64), y: card.y + SCENERY.front - EGG.h * EGG_IN_CARD / 2 }
   return { x: card.x + CARD.w * (0.8 - 0.22 * k), y: card.y + CARD.h - 14 - EGG.h * EGG_IN_CARD / 2 }
 }
 

@@ -7,8 +7,7 @@
     <div class="tb-an-protagonistas" :style="{ height: `${card.h}px` }">
       <button type="button" class="tb-pieza tb-tarjeta tb-an-carta" :aria-label="voice" :style="box(CX - card.w / 2, 0, card.w, card.h)" @click="tap">
         <span class="tb-an-escena">
-          <img v-if="interior" ref="interiorEl" class="tb-an-interior" decoding="sync" :src="librarySvg(interior)" alt="" @load="measure">
-          <img v-else-if="ground" class="tb-isla" decoding="sync" :src="librarySvg(ground)" alt="" :style="box(scenery.island.x - LINE, scenery.island.y - LINE, scenery.island.w, scenery.island.h)">
+          <img v-if="view" ref="viewEl" class="tb-an-vista" decoding="sync" :src="librarySvg(view)" alt="" @load="measure">
           <span v-else class="tb-an-suelo" aria-hidden="true" :style="box(spot.x - layout.floor / 2, spot.y - FLOOR_H / 2, layout.floor, FLOOR_H)" />
           <span
             v-for="(figure, i) in figures"
@@ -29,7 +28,7 @@
 
 <script setup lang="ts">
 import { NARRATOR_KEY } from '../audio/narration'
-import { box, sceneryCard, useSceneText } from '../board'
+import { box, EXTERIOR, useSceneText } from '../board'
 import { librarySvg } from '../content'
 import { playSound } from '../engine/sound'
 import { useWorld } from '../engine/world'
@@ -46,12 +45,13 @@ const subtitle = computed(() => t(props.scene.strings?.subtitle))
 // Lo que suena al tocar la tarjeta: la frase de la escena («Hoy vamos a conocer el huevo»), o el título.
 const voice = computed(() => t(props.scene.meta.instruction) || title.value)
 
-// ---- El escenario de la portada, de `defaults`: `interior` (un lugar bajo techo: el dibujo llena la tarjeta),
-// `ground` (un lugar al aire libre: la isla del lugar, abajo, y arriba el blanco de la tarjeta) o ninguno (el suelo
-// plano del área). Con interior, `stand` dice dónde se apoyan los protagonistas en las unidades del dibujo: el centro
-// del grupo y la línea de la mesa o del suelo. ----
+// ---- El escenario de la portada, de `defaults`: la vista de un lugar, que llena la tarjeta, `interior` (bajo techo)
+// o `exterior` (al aire libre: el cielo arriba y el suelo del lugar abajo), o ninguna (el suelo plano del área). Con
+// una vista, `stand` dice dónde se apoyan los protagonistas en las unidades del dibujo: el centro del grupo y la línea
+// de la mesa o del suelo; si falta, al centro y abajo (en un exterior, donde se está de pie: `EXTERIOR`, board.ts). ----
 const interior = props.scene.defaults.interior as string | undefined
-const ground = interior ? undefined : props.scene.defaults.ground as string | undefined
+const exterior = interior ? undefined : props.scene.defaults.exterior as string | undefined
+const view = interior ?? exterior
 const stand = (() => {
   const value = props.scene.defaults.stand
   return Array.isArray(value) && value.length === 2 && value.every(n => typeof n === 'number' && Number.isFinite(n)) ? value as [number, number] : null
@@ -73,23 +73,24 @@ const FOOT = MAIN / 12
 const FLOOR_H = 40
 const TEXT_W = 1040
 
-// El tamaño del dibujo del escenario: el de un interior se lee del propio dibujo; sin interior, el de las tarjetas con
-// interior del tablero (616 × 536).
+// El tamaño del dibujo del escenario: el de una vista se lee del propio dibujo; sin ella, el de las tarjetas con
+// escenario del tablero (616 × 536).
 const art = reactive({ w: 616, h: 536 })
-const interiorEl = ref<HTMLImageElement | null>(null)
+const viewEl = ref<HTMLImageElement | null>(null)
 function measure() {
-  const el = interiorEl.value
+  const el = viewEl.value
   if (el?.naturalWidth && el.naturalHeight) Object.assign(art, { w: el.naturalWidth, h: el.naturalHeight })
 }
 const scale = computed(() => Math.min(STAGE_H / art.h, STAGE_MAX_W / art.w))
 const stage = computed(() => ({ w: art.w * scale.value, h: art.h * scale.value }))
 const card = computed(() => ({ w: stage.value.w + LINE * 2, h: stage.value.h + LINE * 2 }))
-const scenery = computed(() => sceneryCard(card.value.w, card.value.h))
-// Dónde se apoya el grupo, en el escenario: lo que dice la escena, donde se está de pie en la isla o, sin lugar, algo
-// por debajo del centro.
+// Dónde se apoya el grupo, en el escenario: lo que dice la escena; si no lo dice, abajo (en un exterior, donde se está
+// de pie) o, sin lugar, algo por debajo del centro.
 const spot = computed(() => {
-  if (interior) return { x: (stand?.[0] ?? art.w / 2) * scale.value, y: (stand?.[1] ?? art.h * 0.94) * scale.value }
-  if (ground) return { x: stage.value.w / 2, y: scenery.value.stand - LINE }
+  if (view) {
+    const y = stand?.[1] ?? (exterior ? art.h - EXTERIOR.stand : art.h * 0.94)
+    return { x: (stand?.[0] ?? art.w / 2) * scale.value, y: y * scale.value }
+  }
   return { x: stage.value.w / 2, y: stage.value.h * 0.78 }
 })
 
