@@ -30,7 +30,9 @@
     box-shadow: 0 var(--button-depth) 0 var(--tone-edge), var(--button-halo);   /* one base, like every raised piece */
     transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration), filter var(--ph-duration);
   }
-  .ui-button:hover:not(:disabled) { filter: brightness(1.035); transform: translateY(-1px); }
+  /* Pasar el cursor es cosa de ratón: en una pantalla táctil el efecto se queda pegado después de tocar. Por eso
+     todo efecto de «pasar» del kit va dentro de (hover: hover). */
+  @media (hover: hover) { .ui-button:hover:not(:disabled) { filter: brightness(1.035); transform: translateY(-1px); } }
   .ui-button:active:not(:disabled), .ui-button.is-pressed { --button-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
   .ui-button:focus-visible, .ui-button.is-focused {
     outline: none;
@@ -128,7 +130,7 @@
   .counter-compact .mini-action { width: calc(var(--ph-control) - 20px); height: calc(var(--ph-control) - 20px); }
   .counter-compact .mini-action .icon { @apply size-4; }
   .mini-action { @apply relative ml-auto flex shrink-0 items-center justify-center rounded-chip transition-colors; width: calc(var(--ph-control) - 16px); height: calc(var(--ph-control) - 16px); background: var(--tone-tint); color: var(--tone-strong); }
-  .mini-action:hover:not(:disabled) { background: var(--tone-tint-edge); }
+  @media (hover: hover) { .mini-action:hover:not(:disabled) { background: var(--tone-tint-edge); } }
   .mini-action:disabled { @apply opacity-40; }
   /* Small visual, full touch target. */
   .mini-action::before { content: ''; position: absolute; inset: max(-6px, calc((var(--ph-control) - 16px - 44px) / 2)); }
@@ -159,7 +161,7 @@
   /* A card you choose is a key: its base, a lift on hover and a sink when pressed. Chosen, the base
      takes the tone. */
   .select-card { @apply relative flex w-full flex-col items-center justify-center gap-3 border-2 border-line bg-surface px-4 py-6 text-center; --card-depth: var(--ph-depth); --card-edge: var(--color-depth); border-radius: var(--radius-panel); box-shadow: 0 var(--card-depth) 0 var(--card-edge); transition: border-color var(--ph-duration), background var(--ph-duration), transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
-  .select-card:hover:not(:disabled) { transform: translateY(-2px); }
+  @media (hover: hover) { .select-card:hover:not(:disabled) { transform: translateY(-2px); } }
   .select-card:active:not(:disabled) { --card-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
   .select-card[aria-pressed=true] { --card-edge: var(--tone-edge); border-color: var(--tone-fill); background: var(--tone-wash); }
   .select-card:disabled { @apply bg-canvas text-muted; }
@@ -283,14 +285,15 @@
   /* Inside a positioned popover (Reka, a portal): the popover places it, so it stays in flow. */
   .ui-listbox-floating { @apply relative z-50 mt-0; }
   .ui-option { @apply flex w-full items-center justify-between gap-2 px-3 text-left font-bold text-ink transition-colors; min-height: var(--ph-control-sm); border-radius: var(--radius-control-sm); font-size: var(--text-body); }
-  .ui-option:hover, .ui-option[data-active=true] { background: var(--color-sunken); }
+  .ui-option[data-active=true] { background: var(--color-sunken); }
+  @media (hover: hover) { .ui-option:hover { background: var(--color-sunken); } }
   .ui-option[aria-selected=true] { background: var(--tone-wash); color: var(--tone-strong); }
   /* Picker: a selector that shows a symbol and two lines (context, organisation). One step taller
      than a field (--ph-control-lg). 10 px on the left puts the symbol in the column of the
      ui-nav-item icons below it (12 px from the edge, border included) and leaves it the same space
      above and below; the chevron mirrors it on the right. */
   .ui-picker { @apply flex w-full items-center gap-2.5 rounded-control-sm border-2 border-line bg-surface text-left transition-colors; height: var(--ph-control-lg); padding-inline: 10px 12px; }
-  .ui-picker:not(:disabled):hover { border-color: var(--color-line-strong); }
+  @media (hover: hover) { .ui-picker:not(:disabled):hover { border-color: var(--color-line-strong); } }
   .ui-picker[aria-expanded=true] { border-color: var(--tone-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
   .ui-picker:disabled { @apply cursor-default border-transparent bg-canvas; }   /* only one destination: a plain label */
   .ui-picker > .icon { @apply size-4 shrink-0 text-muted; }
@@ -305,7 +308,7 @@
   .ui-table td { @apply px-5 py-3.5 font-semibold text-ink; border-bottom: 1px solid var(--color-line); }
   .ui-table tbody tr:last-child td { border-bottom: 0; }
   .ui-table tbody tr[data-clickable=true] { @apply cursor-pointer transition-colors; }
-  .ui-table tbody tr[data-clickable=true]:hover { background: var(--color-canvas); }
+  @media (hover: hover) { .ui-table tbody tr[data-clickable=true]:hover { background: var(--color-canvas); } }
   .ui-table-empty { @apply px-5 py-14 text-center font-semibold text-muted; }
   .ui-table-footer { @apply px-5 py-3; border-top: 1px solid var(--color-line); }
 
@@ -332,7 +335,7 @@
      it, a lift on hover and a sink when pressed, like the buttons. */
   .ui-panel { @apply min-w-0 border border-line bg-surface; border-radius: var(--radius-panel); }
   .ui-panel-interactive { @apply cursor-pointer; box-shadow: var(--shadow-raised); transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
-  .ui-panel-interactive:hover { transform: translateY(-2px); }
+  @media (hover: hover) { .ui-panel-interactive:hover { transform: translateY(-2px); } }
   /* Only the key you press sinks: a button inside the card sinks alone. */
   .ui-panel-interactive:active:not(:has(:is(button, a, [role=button]):active)) { transform: translateY(var(--ph-press-offset)); box-shadow: 0 var(--ph-depth-pressed) 0 var(--color-depth); }
   .ui-panel-header { @apply flex items-center justify-between gap-4 px-6 py-4; border-bottom: 1px solid var(--color-line); }
@@ -363,7 +366,7 @@
   .ui-tray.is-target { box-shadow: inset 0 0 0 2px var(--color-line-strong); }
   /* Slot: an empty place to add something. Dashed, grey, one step darker than its tray. */
   .ui-slot { @apply flex w-full items-center justify-center gap-1.5 border-2 border-dashed px-3 font-extrabold text-muted transition-colors; min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--radius-control-sm); border-color: var(--color-night-300); }
-  .ui-slot:hover { border-color: var(--color-night-500); background: var(--color-surface); color: var(--color-ink); }
+  @media (hover: hover) { .ui-slot:hover { border-color: var(--color-night-500); background: var(--color-surface); color: var(--color-ink); } }
   .ui-slot > .icon { @apply size-4; }
 
   /* Cover: a large area tinted by its tone or area (storyboard cards). Softer than a tint: big
@@ -389,7 +392,7 @@
      a toned icon. Lively enough to find at a glance; a tint, never the solid action fill. */
   .ui-nav-item { @apply flex items-center gap-3 px-3 font-bold text-muted transition-colors hover:bg-canvas hover:text-ink; min-height: var(--ph-control); font-size: var(--text-body); border-radius: var(--ph-radius); }
   .ui-nav-item > .icon { color: var(--color-subtle); }
-  .ui-nav-item:hover > .icon { color: var(--color-muted); }
+  @media (hover: hover) { .ui-nav-item:hover > .icon { color: var(--color-muted); } }
   .ui-nav-item[aria-current=page] { @apply font-extrabold; background: var(--nav-current); color: var(--color-ink); }
   .ui-nav-item[aria-current=page] > .icon { color: var(--tone-icon); }
 
