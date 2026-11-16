@@ -2,8 +2,9 @@
   <!-- Feedback del taller, como en la app original: el paso final al terminar el taller en el runner
        (calificación, niños, participación y comentarios, más lo que pide la constitución: solo
        observaciones del grupo). Al finalizar, el taller queda completado; se puede corregir después.
-       Un taller cancelado no tiene feedback. -->
-  <div v-if="taller && puedeIniciarse(taller)" class="mx-auto max-w-[480px]">
+       Un taller cancelado no tiene feedback. Una sola tarjeta, del ancho de la ventana grande del kit
+       (640, `UiDialog` lg): en el teléfono ocupa el ancho de la pantalla. -->
+  <div v-if="taller && puedeIniciarse(taller)" class="mx-auto w-full max-w-[640px]">
     <form class="ui-panel ui-panel-body space-y-7" novalidate @submit.prevent="guardar">
       <header>
         <h1 class="ui-heading">{{ t('cierre.titulo') }}</h1>
@@ -29,7 +30,7 @@
     </form>
   </div>
   <div v-else-if="cargando" class="grid place-items-center py-16"><UiSpinner /></div>
-  <UiCard v-else class="mx-auto max-w-[480px]">
+  <UiCard v-else class="mx-auto w-full max-w-[640px]">
     <UiEmptyState
       v-if="taller"
       icon="ban"
