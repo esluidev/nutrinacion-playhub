@@ -120,6 +120,8 @@
                   <UiBadge v-if="a.perfil?.id === miPerfilId" tone="neutral">{{ t('platform.orgDetail.you') }}</UiBadge>
                 </p>
                 <p class="ui-caption">{{ a.perfil?.email ?? '—' }}</p>
+                <!-- Sus teléfonos (0017): para contactarlo desde el soporte -->
+                <p v-if="telefonosAdmin(a)" class="ui-caption">{{ telefonosAdmin(a) }}</p>
                 <!-- Último acceso: si nunca entró, pendiente (sol) -->
                 <p v-if="a.ultimo_acceso" class="ui-caption mt-0.5">{{ t('platform.orgDetail.lastAccess', { fecha: fechaCorta(a.ultimo_acceso, locale) }) }}</p>
                 <p v-else data-tone="sun" class="mt-0.5 text-caption font-bold text-(--tone-strong)">{{ t('platform.orgDetail.neverAccessed') }}</p>
@@ -402,6 +404,10 @@ async function marcarTitular(row: any) {
 function nombreAdmin(a: any) {
   const p = a?.perfil
   return p ? `${p.nombre ?? ''} ${p.apellido ?? ''}`.trim() : '—'
+}
+
+function telefonosAdmin(a: any) {
+  return telefonosDe(a?.perfil ?? null, { movil: t('admins.mobileShort'), oficina: t('admins.officeShort') })
 }
 
 function inicialesAdmin(a: any) {

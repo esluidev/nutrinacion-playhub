@@ -4,11 +4,21 @@ import type { Enums } from '~/utils/db'
 // de ella (datos, países, licencia). A diferencia de usePlatform (consola del operador, cruza
 // todas las orgs), aquí todo se acota a la organización activa del contexto.
 
+// Lo que se ve del perfil de un administrador: nombre y contacto (correo y teléfonos, 0017).
+export interface PerfilDeAdmin {
+  id: number
+  nombre: string | null
+  apellido: string | null
+  email: string | null
+  telefono_movil: string | null
+  telefono_oficina: string | null
+}
+
 export interface AdminDeOrg {
   id: number                // id del puente organizacion_administradores
   titular: boolean
   created_at: string        // cuándo se unió a la organización
-  perfil: { id: number, nombre: string | null, apellido: string | null, email: string | null } | null
+  perfil: PerfilDeAdmin | null
 }
 
 export interface InvitacionAdminPendiente {
@@ -51,8 +61,8 @@ export interface OrgDetalle {
 
 // Filas demo para el dev sin Supabase (mismo criterio que la superficie demo del contexto).
 const DEMO_ADMINS: AdminDeOrg[] = [
-  { id: 1, titular: true, created_at: '2026-01-15T00:00:00Z', perfil: { id: 1, nombre: 'Luis', apellido: 'Rodríguez', email: 'luis@nutrinacion.com' } },
-  { id: 2, titular: false, created_at: '2026-06-02T00:00:00Z', perfil: { id: 2, nombre: 'Marta', apellido: 'García', email: 'marta@nutrinacion.com' } },
+  { id: 1, titular: true, created_at: '2026-01-15T00:00:00Z', perfil: { id: 1, nombre: 'Luis', apellido: 'Rodríguez', email: 'luis@nutrinacion.com', telefono_movil: '+52 55 1234 5678', telefono_oficina: '+52 55 8765 4321' } },
+  { id: 2, titular: false, created_at: '2026-06-02T00:00:00Z', perfil: { id: 2, nombre: 'Marta', apellido: 'García', email: 'marta@nutrinacion.com', telefono_movil: '+52 55 2345 6789', telefono_oficina: null } },
 ]
 
 const DEMO_ORG: OrgDetalle = {
@@ -83,7 +93,7 @@ export function useOrganizacion() {
         id, nombre, correo, telefono, website, paises, created_at,
         tipo:tipos_organizacion ( nombre ),
         licencias:organizacion_licencias ( id, estado, fecha_inicio, fecha_fin, notas, created_at ),
-        administradores:organizacion_administradores ( id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email ) )
+        administradores:organizacion_administradores ( id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email, telefono_movil, telefono_oficina ) )
       `)
       .eq('id', orgActiva.value.id)
       .maybeSingle()
@@ -95,7 +105,7 @@ export function useOrganizacion() {
     if (!orgActiva.value) return []
     const { data } = await useSupabaseClient()
       .from('organizacion_administradores')
-      .select('id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email )')
+      .select('id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email, telefono_movil, telefono_oficina )')
       .eq('organizacion_id', orgActiva.value.id)
       .order('titular', { ascending: false })
     return (data as AdminDeOrg[] | null) ?? []
@@ -105,19 +115,25 @@ export function useOrganizacion() {
     if (!isSupabaseConfigured()) return DEMO_ADMINS.find(a => a.id === id) ?? null
     const { data } = await useSupabaseClient()
       .from('organizacion_administradores')
-      .select('id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email )')
+      .select('id, titular, created_at, perfil:perfiles ( id, nombre, apellido, email, telefono_movil, telefono_oficina )')
       .eq('id', id)
       .maybeSingle()
     return (data as AdminDeOrg | null) ?? null
   }
 
-  // Corrige los datos del perfil de un admin (nombre/apellido). El correo NO se toca:
-  // vive atado a auth.users y cambiarlo aquí lo desincronizaría.
-  async function updateAdministrador(perfilId: number, datos: { nombre: string, apellido: string }) {
+  // Corrige los datos del perfil de un admin (nombre, apellido y teléfonos). El correo NO se toca:
+  // vive atado a auth.users y cambiarlo aquí lo desincronizaría. Editar el perfil de otro
+  // administrador es del titular (o del superadmin): la RLS lo exige (0017).
+  async function updateAdministrador(perfilId: number, datos: { nombre: string, apellido: string, telefono_movil: string, telefono_oficina: string }) {
     if (!isSupabaseConfigured()) return { error: null }
     const { error } = await useSupabaseClient()
       .from('perfiles')
-      .update({ nombre: datos.nombre.trim() || null, apellido: datos.apellido.trim() || null })
+      .update({
+        nombre: datos.nombre.trim() || null,
+        apellido: datos.apellido.trim() || null,
+        telefono_movil: datos.telefono_movil.trim() || null,
+        telefono_oficina: datos.telefono_oficina.trim() || null,
+      })
       .eq('id', perfilId)
     return { error: error?.message ?? null }
   }

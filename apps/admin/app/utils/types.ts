@@ -17,6 +17,8 @@ export interface Perfil {
   apellido: string | null
   email: string | null
   avatar: string | null
+  telefono_movil: string | null     // contacto, además del correo (0017)
+  telefono_oficina: string | null
   idioma: string
   superadmin: boolean
   usuario_id: string   // FK a auth.users

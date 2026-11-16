@@ -104,6 +104,9 @@ begin
 end $$;
 
 update perfiles set superadmin = true where email = 'superadmin@playhub.test';
+-- Teléfonos de contacto de los titulares (0017).
+update perfiles set telefono_movil = '+502 5555 1001', telefono_oficina = '+502 2222 1001' where email = 'admin@centro.test';
+update perfiles set telefono_movil = '+52 55 5555 2001' where email = 'admin@norte.test';
 
 -- ── Catálogo: el huevo, con la metadata de su JSON, publicado en Guatemala ─────
 ''')

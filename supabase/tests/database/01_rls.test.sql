@@ -4,7 +4,7 @@
 -- la base sin seed (`supabase db reset --no-seed`).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(81);
+select plan(89);
 
 -- Actuar como un usuario de Auth (por su uuid) o como anon.
 -- Ayudas en un esquema propio (se deshace con el rollback), utilizables por anon y authenticated.
@@ -42,7 +42,8 @@ select set_config('t.centro', (select id from organizaciones where nombre = 'RLS
 select set_config('t.norte', (select id from organizaciones where nombre = 'RLS Norte')::text, true);
 
 -- Usuarios: …01 superadmin · …02 admin titular de Centro · …03 colaborador de Centro (enlazado por
--- app_metadata, como hace canjear-invitacion) · …04 admin titular de Norte. El trigger crea el perfil.
+-- app_metadata, como hace canjear-invitacion) · …04 admin titular de Norte · …05 administrador de
+-- Norte (no titular). El trigger crea el perfil.
 insert into auth.users (instance_id, id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 select '00000000-0000-0000-0000-000000000000', v.id, 'authenticated', 'authenticated', v.email, v.app, '{}', now(), now()
   from (values
@@ -52,9 +53,13 @@ select '00000000-0000-0000-0000-000000000000', v.id, 'authenticated', 'authentic
     ('20000000-0000-4000-8000-000000000003'::uuid, 'c@rls.test',
       jsonb_build_object('role', 'COLABORADOR', 'organizacion_id', current_setting('t.centro')::bigint)),
     ('20000000-0000-4000-8000-000000000004'::uuid, 'n@rls.test',
-      jsonb_build_object('role', 'ADMIN', 'titular', true, 'organizacion_id', current_setting('t.norte')::bigint))
+      jsonb_build_object('role', 'ADMIN', 'titular', true, 'organizacion_id', current_setting('t.norte')::bigint)),
+    ('20000000-0000-4000-8000-000000000005'::uuid, 'm@rls.test',
+      jsonb_build_object('role', 'ADMIN', 'titular', false, 'organizacion_id', current_setting('t.norte')::bigint))
   ) as v (id, email, app);
 update perfiles set superadmin = true where email = 's@rls.test';
+-- El titular de Centro tiene sus teléfonos de contacto (0017).
+update perfiles set telefono_movil = '+502 5555 0001', telefono_oficina = '+502 2222 0001' where email = 'a@rls.test';
 select set_config('t.perfil_a', (select id from perfiles where email = 'a@rls.test')::text, true);
 select set_config('t.perfil_n', (select id from perfiles where email = 'n@rls.test')::text, true);
 
@@ -123,8 +128,8 @@ select is((select count(*)::int from educadores where acceso_token is not null a
 select is((select count(*)::int from organizacion_licencias where organizacion_id in (current_setting('t.centro')::bigint, current_setting('t.norte')::bigint)),
   2, 'superadmin: ve todas las licencias');
 select is((select count(*)::int from organizacion_administradores where organizacion_id in (current_setting('t.centro')::bigint, current_setting('t.norte')::bigint)),
-  2, 'superadmin: ve los administradores de todas');
-select is((select array_agg(email order by email) from perfiles where email like '%@rls.test'), array['a@rls.test', 'n@rls.test', 's@rls.test'],
+  3, 'superadmin: ve los administradores de todas');
+select is((select array_agg(email order by email) from perfiles where email like '%@rls.test'), array['a@rls.test', 'm@rls.test', 'n@rls.test', 's@rls.test'],
   'superadmin: ve su perfil y el de los administradores, no el de los colaboradores');
 select is((select count(*)::int from organizacion_colaboradores where organizacion_id = current_setting('t.centro')::bigint), 0,
   'superadmin: no ve a los colaboradores de una organización ajena');
@@ -146,6 +151,11 @@ select is((select personalizados from platform_uso(current_setting('t.norte')::b
 select is(
   (select email || '/' || titular from platform_administradores(current_setting('t.centro')::bigint)),
   'a@rls.test/true', 'superadmin: sus administradores, con quién es titular');
+select is(
+  (select telefono_movil || '/' || telefono_oficina from platform_administradores(current_setting('t.centro')::bigint)),
+  '+502 5555 0001/+502 2222 0001', 'superadmin: y con sus teléfonos de contacto (0017)');
+select is(pruebas.afectadas($$ update perfiles set telefono_oficina = '+502 2222 0009' where email = 'a@rls.test' $$), 1,
+  'superadmin: edita el perfil de un administrador');
 
 -- ── Admin de Centro ───────────────────────────────────────────────────────────
 select pruebas.como('20000000-0000-4000-8000-000000000002');
@@ -184,6 +194,10 @@ select throws_ok(
   '42501', null, 'admin: el feedback solo lo escribe el educador');
 select lives_ok($$ update configuracion set valor = 'https://intruso.test' where clave = 'admin_url' $$,
   'admin: actualizar la configuración no falla, pero no toca nada (ver abajo)');
+select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+502 5555 0002' where usuario_id = auth.uid() $$), 1,
+  'admin: edita sus teléfonos de contacto (0017)');
+select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+502 5555 0003' where email = 'c@rls.test' $$), 0,
+  'admin: no edita el perfil de un colaborador (solo el de los administradores)');
 select throws_ok($$ delete from educadores where correo = 'lucia@rls.test' $$, '42501', null,
   'admin: no borra educadores (0012: la baja es lógica)');
 select lives_ok($$ update educadores set deleted_at = now() where correo = 'lucia@rls.test' $$,
@@ -195,6 +209,8 @@ select throws_ok($$ update perfiles set superadmin = true where usuario_id = aut
   '42501', null, 'colaborador: no puede marcarse superadmin');
 select lives_ok($$ update perfiles set nombre = 'Carlos C.' where usuario_id = auth.uid() $$,
   'colaborador: puede editar sus datos');
+select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+502 5555 0004' where email = 'a@rls.test' $$), 0,
+  'colaborador: no edita el perfil de un administrador');
 select is((select array_agg(nombre) from organizaciones where nombre like 'RLS %'), array['RLS Centro'], 'colaborador: ve la organización donde colabora');
 select is((select count(*)::int from workshops where notas like 'RLS %'), 3, 'colaborador: ve los talleres de la organización');
 select is((select array_agg(correo) from educadores where correo like '%@rls.test' and deleted_at is null), array['maria@rls.test'],
@@ -249,6 +265,14 @@ select is((select count(*)::int from perfiles where email = 'a@rls.test'), 0, 'a
 select is((select count(*)::int from jornadas where nombre like 'RLS Jornada%'), 0, 'ajeno: no ve jornadas de otra organización');
 select is((select count(*)::int from organizacion_colaboradores where organizacion_id = current_setting('t.centro')::bigint), 0,
   'ajeno: no ve colaboradores de otra organización');
+select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+52 55 5555 0005' where email = 'm@rls.test' $$), 1,
+  'titular: edita el perfil de otro administrador de su organización (0017)');
+
+-- ── Administrador de Norte que no es titular ──────────────────────────────────
+select pruebas.como('20000000-0000-4000-8000-000000000005');
+select is((select count(*)::int from perfiles where email = 'n@rls.test'), 1, 'administrador: ve el perfil del titular');
+select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+52 55 5555 0006' where email = 'n@rls.test' $$), 0,
+  'administrador: pero no lo edita (editar a otros es del titular)');
 
 -- ── anon ──────────────────────────────────────────────────────────────────────
 select pruebas.como_anon();

@@ -17,7 +17,7 @@
       :loading="loading"
       :empty-text="t('admins.empty')"
       searchable
-      :search-keys="['nombreCompleto', 'correo']"
+      :search-keys="['nombreCompleto', 'correo', 'movil', 'oficina']"
       :search-placeholder="t('admins.searchPh')"
       :filters="filtros"
     >
@@ -27,6 +27,7 @@
           <div class="min-w-0">
             <p class="truncate font-extrabold text-ink">{{ row.nombreCompleto }}</p>
             <p v-if="row.correo" class="ui-caption truncate">{{ row.correo }}</p>
+            <p v-if="row.contacto" class="ui-caption truncate">{{ row.contacto }}</p>
           </div>
         </div>
       </template>
@@ -175,12 +176,16 @@ const loading = ref(true)
 const puedeGestionar = computed(() => esSuperadmin.value || esTitularOrgActiva.value)
 const miPerfilId = computed(() => useAuth().user.value?.perfil.id ?? null)
 
-// Filas aplanadas: la búsqueda del componente opera sobre campos planos.
-type FilaAdmin = AdminDeOrg & { nombreCompleto: string, correo: string }
+// Filas aplanadas: la búsqueda del componente opera sobre campos planos. `contacto` son sus
+// teléfonos en una línea («Móvil … · Oficina …»).
+type FilaAdmin = AdminDeOrg & { nombreCompleto: string, correo: string, movil: string, oficina: string, contacto: string }
 const filas = computed<FilaAdmin[]>(() => admins.value.map(a => ({
   ...a,
   nombreCompleto: nombreDe(a),
   correo: a.perfil?.email ?? '',
+  movil: a.perfil?.telefono_movil ?? '',
+  oficina: a.perfil?.telefono_oficina ?? '',
+  contacto: telefonosDe(a.perfil, { movil: t('admins.mobileShort'), oficina: t('admins.officeShort') }),
 })))
 
 const columns = computed(() => [

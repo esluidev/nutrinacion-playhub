@@ -17,6 +17,12 @@
         <p class="field-help">{{ t('admins.emailLocked') }}</p>
       </div>
 
+      <!-- Contacto además del correo (0017) -->
+      <div class="grid grid-cols-2 gap-3">
+        <UiInput id="movil" v-model="form.telefono_movil" type="tel" inputmode="tel" :label="t('admins.mobile')" :placeholder="t('admins.phonePh')" optional />
+        <UiInput id="oficina" v-model="form.telefono_oficina" type="tel" inputmode="tel" :label="t('admins.office')" :placeholder="t('admins.phonePh')" optional />
+      </div>
+
       <UiAlert v-if="error" tone="danger">{{ error }}</UiAlert>
 
       <div class="flex items-center justify-end gap-2 pt-2">
@@ -54,7 +60,7 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 
-const form = ref({ nombre: '', apellido: '' })
+const form = ref({ nombre: '', apellido: '', telefono_movil: '', telefono_oficina: '' })
 
 onMounted(async () => {
   admin.value = await getAdministrador(id)
@@ -62,6 +68,8 @@ onMounted(async () => {
     form.value = {
       nombre: admin.value.perfil.nombre ?? '',
       apellido: admin.value.perfil.apellido ?? '',
+      telefono_movil: admin.value.perfil.telefono_movil ?? '',
+      telefono_oficina: admin.value.perfil.telefono_oficina ?? '',
     }
   }
   loading.value = false

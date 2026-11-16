@@ -39,7 +39,7 @@ export interface AdminPlatform {
   titular: boolean
   created_at: string
   ultimo_acceso: string | null
-  perfil: { id: number, nombre: string | null, apellido: string | null, email: string | null }
+  perfil: { id: number, nombre: string | null, apellido: string | null, email: string | null, telefono_movil: string | null, telefono_oficina: string | null }
 }
 
 export interface LicenciaResumen {
@@ -268,8 +268,8 @@ export function usePlatform() {
       .eq('id', id)
       .maybeSingle()
     if (!data) return { data, error }
-    // De su operación: las cifras de la organización y sus administradores con su último acceso
-    // (para el soporte).
+    // De su operación: las cifras de la organización y sus administradores con sus teléfonos y su
+    // último acceso (para el soporte).
     const [uso, { data: admins }] = await Promise.all([
       usoOrganizaciones(id),
       supabase().rpc('platform_administradores', { p_organizacion_id: id }),
@@ -279,7 +279,7 @@ export function usePlatform() {
       titular: a.titular,
       created_at: a.created_at,
       ultimo_acceso: a.ultimo_acceso,
-      perfil: { id: a.perfil_id, nombre: a.nombre, apellido: a.apellido, email: a.email },
+      perfil: { id: a.perfil_id, nombre: a.nombre, apellido: a.apellido, email: a.email, telefono_movil: a.telefono_movil, telefono_oficina: a.telefono_oficina },
     }))
     return { data: { ...data, administradores, uso: uso.get(id) ?? null }, error }
   }

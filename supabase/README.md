@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 13 migraciones de `migrations/`, en orden:**
+**Solo las 17 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -23,12 +23,14 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0013_enlace_de_acceso_educadores.sql` | El acceso del educador a Educators es un enlace, como las invitaciones (sin código de activación) |
 | `0014_eliminar_educadores_sin_historial.sql` | Un administrador elimina de verdad al educador que no ha dado ningún taller; con historial, se sigue dando de baja |
 | `0015_guia_con_orden_y_titulo.sql` | La guía que lee el educador trae el orden y el título de cada escena, para mostrarla en la ficha del taller |
+| `0016_titulo_del_taller_para_el_educador.sql` | El educador recibe el título del taller que escribió la organización |
+| `0017_telefonos_del_administrador.sql` | Teléfono móvil y de oficina en el perfil; el titular edita los perfiles de sus administradores; Platform los ve |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
 ```bash
 supabase link --project-ref <ref-del-proyecto-nuevo>
-supabase db push --dry-run   # debe listar 0001 a 0015
+supabase db push --dry-run   # debe listar 0001 a 0017
 supabase db push
 ```
 

@@ -298,13 +298,13 @@ isOneToOne: false
                   ]
                 },"perfiles": {
                   Row: {
-                    "apellido": string | null,"avatar": string | null,"created_at": string,"email": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string | null,"superadmin": boolean,"usuario_id": string
+                    "apellido": string | null,"avatar": string | null,"created_at": string,"email": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string | null,"superadmin": boolean,"telefono_movil": string | null,"telefono_oficina": string | null,"usuario_id": string
                   }
                   Insert: {
-                    "apellido"?: string | null,"avatar"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"superadmin"?: boolean,"usuario_id": string
+                    "apellido"?: string | null,"avatar"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"superadmin"?: boolean,"telefono_movil"?: string | null,"telefono_oficina"?: string | null,"usuario_id": string
                   }
                   Update: {
-                    "apellido"?: string | null,"avatar"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"superadmin"?: boolean,"usuario_id"?: string
+                    "apellido"?: string | null,"avatar"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: never,"idioma"?: Database["public"]['Enums']["idioma"],"nombre"?: string | null,"superadmin"?: boolean,"telefono_movil"?: string | null,"telefono_oficina"?: string | null,"usuario_id"?: string
                   }
                   Relationships: [
                     
@@ -561,12 +561,15 @@ isOneToOne: false
 "paises_opero":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
+"perfiles_editables":
+{ Args: Record<PropertyKey, never>; Returns: number[]
+                           },
 "perfiles_visibles":
 { Args: Record<PropertyKey, never>; Returns: number[]
                            },
 "platform_administradores":
 { Args: { "p_organizacion_id": number }; Returns: {
-              "apellido": string,"created_at": string,"email": string,"id": number,"nombre": string,"perfil_id": number,"titular": boolean,"ultimo_acceso": string
+              "apellido": string,"created_at": string,"email": string,"id": number,"nombre": string,"perfil_id": number,"telefono_movil": string,"telefono_oficina": string,"titular": boolean,"ultimo_acceso": string
             }[]
                            },
 "platform_eliminar_organizacion":

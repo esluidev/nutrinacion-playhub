@@ -24,6 +24,9 @@
           <UiInput v-model="form.apellido" :label="t('perfil.lastName')" />
           <UiInput :model-value="email" type="email" :label="t('perfil.email')" disabled :hint="t('perfil.emailHint')" />
           <UiSelect v-model="form.idioma" :label="t('perfil.language')" :options="idiomaOptions" />
+          <!-- Contacto además del correo (0017): los ve el titular en Administradores y el soporte en Platform -->
+          <UiInput v-model="form.telefono_movil" type="tel" inputmode="tel" autocomplete="tel" :label="t('perfil.mobile')" :placeholder="t('perfil.phonePh')" />
+          <UiInput v-model="form.telefono_oficina" type="tel" inputmode="tel" autocomplete="tel-work" :label="t('perfil.office')" :placeholder="t('perfil.phonePh')" :hint="t('perfil.phonesHint')" />
         </div>
         <div class="ui-panel-footer flex justify-end">
           <UiButton :loading="guardando" icon="check" @click="guardar">{{ t('common.save') }}</UiButton>
@@ -84,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-// Mi perfil (usuario de Admin): nombre, apellido e idioma de la interfaz, y la contraseña. Es de
+// Mi perfil (usuario de Admin): nombre, apellido, teléfonos de contacto e idioma de la interfaz, y la contraseña. Es de
 // la persona, no de ningún contexto: vive en /perfil, también para quien solo entra a Platform.
 // El correo es la cuenta de acceso y no se cambia aquí; no hay foto (sin almacenamiento de avatares).
 definePageMeta({ layout: 'dashboard' })
@@ -97,11 +100,13 @@ const demo = !isSupabaseConfigured()
 const perfil = computed(() => demo ? null : useAuth().user.value?.perfil ?? null)
 const email = computed(() => demo ? 'admin@nutrinacion.com' : useAuth().user.value?.email ?? '')
 
-const form = reactive({ nombre: '', apellido: '', idioma: 'es' as 'es' | 'en' })
+const form = reactive({ nombre: '', apellido: '', idioma: 'es' as 'es' | 'en', telefono_movil: '', telefono_oficina: '' })
 watch(perfil, (p) => {
   form.nombre = p?.nombre ?? ''
   form.apellido = p?.apellido ?? ''
   form.idioma = p?.idioma === 'en' ? 'en' : 'es'
+  form.telefono_movil = p?.telefono_movil ?? ''
+  form.telefono_oficina = p?.telefono_oficina ?? ''
 }, { immediate: true })
 
 const fullName = computed(() =>

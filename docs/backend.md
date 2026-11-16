@@ -35,7 +35,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 | `organizacion_licencias` | El contrato: `estado`, `fecha_inicio`, `fecha_fin` y notas. Sin cupos |
 | `organizacion_administradores` | Quién administra cada organización (el titular y los demás) |
 | `organizacion_colaboradores` | Quién opera la organización sin administrarla (`activo` para apartarlo sin perder el historial) |
-| `perfiles` | Los usuarios de Admin (Supabase Auth); `superadmin` lo da solo la base |
+| `perfiles` | Los usuarios de Admin (Supabase Auth): nombre, correo, idioma y sus teléfonos móvil y de oficina (0017); `superadmin` lo da solo la base |
 | `invitaciones` | Las invitaciones a administrar o colaborar, hasta que se canjean; con el estado de su correo (`correo_enviado_en`, `correo_error`) |
 | `storyboards` | El catálogo, como un artículo. La metadata del JSON para listar, filtrar y buscar (`clave`, `slug`, `titulo`, `categoria`, `subcategoria`, `edicion`, `enfoques_salud`, `idiomas`…) y lo que decide Player al publicar: `estado_publicacion`, `paises_disponibles` y, si es personalizado, `organizacion_id` |
 | `guias`, `guia_escenas` | La guía del educador: cabecera y una por escena (los 12 campos de la plantilla, por idioma). Se escribe en Admin |
@@ -106,7 +106,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 | `anon` | Nada: no tiene ninguna política. Educators entra por las funciones |
 
 - Un storyboard publicado lo ve cualquier usuario de Admin de una organización que opere en alguno de sus países; un personalizado, solo su organización; registrado o en revisión, solo el superadmin.
-- `perfiles`: nadie puede escribir `superadmin`, `email` ni `usuario_id` desde la API (permisos por columna).
+- `perfiles`: nadie puede escribir `superadmin`, `email` ni `usuario_id` desde la API (permisos por columna). Cada quien edita su perfil; el de otro administrador lo edita el titular de su organización o el superadmin (`perfiles_editables`, 0017).
 - `educadores`: el PIN no se lee ni se escribe por la API, ni siquiera el superadmin. El enlace de acceso pendiente (`acceso_token`) sí lo ve quien opera la organización, para copiarlo. Nadie los borra directamente por la API (0012). Quien no ha dado ningún taller lo elimina un administrador con `educador_eliminar` (0014); quien ya dio talleres se da de baja (`deleted_at`), también solo un administrador de la organización, y queda como historial.
 - `workshop_feedback`: Admin solo lo lee; lo escribe el educador con `educador_guardar_feedback`.
 - El trigger de alta lee el rol de `raw_app_meta_data`, nunca de `raw_user_meta_data`.
@@ -125,7 +125,7 @@ Una invitación lleva a quién se invita (`nombre`, `apellido`) y, si es de admi
 | `educador_acceso`, `educador_usar_acceso` | Educators (anon) | De quién es el enlace (correo, nombre, organización y si es su primer PIN) y elegir el PIN con él: entra y se cierran las sesiones anteriores de ese acceso |
 | `educador_entrar`, `educador_verificar_pin`, `educador_cambiar_pin`, `educador_sesion`, `educador_salir` | Educators (anon) | Entrar con correo y PIN. 5 fallos bloquean 15 minutos. Cambiar el PIN es en dos pasos (0013): confirmar el actual y elegir el nuevo, que lo vuelve a comprobar. Un PIN actual equivocado cuenta como fallo |
 | `educador_workshops`, `educador_guia`, `educador_iniciar`, `educador_terminar`, `educador_guardar_feedback` | Educators (anon) | Sus workshops de todas sus organizaciones (con su título, 0016; su organización y su jornada, con su lugar), la guía en el idioma del workshop (con el orden y el título de cada escena, 0015), la ejecución y el feedback |
-| `platform_uso`, `platform_administradores` | Superadmin | Cifras por organización (educadores, personalizados, talleres, jornadas y, para el soporte, educadores sin acceso, talleres próximos y última actividad) y sus administradores con su último acceso; nunca el detalle de la operación |
+| `platform_uso`, `platform_administradores` | Superadmin | Cifras por organización (educadores, personalizados, talleres, jornadas y, para el soporte, educadores sin acceso, talleres próximos y última actividad) y sus administradores con sus teléfonos y su último acceso; nunca el detalle de la operación |
 | `platform_eliminar_organizacion` | Superadmin | La baja entera: sus talleres y lo demás en cascada. La impiden sus storyboards personalizados |
 | `recuperacion_autorizar(email)` | Superadmin o titular (Edge Function `enlace-recuperacion`) | Si quien lo pide puede generar el enlace de recuperación de esa cuenta; devuelve su correo. El superadmin, para cualquiera; el titular, solo para cuentas que no llegan a otra organización (ni por invitación pendiente); nadie, para la suya |
 | `finalizar_workshops_vencidos` | pg_cron, cada hora | Finaliza lo publicado cuya fecha ya pasó |
@@ -151,6 +151,8 @@ Las `educador_*` reciben el token, son `SECURITY DEFINER` y devuelven solo lo su
 | `0013_enlace_de_acceso_educadores` | El acceso del educador es un enlace (`educador_crear_acceso`, `educador_revocar_acceso`, `educador_acceso`, `educador_usar_acceso`), como las invitaciones; sin código de activación. `configuracion.educators_url` y las plantillas `acceso_educador` y `acceso_educador_pin` |
 | `0014_eliminar_educadores_sin_historial` | Eliminar de verdad al educador que no ha dado ningún taller (`educador_tiene_historial`, `educador_eliminar`); con historial, la baja lógica de 0012 |
 | `0015_guia_con_orden_y_titulo` | `educador_guia` trae también el orden y el título de cada escena, para la ficha del taller en Educators; el runner descarta esas claves |
+| `0016_titulo_del_taller_para_el_educador` | `educador_workshops` trae el título del taller que escribió la organización, además del del storyboard |
+| `0017_telefonos_del_administrador` | `perfiles.telefono_movil` y `telefono_oficina`; el titular (y el superadmin) edita los perfiles de los administradores (`perfiles_editables`); `platform_administradores` los devuelve |
 
 Qué se ejecuta en producción (y qué no), los pasos posteriores y la tabla de usuarios de prueba: [supabase/README.md](../supabase/README.md).
 

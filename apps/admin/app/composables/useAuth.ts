@@ -129,13 +129,16 @@ export function useAuth() {
   }
 
   // ── Mi cuenta ────────────────────────────────────────────────────────────────
-  // El perfil propio: la base solo deja cambiar nombre, apellido, avatar e idioma (grant por columna).
-  async function actualizarPerfil(datos: { nombre: string, apellido: string, idioma: 'es' | 'en' }) {
+  // El perfil propio: la base solo deja cambiar nombre, apellido, avatar, idioma y los teléfonos
+  // (grant por columna).
+  async function actualizarPerfil(datos: { nombre: string, apellido: string, idioma: 'es' | 'en', telefono_movil: string, telefono_oficina: string }) {
     if (!user.value) return { error: 'Sin sesión' }
     const { error } = await useSupabaseClient().from('perfiles').update({
       nombre: datos.nombre.trim() || null,
       apellido: datos.apellido.trim() || null,
       idioma: datos.idioma,
+      telefono_movil: datos.telefono_movil.trim() || null,
+      telefono_oficina: datos.telefono_oficina.trim() || null,
     }).eq('id', user.value.perfil.id)
     if (!error) await fetchUser()
     return { error: error?.message ?? null }
