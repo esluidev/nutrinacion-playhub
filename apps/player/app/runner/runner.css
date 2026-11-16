@@ -12,7 +12,8 @@
    La consola flota sobre el escenario como el HUD de un juego, un elemento por esquina y todos del alto de un
    control: el avance del taller (arriba a la izquierda), Ajustes · Reiniciar · Salir (arriba a la derecha), Guía y
    Siguiente (abajo). El escenario, en el tono más suave del área del storyboard, llega hasta arriba por detrás de la
-   consola; un pie blanco da base a Guía, Siguiente y la hoja de feedback. El tablero (1280 × 600, encajado con
+   consola; abajo lo cierra la banda del pie, un paso más oscura y con el borde de arriba en nubes, donde van Guía y
+   Siguiente y sobre la que sube la hoja de feedback. El tablero (1280 × 600, encajado con
    --scene-fit en lo que queda) va entre ellos. Medidas en useFrameFit.ts. */
 @layer components {
   /* La página es el player, no un documento. Solo desplazamiento (la guía se desplaza): sin zoom con dos dedos ni con
@@ -28,7 +29,7 @@
   .player-frame {
     /* --edge: distancia del borde de la pantalla (dentro del área segura) a los controles de arriba y, la misma, al final
        de los de abajo con su base (useFrameFit: 20; 12 en teléfonos). */
-    --gutter: 32px; --edge: 20px; --footer-gap: 24px;
+    --gutter: 32px; --edge: 20px; --footer-gap: 28px;
     /* HUD: un solo tamaño en toda pantalla y puntero, 44, el mínimo táctil, con la forma del kit (rectángulos de 12 con
        su base). Los teléfonos dibujan el UI a 44/48 de su tamaño (useFrameFit), así que ahí el control mide 48 para
        seguir midiendo 44 reales. Solo la barra, el pie, el riel, los paneles y las ventanas: el tablero conserva su
@@ -37,14 +38,22 @@
     /* Las dos piezas de arriba (el avance y el bloque Ajustes · Reiniciar · Salir) miden lo mismo. */
     --hud-long: 168px;
     /* Las bandas abrazan los controles con una sola regla en todos los modos: --edge más el control y su base; el pie
-       guarda además --footer-gap encima para el feedback (barra 68, pie 92). El tablero se queda con el resto.
+       guarda además --footer-gap encima para el feedback y su borde de nubes (barra 68, pie 96). El tablero se queda con el resto.
        useFrameFit las fija. */
     --bar-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth));
     --footer-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth) + var(--footer-gap));
-    /* El pie guarda más aire sobre sus controles que la barra bajo los suyos; la escena empieza eso más abajo, así queda
-       centrada entre ambos (useFrameFit suma la fila de la consigna). */
+    /* Dónde empieza la escena dentro del escenario. Lo fija useFrameFit en cada medida: el aire que sobra por encima
+       de la consigna y el tablero, que van centrados entre la barra y el pie, más la fila de la consigna. Este valor
+       solo vale hasta la primera medida. */
     --scene-top: calc(var(--footer-h) - var(--bar-h));
     --rail-gap: 4px;
+    /* El borde de nubes del pie y de la hoja del feedback: seis lomos de distinto tamaño que se repiten a lo ancho,
+       cada 18 veces su alto más o menos. El dibujo es simétrico y empieza y termina en la mitad de su lomo más alto;
+       se repite un número entero de veces (se ajusta un poco a lo ancho), así que los dos extremos de la pantalla
+       tienen la misma forma: el lomo alto, que baja hacia dentro. Miden el aire que el pie guarda sobre sus
+       controles menos 8 (20; 12 en teléfonos): los controles y lo que dice la hoja quedan 8 por debajo. */
+    --cloud: calc(var(--footer-gap) - 8px);
+    --clouds: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 20' preserveAspectRatio='none'%3E%3Cg fill='black'%3E%3Cellipse cx='0' cy='20' rx='56' ry='20'/%3E%3Cellipse cx='88' cy='20' rx='44' ry='13'/%3E%3Cellipse cx='150' cy='20' rx='36' ry='17'/%3E%3Cellipse cx='180' cy='20' rx='34' ry='12'/%3E%3Cellipse cx='210' cy='20' rx='36' ry='17'/%3E%3Cellipse cx='272' cy='20' rx='44' ry='13'/%3E%3Cellipse cx='360' cy='20' rx='56' ry='20'/%3E%3C/g%3E%3C/svg%3E");
     @apply fixed left-0 top-0 grid overflow-hidden bg-surface;
     width: var(--frame-w, 100vw); height: var(--frame-h, 100vh);
     padding: var(--safe-t, 0px) var(--safe-r, 0px) var(--safe-b, 0px) var(--safe-l, 0px);
@@ -53,6 +62,20 @@
     zoom: var(--player-scale, 1);
   }
   .player-frame :is(.player-bar, .player-footer, .quick-rail) { --ph-control: var(--hud-control); }
+  /* Mientras se prepara lo primero que se va a ver (RunnerFrame, `start`), el marco no enseña nada a medias: solo el
+     suelo del escenario. Después aparece entero, de una vez, con un fundido corto. Lo que anima al entrar espera
+     quieto, para empezar cuando ya se ve. Si la carga tarda, sale la carga del kit. */
+  .player-frame[data-loading] :is(.player-bar, .player-footer, .player-stage > *) { opacity: 0; pointer-events: none; }
+  .player-frame[data-loading] .tb-scene * { animation-play-state: paused !important; }
+  .player-frame[data-entering] :is(.player-bar, .player-footer, .player-stage > *) { animation: frame-in 220ms ease-out both; }
+  /* El medidor del motor (`?medir=1`, engine/meter.ts): una herramienta de prueba, fuera del marco, arriba y al centro,
+     entre los dos lados de la consola, para no tapar el tablero. Solo sus botones reciben toques. */
+  .player-meter { position: fixed; left: 50%; top: 6px; z-index: 80; translate: -50% 0; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 2px var(--color-depth); opacity: .94; pointer-events: none; font: 700 11px/1.4 ui-monospace, monospace; }
+  /* El panel de sonidos (`?sonidos=1`): otra herramienta de prueba, en una columna pegada al borde izquierdo. */
+  .player-sounds { position: fixed; left: 8px; top: 50%; z-index: 80; translate: 0 -50%; display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 2px var(--color-depth); opacity: .94; pointer-events: none; font: 700 11px/1.4 ui-monospace, monospace; }
+  :is(.player-meter, .player-sounds) pre { margin: 0; font: inherit; white-space: pre; }
+  :is(.player-meter, .player-sounds) button { padding: 4px 8px; border: 0; border-radius: 6px; background: var(--color-depth); color: inherit; font: inherit; text-align: left; white-space: nowrap; pointer-events: auto; }
+  .player-loading { @apply absolute inset-0 grid place-items-center; z-index: 60; opacity: 0; pointer-events: none; animation: frame-in 200ms ease-out 600ms both; }
   /* Las ventanas nativas viven en la capa superior, fuera del marco: llevan el mismo zoom. */
   .player-page dialog { zoom: var(--player-scale, 1); max-height: calc(var(--frame-h, 100vh) - var(--safe-t, 0px) - var(--safe-b, 0px) - 32px); overflow-y: auto; }
 
@@ -73,14 +96,14 @@
   .hud-piece { @apply relative isolate flex items-center; height: var(--hud-control); border-radius: var(--ph-radius); background: var(--color-depth); box-shadow: 0 var(--piece-depth, var(--ph-depth)) 0 var(--color-depth); }
   .hud-piece::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
 
-  /* El avance del taller: la claqueta, la barra de progreso del kit y, en el educador, el chevron de un desplegable que
-     lista las escenas. Como botón, sube y se hunde como uno. */
-  .scene-card { gap: 10px; width: var(--hud-long); padding: 0 12px; border: 0; font: inherit; appearance: none; transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
-  button.scene-card { cursor: pointer; }
-  button.scene-card:hover { transform: translateY(-1px); }
-  button.scene-card:active { --piece-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
-  button.scene-card:focus-visible { outline: none; }
-  button.scene-card:focus-visible::after { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px; border-radius: var(--radius-pill); background: var(--color-focus); transform: translateX(-50%); }
+  /* El avance del taller (educador): la claqueta, la barra de progreso del kit y el chevron de un desplegable que lista
+     las escenas. Es un botón: sube y se hunde como uno. */
+  .scene-card { gap: 10px; width: var(--hud-long); padding: 0 12px; border: 0; font: inherit; appearance: none; cursor: pointer; transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
+  /* Subir al pasar es de ratón: en una pantalla táctil el «pasar» se queda pegado después de tocar. */
+  @media (hover: hover) { .scene-card:hover { transform: translateY(-1px); } }
+  .scene-card:active { --piece-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  .scene-card:focus-visible { outline: none; }
+  .scene-card:focus-visible::after { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px; border-radius: var(--radius-pill); background: var(--color-focus); transform: translateX(-50%); }
   /* La claqueta de Lucide en el icono del cielo (data-tone=sky), el tono propio de la consola (Guía); la barra del alto
      del chevron (18), para que pese como los iconos que la acompañan. */
   .scene-card-icon { @apply shrink-0; width: 22px; height: 22px; stroke-width: 2.2; color: var(--tone-icon); }
@@ -91,7 +114,7 @@
   .scene-card.is-advancing { animation: scene-advance 520ms var(--ease-playful); }
 
   /* Ajustes · Reiniciar · Salir: el grupo de botones del kit (un bloque con su base y segmentos iguales), tres
-     segmentos del largo del avance (en casa, sin Ajustes, dos). Salir lleva su icono en coral. */
+     segmentos del largo del avance. Salir lleva su icono en coral. */
   .player-frame .hud-tools > .ui-button { flex: none; width: calc((var(--hud-long) - 2px) / 3); min-width: 0; }
   .player-frame .hud-tools > .exit-button { --tone-on: var(--color-coral-600); }
 
@@ -101,16 +124,39 @@
   .participant .ui-symbol { @apply m-0; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); border-radius: var(--radius-chip); }
   .participant .ui-symbol > .icon { width: 20px; height: 20px; }
   .participant-name { @apply font-black; font-size: var(--text-counter); color: var(--color-ink); }
+
+  /* En casa, el niño: una insignia de jugador. El avatar es un animal de la librería (`avatar-*`) dentro de un círculo
+     que lo recorta, con el tinte de su tono de fondo; el dibujo trae su propio aire (la cabeza ocupa unas dos terceras
+     partes del círculo), así que queda pequeña y holgada dentro de él. El círculo mide lo que un control y va delante de
+     la pieza blanca, que sale de su centro: lleva un aro
+     blanco, el contorno de 1 y la base de toda pieza blanca del HUD; el aro empieza donde las demás piezas, en el
+     margen del marco. La pieza lleva el apodo, en tinta y en text-title,
+     con su aire a los lados; mide lo que su texto, hasta 240 en total, y un apodo más largo se corta con puntos
+     suspensivos. */
+  .player-chip { --avatar: var(--hud-control); @apply relative flex items-center; height: var(--hud-control); max-width: 240px; }
+  .player-avatar { @apply relative z-[1] block shrink-0 overflow-hidden rounded-full; width: var(--avatar); height: var(--avatar); margin-left: 4px; background: var(--tone-tint); box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-depth), 0 var(--ph-depth) 0 4px var(--color-depth); }
+  .player-avatar > img { @apply block size-full; }
+  .player-tag { @apply min-w-0; margin-left: calc(var(--avatar) / -2); padding: 0 18px 0 calc(var(--avatar) / 2 + 12px); }
+  .player-name { @apply min-w-0 truncate font-black; font-size: var(--text-title); line-height: 1.2; letter-spacing: -.01em; color: var(--color-ink); }
   .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
 
   /* ---- Escenario: el tono más suave del área del storyboard (data-area: alimentación → sol), como el suelo de un
      juego. Llega hasta arriba, por detrás de la consola, y hasta abajo, por detrás del pie, pasando bajo las áreas
-     seguras. El pie no tiene fondo ni línea: sus controles flotan sobre el escenario, como los de la consola, y solo
-     la hoja del feedback le da fondo, con el tinte de su tipo. Desborde visible para que los paneles flotantes
-     proyecten su sombra entera. ---- */
+     seguras. Desborde visible para que los paneles flotantes proyecten su sombra entera.
+     El pie es una banda de un solo color, un paso más oscura que el lienzo (el tinte del área: sol 100 sobre sol 50),
+     de lado a lado, con el borde de arriba en nubes del mismo color, sin línea. Las nubes caben en el aire que el pie
+     guarda sobre sus controles (--footer-gap), así que no entran en el tablero. La pinta el escenario, que es quien
+     lleva el tono del área; la hoja del feedback sube por encima con el tinte de su tipo. En la vista previa, que no
+     tiene pie, no sale. ---- */
   .player-stage { @apply relative min-h-0 overflow-visible; }
   .player-stage::before { content: ''; position: absolute; z-index: -1; inset: calc(-1 * (var(--bar-h) + var(--safe-t, 0px))) calc(-1 * var(--safe-r, 0px)) calc(-1 * (var(--footer-h) + var(--safe-b, 0px))) calc(-1 * var(--safe-l, 0px)); background: var(--tone-wash); pointer-events: none; }
   .player-stage:focus { outline: none; }
+  /* El borde de nubes es una máscara: arriba, los lomos (--clouds), y debajo, la pieza entera. Un píxel de solape para
+     que no se vea la unión. La banda del pie y la hoja del feedback empiezan en el mismo punto, así que sus lomos
+     coinciden: al subir, la hoja ocupa justo el sitio de la banda. */
+  .player-stage::after, .feedback-sheet { mask: var(--clouds) left top / calc(var(--cloud) * 18) var(--cloud) round no-repeat, linear-gradient(black, black) left bottom / 100% calc(100% - var(--cloud) + 1px) no-repeat; }
+  .player-stage::after { content: ''; position: absolute; z-index: -1; top: 100%; left: calc(-1 * var(--safe-l, 0px)); right: calc(-1 * var(--safe-r, 0px)); height: calc(var(--footer-h) + var(--safe-b, 0px)); background: var(--tone-tint); pointer-events: none; }
+  .player-frame[data-mode=preview] .player-stage::after { display: none; }
   /* Sobre el escenario, una insignia neutra (tinte hundido) desaparecería: lleva la superficie blanca. */
   .player-stage .badge:not([data-tone]):not([data-area]) { background: var(--color-surface); }
 
@@ -229,8 +275,8 @@
   .scene-overlay { @apply absolute inset-0 flex items-center justify-center; z-index: 50; padding: 16px; background: var(--color-scrim); backdrop-filter: blur(5px); }
   .scene-overlay .panel-window { max-height: 100%; overflow-y: auto; }
 
-  /* ---- Pie: Guía a la izquierda y Siguiente a la derecha, en espejo y del mismo ancho, algo más cortos que las piezas
-     de arriba (que llevan más dentro). Sin fondo: flotan sobre el escenario, con el aire del feedback encima. La hoja de feedback
+  /* ---- Pie: Guía (en casa, Anterior) a la izquierda y Siguiente a la derecha, en espejo y del mismo ancho, algo más
+     cortos que las piezas de arriba (que llevan más dentro). Sin fondo propio: van sobre la banda del pie, que pinta el escenario (`.player-stage::after`), con el aire del feedback encima. La hoja de feedback
      sube sobre él siempre con escuchar y cerrar (nunca con Siguiente), y los controles se apartan hasta
      cerrarla. Plana: la hoja no proyecta sombra. Su tinte sigue los avisos del kit: éxito → lima · información →
      cielo; el reintento amable → sol. ---- */
@@ -240,40 +286,58 @@
   /* El icono de reproducir del kit es un triángulo lleno con un trazo de 1: con un trazo de 3,5 y uniones redondas
      sus puntas se suavizan, como el resto de iconos de trazo redondo; un poco más pequeño para que el trazo no lo
      agrande. Solo el triángulo lleno (el check de Terminar conserva su trazo). */
-  .player-frame .next-button .icon { width: 16px; height: 16px; }
-  .player-frame .next-button .icon path[fill=currentColor] { stroke-width: 3.5; stroke-linejoin: round; }
+  .player-frame :is(.next-button, .previous-button) .icon { width: 16px; height: 16px; }
+  .player-frame :is(.next-button, .previous-button) .icon path[fill=currentColor] { stroke-width: 3.5; stroke-linejoin: round; }
+  /* Anterior (en casa) es el espejo de Siguiente: el mismo triángulo, mirando atrás y a la izquierda del texto. */
+  .player-frame .previous-button .icon { scale: -1 1; }
   /* Cambio de panel: uno sale y después entra el otro. Al abrir, los controles bajan y después sube la hoja. Al
      cerrar, la hoja baja y después suben los controles. La hoja llega a los bordes de la pantalla, bajo la barra de
      inicio y junto al notch. */
-  /* La hoja (.feedback-sheet) lleva el tono de su tipo (data-tone) y su tinte del kit. Al subir le da fondo al pie,
-     sin línea ni sombra: solo el tinte (100). Al cerrarse baja con su tono. */
-  .feedback-sheet { position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px)) calc(-1 * var(--safe-l, 0px)); background: var(--tone-tint); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); pointer-events: none; }
-  .player-frame:not([data-feedback=none]) .feedback-sheet { transform: none; transition: transform 300ms var(--ease-playful) 140ms; }
+  /* La hoja (.feedback-sheet) es el patrón de Duolingo: lleva el tono de su tipo (data-tone) con cuerpo. Su fondo es
+     un tinte con color (el 200 del tono, `--tone-tint-edge`; el 100 casi no se separaba del escenario), el título y el
+     texto van en el mismo tono en fuerte, y el símbolo es un punto sólido del tono, como el botón de cerrar del otro
+     lado. Sin línea ni sombra, con el mismo borde de nubes que la banda del pie. Al subir ocupa su sitio con un rebote
+     corto: se alarga 24 por debajo de la pantalla para que el rebote no deje ver el escenario. Al cerrarse baja con
+     su tono. */
+  .feedback-sheet { position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px) - 24px) calc(-1 * var(--safe-l, 0px)); background: var(--tone-tint-edge); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); pointer-events: none; }
+  .player-frame:not([data-feedback=none]) .feedback-sheet { transform: none; transition: transform 380ms cubic-bezier(.34, 1.4, .64, 1) 140ms; }
   .footer-start, .footer-end { @apply relative; transition: transform 300ms var(--ease-playful) 180ms, opacity 200ms ease 180ms, visibility 0s linear 180ms; }
   .player-frame:not([data-feedback=none]) :is(.footer-start, .footer-end) { transform: translateY(120%); opacity: 0; visibility: hidden; transition: transform 180ms cubic-bezier(.4, 0, 1, 1), opacity 160ms ease, visibility 0s linear 180ms; }
   .feedback-slot { @apply pointer-events-none absolute inset-0 z-10 flex items-center; padding: 0 var(--gutter); }
-  .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 300ms var(--ease-playful) 160ms, visibility 0s linear 0s; }
+  .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 380ms cubic-bezier(.34, 1.4, .64, 1) 140ms, visibility 0s linear 0s; }
   .feedback-slot .ui-feedback[data-visible=false] { opacity: 1; visibility: hidden; transform: translateY(130%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1), visibility 0s linear 220ms; }
   /* El símbolo y el texto conservan las medidas del feedback del kit (símbolo 64, título text-title, descripción
      text-body). */
-  .feedback-slot .ui-feedback-symbol { width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-tint-edge); color: var(--tone-icon); box-shadow: none; }
+  .feedback-slot .ui-feedback-symbol { width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-fill); color: var(--tone-on); box-shadow: none; }
   .feedback-slot .ui-feedback-symbol > .icon { width: 32px; height: 32px; stroke-width: 2.6; }
+  /* Escuchar, en la hoja: el botón del kit en el tono de la hoja, en suave (la cara, el tinte 100; la base, el 300; el
+     icono, el tono fuerte del texto). En blanco era lo más claro de la hoja y no jugaba con su color; cerrar sigue
+     siendo el botón lleno. */
+  .feedback-slot .listen-button { --tone-fill: var(--tone-tint); --tone-edge: var(--tone-top); --tone-on: var(--tone-strong); }
   .feedback-slot .ui-feedback strong { font-size: var(--text-title); color: var(--tone-strong); letter-spacing: 0; }
-  .feedback-slot .ui-feedback .sheet-text { @apply mt-0.5 font-semibold text-muted; font-size: var(--text-body); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .feedback-slot .ui-feedback .sheet-text { @apply mt-0.5 font-semibold; font-size: var(--text-body); line-height: 1.4; color: var(--tone-strong); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .feedback-actions { @apply ml-auto flex items-center gap-3; }
+  /* La entrada con carácter (la clase `is-entering`, que el marco vuelve a poner con cada hoja nueva): la hoja sube
+     con su rebote, el símbolo salta un instante después y el texto llega detrás. Cada tipo tiene su gesto: el del
+     acierto salta más alto y se ladea; el del «otra vez» da una vuelta, como su flecha; el del aviso solo salta. */
+  .feedback-slot .ui-feedback.is-entering .ui-feedback-symbol { animation: fb-pop 460ms cubic-bezier(.34, 1.56, .64, 1) 300ms both; }
+  .feedback-slot .ui-feedback.is-entering[data-tone=lime] .ui-feedback-symbol { animation: fb-cheer 560ms var(--ease-playful) 300ms both; }
+  .feedback-slot .ui-feedback.is-entering[data-tone=sun] .ui-feedback-symbol > .icon { animation: fb-turn 640ms var(--ease-playful) 340ms both; }
+  .feedback-slot .ui-feedback.is-entering .ui-feedback-body { animation: fb-rise 320ms var(--ease-playful) 360ms both; }
+  .feedback-slot .ui-feedback.is-entering .feedback-actions { animation: fb-fade 240ms ease 420ms both; }
 
   /* Un grupo de botones (Ajustes · Reiniciar · Salir) como un solo bloque, en relieve como los botones y con su
      contorno de 1. Es el grupo del kit (ui-group) en su versión de la consola, a propósito: flota sobre el escenario,
      así que sus iconos son los del botón neutro (night-700, un paso más oscuros) y cada segmento se tiñe al pasar y al
      pulsar. Los segmentos son blancos y lo llenan; la línea fina entre ellos es el color de línea del propio
-     bloque, que asoma por un hueco de 1, así un segmento que falta (Ajustes en casa) no deja un divisor suelto. El
+     bloque, que asoma por un hueco de 1, así un segmento que falte no deja un divisor suelto. El
      contorno se pinta sobre los segmentos, así un tinte al pasar o pulsar nunca lo tapa. Los segmentos nunca suben ni
      se hunden: solo cambia su tinte. Un control abierto (Ajustes, Guía) conserva su aspecto. */
   .hud-group { @apply relative flex shrink-0; gap: 1px; height: var(--ph-control); overflow: hidden; border-radius: var(--ph-radius); background: var(--color-line); box-shadow: var(--shadow-raised); }
   .hud-group::after { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 var(--color-depth), inset 1px 0 0 var(--color-depth), inset -1px 0 0 var(--color-depth); pointer-events: none; }
   .player-frame .hud-group > .ui-button { height: 100%; min-height: 0; border-radius: 0; background: var(--color-surface); box-shadow: none; transform: none; filter: none; transition: background-color var(--ph-duration); }
   .player-frame .hud-group > .ui-button::before { display: none; }
-  .player-frame .hud-group > .ui-button:hover:not(:disabled) { background: var(--color-sunken); transform: none; filter: none; }
+  @media (hover: hover) { .player-frame .hud-group > .ui-button:hover:not(:disabled) { background: var(--color-sunken); transform: none; filter: none; } }
   .player-frame .hud-group > .ui-button:active:not(:disabled) { background: var(--color-line); transform: none; }
   .player-frame .hud-group > .ui-button:disabled { background: var(--color-surface); color: var(--color-subtle); }
   /* La marca de foco del kit va dentro del bloque, que recorta sus bordes. */
@@ -281,7 +345,7 @@
 
   /* ---- Compacto (pantallas táctiles y ventanas pequeñas): las mismas piezas y medidas, con menos aire ---- */
   /* Teléfonos: el HUD se dibuja a 48 para seguir midiendo 44 reales (useFrameFit), y el pie guarda menos aire encima. */
-  .player-page[data-phone] .player-frame { --hud-control: var(--ph-control); --footer-gap: 16px; }
+  .player-page[data-phone] .player-frame { --hud-control: var(--ph-control); --footer-gap: 20px; }
   /* Pantallas táctiles: nada que se toque por debajo de 44 reales (el mínimo táctil). Los botones pequeños toman la
      medida estándar, las pestañas la altura de un control y los mini-botones conservan su cara pequeña con un área de
      toque de 44 reales, sea cual sea el zoom. */
@@ -301,13 +365,23 @@
   @media (prefers-reduced-motion: reduce) {
     .spark-burst { display: none; }
     .scene-card.is-advancing { animation: none; }
+    /* La hoja llega sin rebote y sin gestos. */
+    .player-frame:not([data-feedback=none]) .feedback-sheet, .feedback-slot .ui-feedback { transition-timing-function: ease; }
+    .feedback-slot .ui-feedback.is-entering :is(.ui-feedback-symbol, .ui-feedback-symbol > .icon, .ui-feedback-body, .feedback-actions) { animation: none; }
   }
 }
 
 @keyframes scene-advance { 35% { scale: 1.035; } 70% { scale: .99; } }
+@keyframes frame-in { from { opacity: 0; } to { opacity: 1; } }
+/* La entrada de la hoja de feedback. */
+@keyframes fb-pop { from { scale: .3; opacity: 0; } 50% { opacity: 1; } to { scale: 1; opacity: 1; } }
+@keyframes fb-cheer { 0% { scale: .3; opacity: 0; rotate: -16deg; } 45% { scale: 1.22; opacity: 1; rotate: 8deg; } 70% { scale: .96; rotate: -3deg; } 100% { scale: 1; opacity: 1; rotate: 0deg; } }
+@keyframes fb-turn { from { rotate: -360deg; } to { rotate: 0deg; } }
+@keyframes fb-rise { from { translate: 0 10px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+@keyframes fb-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes spark-fall { 0% { opacity: 1; translate: 0 0; rotate: 0deg; scale: .3; } 15% { opacity: 1; scale: 1; } 80% { opacity: 1; } 100% { opacity: 0; translate: var(--dx) var(--dy); rotate: var(--r); scale: .9; } }
 
-/* ---- Piezas de juego de las plantillas (Anuncio, Destapar, Colocar e Historia). Ninguna usa lima ni night como color
+/* ---- Piezas de juego de las plantillas (Anuncio, Destapar, Colocar, Historia, Estaciones, Abrir, Beber, Señalar y Repasar). Ninguna usa lima ni night como color
    propio: son del UI. */
 @layer components {
   /* ---- Tablero: 1280 × 600, sin fondo, centrado entre la barra y el pie, a la escala del UI ------ */
@@ -317,6 +391,13 @@
   .tb-scene[data-sin-consigna] { translate: 0 calc(var(--consigna-h, 56px) / -2); }
   .tb-board { position: absolute; left: 50%; top: 50%; width: 1280px; height: 600px; transform: translate(-50%, -50%) scale(var(--scene-fit, 1)); touch-action: none; }
   .tb-board[data-blocked] { pointer-events: none; }
+  /* Un tablero en pausa (una ventana, un panel o la pausa) se queda quieto de verdad: lo que se anima se
+     detiene y sigue al volver. Los personajes de Rive se paran por su lado (RiveCharacter, `paused`). */
+  .tb-board[data-blocked] * { animation-play-state: paused; }
+  /* La escena se ve cuando está completa (useSceneLoad): mientras espera a sus personajes, o montada por adelantado
+     para la siguiente, ocupa su sitio pero no se ve ni se toca, y lo que anima al entrar espera. */
+  .tb-scene:is([data-pending], [data-warm]) { visibility: hidden; pointer-events: none; }
+  .tb-scene:is([data-pending], [data-warm]) * { animation-play-state: paused !important; }
   .tb-board img { display: block; pointer-events: none; -webkit-user-drag: none; }
   /* Capa de una plantilla: ocupa el tablero entero y es la referencia de sus coordenadas. */
   .tb-layer { position: absolute; inset: 0; }
@@ -330,9 +411,10 @@
      - Ficha: la tarjeta que se mueve. El tinte más suave de su tono (50) y el contorno un paso más, para que el
        protagonista sea siempre el dibujo.
      - Hueco: donde cae una ficha. Arena plana, sin contorno.
-     Los mismos estados en todas: quieta; invita (respira); activa (elegida, tocada, arrastrada o con algo encima: el
-     cielo de selección del kit, de 4, --board-active); resuelta (apagada, con su marca ✓ en lima); descubierta
-     (Revelar: lo que escondía aparece en ella y rebota; su cara no cambia). Las caras salen del tono del ítem (data-tone): cara --tone-wash, contorno entre
+     Los mismos estados en todas: quieta; activa (elegida, tocada, arrastrada o con algo encima: el
+     cielo de selección del kit, de 4, --board-active); resuelta (apagada, sin marca: su estado basta); descubierta
+     (Revelar: lo que escondía aparece en ella y rebota; su cara no cambia). Ninguna pieza respira ni late para invitar:
+     lo que se puede hacer lo demuestra la mano (useDemo). Las caras salen del tono del ítem (data-tone): cara --tone-wash, contorno entre
      --tone-wash y --tone-face, texto --tone-strong. ---- */
   .tb-pieza[data-tone] { --pz-face: var(--tone-wash); --pz-line: color-mix(in oklab, var(--tone-face) 45%, var(--tone-wash)); --pz-edge: var(--tone-fill); --pz-ink: var(--tone-strong); }
 
@@ -352,33 +434,33 @@
      encogen un poco. Los huecos donde caen llevan la misma forma. */
   .tb-pieza { padding: 0; border: 0; appearance: none; border-radius: var(--radius-board); -webkit-tap-highlight-color: transparent; }
   /* El foco de todo lo que se toca en el tablero. */
-  :is(.tb-pieza, .tb-an-toque, .tb-hv-agarre):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+  :is(.tb-pieza, .tb-hv-agarre, .tb-ab-toque, .tb-be-vaso, .tb-se-zona):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
 
   /* El texto dentro del tablero escala con él (hasta unos 0,35 en el teléfono más pequeño): nada por debajo de 28 px
      del tablero. Nombre de una pieza: una etiqueta blanca en la tinta de la pieza (preadolescencia y adolescencia). */
   .tb-etiqueta { @apply absolute rounded-control px-5 py-2 font-black whitespace-nowrap; left: 50%; translate: -50% -50%; font-size: var(--text-headline-lg); line-height: 1.2; color: var(--pz-ink, var(--color-ink)); background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); }
 
-  /* ---- Anuncio (Situar): la Bienvenida como portada, en el tablero como cualquier juego (TemplateAnuncio.vue). Los
-     protagonistas aparecen uno tras otro sobre un suelo plano en el tinte del área y saltan al tocarlos; las chispas,
-     en el tono del área, brillan despacio. El título usa el tamaño del tema del día (--text-hero) y se reduce si no
-     cabe en una línea; la línea que lo presenta, el de la consigna, en el gris de apoyo. Todo va en una columna
-     centrada en el alto del tablero por lo que mide (con una línea, dos o ninguna). ---- */
+  /* ---- Anuncio (Situar): la Bienvenida como portada, en el tablero como cualquier juego (TemplateAnuncio.vue). Arriba,
+     una tarjeta con su escenario (el interior de un lugar, la isla de un lugar al aire libre o, sin lugar, el suelo
+     plano en el tinte del área) y, dentro, los protagonistas, que aparecen uno tras otro y saltan al tocar la tarjeta.
+     Debajo, el título (el tamaño del tema del día, --text-hero, a 0,8: 96), que se reduce si no cabe en una línea, y
+     la línea que lo presenta, del tamaño de la consigna y en el gris de apoyo. Todo va en una columna centrada en el
+     alto del tablero por lo que mide (con una línea, dos o ninguna). ---- */
   .tb-an { position: absolute; inset: 50% 0 auto; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; }
   .tb-an-protagonistas { position: relative; flex: none; width: 100%; }
+  .tb-an-escena { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); pointer-events: none; }
+  .tb-an-interior { inset: 0; width: 100%; height: 100%; object-fit: fill; }
   .tb-an-suelo { position: absolute; border-radius: 50%; background: var(--tone-tint); }
   .tb-an-figura { position: absolute; transform-origin: 50% 92%; animation: tb-aparece 420ms var(--ease-playful) var(--delay, 0ms) both; }
   .tb-an-figura img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
   .tb-an-figura img.is-hopping { animation: tb-an-salto 700ms ease-out both; }
-  .tb-an-chispa { position: absolute; background: var(--tone-fill); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: tb-aparece 320ms var(--ease-playful) var(--delay, 0ms) both, tb-an-brillo 2400ms ease-in-out calc(var(--delay, 0ms) + 320ms) infinite; }
-  .tb-an-chispa.is-mid { background: var(--tone-mid); }
-  .tb-an-toque { position: absolute; z-index: 4; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .tb-an-titulo { @apply m-0 font-black whitespace-nowrap text-center; flex: none; height: 120px; font-size: calc(var(--text-hero) * var(--title-fit, 1)); line-height: 120px; letter-spacing: -.02em; color: var(--color-ink); }
-  .tb-an-linea { @apply m-0 font-bold text-center text-muted; flex: none; margin-top: 20px; font-size: var(--text-headline); line-height: 1.3; text-wrap: balance; }
+  .tb-an-titulo { @apply m-0 font-black whitespace-nowrap text-center; flex: none; height: 96px; margin-top: 14px; font-size: calc(var(--text-hero) * .8 * var(--title-fit, 1)); line-height: 96px; letter-spacing: -.02em; color: var(--color-ink); }
+  .tb-an-linea { @apply m-0 font-bold text-center text-muted; flex: none; margin-top: 6px; font-size: var(--text-headline); line-height: 1.3; text-wrap: balance; }
 
   /* ---- La tarjeta y la tarjeta con escenario (Destapar e Historia): blanca y plana, con el contorno suave; activa (algo
-     encima), el cielo de 4 y un poco más grande; al recibir algo, rebota. El suelo del lugar (`sceneryCard`, board.ts)
-     va abajo y a lo ancho dentro del margen blanco, con las esquinas de abajo de la tarjeta; arriba, el blanco de la
-     tarjeta es el cielo. La tarjeta no cambia los colores del suelo. ---- */
+     encima), el cielo de 4 y un poco más grande; al recibir algo, rebota. El suelo del lugar es su isla (`sceneryCard`,
+     board.ts): la misma pieza que va suelta bajo lo que se toma, aquí dentro de la tarjeta, abajo y sin tocar el
+     marco; arriba, el blanco de la tarjeta es el cielo. La tarjeta no cambia los colores de la isla. ---- */
   .tb-tarjeta { position: absolute; z-index: 2; background: var(--color-surface); box-shadow: inset 0 0 0 3px var(--color-depth); transition: scale 160ms var(--ease-playful), box-shadow 160ms ease; }
   .tb-tarjeta img { position: absolute; pointer-events: none; }
   button.tb-tarjeta:not(:disabled) { cursor: pointer; }
@@ -386,33 +468,34 @@
   button.tb-tarjeta:disabled { cursor: default; }
   .tb-tarjeta.is-over { animation: none; scale: 1.06; box-shadow: inset 0 0 0 4px var(--board-active); }
   .tb-tarjeta.is-landing { animation: tb-placed 420ms var(--ease-playful); }
-  .tb-suelo { border-radius: 0 0 calc(var(--radius-board) - 6px) calc(var(--radius-board) - 6px); object-fit: fill; }
+  .tb-isla { position: absolute; max-width: none; pointer-events: none; }
 
-  /* ---- Destapar (Revelar): por ítem, arriba su tarjeta (con escenario, si el ítem trae su suelo) y debajo lo que se
-     ve, en su nido (el nido detrás y su borde delante), todos a una escala. Al tocar lo que se ve, o su tarjeta, lo
-     que escondía aparece en la tarjeta, apoyado en su suelo, y la tarjeta rebota. Lo que se ve es lo que se toca: sin
-     caja ni contorno, salta un poco al tocarlo y, en guiado, el primero por destapar respira. ---- */
+  /* ---- Destapar (Revelar): por ítem, arriba su tarjeta (con escenario, si el ítem trae la isla de su lugar) y debajo
+     lo que se ve, asentado en el apoyo que nombra la escena (un nido: detrás y, por delante, su capa de delante), todos
+     a una escala. Al tocar lo que se ve, o su tarjeta, lo que escondía aparece en la tarjeta, de pie en su isla, y la
+     tarjeta rebota. Lo que se ve es lo que se toca: sin caja ni contorno, salta un poco al tocarlo; si nadie toca, la
+     mano pulsa el primero por destapar. ---- */
   .tb-objeto { position: absolute; z-index: 3; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .tb-objeto img { position: absolute; pointer-events: none; }
   .tb-objeto.is-hopping .tb-huevo { animation: tb-nudge 700ms ease-in-out; }
-  .tb-objeto.is-inviting { animation: tb-breathe 1600ms ease-in-out; }
   /* Mientras la tarjeta esconde algo, un «?» pequeño y discreto en su blanco, del mismo gris que su contorno
      (--color-depth): se nota sin competir con los dibujos ni con el color de la pantalla. Al destaparla se va y lo
      que escondía aparece. */
   .tb-incognita { @apply absolute grid place-items-center font-black; pointer-events: none; font-size: 72px; line-height: 1; color: var(--color-depth); transition: opacity 180ms ease, scale 180ms ease; }
   .tb-incognita.is-gone { opacity: 0; scale: .6; }
-  .tb-tarjeta .tb-ave { animation: tb-entra 260ms ease-out 120ms both; }
+  /* El ave entra cuando ya está pintada (data-loaded, RiveCharacter): nunca aparece de golpe ni a medio cargar. */
+  .tb-tarjeta .tb-ave { opacity: 0; }
+  .tb-tarjeta .tb-ave[data-loaded] { opacity: 1; animation: tb-entra 260ms ease-out 120ms both; }
 
   /* ---- Colocar: los destinos arriba, huecos planos en la arena del área con su número dentro como marca de agua; las
      fichas abajo, del mismo tamaño que los destinos, así al colocarlas los cubren enteros.
-     El hueco que toca (guiado) respira; el que recibe una ficha arrastrada se marca en cielo, como toda pieza activa.
+     El hueco que recibe una ficha arrastrada se marca en cielo, como toda pieza activa.
      El número no cambia: todos los huecos lo llevan igual. Descartados: el azul de información del kit con borde
      punteado, un lavanda pálido, el gris de Seedle, los grises night del kit y un gris neutro (un hueco gris se lee
      desactivado, lo contrario de «aquí va»), un número blanco y el contorno de tinta (rompe el kit). ---- */
   .tb-numero { @apply absolute z-[1] flex items-center justify-center font-black; pointer-events: none; font-size: 140px; line-height: 1; color: var(--board-slot-mark); }
   .tb-ranura { position: absolute; z-index: 0; border-radius: var(--radius-board); background: var(--board-slot); transition: background 160ms ease, box-shadow 160ms ease; }
   .tb-ranura.is-over { box-shadow: inset 0 0 0 4px var(--board-active); }
-  .tb-ranura.is-next { animation: tb-breathe 1600ms ease-in-out infinite; }
   .tb-ranura.is-wrong { animation: tb-wiggle 460ms ease; }
   .tb-flecha { @apply absolute grid place-items-center; color: var(--board-slot-mark); }
   .tb-flecha .icon { width: 40px; height: 40px; stroke-width: 3; }
@@ -421,41 +504,44 @@
      tono de cada ítem se elige en contraste suave con su dibujo. Descartados: la cara pastel apagada con el contorno
      de tinta, como las cartas de Seedle (rompía el kit y quitaba protagonismo al dibujo). Su dibujo se hizo para una
      ficha de 192 y crece en proporción (--art-scale, TemplateColocar). */
-  .tb-ficha { @apply absolute z-[2] flex flex-col items-center justify-center gap-1.5; cursor: grab; touch-action: none; background: var(--pz-face, var(--color-surface)); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); transition: left 340ms var(--ease-playful), top 340ms var(--ease-playful), translate 160ms var(--ease-playful), rotate 240ms var(--ease-playful), scale 120ms ease, box-shadow 160ms ease; }
+  /* Cada ficha va en una caja que lleva su posición con una transformación, en su propia capa (TemplateColocar,
+     `placePiece`): sigue al dedo y cambia de sitio con la física del motor, sin recalcular ni repintar el tablero. La
+     caja no mide nada: la ficha se coloca desde su esquina. En un gesto o de camino a su sitio va por encima. */
+  .tb-ficha-caja { position: absolute; left: 0; top: 0; z-index: 2; will-change: transform; }
+  .tb-ficha-caja[data-state=colocada] { z-index: 3; }
+  .tb-ficha-caja.is-held { z-index: 20; }
+  .tb-ficha { @apply absolute flex flex-col items-center justify-center gap-1.5; cursor: grab; touch-action: none; background: var(--pz-face, var(--color-surface)); box-shadow: inset 0 0 0 3px var(--pz-line, var(--color-depth)); transition: translate 160ms var(--ease-playful), rotate 240ms var(--ease-playful), scale 120ms ease, box-shadow 160ms ease; }
   .tb-ficha:active:not(:disabled) { scale: .97; }
-  /* En un gesto (useDrag), la ficha se mueve con su desplazamiento: sin transición de posición, para que al soltar salga
-     del punto donde se soltó y no salte. */
-  .tb-ficha.is-held { z-index: 20; transition: rotate 240ms var(--ease-playful), scale 120ms ease, box-shadow 160ms ease; }
-  .tb-ficha.is-dragging { z-index: 20; cursor: grabbing; transition: none; box-shadow: inset 0 0 0 4px var(--board-active); filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
-  /* La mano: en la bandeja las fichas van un poco giradas, como cartas; la que se toca se endereza y sube. */
-  .tb-ficha:not([data-state=colocada]):nth-of-type(3n+1) { rotate: -4deg; }
-  .tb-ficha:not([data-state=colocada]):nth-of-type(3n+2) { rotate: 3deg; }
-  .tb-ficha:not([data-state=colocada]):nth-of-type(3n) { rotate: -2deg; }
-  .tb-ficha:not([data-state=colocada]):not(:disabled):hover, .tb-ficha.is-dragging { rotate: 0deg; translate: 0 -8px; }
+  .tb-ficha.is-dragging { cursor: grabbing; box-shadow: inset 0 0 0 4px var(--board-active); filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
+  /* La mano: en la bandeja las fichas van un poco giradas, como cartas; la que se arrastra y la colocada, derechas. */
+  .tb-ficha[data-tilt="0"] { rotate: -4deg; }
+  .tb-ficha[data-tilt="1"] { rotate: 3deg; }
+  .tb-ficha[data-tilt="2"] { rotate: -2deg; }
+  .tb-ficha[data-state=colocada], .tb-ficha.is-dragging { rotate: 0deg; }
+  /* Con ratón, la ficha también se endereza al pasar. En táctil no: el «pasar» se queda pegado después de tocar. */
+  @media (hover: hover) { .tb-ficha:not([data-state=colocada]):not(:disabled):hover { rotate: 0deg; translate: 0 -8px; } }
   /* Al caer en su destino la ficha rebota; al completar, todas saltan en fila. */
-  .tb-ficha[data-state=colocada] { z-index: 3; animation: tb-placed 420ms var(--ease-playful) 260ms both; }
+  .tb-ficha[data-state=colocada] { animation: tb-placed 420ms var(--ease-playful) 260ms both; }
   .tb-ficha:disabled { cursor: default; }
   .tb-ficha.is-celebrating { animation: tb-celebrate 720ms var(--ease-playful) var(--delay, 0ms) both; }
   .tb-ficha-arte { @apply relative block; width: 140px; height: 120px; scale: var(--art-scale, 1); }
   .tb-ficha-img { position: absolute; inset: 0; margin: auto; width: auto; height: auto; max-width: 100%; max-height: 100%; }
-  /* La insignia de una pieza: blanca y plana, con su contorno suave y el icono en el tono de la pieza. Con su propio
-     tono (data-tone; la marca de hecho, en lima), el icono y el contorno son los de ese tono. */
+  /* La insignia de una pieza: blanca y plana, con su contorno suave y el icono en el tono de la pieza. */
   .tb-insignia { @apply absolute grid place-items-center rounded-full; right: -12px; top: -8px; width: 60px; height: 60px; background: var(--color-surface); color: var(--tone-icon); box-shadow: inset 0 0 0 3px var(--color-depth); }
-  .tb-insignia[data-tone] { box-shadow: inset 0 0 0 3px var(--tone-fill); }
   .tb-insignia .icon { width: 34px; height: 34px; stroke-width: 2.4; }
   .tb-ficha-etiqueta { @apply font-black whitespace-nowrap; font-size: var(--text-headline); line-height: 1.1; color: var(--pz-ink, var(--color-ink)); }
   /* Sin nombre escrito (infantil), el dibujo ocupa la ficha. */
   .tb-ficha:not(:has(.tb-ficha-etiqueta)) .tb-ficha-arte { scale: calc(var(--art-scale, 1) * 1.22); }
 
   /* La mano que demuestra la acción (useDemo y DemoHand): encima de todo, con la copia translúcida de lo que lleva. */
-  .tb-mano, .tb-mano-copia { position: absolute; pointer-events: none; }
+  .tb-mano, .tb-mano-copia { position: absolute; pointer-events: none; will-change: transform, opacity; }
   .tb-mano-copia { z-index: 11; }
   .tb-mano { z-index: 12; }
 
   /* ---- Historia (Recorrido). Cada lugar, en una tarjeta (con escenario, si su ítem lo trae) del patrón de las
-     piezas: quieta, activa en cielo con lo que viaja encima (y se agranda) y resuelta cuando ya se recorrió. No
-     respiran: la mano demuestra lo que se puede hacer, y las dos juntas recargan el tablero. El origen: su dibujo al fondo y, delante, su personaje y el nido
-     de lo que viaja; el borde anterior del nido va delante. Lo que viaja se agarra por una zona de 160 sobre él;
+     piezas: quieta, activa en cielo con lo que viaja encima (y se agranda) y resuelta cuando ya se recorrió. Lo que
+     se puede hacer lo demuestra la mano. El origen: su dibujo al fondo y, delante, su personaje y el apoyo donde
+     espera lo que viaja (el que nombra la escena: un nido), con su capa de delante por delante. Lo que viaja se agarra por una zona de 160 sobre él;
      arrastrado va derecho, un poco más grande y con su sombra flotante. ---- */
   .tb-hv-carta img { transition: opacity 240ms ease; }
   /* Con interior: mientras el huevo está en el lugar, la tarjeta «se acerca» y muestra su interior (el exterior se va y
@@ -471,32 +557,166 @@
   .tb-hv-carton-fondo { z-index: 4; }
   .tb-hv-carton-frente { z-index: 6; }
   .tb-hv-carta[data-done]:not(.is-inside) .tb-hv-exterior { opacity: .45; }
+  /* Un lugar de paso ya recorrido conserva su interior, con su cartón vacío, y se apaga igual. */
+  .tb-hv-carta[data-done].is-inside .tb-hv-interior, .tb-hv-carton.is-inside[data-done] { opacity: .45; }
   .tb-hv-granja, .tb-hv-gallina, .tb-hv-nido, .tb-hv-nido-frente { position: absolute; pointer-events: none; }
+  /* La base (`ground`): la isla de un lugar, suelta en el tablero, donde se apoya lo que se toma o se toca (el origen
+     de un recorrido, con su personaje y su nido; la fila de nidos de Destapar; el personaje de Señalar). Detrás de
+     todo; toma el alto de su dibujo. */
+  .tb-base { position: absolute; z-index: 0; height: auto; max-width: none; pointer-events: none; }
   .tb-hv-granja { z-index: 1; }
   .tb-hv-gallina, .tb-hv-nido { z-index: 3; }
   .tb-hv-nido-frente { z-index: 7; }
-  .tb-hv-huevo { position: absolute; pointer-events: none; transform-origin: 50% 100%; }
+  /* El huevo se mueve solo con transformaciones, en su propia capa: su caja (`tb-hv-huevo-caja`) lleva la posición y el
+     dibujo, centrado en ella, su tamaño y su giro sobre el centro de su base. Así arrastrarlo o verlo volar no obliga
+     a recalcular ni a repintar el tablero (TemplateHistoria, `placeEgg`). */
+  .tb-hv-huevo-caja { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }
+  /* Su caja no tiene ancho: sin esto, el `max-width: 100%` de toda imagen lo dejaría en nada. */
+  .tb-hv-huevo { position: absolute; max-width: none; pointer-events: none; transform-origin: 50% 100%; }
   .tb-hv-huevo.is-flying { animation: tb-hv-giro 520ms ease-in-out infinite; }
   .tb-hv-huevo.is-hopping { animation: tb-hop 1100ms ease-in-out; }
   .tb-hv-huevo.is-dragging { filter: drop-shadow(0 18px 14px var(--color-shade-strong)); }
-  .tb-hv-agarre { position: absolute; z-index: 10; padding: 0; border: 0; background: none; appearance: none; border-radius: 50%; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  .tb-hv-agarre { position: absolute; left: 0; top: 0; z-index: 10; padding: 0; border: 0; background: none; appearance: none; border-radius: 50%; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
   .tb-hv-agarre.is-dragging { cursor: grabbing; }
 
+  /* ---- Estaciones (Simular): una tarjeta por estación, con su escenario dentro, y abajo el origen común de las
+     piezas, en dos capas (las piezas van entre ellas; las clases de lo que viaja son las de Historia). Dentro de la
+     tarjeta, el escenario (por dentro del marco, recortado a su esquina) y, sobre él, piezas sueltas de la librería
+     colocadas por un punto: las apoyadas, por el centro de su base; el utensilio, por su punto de apoyo. El fogón (la
+     estufa, la llama, el utensilio, lo de dentro y lo que se mueve encima) se coloca y se escala entero. Todo cambia
+     solo de opacidad y de transformación. Recién puesto se ve lo que llegó; mientras se mantiene el dedo, la tarjeta se
+     marca como activa, la llama arde, lo que se mueve encima gira y lo hecho va apareciendo (su opacidad la escribe
+     la plantilla en cada cuadro); al servir, lo de dentro se va y aparece en el plato. La tarjeta se mantiene pulsada:
+     sin menú del sistema ni selección. ---- */
+  .tb-es-carta { cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .tb-es-carta.is-held { scale: 1.03; box-shadow: inset 0 0 0 4px var(--board-active); }
+  .tb-es-escena { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); pointer-events: none; }
+  .tb-es-interior { inset: 0; width: 100%; height: 100%; object-fit: fill; }
+  .tb-es-fogon, .tb-es-comida, .tb-es-util, .tb-es-servido { position: absolute; width: 0; height: 0; }
+  .tb-es-fogon { transform-origin: 0 0; }
+  .tb-es-escena img { max-width: none; }
+  .tb-es-apoyado, .tb-ab-apoyado { left: 0; top: 0; translate: -50% -100%; transform-origin: 50% 100%; }
+  /* La llama: cada lengua nace de su punto del quemador. Al encenderse crecen una tras otra; encendidas, cada una se
+     estira y se ladea a su ritmo (`--ritmo`) y desfasada de las demás (`--desfase`). */
+  .tb-es-llama, .tb-es-lengua { position: absolute; width: 0; height: 0; }
+  .tb-es-lengua { top: 0; scale: 0; opacity: 0; transform-origin: 0 0; transition: scale 160ms ease-in, opacity 120ms ease; }
+  .tb-es-carta.is-held .tb-es-lengua, .tb-es-fogon.is-lit .tb-es-lengua { scale: var(--alto, 1); opacity: 1; transition: scale 260ms var(--ease-playful) calc(var(--turno, 0) * 28ms), opacity 120ms ease calc(var(--turno, 0) * 28ms); }
+  .tb-es-carta.is-held .tb-es-lengua img, .tb-es-fogon.is-lit .tb-es-lengua img { animation: tb-es-llama var(--ritmo, 420ms) ease-in-out var(--desfase, 0ms) infinite; }
+  .tb-es-comida { opacity: 0; transform-origin: 0 0; will-change: transform; transition: opacity 180ms ease; }
+  .tb-es-carta:is([data-state=cruda], [data-state=firme]) .tb-es-comida { opacity: 1; }
+  .tb-es-comida.is-hopping { animation: tb-nudge 700ms ease-in-out; }
+  .tb-es-hecho { opacity: 0; }
+  /* Lo que se mueve encima (la cuchara) remueve: su pala da vueltas dentro del utensilio, en una elipse aplastada por
+     la vista, y el mango se inclina con ella. Lo de dentro se mece al mismo compás. En reposo queda donde empieza la
+     vuelta, así no salta al empezar ni al parar. */
+  .tb-es-util { rotate: calc(var(--giro, 0deg) - 7deg); }
+  .tb-es-carta.is-held .tb-es-util, .tb-es-fogon.is-lit .tb-es-util { animation: tb-es-mezcla 900ms linear infinite; }
+  .tb-es-carta.is-held[data-stir] .tb-es-comida img, .tb-es-carta[data-stir] .tb-es-fogon.is-lit .tb-es-comida img { animation: tb-es-remueve 900ms ease-in-out infinite; }
+  .tb-es-servido { opacity: 0; scale: .6; }
+  .tb-es-carta[data-state=servida] .tb-es-servido { opacity: 1; scale: 1; transition: opacity 200ms ease 120ms, scale 420ms var(--ease-playful) 120ms; }
+  .tb-es-servido.is-celebrating { animation: tb-celebrate 720ms var(--ease-playful) calc(600ms + var(--delay, 0ms)) both; }
+  .tb-es-origen { position: absolute; z-index: 3; pointer-events: none; }
+  .tb-es-origen-frente { z-index: 6; }
+
+  /* ---- Abrir (Simular): una sola tarjeta con su interior (por dentro del marco, recortado a su esquina), la del plano
+     detalle, y, dentro, piezas sueltas de la librería apoyadas por el centro de su base: el apoyo, el entero con su
+     grieta encima y las piezas de sus partes. Cada pieza tiene su sitio (un punto del escenario, que lleva el vuelo al
+     abrirse) y,
+     en él, lo que se toca: su dibujo, a la escala de las piezas (--s), con una zona de 160 como mínimo. Todo cambia
+     solo de opacidad y de transformación. Cerrado, las partes no se ven; al abrirse, el entero se va creciendo un poco
+     y las partes salen de él. La parte tocada se marca con un halo blanco de 6 y un poco más grande (--k): un contorno
+     de color no se ve sobre un apoyo de color. ---- */
+  .tb-ab-escena { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); }
+  .tb-ab-escena img { max-width: none; }
+  .tb-ab-interior { inset: 0; width: 100%; height: 100%; object-fit: fill; }
+  .tb-ab-sitio { position: absolute; width: 0; height: 0; will-change: transform; }
+  .tb-ab-toque { position: absolute; left: 0; top: 0; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; translate: -50% -100%; transform-origin: 50% 100%; scale: calc(var(--s, 1) * var(--k, 1)); transition: scale 180ms var(--ease-playful); will-change: transform; }
+  :is(.tb-ab-toque, .tb-be-vaso):focus-visible { outline-width: calc(3px / var(--s, 1)); outline-offset: calc(4px / var(--s, 1)); }
+  .tb-ab-toque:disabled { cursor: default; }
+  /* La zona de toque: el dibujo o, si es más pequeño, 160 del tablero, centrada en él. */
+  .tb-ab-toque::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, calc(160px / var(--s, 1))); height: max(100%, calc(160px / var(--s, 1))); translate: -50% -50%; }
+  .tb-ab-toque img { position: static; }
+  .tb-ab-toque .tb-ab-grieta { position: absolute; left: 0; top: 0; opacity: 0; }
+  .tb-ab-toque .tb-ab-grieta.is-on { opacity: 1; }
+  .tb-ab-entero { transition: opacity 160ms ease, scale 220ms ease-out; }
+  .tb-ab:not([data-phase=cerrado]) .tb-ab-entero { opacity: 0; scale: 1.1; pointer-events: none; }
+  .tb-ab[data-phase=cerrado] .tb-ab-pieza { opacity: 0; }
+  .tb-ab:not([data-phase=abierto]) .tb-ab-pieza { pointer-events: none; }
+  .tb-ab-pieza.is-marked { --k: 1.06; }
+  .tb-ab-pieza.is-marked img { --halo: calc(6px / var(--s, 1)); filter: drop-shadow(var(--halo) 0 0 var(--color-white)) drop-shadow(calc(var(--halo) * -1) 0 0 var(--color-white)) drop-shadow(0 var(--halo) 0 var(--color-white)) drop-shadow(0 calc(var(--halo) * -1) 0 var(--color-white)); }
+
+  /* ---- Beber: la pausa de agua, la misma en todos los storyboards. Una sola tarjeta con su interior (la del plano
+     detalle) y, dentro, sobre la mesa, el posavasos y un vaso grande. El vaso es lo que se toca: su sitio es el punto donde se apoya y, en él, sus
+     piezas en un mismo lienzo, a la escala del plano (--s): el vaso, el agua y su superficie dentro del recorte de su
+     hueco, y los brillos delante. El agua sube y el vaso se mece solo con transformaciones. ---- */
+  .tb-be-interior { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
+  .tb-be-carta img { max-width: none; }
+  .tb-be-sitio { position: absolute; width: 0; height: 0; }
+  .tb-be-vaso { position: absolute; left: 0; top: 0; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; scale: var(--s, 1); will-change: transform; }
+  .tb-be-vaso img { position: absolute; left: 0; top: 0; max-width: none; }
+  .tb-be-hueco { position: absolute; inset: 0; }
+  .tb-be-agua { will-change: transform; }
+
   @media (prefers-reduced-motion: reduce) {
-    .tb-an-figura, .tb-an-figura img.is-hopping, .tb-an-chispa, .tb-ficha[data-state=colocada], .tb-ficha.is-celebrating, .tb-ranura.is-next { animation: none; }
+    .tb-ab-entero, .tb-ab-toque { transition: none; }
+    .tb-an-figura, .tb-an-figura img.is-hopping, .tb-ficha[data-state=colocada], .tb-ficha.is-celebrating { animation: none; }
     .tb-hv-carta.is-landing, .tb-hv-huevo { animation: none !important; }
     .tb-hv-exterior, .tb-hv-interior, .tb-hv-carton { transition: none; scale: 1; }
+    .tb-es-lengua img, .tb-es-util, .tb-es-comida, .tb-es-comida img, .tb-es-servido { animation: none !important; }
+    .tb-es-lengua { transition: none !important; }
+    .tb-es-carta[data-state=servida] .tb-es-servido { transition: none; }
   }
+  /* ---- Señalar (Conectar, Localizar; TemplateSenalar.vue). A la izquierda, una tarjeta por cada cosa que se busca, con
+     su dibujo apoyado por el centro de su base y, si la escena lo trae, su escenario (un interior, que llena la
+     tarjeta dentro del marco, o la isla de su lugar); lo de dentro se encoge con la tarjeta. A la derecha, el
+     personaje, suelto: de pie en la isla de su lugar (`tb-base`), entero y sin marco. Las tarjetas siguen el patrón de
+     las piezas: quieta; activa (la elegida), en cielo y un poco más grande; resuelta, apagada, sin marca. Si se toca
+     al personaje sin haber elegido, la mano demuestra al momento un toque sobre una de las que faltan; al elegir una,
+     que ahora se toca al personaje. Las zonas que se tocan son regiones grandes de su lienzo, sin dibujo. El personaje
+     entra cuando ya está pintado. ---- */
+  .tb-se-dentro { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+  .tb-se-parte img { max-width: none; transition: opacity 240ms ease; }
+  .tb-se-interior { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
+  .tb-se-pieza { translate: -50% -100%; transform-origin: 50% 100%; }
+  .tb-se-parte.is-found img { opacity: .45; }
+  .tb-se-personaje { position: absolute; pointer-events: none; opacity: 0; }
+  .tb-se-personaje[data-loaded] { opacity: 1; animation: tb-entra 260ms ease-out both; }
+  .tb-se-zona { position: absolute; z-index: 4; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  /* ---- Repasar (Recordar; TemplateRepasar.vue). Armar el recorrido: los lugares numerados y las fichas son los del
+     tablero (`tb-ranura`, `tb-numero`, `tb-flecha` y `tb-ficha`, arriba). Aquí, lo que lleva cada ficha: sus dibujos,
+     apoyados por el centro de su base, y su personaje, si lo tiene, que entra ya pintado y recortado por el marco de
+     la ficha. La ficha que se toca y no puede ir al lugar libre tiembla. ---- */
+  /* Al completarse, el recorrido armado baja al centro del tablero y crece (TemplateRepasar, `ARMED`): toda la capa,
+     con una sola transformación. */
+  .tb-re { transition: transform 520ms var(--ease-playful); }
+  .tb-re.is-armed { transform: translateY(var(--re-dy)) scale(var(--re-grow)); }
+  @media (prefers-reduced-motion: reduce) { .tb-re { transition: none; } }
+  .tb-re-ficha img { position: absolute; max-width: none; pointer-events: none; }
+  .tb-re-pieza { translate: -50% -100%; transform-origin: 50% 100%; }
+  .tb-re-dentro { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); pointer-events: none; }
+  .tb-re-dentro .tb-ave { position: absolute; opacity: 0; }
+  .tb-re-dentro .tb-ave[data-loaded] { opacity: 1; }
+  .tb-re-ficha.is-wrong { animation: tb-wiggle 460ms ease; }
 }
 
 @keyframes tb-nudge { 0%, 50%, 100% { translate: 0 0; } 25% { translate: 0 -14px; } 70% { translate: 0 -6px; } }
 @keyframes tb-wiggle { 20% { translate: -12px 0; } 45% { translate: 10px 0; } 70% { translate: -5px 0; } }
 @keyframes tb-placed { 0% { scale: 1; } 45% { scale: 1.1; } 100% { scale: 1; } }
 @keyframes tb-celebrate { 0% { translate: 0 0; scale: 1; rotate: 0deg; } 30% { translate: 0 -30px; scale: 1.08; rotate: -4deg; } 55% { translate: 0 -10px; rotate: 3deg; } 75% { translate: 0 -16px; rotate: -1deg; } 100% { translate: 0 0; scale: 1; rotate: 0deg; } }
-@keyframes tb-breathe { 50% { scale: 1.03; } }
 @keyframes tb-aparece { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 @keyframes tb-entra { from { opacity: 0; } }
 @keyframes tb-hop { 0%, 72%, 100% { translate: 0 0; } 80% { translate: 0 -22px; } 88% { translate: 0 0; } 93% { translate: 0 -8px; } }
 @keyframes tb-an-salto { 0%, 55%, 86%, 100% { translate: 0 0; } 30% { translate: 0 -34px; } 72% { translate: 0 -10px; } }
-@keyframes tb-an-brillo { 0%, 100% { scale: 1; } 50% { scale: .6; } }
 @keyframes tb-hv-giro { 0%, 100% { rotate: -8deg; } 50% { rotate: 8deg; } }
+@keyframes tb-es-llama { 0%, 100% { transform: scaleY(1) skewX(0deg); } 28% { transform: scaleY(1.24) skewX(-6deg); } 52% { transform: scaleY(.88) skewX(3deg); } 78% { transform: scaleY(1.12) skewX(5deg); } }
+@keyframes tb-es-mezcla {
+  0%, 100% { translate: 0 0; rotate: calc(var(--giro, 0deg) - 7deg); }
+  12.5% { translate: 3.5px -3.5px; rotate: calc(var(--giro, 0deg) - 5deg); }
+  25% { translate: 12px -5px; rotate: var(--giro, 0deg); }
+  37.5% { translate: 20.5px -3.5px; rotate: calc(var(--giro, 0deg) + 5deg); }
+  50% { translate: 24px 0; rotate: calc(var(--giro, 0deg) + 7deg); }
+  62.5% { translate: 20.5px 3.5px; rotate: calc(var(--giro, 0deg) + 5deg); }
+  75% { translate: 12px 5px; rotate: var(--giro, 0deg); }
+  87.5% { translate: 3.5px 3.5px; rotate: calc(var(--giro, 0deg) - 5deg); }
+}
+@keyframes tb-es-remueve { 0%, 100% { transform: skewX(0deg) scaleX(1); } 25% { transform: skewX(4deg) scaleX(1.03); } 75% { transform: skewX(-4deg) scaleX(.98); } }

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { animate, useAnimation } from '~/runner/board'
+import { realTime } from '~/runner/engine/world'
 import { useDemo } from '~/runner/useDemo'
 import type { DemoMove } from '~/runner/useDemo'
 
@@ -12,6 +13,7 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: ReturnType<typeof setTimeout>) => clearTimeout(id))
 })
 afterEach(() => {
+  realTime.clear() // lo que una prueba deja a medias no sigue en la siguiente
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
@@ -172,9 +174,58 @@ describe('useDemo', () => {
     expect(demo.state.on).toBe(false)
   })
 
+  it('un toque: la mano se queda en su sitio, sin copia, pulsa dos veces y marca lo que pulsa mientras está abajo', () => {
+    const demo = useDemo<string>({
+      ready: () => true,
+      move: () => ({ from: { x: 640, y: 300 }, to: { x: 640, y: 300 }, target: 'huevo', tap: true }),
+    })
+    vi.advanceTimersByTime(1800) // empezó a los 1,5 s; va por los 300 ms: ya se ve y todavía no pulsa
+    expect(demo.state.on).toBe(true)
+    expect(demo.state.over).toBe(null)
+    vi.advanceTimersByTime(200) // 500 ms: abajo, la primera vez
+    expect(demo.state.hand.s).toBeLessThan(0.95)
+    expect(demo.state.over).toBe('huevo')
+    expect(demo.state.hand.x).toBe(640)
+    expect(demo.state.copy.o).toBe(0)
+    vi.advanceTimersByTime(280) // 780 ms: arriba, entre las dos
+    expect(demo.state.hand.s).toBeCloseTo(1)
+    expect(demo.state.over).toBe(null)
+    vi.advanceTimersByTime(300) // 1080 ms: abajo, la segunda
+    expect(demo.state.over).toBe('huevo')
+    vi.advanceTimersByTime(400) // 1480 ms: arriba otra vez
+    expect(demo.state.over).toBe(null)
+    vi.advanceTimersByTime(600) // terminó
+    expect(demo.state.on).toBe(false)
+  })
+
   it('nunca con movimiento reducido', () => {
-    const { moves } = setup({ reduced: true })
+    const { demo, moves } = setup({ reduced: true })
     vi.advanceTimersByTime(20000)
+    demo.show()
     expect(moves).toHaveLength(0)
+  })
+
+  it('pedida al momento, demuestra sin esperar y cuenta como la primera del tramo', () => {
+    const { demo, moves } = setup()
+    demo.show()
+    expect(demo.state.on).toBe(true)
+    expect(moves).toEqual([0])
+    vi.advanceTimersByTime(2400 + 5000) // terminó; la primera del tramo ya salió: no vuelve a los 1,5 s
+    expect(moves).toEqual([0])
+    vi.advanceTimersByTime(1500) // la siguiente, a los 6 s sin tocar
+    expect(moves).toEqual([0, 1])
+  })
+
+  it('pedida al momento con una en marcha, o sin poder, no hace nada', () => {
+    let ready = true
+    const { demo, moves } = setup({ ready: () => ready })
+    demo.show()
+    demo.show()
+    expect(moves).toEqual([0])
+    demo.stop()
+    ready = false
+    demo.show()
+    expect(demo.state.on).toBe(false)
+    expect(moves).toEqual([0])
   })
 })

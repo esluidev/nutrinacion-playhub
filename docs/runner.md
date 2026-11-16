@@ -24,6 +24,8 @@ educator.nutrinacion.com                         player.nutrinacion.com
 | `mode` | `educator`, `device`, `home` o `preview` | `educator` |
 | `lang` | Un idioma que declare el storyboard | El idioma por defecto del storyboard |
 | `escena` | Carpeta de una escena | La primera escena |
+| `sonidos` | `1` | Sin panel. Con él, un botón por cada sonido del motor para oírlo suelto y el nombre del último que sonó. No es parte del contrato |
+| `medir` | `1` | Sin medidor. Con él, sobre el runner salen los números del motor (cuadros por segundo, cuadros perdidos y lo que tarda un toque en verse) para probar en un dispositivo. No es parte del contrato: la app no lo manda |
 
 La URL no lleva nada sensible ni identificadores de la app: ni taller, ni sesión, ni datos personales. Se construye con `runnerUrl()`.
 
@@ -37,8 +39,8 @@ Todos los mensajes van por `postMessage` con canal y versión: `{ canal: 'playhu
 
 | `tipo` | Campos | Cuándo |
 |---|---|---|
-| `listo` | `storyboard` (`<eje>/<slug>`), `modo`, `idioma`, `escenas` (número) | Al cargar, antes de la primera escena |
-| `escena` | `indice` (desde 0), `carpeta` | Cada vez que cambia la escena, también la primera (educador y casa) |
+| `listo` | `storyboard` (`<eje>/<slug>`), `modo`, `idioma`, `escenas` (número) | Cuando lo primero que se va a ver ya está completo en pantalla; siempre antes de la primera `escena` |
+| `escena` | `indice` (desde 0), `carpeta` | Cada vez que cambia la escena, también la primera (educador, casa y vista previa; un dispositivo no la manda) |
 | `terminado` | — | Se confirma «Terminar» en la última escena |
 | `salir` | `indice`, `carpeta` | Se confirma «Salir» a medias |
 | `error` | `codigo: 'no-encontrado'` | El storyboard no existe en el build de Player |
@@ -56,7 +58,7 @@ Nunca viajan puntos, respuestas ni datos de los participantes (constitución, «
 ## 3. El saludo
 
 1. La app monta el iframe y espera `listo`, por defecto 20 s.
-2. El runner manda `listo` y empieza a funcionar sin esperar respuesta. El taller no se bloquea si la guía tarda.
+2. El runner prepara lo primero que se va a ver (la letra, los dibujos de la escena y su personaje) y entonces manda `listo` y empieza a funcionar sin esperar respuesta: la app quita su carga justo cuando hay una escena entera que mostrar. Con mala red no espera para siempre: a los 10 s manda `listo` con lo que haya. El taller no se bloquea si la guía tarda.
 3. La app responde `iniciar` con la guía. El runner la muestra en su panel «Guía».
 4. Si no llega `listo` a tiempo, o llega `error`, la app muestra «No se pudo abrir el taller» con «Reintentar» (recarga el iframe) y su propia salida.
 

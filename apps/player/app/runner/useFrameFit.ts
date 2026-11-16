@@ -4,8 +4,8 @@ import type { Ref } from 'vue'
 // Mide la pantalla con una sonda (`probe`, con los insets de env(safe-area-*)) y fija en el
 // documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-*, la fila
 // de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). En el marco fija la
-// altura de la barra (--bar-h: los controles flotantes a la distancia del borde) y la del pie
-// blanco (--footer-h, con el aire --footer-gap sobre sus botones). `sinBandas` (la vista previa)
+// altura de la barra (--bar-h: los controles flotantes a la distancia del borde) y la de la banda
+// del pie (--footer-h, con el aire --footer-gap sobre sus botones, donde va su borde de nubes). `sinBandas` (la vista previa)
 // no reserva la barra ni el pie: la escena se encaja en todo el alto.
 
 const FRAME = { width: 1280, height: 800 }
@@ -18,7 +18,8 @@ const GUTTER = 32
 // Controles del HUD (44, el mínimo táctil; 48 en teléfonos) más su base de 4.
 const DEPTH = 4
 const CONTROL = { large: 44, phone: 48 }
-const GAP = { large: 24, phone: 16 }
+// El aire del pie sobre sus botones: ahí va el borde de nubes de la banda y de la hoja del feedback.
+const GAP = { large: 28, phone: 20 }
 const CONSIGNA = { large: 56, phone: 48 }
 
 export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, sinBandas = false) {

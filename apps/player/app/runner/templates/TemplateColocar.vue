@@ -2,13 +2,15 @@
   <!-- Colocar · Emparejar, Ordenar, Recorrido. Plano mesa: los destinos arriba, con su número
        encima; las fichas abajo. Tocar una ficha la lleva al siguiente destino libre y tocarla en
        su destino la devuelve; también se arrastra a un destino concreto. Sin «Comprobar»: al
-       llenarse los destinos, el juego responde. -->
+       llenarse los destinos, el juego responde. Sin mano que demuestre: mostrar el arrastre diría
+       la respuesta. Cada ficha va en una caja que lleva su posición con una transformación
+       (`placePiece`): cambiar de sitio no recalcula ni repinta el tablero. -->
   <div ref="layer" class="tb-layer" :style="{ '--art-scale': TILE / ART_TILE }">
     <template v-for="(_, i) in order" :key="`slot-${i}`">
       <span class="tb-numero" :style="box(slotX(i), SLOT_Y, SLOT, SLOT)">{{ i + 1 }}</span>
       <div
         :ref="(el) => { slotNodes[i] = el as HTMLElement }"
-        :class="['tb-ranura', i === nextSlot && 'is-next', i === drag.state.over && 'is-over']"
+        :class="['tb-ranura', i === drag.state.over && 'is-over']"
         :style="box(slotX(i), SLOT_Y, SLOT, SLOT)"
       />
       <span v-if="i < n - 1" class="tb-flecha" :style="box(slotX(i) + SLOT + slotGap / 2 - 24, SLOT_Y + SLOT / 2 - 24, 48, 48)">
@@ -16,29 +18,38 @@
       </span>
     </template>
 
-    <button
-      v-for="piece in pieces"
+    <div
+      v-for="(piece, i) in pieces"
       :key="piece.item.id"
-      :ref="(el) => { piece.node = el as HTMLElement }"
-      type="button"
-      :class="['tb-pieza tb-ficha', drag.isActive(piece.item.id) && 'is-held', drag.isDragging(piece.item.id) && 'is-dragging']"
-      :data-tone="piece.item.tone"
+      :ref="(el) => { boxes[piece.item.id] = el as HTMLElement | null }"
+      class="tb-ficha-caja"
+      :class="{ 'is-held': drag.isActive(piece.item.id) }"
       :data-state="piece.slot >= 0 ? 'colocada' : undefined"
-      :disabled="done"
-      :aria-label="t(piece.item.name)"
-      :style="{ ...box(piece.x, piece.y, TILE, TILE), translate: held(piece), '--delay': piece.delay }"
-      v-bind="drag.bind(piece.item.id)"
     >
-      <span class="tb-ficha-arte">
-        <template v-if="piece.item.nest">
-          <img class="tb-nido" :src="librarySvg('nido')" alt="" :style="nestBox()">
-          <img class="tb-huevo" :src="librarySvg(piece.item.svg)" alt="" :style="eggBox(piece.item)">
-        </template>
-        <img v-else class="tb-ficha-img" :src="librarySvg(piece.item.svg)" alt="">
-        <span v-if="piece.item.icon" class="tb-insignia"><UiIcon :name="(piece.item.icon as UiIconName)" /></span>
-      </span>
-      <span v-if="profile.labels" class="tb-ficha-etiqueta">{{ t(piece.item.name) }}</span>
-    </button>
+      <button
+        :ref="(el) => { piece.node = el as HTMLElement }"
+        type="button"
+        :class="['tb-pieza tb-ficha', drag.isDragging(piece.item.id) && 'is-dragging']"
+        :data-tone="piece.item.tone"
+        :data-tilt="i % 3"
+        :data-state="piece.slot >= 0 ? 'colocada' : undefined"
+        :disabled="done"
+        :aria-label="t(piece.item.name)"
+        :style="{ ...box(0, 0, TILE, TILE), '--delay': piece.delay }"
+        v-bind="drag.bind(piece.item.id)"
+      >
+        <span class="tb-ficha-arte">
+          <template v-if="piece.item.nest && support">
+            <img decoding="sync" class="tb-nido" :src="librarySvg(support.svg)" alt="" :style="nestBox()">
+            <img decoding="sync" class="tb-huevo" :src="librarySvg(piece.item.svg)" alt="" :style="eggBox(piece.item)">
+            <img v-if="support.front" decoding="sync" class="tb-nido" :src="librarySvg(support.front)" alt="" :style="nestBox()">
+          </template>
+          <img decoding="sync" v-else class="tb-ficha-img" :src="librarySvg(piece.item.svg)" alt="">
+          <span v-if="piece.item.icon" class="tb-insignia"><UiIcon :name="(piece.item.icon as UiIconName)" /></span>
+        </span>
+        <span v-if="profile.labels" class="tb-ficha-etiqueta">{{ t(piece.item.name) }}</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -46,9 +57,10 @@
 import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
 import { box, prefersReducedMotion, useSceneText } from '../board'
 import { librarySvg } from '../content'
+import { useWorld } from '../engine/world'
 import { useDrag } from '../useDrag'
-import { replay, useTimers } from '../useTimers'
-import type { DatosItem, FeedbackPayload, TemplateProps } from '../types'
+import { replay } from '../useTimers'
+import type { DatosItem, FeedbackPayload, SupportSpec, TemplateProps } from '../types'
 
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
@@ -83,19 +95,27 @@ const TRAY_Y = SLOT_Y + SLOT + 56
 const slotX = (i: number) => 640 - (n * SLOT + (n - 1) * slotGap) / 2 + i * (SLOT + slotGap)
 const homeOf = (i: number) => ({ x: 640 - (n * TILE + (n - 1) * TILE_GAP) / 2 + i * (TILE + TILE_GAP), y: TRAY_Y })
 
-// Huevo sobre su nido dentro del arte de la ficha (140 × 120), a una misma escala.
-const NEST = { cx: 70, baseline: 94, width: 110, ratio: 660 / 1200 }
+// Una pieza con `nest` va asentada en el apoyo de la escena (`defaults.support`: su dibujo y sus medidas los trae la
+// escena), dentro del arte de la ficha (140 × 120) y todas a una misma escala: el apoyo, a 110 de ancho, con su
+// asiento centrado en x 70, y 94; la base de lo dibujado en la pieza (lienzo de 164 × 192, dibujado hasta y 176)
+// descansa en ese asiento y la capa de delante del apoyo la tapa.
+const support = props.scene.defaults.support as SupportSpec | undefined
+const NEST = { cx: 70, baseline: 94, width: 110 }
+const DRAWN_BASE = 176 / 192
 function nestBox() {
-  const h = NEST.width * NEST.ratio
-  return box(NEST.cx - NEST.width / 2, NEST.baseline - h * 0.52, NEST.width, h)
+  if (!support) return {}
+  const k = NEST.width / support.w
+  const [x, y] = support.seats[0] ?? [support.w / 2, support.h]
+  return box(NEST.cx - x * k, NEST.baseline - y * k, support.w * k, support.h * k)
 }
 function eggBox(item: DatosItem) {
   const h = (item.sizeScale ?? 0.68) * 120
   const w = h * 164 / 192
-  return box(NEST.cx - w / 2, NEST.baseline - h, w, h)
+  return box(NEST.cx - w / 2, NEST.baseline - h * DRAWN_BASE, w, h)
 }
 
-const time = useTimers()
+// El tiempo de juego de la escena: con el tablero en pausa, las fichas y las esperas se detienen y siguen al volver.
+const world = useWorld(() => props.blocked)
 const layer = ref<HTMLElement | null>(null)
 const slotNodes = ref<HTMLElement[]>([])
 const tray = [...order.slice(1), order[0]!]
@@ -107,28 +127,30 @@ const slots = reactive<(string | null)[]>(Array(n).fill(null))
 const done = ref(false)
 let misses = 0
 
-// Guiado: el siguiente destino libre se ilumina.
-const nextSlot = computed(() => (props.profile.scaffolding === 'guiado' && !done.value ? slots.indexOf(null) : -1))
-
 emit('progress', 0)
 
+// Cambiar de sitio pasa siempre por `drag.shift`: la ficha sigue viéndose donde estaba y llega al nuevo con el resorte.
 function place(piece: Piece, i: number) {
   const occupant = pieces.find(p => p.slot === i && p !== piece)
   if (occupant) back(occupant)
-  if (piece.slot >= 0) slots[piece.slot] = null
-  slots[i] = piece.item.id
-  piece.slot = i
-  piece.x = slotX(i) + (SLOT - TILE) / 2
-  piece.y = SLOT_Y + (SLOT - TILE) / 2
+  drag.shift(piece.item.id, () => {
+    if (piece.slot >= 0) slots[piece.slot] = null
+    slots[i] = piece.item.id
+    piece.slot = i
+    piece.x = slotX(i) + (SLOT - TILE) / 2
+    piece.y = SLOT_Y + (SLOT - TILE) / 2
+  }, { arrive: 'soltar' })
   emit('progress', slots.filter(Boolean).length / n * 0.6)
-  if (slots.every(Boolean)) time.later(check, 360)
+  if (slots.every(Boolean)) world.after(360, check)
 }
 
 function back(piece: Piece) {
-  if (piece.slot >= 0) slots[piece.slot] = null
-  piece.slot = -1
-  piece.x = piece.home.x
-  piece.y = piece.home.y
+  drag.shift(piece.item.id, () => {
+    if (piece.slot >= 0) slots[piece.slot] = null
+    piece.slot = -1
+    piece.x = piece.home.x
+    piece.y = piece.home.y
+  })
 }
 
 function tap(piece: Piece) {
@@ -153,22 +175,22 @@ function check() {
   const hint = props.profile.scaffolding === 'libre' && misses < 2 ? str('retry') : str('hint')
   emit('feedback', { kind: 'retry', title: hint })
   slotNodes.value.forEach(node => replay(node, 'is-wrong'))
-  time.later(() => pieces.forEach(back), 700)
+  world.after(700, () => pieces.forEach(back))
 }
 
-function slotAt(point: { x: number, y: number }) {
-  return order.findIndex((_, i) => point.x >= slotX(i) - MAGNET && point.x <= slotX(i) + SLOT + MAGNET && point.y >= SLOT_Y - MAGNET && point.y <= SLOT_Y + SLOT + MAGNET)
-}
-
-// Arrastrar (el gesto, en useDrag), o tocar y tocar. Un arrastre que termina en un destino coloca la ficha ahí y sale
-// desde donde se soltó; fuera, una ficha colocada vuelve a la bandeja y una de la bandeja, a su sitio. El toque llega por
-// el clic (también con el teclado); el que sigue a un arrastre se descarta.
+// Arrastrar (el gesto, en useDrag, con la física del motor), o tocar y tocar. Un arrastre que termina en un destino
+// coloca la ficha ahí y sale desde donde se soltó, con la velocidad del dedo; fuera, una ficha colocada vuelve a la
+// bandeja y una de la bandeja, a su sitio. El toque llega por el clic (también con el teclado); el que sigue a un
+// arrastre se descarta.
 const pieceOf = (id: string) => pieces.find(p => p.item.id === id)!
 const drag = useDrag<string, number>({
   layer,
+  world,
   home: (id) => { const p = pieceOf(id); return { x: p.x, y: p.y } },
   canStart: () => !props.blocked && !done.value,
-  targetAt: (point) => { const i = slotAt(point); return i >= 0 ? i : null },
+  // Los destinos, con su imán alrededor.
+  zones: () => order.map((_, i) => ({ id: i, x: slotX(i), y: SLOT_Y, w: SLOT, h: SLOT })),
+  margin: MAGNET,
   drop: (id, i) => {
     const piece = pieceOf(id)
     if (i !== null) place(piece, i)
@@ -176,15 +198,19 @@ const drag = useDrag<string, number>({
   },
   tap: id => tap(pieceOf(id)),
   lift: -24, // va por encima del dedo
-  returnMs: prefersReducedMotion() ? 0 : 320,
+  reduced: prefersReducedMotion(),
 })
 watch(() => props.blocked, (blocked) => { if (blocked) drag.cancel() })
-// La ficha en un gesto se dibuja en su sitio más lo que la lleva el dedo.
-const held = (piece: Piece) => {
-  if (!drag.isActive(piece.item.id)) return undefined
+// Dónde se dibuja la ficha: su sitio más su desplazamiento (el del dedo o el de llegar a un sitio nuevo). Se escribe
+// en la transformación de su caja, fuera del render de la plantilla: nada del tablero se recalcula mientras se mueve.
+const boxes: Record<string, HTMLElement | null> = {}
+function placePiece(piece: Piece) {
+  const node = boxes[piece.item.id]
+  if (!node) return
   const o = drag.offsetOf(piece.item.id)
-  return `${o.x}px ${o.y}px`
+  node.style.transform = `translate3d(${piece.x + o.x}px, ${piece.y + o.y}px, 0)`
 }
+onMounted(() => pieces.forEach(piece => watchEffect(() => placePiece(piece))))
 
 defineExpose({ fit: () => {} })
 </script>

@@ -33,6 +33,11 @@ export default defineNuxtConfig({
   // librería entran con `?url` y no los vigila: corregido uno, seguía sirviendo el de antes. Vigilando
   // content/library, un dibujo modificado recarga la página como cualquier otro archivo.
   vite: {
+    // Los dibujos de la librería (SVG de pocos KB) van dentro del código en vez de pedirse uno a uno: el runner los
+    // tiene todos desde el arranque y ninguna escena espera a la red por un dibujo. Lo demás, como siempre.
+    build: {
+      assetsInlineLimit: (file: string) => (file.includes('/content/library/svg/') ? true : undefined),
+    },
     plugins: [{
       name: 'playhub:vigilar-libreria',
       configureServer(server) {

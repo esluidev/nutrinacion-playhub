@@ -5,33 +5,33 @@
       "name": { "es": "Gallina" },
       "tone": "grape",
       "svg": "huevo-gallina",
-      "backdrop": "suelo-corral",
+      "ground": "isla-corral",
       "sizeScale": 0.68,
       "description": { "es": "Sin manchitas." },
       "fact": { "es": "Este huevo es de gallina" },
-      "character": { "rive": "aves", "enum": { "ave": "gallina" } }
+      "character": { "rive": "aves", "enum": { "ave": "gallina" }, "accept": "aceptar" }
     },
     {
       "id": "codorniz",
       "name": { "es": "Codorniz" },
       "tone": "sky",
       "svg": "huevo-codorniz",
-      "backdrop": "suelo-campo",
+      "ground": "isla-campo",
       "sizeScale": 0.49,
       "description": { "es": "Más pequeño y con manchitas." },
       "fact": { "es": "Este huevo es de codorniz" },
-      "character": { "rive": "aves", "enum": { "ave": "codorniz" } }
+      "character": { "rive": "aves", "enum": { "ave": "codorniz" }, "accept": "aceptar" }
     },
     {
       "id": "pato",
       "name": { "es": "Pato" },
       "tone": "coral",
       "svg": "huevo-pato",
-      "backdrop": "suelo-estanque",
+      "ground": "isla-estanque",
       "sizeScale": 0.8,
       "description": { "es": "Más grande y sin manchitas." },
       "fact": { "es": "Este huevo es de pato" },
-      "character": { "rive": "aves", "enum": { "ave": "pata" } }
+      "character": { "rive": "aves", "enum": { "ave": "pata" }, "accept": "aceptar" }
     },
     {
       "id": "huevo",
@@ -42,14 +42,15 @@
       "id": "granja",
       "name": { "es": "Granja" },
       "svg": "granja",
-      "character": { "rive": "aves", "enum": { "ave": "gallina" } },
+      "ground": "isla-corral",
+      "character": { "rive": "aves", "enum": { "ave": "gallina" }, "accept": "aceptar" },
       "fact": { "es": "En la granja se recogen." }
     },
     {
       "id": "tienda",
       "name": { "es": "Tienda" },
       "svg": "tienda",
-      "backdrop": "suelo-calle",
+      "ground": "isla-acera",
       "interior": "mostrador",
       "fact": { "es": "En la tienda se venden." }
     },
@@ -57,23 +58,68 @@
       "id": "casa",
       "name": { "es": "Casa" },
       "svg": "casa",
-      "backdrop": "suelo-jardin",
+      "ground": "isla-pasto",
       "interior": "cocina",
       "fact": { "es": "A la casa llegan para preparar comida." }
     },
     {
-      "id": "frio",
-      "name": { "es": "Frío" },
-      "tone": "sky",
-      "svg": "huevo-gallina",
-      "icon": "snowflake"
+      "id": "cascara",
+      "name": { "es": "Cáscara" },
+      "fact": { "es": "La cáscara no se come." }
+    },
+    {
+      "id": "clara",
+      "name": { "es": "Clara" },
+      "fact": { "es": "La clara tiene proteína." }
+    },
+    {
+      "id": "yema",
+      "name": { "es": "Yema" },
+      "fact": { "es": "La yema tiene vitaminas." }
+    },
+    {
+      "id": "hervido",
+      "name": { "es": "Huevo hervido" },
+      "svg": "olla",
+      "interior": "cocina-ventana",
+      "station": { "anchor": [100, 124], "inside": [100, 80], "front": "olla-frente", "raw": "huevo-gallina", "rawScale": 0.42, "done": "hervor", "served": "huevo-hervido", "servedScale": 0.72, "reveal": true },
+      "fact": { "es": "La clara y la yema están firmes." }
+    },
+    {
+      "id": "frito",
+      "name": { "es": "Huevo frito" },
+      "svg": "sarten",
+      "interior": "cocina-alacena",
+      "station": { "anchor": [104, 117], "inside": [104, 86], "raw": "huevo-frito-crudo", "done": "huevo-frito", "served": "huevo-frito" },
+      "fact": { "es": "La clara y la yema están firmes." }
+    },
+    {
+      "id": "revuelto",
+      "name": { "es": "Huevo revuelto" },
+      "svg": "sarten",
+      "interior": "cocina-refrigerador",
+      "station": { "anchor": [104, 117], "inside": [104, 86], "raw": "huevo-revuelto-crudo", "done": "huevo-revuelto", "tool": { "svg": "cuchara", "pivot": [30, 40], "at": [-12, -26], "rotate": 145, "scale": 0.6 }, "served": "huevo-revuelto" },
+      "fact": { "es": "La clara y la yema están firmes." }
+    },
+    {
+      "id": "proteina",
+      "name": { "es": "Proteína" },
+      "fact": { "es": "La proteína ayuda a tus músculos." }
+    },
+    {
+      "id": "vitaminas",
+      "name": { "es": "Vitaminas" },
+      "fact": { "es": "Las vitaminas ayudan a tus ojos." }
+    },
+    {
+      "id": "huevo-abierto",
+      "name": { "es": "Huevo" },
+      "fact": { "es": "Un huevo tiene cáscara, clara y yema." }
     },
     {
       "id": "cocido",
       "name": { "es": "Bien cocido" },
-      "tone": "grape",
-      "svg": "huevo-gallina",
-      "icon": "flame-solid"
+      "fact": { "es": "Se come cocido, con clara y yema firmes." }
     }
   ]
 }

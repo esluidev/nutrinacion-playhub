@@ -1,0 +1,27 @@
+{
+  "id": "propiedades",
+  "family": "simular",
+  "template": "abrir",
+  "affirmations": ["A2", "A3"],
+  "meta": {
+    "instruction": {"es": "¿Qué hay adentro?"},
+    "completionFeedback": {"es": "Un huevo tiene cáscara, clara y yema."}
+  },
+  "strings": {
+    "opened": {"es": "¿Cómo llamamos a lo amarillo?"}
+  },
+  "library": {"rive": [], "svg": ["cocina-alacena-ancha", "plato-hondo", "huevo-gallina", "huevo-grieta", "huevo-cascara-punta", "huevo-cascara-base", "huevo-clara", "huevo-yema", "mano-apunta"], "sfx": []},
+  "defaults": {
+    "items": ["cascara", "clara", "yema"],
+    "interior": "cocina-alacena-ancha",
+    "scale": 1.25,
+    "support": {"svg": "plato-hondo", "at": [360, 496], "scale": 1.18},
+    "whole": {"svg": "huevo-gallina", "at": [361, 458], "crack": "huevo-grieta", "crackFirst": [0.33, 0.63], "taps": 3},
+    "parts": {
+      "cascara": [{"svg": "huevo-cascara-punta", "at": [108, 532]}, {"svg": "huevo-cascara-base", "at": [612, 533]}],
+      "clara": [{"svg": "huevo-clara", "at": [360, 471], "soft": true}],
+      "yema": [{"svg": "huevo-yema", "at": [333, 449], "soft": true}]
+    },
+    "pointsOnComplete": 10
+  }
+}

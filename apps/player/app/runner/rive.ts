@@ -10,6 +10,11 @@ type RiveModule = typeof import('@rive-app/webgl2')
 let runtime: Promise<RiveModule> | null = null
 const buffers = new Map<string, Promise<ArrayBuffer>>()
 
+// En desarrollo, un .riv de la librería puede cambiar con la página abierta. Su URL es la misma, así que lo que estaba
+// en memoria seguiría siendo el archivo anterior hasta recargar a mano. Con cada actualización en caliente se olvida
+// lo cargado: el personaje, al volver a montarse, pide el archivo de nuevo.
+if (import.meta.hot) import.meta.hot.on('vite:beforeUpdate', () => buffers.clear())
+
 export function loadRive(): Promise<RiveModule> {
   runtime ??= import('@rive-app/webgl2').then((mod) => {
     mod.RuntimeLoader.setWasmUrl(riveWasm)

@@ -3,7 +3,10 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path.startsWith('/play/')) return
 
-  const { usuario, cargar } = useSesion()
+  // La sesión (y con ella el cliente de Supabase) se carga solo aquí, fuera del runner: importada arriba, viajaría
+  // en el arranque de toda la app y el runner la descargaría sin usarla.
+  const sesion = await import('~/composables/useSesion')
+  const { usuario, cargar } = sesion.useSesion()
   await cargar()
 
   if (to.path === '/entrar') return usuario.value ? navigateTo('/') : undefined

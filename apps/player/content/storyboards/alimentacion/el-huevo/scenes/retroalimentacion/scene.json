@@ -1,0 +1,28 @@
+{
+  "id": "retroalimentacion",
+  "family": "repasar",
+  "template": "repasar",
+  "affirmations": ["A0", "A2", "A3", "A4", "A5"],
+  "meta": {
+    "instruction": {"es": "Vamos a recordar el recorrido del huevo"},
+    "completionFeedback": {"es": "Recordamos juntos el recorrido del huevo."}
+  },
+  "strings": {},
+  "library": {"rive": ["nino"], "svg": ["granja", "isla-corral", "huevo-cascara-base", "huevo-cascara-punta", "plato-hondo", "huevo-clara", "huevo-yema", "plato", "huevo-frito"], "sfx": []},
+  "defaults": {
+    "items": ["granja", "huevo-abierto", "cocido", "proteina"],
+    "cards": {
+      "granja": {"ground": "isla-corral", "pieces": [{"svg": "granja", "scale": 0.36, "drop": 41}]},
+      "huevo-abierto": {"pieces": [
+        {"svg": "huevo-cascara-punta", "at": [-48, 108], "scale": 0.46},
+        {"svg": "huevo-cascara-base", "at": [48, 108], "scale": 0.46},
+        {"svg": "plato-hondo", "at": [0, 178], "scale": 0.6},
+        {"svg": "huevo-clara", "at": [0, 157], "scale": 0.6},
+        {"svg": "huevo-yema", "at": [6, 148], "scale": 0.54}
+      ]},
+      "cocido": {"pieces": [{"svg": "plato", "at": [0, 156], "scale": 0.95}, {"svg": "huevo-frito", "at": [0, 139], "scale": 0.95}]},
+      "proteina": {"character": {"rive": "nino", "values": {"senala": "musculos"}, "flags": {"acercar": true}, "accept": "aceptar", "box": [0, -15, 262]}}
+    },
+    "pointsOnComplete": 10
+  }
+}

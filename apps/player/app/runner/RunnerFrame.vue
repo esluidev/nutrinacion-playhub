@@ -5,7 +5,8 @@
          conectado; puede pausar, reiniciar o quitar un dispositivo.
        - device: el dispositivo de un participante. No navega: la sesión le manda escena, pausa y
          reinicios; la actividad y su feedback se quedan ahí.
-       - home: uso autónomo en casa; la persona avanza.
+       - home: uso autónomo, en casa: el niño recorre el storyboard por su cuenta. Vuelve a la escena anterior cuando
+         quiere y pasa a la siguiente cuando termina el juego de la escena.
        - preview: solo el escenario (consigna, juego y su hoja de feedback), para mirar un storyboard
          desde Admin: sin consola ni sesión. Conduce la app que lo incrusta (`ir` y `reiniciar`,
          docs/runner.md). Sin bandas: la escena ocupa todo el alto y la hoja de feedback sube sobre ella
@@ -13,12 +14,14 @@
        La consola flota sobre el escenario, un elemento por esquina, todos del alto de un control y sin
        puntos ni tiempo:
        - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas). En un
-         dispositivo, el participante.
-       - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque (en casa, sin Ajustes). Ajustes
-         abre su riel: pausa, sonido, pantalla completa (donde se puede) y dispositivos.
-       - Abajo, en un pie sin fondo (solo la hoja del feedback le da fondo): Guía (educador) y Siguiente, que lleva el icono de reproducir (Terminar,
-         el check). Anterior queda en las teclas (← y Re Pág) y en la lista. La hoja de feedback sube
-         sobre el pie, siempre con escuchar y cerrar: nunca lleva Siguiente.
+         dispositivo, el participante. En casa, el niño: su avatar (un animal, en un círculo) y su apodo.
+       - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque. Ajustes abre su riel: en el educador,
+         pausa, sonido, pantalla completa (donde se puede) y dispositivos; en casa, sonido y pantalla completa.
+       - Abajo, sobre la banda del pie: a la izquierda, Guía (educador) o Anterior (casa); a la derecha, Siguiente, que
+         lleva el icono de reproducir (Terminar, el check). En casa los dos se activan según la escena: Anterior, desde
+         la segunda; Siguiente, cuando el juego de la escena está hecho. En el educador, Anterior queda en las teclas
+         (← y Re Pág) y en la lista. La hoja de feedback sube sobre el pie, siempre con escuchar y cerrar: nunca lleva
+         Siguiente.
        La sesión se simula entre pestañas del mismo navegador (BroadcastChannel). Del dispositivo solo
        vuelve su presencia, nunca respuestas, intentos ni si terminó. -->
   <main
@@ -28,7 +31,10 @@
     :data-mode="mode"
     :data-feedback="feedbackType"
     :data-compact="compact || undefined"
+    :data-loading="!loaded || undefined"
+    :data-entering="entering || undefined"
     :aria-label="txt('workshop')"
+    :aria-busy="!loaded"
   >
     <header v-if="mode !== 'preview'" class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
       <div class="bar-start">
@@ -40,41 +46,35 @@
           </div>
           <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
         </template>
-        <template v-else>
-          <!-- Dónde va el taller: la barra de avance del kit, del alto de un botón. En el educador es un
-               desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza da un
-               pequeño salto mientras la barra crece. -->
-          <button
-            v-if="mode === 'educator'"
-            ref="sceneCard"
-            type="button"
-            class="hud-piece scene-card scenes-button"
-            aria-haspopup="listbox"
-            :aria-expanded="scenesOpen"
-            :aria-label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
-            :title="sceneCaption()"
-            @click="setScenes(!scenesOpen)"
-          >
-            <UiIcon name="clapperboard" class="scene-card-icon" data-tone="sky" aria-hidden="true" />
-            <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
-            <UiIcon name="chevron-down" class="scene-card-chevron" aria-hidden="true" />
-          </button>
-          <div v-else ref="sceneCard" class="hud-piece scene-card" :title="sceneCaption()">
-            <UiIcon name="clapperboard" class="scene-card-icon" data-tone="sky" aria-hidden="true" />
-            <UiProgress
-              class="scene-card-bar"
-              :value="percent"
-              tone="lime"
-              :label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
-            />
-          </div>
-        </template>
+        <!-- En casa, el niño: una insignia. Su avatar (un animal, en un círculo con el tinte de su tono y un aro
+             blanco) sobresale por delante de la pieza blanca del HUD, que lleva su apodo. -->
+        <div v-else-if="mode === 'home'" class="player-chip">
+          <span class="player-avatar" :data-tone="AVATAR_TONES[player.avatar]"><img :src="librarySvg(`avatar-${player.avatar}`)" alt="" decoding="sync"></span>
+          <span class="hud-piece player-tag"><span class="player-name">{{ player.apodo }}</span></span>
+        </div>
+        <!-- En el educador (la vista previa no tiene barra), dónde va el taller: la barra de avance del kit, del alto
+             de un botón, en un desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza
+             da un pequeño salto mientras la barra crece. -->
+        <button
+          v-else
+          ref="sceneCard"
+          type="button"
+          class="hud-piece scene-card scenes-button"
+          aria-haspopup="listbox"
+          :aria-expanded="scenesOpen"
+          :aria-label="txt('sceneProgress', { n: current + 1, total: scenes.length, percent })"
+          :title="sceneCaption()"
+          @click="setScenes(!scenesOpen)"
+        >
+          <UiIcon name="clapperboard" class="scene-card-icon" data-tone="sky" aria-hidden="true" />
+          <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
+          <UiIcon name="chevron-down" class="scene-card-chevron" aria-hidden="true" />
+        </button>
       </div>
       <div class="bar-end">
-        <!-- Lo del taller en un solo bloque: Ajustes (educador), Reiniciar la escena y Salir (su icono en coral). -->
+        <!-- Lo del taller en un solo bloque: Ajustes, Reiniciar la escena y Salir (su icono en coral). -->
         <div v-if="mode !== 'device'" class="hud-group hud-tools" role="group" :aria-label="txt('tools')">
           <UiButton
-            v-if="mode === 'educator'"
             tone="neutral"
             :icon="railOpen ? 'close' : 'settings'"
             icon-only
@@ -101,9 +101,19 @@
       </div>
 
       <template v-for="(scene, i) in scenes" :key="`${scene.folder}-${states[i]!.generation}`">
-        <template v-if="states[i]!.visited">
-          <!-- Toda escena, también la Bienvenida (Anuncio), se compone en el tablero de 1280 × 600. -->
-          <section v-show="i === current" class="tb-scene" :aria-label="scene.title" :data-sin-consigna="!showsConsigna(scene) || undefined">
+        <template v-if="states[i]!.visited || states[i]!.warm">
+          <!-- Toda escena, también la Bienvenida (Anuncio), se compone en el tablero de 1280 × 600. Se ve cuando está
+               completa (data-pending, useSceneLoad). La que viene se monta por adelantado (data-warm): oculta pero con
+               su sitio, para que sus personajes ya estén pintados cuando toque verla. -->
+          <section
+            v-show="i === current || !states[i]!.visited"
+            class="tb-scene"
+            :aria-label="scene.title"
+            :data-scene="i"
+            :data-pending="!sceneLoad.scenes[i]!.shown || undefined"
+            :data-warm="i !== current || undefined"
+            :data-sin-consigna="!showsConsigna(scene) || undefined"
+          >
             <div class="tb-board" :data-template="scene.json.template ?? 'propia'" :data-blocked="i !== current || blocked || undefined">
               <component
                 :is="sceneComponent(scene)"
@@ -166,9 +176,10 @@
         </div>
       </div>
 
-      <!-- Riel de ajustes (educador): cuelga del engranaje. La pausa, el sonido, la pantalla y los dispositivos. -->
+      <!-- Riel de ajustes: cuelga del engranaje. En el educador, la pausa, el sonido, la pantalla y los dispositivos;
+           en casa, lo que usa el niño: el sonido y la pantalla. -->
       <div v-if="railOpen" class="quick-rail" role="toolbar" aria-orientation="vertical" :aria-label="txt('settings')">
-        <UiButton tone="neutral" icon="pause" icon-only :label="txt('pause')" :title="txt('pauseKey')" @click="fromRail(() => setPause('manual', true))" />
+        <UiButton v-if="mode === 'educator'" tone="neutral" icon="pause" icon-only :label="txt('pause')" :title="txt('pauseKey')" @click="fromRail(() => setPause('manual', true))" />
         <UiButton
           tone="neutral"
           :icon="muted ? 'muted' : 'sound'"
@@ -189,6 +200,7 @@
           @click="toggleFullscreen"
         />
         <UiButton
+          v-if="mode === 'educator'"
           tone="neutral"
           icon="devices"
           icon-only
@@ -217,7 +229,23 @@
 
     <footer class="player-footer" :inert="Boolean(overlay)">
       <div v-if="mode === 'educator'" class="footer-start">
-        <UiButton tone="sky" icon="book" :aria-expanded="guideOpen" :title="txt('guideKey')" @click="setGuide(!guideOpen)">{{ txt('guide') }}</UiButton>
+        <UiButton tone="neutral" icon="book" :aria-expanded="guideOpen" :title="txt('guideKey')" @click="setGuide(!guideOpen)">{{ txt('guide') }}</UiButton>
+      </div>
+      <!-- En casa, en el sitio de Guía va Anterior, el espejo de Siguiente: vuelve a la escena de antes, que conserva
+           su estado. En la primera escena no hay a dónde volver y queda desactivado. Los dos van en color (cielo),
+           para que el niño los encuentre de un vistazo. -->
+      <div v-else-if="mode === 'home'" class="footer-start">
+        <UiButton
+          class="previous-button"
+          tone="sky"
+          icon="play"
+          :disabled="current === 0"
+          :aria-label="`${txt('previous')}: ${scenes[current - 1]?.title ?? ''}`"
+          :title="txt('previousKey')"
+          @click="previous"
+        >
+          {{ txt('previous') }}
+        </UiButton>
       </div>
       <!-- La hoja del feedback: sube sobre el pie con el tinte del tono de su tipo. -->
       <span class="feedback-sheet" :data-tone="look.tone" aria-hidden="true" />
@@ -237,15 +265,21 @@
             <p v-if="message?.body" class="sheet-text">{{ message.body }}</p>
           </div>
           <div class="feedback-actions">
-            <UiButton tone="neutral" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen([message?.title, message?.body].filter(Boolean).join('. '))" />
+            <UiButton :tone="look.tone" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen([message?.title, message?.body].filter(Boolean).join('. '))" />
             <UiButton :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
           </div>
         </div>
       </div>
       <div v-if="leads" class="footer-end">
+        <!-- Siguiente va en blanco, como Guía y como los elementos de arriba (a prueba; Luis, 2026-11-13): las cuatro
+             esquinas del marco, iguales. Antes iban los dos en cielo (2026-11-10); en lima, Siguiente pasaba
+             desapercibido sobre el escenario. En casa va en cielo, como Anterior (Luis, 2026-11-13: «lo que basta es que
+             sean de colores»), y queda desactivado hasta que el juego de la escena está hecho. -->
         <UiButton
           ref="nextButton"
           class="next-button"
+          :tone="mode === 'home' ? 'sky' : 'neutral'"
+          :disabled="!canAdvance"
           :icon-right="isLast ? 'check' : 'play'"
           :aria-label="isLast ? txt('finishWorkshop') : `${nextLabel}: ${upcoming?.title ?? ''}`"
           :title="txt('nextKey')"
@@ -293,6 +327,9 @@
       </template>
     </RunnerWindow>
 
+    <!-- Mientras se prepara lo primero que se va a ver, solo el suelo del escenario; si tarda, la carga del kit. -->
+    <div v-if="!loaded" class="player-loading" aria-hidden="true"><UiSpinner /></div>
+
     <div ref="probe" class="safe-probe" aria-hidden="true" />
   </main>
 </template>
@@ -306,8 +343,10 @@ import { tr } from '~/types/i18n'
 import type { I18nText } from '~/types/i18n'
 import { cancelNarration, narrate, NARRATOR_KEY } from './audio/narration'
 import { muted, setMuted } from './audio/settings'
-import { itemsOf } from './content'
+import { itemsOf, librarySvg } from './content'
+import { cueInterface, cueSound, SCALE } from './engine/sound'
 import { useRunnerText } from './i18n'
+import { fontsReady, isPreloaded, mark, preloadScene, preloadSvg, within } from './preload'
 import { profileOf } from './profiles'
 import RunnerDevices from './RunnerDevices.vue'
 import type { DeviceView } from './RunnerDevices.vue'
@@ -316,6 +355,7 @@ import RunnerWindow from './RunnerWindow.vue'
 import { TEMPLATES } from './templates'
 import type { FeedbackPayload, LoadedStoryboard, RunnerScene } from './types'
 import { useFrameFit } from './useFrameFit'
+import { SCENE_HOLD_KEY, useSceneLoad } from './useSceneLoad'
 import { replay } from './useTimers'
 
 const props = defineProps<{
@@ -331,6 +371,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  /** Lo primero que se ve ya está completo en pantalla. */
+  ready: []
   scene: [index: number, folder: string]
   finish: []
   exit: [index: number, folder: string]
@@ -346,12 +388,19 @@ const profile = profileOf(props.storyboard.json.audience)
 const isGame = (scene: RunnerScene) => scene.json.template !== 'anuncio'
 // Quien conduce desde la consola: el educador y la persona en casa (la vista previa la conduce su app).
 const leads = props.mode === 'educator' || props.mode === 'home'
+// En casa, el niño: su apodo y su avatar, un animal de la librería (`avatar-<animal>`) en un círculo. Cada animal lleva
+// el tono de fondo que mejor lo separa de su pelaje, entre los tonos del kit para las personas (cielo, uva o rosa).
+// El runner no conoce al niño: mientras la app que lo abre no se los dé, es este de demostración.
+const AVATAR_TONES = { oso: 'sky', zorro: 'sky', conejo: 'grape', gato: 'rose', rana: 'rose', leon: 'grape' } as const satisfies Record<string, UiTone>
+const player: { apodo: string, avatar: keyof typeof AVATAR_TONES } = { apodo: 'Jeffrey', avatar: 'zorro' }
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
 type FeedbackType = 'success' | 'info' | 'retry'
 interface Message { type: FeedbackType, title: string, body?: string, sequence: number }
 interface SceneState {
   visited: boolean
+  /** Montada por adelantado, sin haberse visto todavía. */
+  warm: boolean
   generation: number
   fraction: number
   completed: boolean
@@ -360,15 +409,43 @@ interface SceneState {
 }
 
 const states = reactive<SceneState[]>(scenes.map(() => ({
-  visited: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
+  visited: false, warm: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
 })))
+
+// ── Carga: nada aparece a medias. Lo primero que se ve se prepara antes de enseñar el marco (la letra, los dibujos
+// de la escena y su Rive, en preload.ts) y entonces aparece entero, de una vez. Cada escena se muestra cuando sus
+// personajes ya están pintados (useSceneLoad), y la que viene se monta por adelantado para que «Siguiente» la
+// encuentre completa.
+const loaded = ref(false)
+// Solo en el momento de aparecer: el marco entra con un fundido corto.
+const entering = ref(false)
+const sceneLoad = useSceneLoad(scenes.length)
+provide(SCENE_HOLD_KEY, (el: Element) => {
+  const index = Number((el.closest('[data-scene]') as HTMLElement | null)?.dataset.scene ?? -1)
+  return sceneLoad.hold(index)
+})
+
+/** Monta una escena: la que se va a ver o, con `warm`, la siguiente por adelantado. */
+function mountScene(i: number, warm = false) {
+  const state = states[i]
+  if (!state) return
+  const mounted = state.visited || state.warm
+  if (warm) state.warm = true
+  else state.visited = true
+  if (mounted) return
+  sceneLoad.open(i)
+  nextTick(() => sceneLoad.settle(i))
+}
 
 // Empieza ya en la escena pedida (?escena=), para que el avance y el título no muestren la primera un instante.
 const current = ref(props.mode === 'device' ? 0 : Math.max(0, scenes.findIndex(s => s.folder === props.start)))
 const active = computed(() => scenes[current.value]!)
 const activeState = computed(() => states[current.value]!)
 const isLast = computed(() => current.value === scenes.length - 1)
-const nextLabel = computed(() => (isLast.value ? txt('finish') : props.mode === 'home' ? txt('continue') : txt('next')))
+const nextLabel = computed(() => (isLast.value ? txt('finish') : txt('next')))
+// En casa se pasa a la siguiente escena cuando el juego de esta está hecho; una escena sin juego (la Bienvenida) deja
+// pasar siempre. El educador conduce: pasa cuando quiere.
+const canAdvance = computed(() => props.mode !== 'home' || !isGame(active.value) || activeState.value.completed)
 // La escena que viene, para el nombre accesible de Siguiente.
 const upcoming = computed(() => scenes[current.value + 1] ?? null)
 const percent = computed(() => Math.round(states.reduce((sum, s) => sum + s.fraction, 0) / scenes.length * 100))
@@ -495,7 +572,8 @@ const stage = ref<HTMLElement | null>(null)
 function closeFeedback(focus = true) {
   activeState.value.message = null
   if (!focus) return
-  const target = leads ? (nextButton.value?.$el as HTMLElement | undefined) : stage.value
+  // El foco vuelve a Siguiente; si todavía no se puede pasar (en casa, con el juego a medias), al escenario.
+  const target = leads && canAdvance.value ? (nextButton.value?.$el as HTMLElement | undefined) : stage.value
   target?.focus({ preventScroll: true })
 }
 
@@ -535,6 +613,7 @@ function onComplete(i: number) {
     clearTimeout(burstTimer)
     burstTimer = setTimeout(() => { burst.value = 0 }, 1600)
     replay(sceneCard.value, 'is-advancing')
+    cueSound('completar')
   }
   state.completed = true
   state.fraction = 1
@@ -542,28 +621,67 @@ function onComplete(i: number) {
   publish()
 }
 
+// La hoja llega con su sonido: un acierto, un «otra vez» o un aviso. Si además completa la escena, suena solo eso.
+// La racha se oye: cada acierto seguido en la escena suena un paso más arriba en la escala; un «otra vez» la corta.
+const FEEDBACK_SOUNDS = { success: 'acierto', retry: 'reintento', info: 'aviso' } as const
+let streak = 0
 function onFeedback(i: number, payload: FeedbackPayload) {
-  states[i]!.message = { type: typeOf(payload.kind), title: payload.title, body: payload.body, sequence: ++sequence }
+  const type = typeOf(payload.kind)
+  states[i]!.message = { type, title: payload.title, body: payload.body, sequence: ++sequence }
+  if (i !== current.value) return
+  if (type === 'retry') streak = 0
+  cueSound(FEEDBACK_SOUNDS[type], type === 'success' ? { rate: SCALE[Math.min(streak, SCALE.length - 1)] } : undefined)
+  if (type === 'success') streak += 1
 }
 
-// ── Navegación (educador y casa). Un dispositivo solo sigue a la sesión.
+// ── Navegación (educador y casa; en la vista previa, con las teclas). Un dispositivo solo sigue a la sesión.
+// Ir a una escena que todavía no está lista (un salto desde la lista, nada más abrir) espera un momento a sus dibujos
+// para enseñarla entera; la última petición manda.
+let going = 0
 function goTo(index: number, focus = true) {
-  if (index < 0 || index >= scenes.length) return
+  const scene = scenes[index]
+  if (!scene) return
+  const turn = ++going
+  if (loaded.value && !states[index]!.visited && !states[index]!.warm && !isPreloaded(scene)) {
+    void within(2000, preloadScene(scene)).then(() => {
+      if (turn === going && !unmounted) show(index, focus)
+    })
+    return
+  }
+  show(index, focus)
+}
+
+function show(index: number, focus: boolean) {
   cancelNarration()
+  // Pasar a otra escena no suena. La racha de aciertos empieza de nuevo.
+  streak = 0
   current.value = index
   pauseReasons.delete('manual')
-  states[index]!.visited = true
+  mountScene(index)
   burst.value = 0
   announce(txt('announceScene', { n: index + 1, name: active.value.title }))
-  if (props.mode !== 'device') emit('scene', index, active.value.folder)
+  // La primera escena se cuenta a la app al aparecer el marco, después de «listo» (start).
+  if (props.mode !== 'device' && loaded.value) emit('scene', index, active.value.folder)
   nextTick(() => {
     instances.get(index)?.fit?.()
     if (focus && props.mode !== 'device') stage.value?.focus({ preventScroll: true })
   })
   publish()
+  warmNext()
+}
+
+// La escena que viene se monta por adelantado, oculta y en pausa: al pulsar «Siguiente» ya está completa.
+function warmNext() {
+  const index = current.value + 1
+  const scene = scenes[index]
+  if (!scene || !loaded.value || props.mode === 'device' || states[index]!.visited || states[index]!.warm) return
+  void preloadScene(scene).then(() => {
+    if (!unmounted && current.value + 1 === index) mountScene(index, true)
+  })
 }
 
 function next() {
+  if (!canAdvance.value) return // en casa, también con las teclas
   if (!isGame(active.value)) activeState.value.fraction = 1 // el Anuncio se cumple al presentarlo
   if (!isLast.value) {
     goTo(current.value + 1)
@@ -583,8 +701,12 @@ function next() {
 const previous = () => goTo(current.value - 1)
 
 function restartScene(i: number) {
+  streak = 0 // la racha de aciertos empieza de nuevo
   Object.assign(states[i]!, { message: null, completed: false, ready: false, fraction: 0 })
   states[i]!.generation += 1
+  // Se monta de nuevo: vuelve a mostrarse cuando está completa.
+  sceneLoad.open(i)
+  nextTick(() => sceneLoad.settle(i))
 }
 
 // Salir a medias. Dentro de otra app, ella decide a dónde vuelve; el cierre queda debajo por si
@@ -935,12 +1057,11 @@ function onKey(event: KeyboardEvent) {
   if ((event.target as HTMLElement).closest?.('input, select, textarea, [contenteditable], [role=tablist]')) return
   if (sheetOpen && ['ArrowRight', 'PageDown', 'ArrowLeft', 'PageUp'].includes(key)) closeFeedback(false)
   const educator = props.mode === 'educator'
-  const conduce = educator || props.mode === 'preview'
   const actions: Record<string, (() => void) | null> = {
     ArrowRight: next,
     PageDown: next,
-    ArrowLeft: conduce ? previous : null,
-    PageUp: conduce ? previous : null,
+    ArrowLeft: previous,
+    PageUp: previous,
     p: educator ? () => setPause('manual', !manualPause.value) : null,
     g: educator ? () => setGuide(!guideOpen.value) : null,
     m: toggleMute,
@@ -961,16 +1082,82 @@ const onVisibility = () => { if (props.mode !== 'device') setPause('hidden', doc
 
 const frame = ref<HTMLElement | null>(null)
 const probe = ref<HTMLElement | null>(null)
+// Cada vez que el marco se encaja (al montarse y con cada cambio de tamaño), la escena que se ve vuelve a ajustar lo
+// suyo. Puede pedírselo antes de que su personaje termine de cargar: él lo deja pasar y se ajusta solo al cargar.
 const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.(), props.mode === 'preview')
 
+// En iOS un botón solo muestra su estado pulsado si la página escucha los toques: con esto responde al instante.
+const onTouchStart = () => {}
+
+// La pantalla no se apaga durante el taller, como en una app. Si el navegador no lo permite, no pasa nada; al volver
+// a la pestaña se pide otra vez, porque el sistema lo suelta al ocultarla.
+let wakeLock: { release: () => Promise<void> } | null = null
+async function keepAwake() {
+  if (props.mode === 'preview' || document.hidden) return
+  try {
+    const lock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
+    wakeLock = await lock?.request('screen') ?? null
+  }
+  catch { /* sin permiso o sin soporte */ }
+}
+const onWake = () => { if (!document.hidden) void keepAwake() }
+
+// Lo primero que se ve se prepara antes de enseñar nada. Con mala red no se espera para siempre: al agotar el plazo se
+// muestra lo que haya y lo demás llega después, como antes.
+const LOAD_LIMIT = 10_000
+let unmounted = false
+async function start() {
+  const first = current.value
+  mark('inicio')
+  await within(LOAD_LIMIT, Promise.all([fontsReady(), preloadScene(scenes[first]!), props.mode === 'home' ? preloadSvg(`avatar-${player.avatar}`) : null]))
+  if (unmounted) return
+  mark('preparado')
+  if (props.mode === 'device') mountScene(first)
+  else goTo(first, false)
+  await sceneLoad.whenShown(first)
+  if (unmounted) return
+  loaded.value = true
+  // Cuándo aparece el marco entero.
+  mark('listo')
+  entering.value = true
+  setTimeout(() => { entering.value = false }, 400)
+  emit('ready')
+  if (props.mode !== 'device') emit('scene', first, scenes[first]!.folder)
+  warmNext()
+  // El resto de las escenas se preparan mientras se juega la primera.
+  for (const scene of scenes) {
+    if (unmounted) return
+    await preloadScene(scene)
+  }
+}
+
+// ── El sonido de la interfaz (el motor, `engine/sound.ts`), con su propio material, distinto del de las piezas: pulsar
+// un control y desplegar o recoger un panel o una ventana. Cada interacción suena una vez: si el botón pulsado
+// despliega o recoge algo, suena solo eso. Pasar de escena no tiene sonido propio: «Siguiente» suena como cualquier
+// botón. Las piezas del tablero suenan por su cuenta, y la hoja, con su respuesta.
+function onPress(event: MouseEvent) {
+  const control = (event.target as Element | null)?.closest?.('button, a[href], summary, [role=tab], [role=button]')
+  if (!control || (control as HTMLButtonElement).disabled) return
+  // Ni las piezas del tablero ni los paneles de prueba (el medidor y el de sonidos).
+  if (control.closest('.tb-board, .player-meter, .player-sounds')) return
+  cueInterface('pulsar')
+}
+const somethingOpen = computed(() => guideOpen.value || scenesOpen.value || railOpen.value || devicesOpen.value || confirmOpen.value || Boolean(overlay.value))
+watch(somethingOpen, (open) => { if (loaded.value) cueInterface(open ? 'abrir' : 'cerrar') })
+
 onMounted(() => {
+  // En la captura: se anota el pulso antes de que el botón haga lo suyo, y lo que haga decide qué suena.
+  document.addEventListener('click', onPress, true)
   BLOCKED.forEach(type => document.addEventListener(type, blockEvent))
   window.addEventListener('wheel', onWheel, { passive: false })
   document.addEventListener('keydown', onKey)
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('fullscreenchange', onFullscreen)
   document.addEventListener('visibilitychange', onVisibility)
+  document.addEventListener('visibilitychange', onWake)
+  document.addEventListener('touchstart', onTouchStart, { passive: true })
   canFullscreen.value = Boolean(document.fullscreenEnabled)
+  void keepAwake()
 
   // La vista previa no es un taller: no abre la sesión con los dispositivos.
   channel = props.mode !== 'preview' && 'BroadcastChannel' in window ? new BroadcastChannel('playhub-taller-demo') : null
@@ -991,22 +1178,25 @@ onMounted(() => {
 
   if (props.mode === 'device') {
     me.value = deviceIdentity()
-    states[0]!.visited = true
     presenceTimer = setInterval(presence, 2000)
     window.addEventListener('pagehide', sayGoodbye)
     post({ tipo: 'hola' })
     presence()
   }
-  else {
-    goTo(current.value, false)
-  }
+  void start()
 })
 
 onBeforeUnmount(() => {
+  unmounted = true
+  sceneLoad.dispose()
+  void wakeLock?.release().catch(() => {})
+  document.removeEventListener('visibilitychange', onWake)
+  document.removeEventListener('touchstart', onTouchStart)
   BLOCKED.forEach(type => document.removeEventListener(type, blockEvent))
   window.removeEventListener('wheel', onWheel)
   document.removeEventListener('keydown', onKey)
   document.removeEventListener('pointerdown', onPointerDown)
+  document.removeEventListener('click', onPress, true)
   document.removeEventListener('fullscreenchange', onFullscreen)
   document.removeEventListener('visibilitychange', onVisibility)
   window.removeEventListener('pagehide', sayGoodbye)

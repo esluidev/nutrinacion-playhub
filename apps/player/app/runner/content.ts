@@ -15,12 +15,15 @@ const customScenes = import.meta.glob<Component>('../../content/storyboards/*/*/
 
 const svgModules = import.meta.glob<string>('../../content/library/svg/*.svg', { eager: true, query: '?url', import: 'default' })
 const riveModules = import.meta.glob<string>('../../content/library/rive/*.riv', { eager: true, query: '?url', import: 'default' })
+const sfxModules = import.meta.glob<string>('../../content/library/sfx/**/*.{mp3,m4a,ogg,wav}', { eager: true, query: '?url', import: 'default' })
 
-const byName = (modules: Record<string, string>, ext: string) => new Map(
-  Object.entries(modules).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, -ext.length), url]),
+const byName = (modules: Record<string, string>) => new Map(
+  Object.entries(modules).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, path.lastIndexOf('.')), url]),
 )
-const SVG = byName(svgModules, '.svg')
-const RIVE = byName(riveModules, '.riv')
+const SVG = byName(svgModules)
+const RIVE = byName(riveModules)
+// Una grabación se nombra por su ruta dentro de `sfx/`, con su grupo si lo tiene (`ui/click2`).
+const SFX = new Map(Object.entries(sfxModules).map(([path, url]) => [path.slice(path.indexOf('/sfx/') + 5, path.lastIndexOf('.')), url]))
 
 /** URL servida de un dibujo de la librería, por nombre sin extensión. */
 export function librarySvg(name: string | undefined): string | undefined {
@@ -31,6 +34,14 @@ export function librarySvg(name: string | undefined): string | undefined {
 export function libraryRive(name: string | undefined): string | undefined {
   return name ? RIVE.get(name) : undefined
 }
+
+/** URL servida de una grabación de sonido de la librería, por su nombre sin extensión. */
+export function librarySfx(name: string | undefined): string | undefined {
+  return name ? SFX.get(name) : undefined
+}
+
+/** Las grabaciones de sonido que hay en la librería, por nombre. */
+export const LIBRARY_SFX = [...SFX.keys()]
 
 export const tipoDeType = (type: string) => type.toLowerCase().replace(/_/g, '-') as TipoStoryboard
 

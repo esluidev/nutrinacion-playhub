@@ -2,18 +2,21 @@
   <!-- La mano que demuestra la acción (useDemo): la copia translúcida de lo que lleva y, encima, la mano puntero de la
        librería con la punta del índice donde está la demostración. La escena lista `mano-apunta` en `library.svg`. -->
   <template v-if="demo.on">
+    <!-- Las dos tienen caja fija y se mueven solo con su transformación y su opacidad: nada se recalcula ni se repinta. -->
     <img
       v-if="copy"
       class="tb-mano-copia"
       :src="librarySvg(copy)"
       alt=""
-      :style="{ ...box(demo.copy.x - size.w * demo.copy.s / 2, demo.copy.y - size.h * demo.copy.s / 2, size.w * demo.copy.s, size.h * demo.copy.s), opacity: demo.copy.o }"
+      decoding="sync"
+      :style="{ ...box(-size.w / 2, -size.h / 2, size.w, size.h), transform: `translate3d(${demo.copy.x}px, ${demo.copy.y}px, 0) scale(${demo.copy.s})`, opacity: demo.copy.o }"
     >
     <img
       class="tb-mano"
       :src="librarySvg('mano-apunta')"
       alt=""
-      :style="{ ...box(demo.hand.x - HAND.tipX, demo.hand.y - HAND.tipY, HAND.w, HAND.h), opacity: demo.hand.o, scale: demo.hand.s, transformOrigin: `${HAND.tipX}px ${HAND.tipY}px` }"
+      decoding="sync"
+      :style="{ ...box(-HAND.tipX, -HAND.tipY, HAND.w, HAND.h), transform: `translate3d(${demo.hand.x}px, ${demo.hand.y}px, 0) scale(${demo.hand.s})`, transformOrigin: `${HAND.tipX}px ${HAND.tipY}px`, opacity: demo.hand.o }"
     >
   </template>
 </template>

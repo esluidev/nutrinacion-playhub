@@ -8,12 +8,13 @@
     :start="start"
     :guide="host.guide.value"
     :embedded="host.embedded"
+    @ready="host.send({ tipo: 'listo', storyboard: `${category}/${id}`, modo: mode, idioma: locale, escenas: storyboard.scenes.length })"
     @scene="(indice, carpeta) => host.send({ tipo: 'escena', indice, carpeta })"
     @finish="host.send({ tipo: 'terminado' })"
     @exit="(indice, carpeta) => host.send({ tipo: 'salir', indice, carpeta })"
   />
   <div v-else class="grid min-h-screen place-items-center p-6">
-    <UiEmptyState icon="warning" :title="'Taller no encontrado'" :text="'Este storyboard no existe en este build.'" />
+    <UiEmptyState icon="warning" :title="txt('notFoundTitle')" :text="txt('notFound')" />
   </div>
 </template>
 
@@ -22,7 +23,9 @@ import '~/runner/runner.css'
 import { runnerOrigins } from '@playhub/ui/app/utils/runner-contract'
 import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import type { RunnerMode } from '@playhub/ui/app/utils/runner-contract'
+import nunito from '@playhub/ui/fonts/nunito-latin.woff2?url'
 import { loadStoryboard } from '~/runner/content'
+import { useRunnerText } from '~/runner/i18n'
 import RunnerFrame from '~/runner/RunnerFrame.vue'
 import { useRunnerHost } from '~/runner/useHost'
 
@@ -31,6 +34,8 @@ import { useRunnerHost } from '~/runner/useHost'
 //                               preview: solo el escenario; la app que lo incrusta conduce.
 //   ?lang=es                    idioma del contenido, entre los que declara el storyboard.
 //   ?escena=<carpeta>           escena con la que abre.
+//   ?medir=1                    el medidor del motor, para probar en un dispositivo (cuadros y toque).
+//   ?sonidos=1                  el panel de sonidos: oír cada uno suelto y ver cuál sonó.
 // Dentro de un iframe de una app permitida (NUXT_PUBLIC_RUNNER_HOSTS), la app le da la guía y
 // el runner le cuenta la escena, si terminó o si salió; abierto directamente, va solo y sin guía.
 definePageMeta({ layout: false })
@@ -48,6 +53,7 @@ const languages = peek?.json.languages?.length ? peek.json.languages : [peek?.js
 const requestedLang = String(route.query.lang ?? '')
 const locale = languages.includes(requestedLang) ? requestedLang : (peek?.json.defaultLanguage ?? languages[0] ?? 'es')
 const storyboard = loadStoryboard(category, id, locale)
+const txt = useRunnerText(() => locale)
 const start = route.query.escena ? String(route.query.escena) : undefined
 
 // Los orígenes permitidos y, si este equipo se abrió por Tailscale, los mismos con su nombre:
@@ -60,10 +66,22 @@ const host = useRunnerHost(
   mode === 'preview' ? { ir: escena => marco.value?.ir(escena), reiniciar: () => marco.value?.reiniciar() } : undefined,
 )
 
-// «listo» antes de montar el marco: así la app lo recibe antes que la primera escena.
-onBeforeMount(() => host.send(storyboard
-  ? { tipo: 'listo', storyboard: `${category}/${id}`, modo: mode, idioma: locale, escenas: storyboard.scenes.length }
-  : { tipo: 'error', codigo: 'no-encontrado' }))
+// El medidor y el panel de sonidos del motor (`engine/meter.ts`) solo se descargan si se piden.
+const stopTools: (() => void)[] = []
+onMounted(async () => {
+  if (!route.query.medir && !route.query.sonidos) return
+  const { startMeter, startSoundboard } = await import('~/runner/engine/meter')
+  if (route.query.medir) stopTools.push(startMeter())
+  if (route.query.sonidos) stopTools.push(startSoundboard())
+})
+onBeforeUnmount(() => stopTools.forEach(stop => stop()))
+
+// «listo» lo manda el marco cuando lo primero que se ve ya está completo en pantalla (`ready`), siempre antes que la
+// primera escena: así la app quita su carga justo cuando hay algo entero que mostrar. Si el storyboard no existe, el
+// error sale enseguida.
+onBeforeMount(() => {
+  if (!storyboard) host.send({ tipo: 'error', codigo: 'no-encontrado' })
+})
 
 // El player es una superficie de juego, no un documento: sin zoom de dedos, a pantalla
 // completa del área segura y en densidad táctil.
@@ -71,5 +89,7 @@ useHead({
   htmlAttrs: { 'lang': locale, 'data-density': 'touch' },
   bodyAttrs: { class: 'player-page' },
   meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' }],
+  // La letra se pide desde el principio, sin esperar a que el CSS la descubra: el marco no aparece hasta tenerla.
+  link: [{ rel: 'preload', as: 'font', type: 'font/woff2', href: nunito, crossorigin: 'anonymous' }],
 })
 </script>

@@ -4,7 +4,7 @@ import type { StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Contrato del contenido del runner (estructura.md) y de sus plantillas (PLAYER-DESIGN.md).
 
-export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia'
+export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'estaciones' | 'abrir' | 'beber' | 'senalar' | 'repasar'
 
 /** Caras suaves de la paleta reutilizable del kit. Lima y night son del UI. */
 export type PieceTone = 'sun' | 'coral' | 'sky' | 'grape' | 'rose'
@@ -39,23 +39,76 @@ export interface DatosItem {
   rive?: string
   /** Tamaño relativo para comparar a una misma escala (1 = el más grande posible). */
   sizeScale?: number
-  /** La pieza se apoya en el nido de la librería. */
+  /** Colocar: la pieza va asentada en el apoyo de la escena (`defaults.support`). */
   nest?: boolean
   /** Icono del kit como insignia de la pieza. */
   icon?: string
-  /** Historia: el suelo del lugar dentro de su tarjeta (una franja de la librería). */
-  backdrop?: string
-  /** Historia: el interior del lugar, que la tarjeta muestra mientras el huevo está ahí, con el cartón donde se posa. */
+  /**
+   * El suelo del lugar: su isla, una pieza de la librería de 560 × 166 (`isla-corral`, `isla-acera`…; sus apoyos, en
+   * `ISLAND`, board.ts), la misma en todo el taller. Va suelta en el tablero cuando de ese lugar se toma algo (el
+   * origen de un recorrido: su dibujo al fondo y su personaje y el nido delante) y dentro de su tarjeta cuando ahí
+   * llega o se muestra algo (el destino de un recorrido, lo que se destapa).
+   */
+  ground?: string
+  /**
+   * Historia: el interior del lugar, que la tarjeta muestra mientras el huevo está ahí, con el cartón donde se posa.
+   * Estaciones: el escenario de la tarjeta de la estación (616 × 536), siempre a la vista.
+   */
   interior?: string
   description?: I18nText
   fact?: I18nText
   voice?: I18nText
-  /** Personaje de Rive que aparece al descubrir el ítem, con los valores de su View Model. */
-  character?: { rive: string, enum?: Record<string, string> }
+  /**
+   * Personaje de Rive del ítem (el que aparece al descubrirlo, el del origen de un recorrido), con los valores de su
+   * View Model y el trigger con que responde cuando pasa algo con él (`accept`); sin trigger, no responde.
+   */
+  character?: { rive: string, enum?: Record<string, string>, accept?: string }
+  /**
+   * Estaciones: el utensilio de la estación es `svg`; esto dice cómo se compone con lo que llega. Los dibujos van a la
+   * escala del tablero y se colocan por sus puntos de apoyo.
+   */
+  station?: {
+    /** Dónde se apoya el utensilio sobre la estufa, en su lienzo. */
+    anchor: [number, number]
+    /** Dónde descansa lo de dentro, en el lienzo del utensilio. */
+    inside: [number, number]
+    /** La capa de delante del utensilio, si lo que llega va entre dos (una olla con agua). */
+    front?: string
+    /** Lo que llega, recién puesto (líquido). */
+    raw?: string
+    /** A qué tamaño va `raw`, si no es al suyo. */
+    rawScale?: number
+    /** Lo mismo ya hecho (firme): aparece poco a poco sobre `raw` mientras se mantiene el dedo. */
+    done?: string
+    /** Lo que se mueve dentro mientras se hace (una cuchara): va metido en lo de dentro, que tapa su pala. Su pivote, en su lienzo; dónde va, desde donde descansa lo de dentro; su giro y su tamaño. */
+    tool?: { svg: string, pivot: [number, number], at: [number, number], rotate?: number, scale?: number }
+    /** Lo que queda en el plato al servir. */
+    served: string
+    /** A qué tamaño va `served`, si no es al suyo. */
+    servedScale?: number
+    /** Lo hecho no se ve hasta servirlo (un huevo hervido se parte en el plato): servir suena a descubrir. */
+    reveal?: boolean
+  }
 }
 
 export interface DatosJson {
   items: DatosItem[]
+}
+
+/**
+ * Un apoyo de la librería donde se asienta algo (un nido, un cartón de huevos). Lo nombra la escena, nunca la
+ * plantilla, y trae las medidas de su propio dibujo: sus dos capas (`svg` detrás y `front` delante, si lo que se
+ * asienta va entre ellas), su lienzo (`w` × `h`), el aire que el dibujo deja bajo su base (`drop`) y sus asientos
+ * (`seats`): por cada uno, x e y de donde descansa el centro de la base de lo que lleva y, si va recostado, su giro en
+ * grados. Todo en las unidades del lienzo, desde su esquina de arriba a la izquierda.
+ */
+export interface SupportSpec {
+  svg: string
+  front?: string
+  w: number
+  h: number
+  drop?: number
+  seats: [x: number, y: number, tilt?: number][]
 }
 
 export type EditionId = 'infantil' | 'preadolescencia' | 'adolescencia'
@@ -66,7 +119,10 @@ export interface Profile {
   label: string
   /** Las piezas muestran su nombre escrito (infantil es prelectora: imagen y voz). */
   labels: boolean
-  /** guiado: se ilumina dónde actuar · pista: ayuda en el primer error · libre: en el segundo. */
+  /**
+   * Cuándo llega la pista de un juego que la tiene: en guiado y en pista, con el primer error; en libre, con el
+   * segundo. La mano que demuestra la acción no depende de esto: sale en las tres ediciones.
+   */
   scaffolding: 'guiado' | 'pista' | 'libre'
 }
 

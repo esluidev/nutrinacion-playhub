@@ -1,35 +1,26 @@
 <template>
   <!-- Anuncio (Situar): la Bienvenida como portada del taller, la misma en todos los storyboards. Una columna centrada
-       en el tablero por su alto real: arriba, los protagonistas del tema sobre su suelo, con unas chispas; debajo, el
-       título en grande y, si la hay, una línea que lo presenta. Al tocarlos, saltan y suena la frase de la escena. -->
+       en el tablero por su alto real: arriba, una tarjeta con su escenario y, dentro, los protagonistas del tema;
+       debajo, el título en grande y, si la hay, una línea que lo presenta. Al tocar la tarjeta, los protagonistas
+       saltan y suena la frase de la escena. -->
   <div class="tb-an">
-    <div class="tb-an-protagonistas" :style="{ height: `${ART_H}px` }">
-      <span class="tb-an-suelo" aria-hidden="true" :style="box(CX - layout.floor / 2, FLOOR_Y - FLOOR_H / 2, layout.floor, FLOOR_H)" />
-      <span
-        v-for="(figure, i) in figures"
-        :key="i"
-        class="tb-an-figura"
-        aria-hidden="true"
-        :style="{ ...box(CX + figure.dx - figure.size / 2, BASE_Y - figure.size, figure.size, figure.size), rotate: `${figure.r}deg`, '--delay': `${i * 110}ms` }"
-      >
-        <img :src="librarySvg(figure.svg)" alt="" :class="{ 'is-hopping': hopping }" :style="{ animationDelay: `${i * 90}ms` }">
-      </span>
-      <i
-        v-for="(spark, i) in sparks"
-        :key="`chispa-${i}`"
-        class="tb-an-chispa"
-        :class="{ 'is-mid': spark.mid }"
-        aria-hidden="true"
-        :style="{ ...box(spark.x, spark.y, spark.size, spark.size), '--delay': `${380 + i * 140}ms` }"
-      />
-      <button
-        v-if="figures.length"
-        type="button"
-        class="tb-an-toque"
-        :aria-label="voice"
-        :style="box(CX - layout.spread - 24, BASE_Y - MAIN - 16, (layout.spread + 24) * 2, MAIN + 40)"
-        @click="tap"
-      />
+    <div class="tb-an-protagonistas" :style="{ height: `${card.h}px` }">
+      <button type="button" class="tb-pieza tb-tarjeta tb-an-carta" :aria-label="voice" :style="box(CX - card.w / 2, 0, card.w, card.h)" @click="tap">
+        <span class="tb-an-escena">
+          <img v-if="interior" ref="interiorEl" class="tb-an-interior" decoding="sync" :src="librarySvg(interior)" alt="" @load="measure">
+          <img v-else-if="ground" class="tb-isla" decoding="sync" :src="librarySvg(ground)" alt="" :style="box(scenery.island.x - LINE, scenery.island.y - LINE, scenery.island.w, scenery.island.h)">
+          <span v-else class="tb-an-suelo" aria-hidden="true" :style="box(spot.x - layout.floor / 2, spot.y - FLOOR_H / 2, layout.floor, FLOOR_H)" />
+          <span
+            v-for="(figure, i) in figures"
+            :key="i"
+            class="tb-an-figura"
+            aria-hidden="true"
+            :style="{ ...box(figure.x, figure.y, figure.size, figure.size), rotate: `${figure.r}deg`, '--delay': `${i * 110}ms` }"
+          >
+            <img decoding="sync" :src="librarySvg(figure.svg)" alt="" :class="{ 'is-hopping': hopping }" :style="{ animationDelay: `${i * 90}ms` }">
+          </span>
+        </span>
+      </button>
     </div>
     <h2 ref="titleEl" class="tb-an-titulo" :style="{ width: `${TEXT_W}px`, '--title-fit': titleFit }">{{ title }}</h2>
     <p v-if="subtitle" class="tb-an-linea" :style="{ width: `${TEXT_W - 80}px` }">{{ subtitle }}</p>
@@ -38,8 +29,10 @@
 
 <script setup lang="ts">
 import { NARRATOR_KEY } from '../audio/narration'
-import { box, useSceneText } from '../board'
+import { box, sceneryCard, useSceneText } from '../board'
 import { librarySvg } from '../content'
+import { playSound } from '../engine/sound'
+import { useWorld } from '../engine/world'
 import type { TemplateProps } from '../types'
 
 const props = defineProps<TemplateProps>()
@@ -50,57 +43,91 @@ const { t } = useSceneText(props)
 
 const title = computed(() => t(props.scene.strings?.title))
 const subtitle = computed(() => t(props.scene.strings?.subtitle))
-// Lo que suena al tocar a los protagonistas: la frase de la escena («Hoy vamos a conocer el huevo»), o el título.
+// Lo que suena al tocar la tarjeta: la frase de la escena («Hoy vamos a conocer el huevo»), o el título.
 const voice = computed(() => t(props.scene.meta.instruction) || title.value)
 
+// ---- El escenario de la portada, de `defaults`: `interior` (un lugar bajo techo: el dibujo llena la tarjeta),
+// `ground` (un lugar al aire libre: la isla del lugar, abajo, y arriba el blanco de la tarjeta) o ninguno (el suelo
+// plano del área). Con interior, `stand` dice dónde se apoyan los protagonistas en las unidades del dibujo: el centro
+// del grupo y la línea de la mesa o del suelo. ----
+const interior = props.scene.defaults.interior as string | undefined
+const ground = interior ? undefined : props.scene.defaults.ground as string | undefined
+const stand = (() => {
+  const value = props.scene.defaults.stand
+  return Array.isArray(value) && value.length === 2 && value.every(n => typeof n === 'number' && Number.isFinite(n)) ? value as [number, number] : null
+})()
+
 // ---- Medidas (tablero 1280 × 600). Todo centrado en x 640, en una columna que se centra en el alto del tablero según
-// lo que mide: la franja de los protagonistas (285, de la chispa más alta al título), el título (una línea de 120) y la
-// línea que lo presenta (28, 20 por debajo; una línea, o dos si no cabe). Sin línea, el grupo se centra igual. En la
-// franja, los protagonistas se apoyan en un suelo plano del tono del área (su centro en 242). El principal ocupa un
-// cuadro de 248 apoyado 20 por debajo del centro del suelo (los dibujos guardan un margen abajo); los demás, más
-// pequeños, van delante y recostados. Del ítem solo se usa su dibujo. ----
+// lo que mide: la tarjeta (414), el título (una línea de 96, 14 por debajo) y la línea que lo presenta (28, 6 por
+// debajo; una línea, o dos si no cabe). Sin línea, el grupo se centra igual. La tarjeta lleva el contorno y el margen
+// blanco del kit (6) y, dentro, el escenario, de 402 de alto y con la proporción de su dibujo (un interior de 616 × 536
+// da 462 de ancho; uno más ancho que la columna se reduce hasta caber). El protagonista principal ocupa un cuadro de
+// 260 y los demás, más pequeños, van delante y recostados. Del ítem solo se usa su dibujo. ----
 const CX = 640
-const ART_H = 285
-const FLOOR_Y = 242
+const LINE = 6
+const STAGE_H = 402
+const STAGE_MAX_W = 1040 - LINE * 2
+const MAIN = 260
+// Los dibujos guardan un margen abajo, un doceavo de su alto: el cuadro baja eso para que el dibujo toque el apoyo.
+const FOOT = MAIN / 12
 const FLOOR_H = 40
-const BASE_Y = FLOOR_Y + 20
-const MAIN = 248
 const TEXT_W = 1040
 
-// Cómo se reparten de uno a tres protagonistas: desplazamiento desde el centro, escala e inclinación de cada uno (en el
-// orden de `defaults.items`; el primero es el principal), el ancho del suelo y hasta dónde llegan a cada lado.
+// El tamaño del dibujo del escenario: el de un interior se lee del propio dibujo; sin interior, el de las tarjetas con
+// interior del tablero (616 × 536).
+const art = reactive({ w: 616, h: 536 })
+const interiorEl = ref<HTMLImageElement | null>(null)
+function measure() {
+  const el = interiorEl.value
+  if (el?.naturalWidth && el.naturalHeight) Object.assign(art, { w: el.naturalWidth, h: el.naturalHeight })
+}
+const scale = computed(() => Math.min(STAGE_H / art.h, STAGE_MAX_W / art.w))
+const stage = computed(() => ({ w: art.w * scale.value, h: art.h * scale.value }))
+const card = computed(() => ({ w: stage.value.w + LINE * 2, h: stage.value.h + LINE * 2 }))
+const scenery = computed(() => sceneryCard(card.value.w, card.value.h))
+// Dónde se apoya el grupo, en el escenario: lo que dice la escena, donde se está de pie en la isla o, sin lugar, algo
+// por debajo del centro.
+const spot = computed(() => {
+  if (interior) return { x: (stand?.[0] ?? art.w / 2) * scale.value, y: (stand?.[1] ?? art.h * 0.94) * scale.value }
+  if (ground) return { x: stage.value.w / 2, y: scenery.value.stand - LINE }
+  return { x: stage.value.w / 2, y: stage.value.h * 0.78 }
+})
+
+// Cómo se reparten de uno a tres protagonistas: desplazamiento desde el centro del grupo, escala e inclinación de cada
+// uno (en el orden de `defaults.items`; el primero es el principal), y el ancho del suelo del área cuando no hay lugar.
 interface Slot { dx: number, s: number, r: number }
-const LAYOUTS: { slots: Slot[], floor: number, spread: number }[] = [
-  { slots: [{ dx: 0, s: 1, r: 0 }], floor: 240, spread: 130 },
-  { slots: [{ dx: 51, s: 1, r: 0 }, { dx: -82, s: 0.82, r: -16 }], floor: 330, spread: 192 },
-  { slots: [{ dx: 0, s: 1, r: 0 }, { dx: -150, s: 0.8, r: -14 }, { dx: 150, s: 0.8, r: 14 }], floor: 440, spread: 250 },
+const LAYOUTS: { slots: Slot[], floor: number }[] = [
+  { slots: [{ dx: 0, s: 1, r: 0 }], floor: 240 },
+  { slots: [{ dx: 45, s: 1, r: 0 }, { dx: -58, s: 0.77, r: -13 }], floor: 320 },
+  { slots: [{ dx: 0, s: 1, r: 0 }, { dx: -112, s: 0.74, r: -13 }, { dx: 112, s: 0.74, r: 13 }], floor: 400 },
 ]
 const shown = props.items.filter(item => item.svg).slice(0, 3)
 const layout = LAYOUTS[Math.max(shown.length - 1, 0)]!
-const figures = shown.map((item, i) => ({ svg: item.svg!, dx: layout.slots[i]!.dx, size: MAIN * layout.slots[i]!.s, r: layout.slots[i]!.r }))
-// Tres chispas a los lados del grupo, en el tono del área: una arriba a la izquierda y dos a la derecha.
-const sparks = [
-  { x: CX - layout.spread, y: 22, size: 30, mid: false },
-  { x: CX + layout.spread - 18, y: 0, size: 22, mid: true },
-  { x: CX + layout.spread, y: 119, size: 18, mid: false },
-]
+const figures = computed(() => shown.map((item, i) => {
+  const slot = layout.slots[i]!
+  const size = MAIN * slot.s
+  return { svg: item.svg!, size, r: slot.r, x: spot.value.x + slot.dx - size / 2, y: spot.value.y + FOOT - size }
+}))
 
-// Al tocarlos, saltan uno tras otro y suena la frase. Se reinicia el salto si se vuelve a tocar.
+// Al tocar la tarjeta, saltan uno tras otro y suena la frase. Se reinicia el salto si se vuelve a tocar. Sus esperas
+// van en el tiempo de juego de la escena (con el tablero en pausa no corren).
+const world = useWorld(() => props.blocked)
 const hopping = ref(false)
-let hopTimer: ReturnType<typeof setTimeout> | undefined
+let stopHop = () => {}
 function tap() {
   if (props.blocked) return
+  playSound('tocar')
   hopping.value = false
-  clearTimeout(hopTimer)
-  requestAnimationFrame(() => {
+  stopHop()
+  // En el cuadro siguiente, para que el salto empiece de nuevo.
+  stopHop = world.after(0, () => {
     hopping.value = true
-    hopTimer = setTimeout(() => (hopping.value = false), 700 + figures.length * 90)
+    stopHop = world.after(700 + shown.length * 90, () => (hopping.value = false))
   })
   if (voice.value) void narrate?.(voice.value)
 }
-onBeforeUnmount(() => clearTimeout(hopTimer))
 
-// El título va en una sola línea a 120; si el del tema no cabe en el ancho, se reduce hasta caber.
+// El título va en una sola línea a 96; si el del tema no cabe en el ancho, se reduce hasta caber.
 const titleEl = ref<HTMLElement | null>(null)
 const titleFit = ref(1)
 async function fitTitle() {
@@ -112,6 +139,7 @@ async function fitTitle() {
   titleFit.value = Math.min(1, el.clientWidth / el.scrollWidth)
 }
 onMounted(() => {
+  measure()
   void fitTitle()
   void document.fonts?.ready.then(fitTitle)
 })

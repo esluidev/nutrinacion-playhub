@@ -1,0 +1,15 @@
+{
+  "id": "hidratacion",
+  "family": "beber",
+  "template": "beber",
+  "affirmations": [],
+  "meta": {
+    "instruction": {"es": "Ahora toca tomar agua"},
+    "completionFeedback": {"es": "El agua es la bebida de esta pausa."}
+  },
+  "strings": {
+    "after": {"es": "¿Qué notaste después?"}
+  },
+  "library": {"rive": [], "svg": ["cocina-alacena-ancha"], "sfx": []},
+  "defaults": {"interior": "cocina-alacena-ancha", "sips": 3, "pointsOnComplete": 10}
+}

@@ -11,10 +11,15 @@
     "next": { "es": "Después llegan a la casa." },
     "direct": { "es": "También pueden llegar directamente desde donde se recogen." }
   },
-  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "nido", "nido-frente", "granja", "tienda", "casa", "suelo-calle", "suelo-jardin", "mostrador", "cocina", "carton", "carton-frente", "mano-apunta"], "sfx": [] },
+  "library": { "rive": ["aves"], "svg": ["huevo-gallina", "nido", "nido-frente", "granja", "isla-corral", "tienda", "casa", "isla-acera", "isla-pasto", "mostrador", "cocina", "carton", "carton-frente", "mano-apunta"], "sfx": [] },
   "defaults": {
     "items": ["granja", "tienda", "casa"],
     "traveler": "huevo",
+    "supports": {
+      "granja": { "svg": "nido", "front": "nido-frente", "w": 1200, "h": 660, "seats": [[730, 404.6, 18], [520, 394.6, -20]] },
+      "tienda": { "svg": "carton", "front": "carton-frente", "w": 240, "h": 112, "drop": 1, "seats": [[70, 98], [170, 98]] },
+      "casa": { "svg": "carton", "front": "carton-frente", "w": 240, "h": 112, "drop": 1, "seats": [[70, 98], [170, 98]] }
+    },
     "routes": [
       { "stops": ["granja", "tienda", "casa"] },
       { "stops": ["granja", "casa"], "body": "direct" }

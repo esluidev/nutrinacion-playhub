@@ -1,17 +1,25 @@
 {
   "id": "preparacion",
-  "family": "ordenar",
-  "template": "colocar",
+  "family": "simular",
+  "template": "estaciones",
   "affirmations": ["A5"],
   "meta": {
-    "instruction": { "es": "Pon los cuidados en orden" },
-    "completionFeedback": { "es": "Primero se conserva frío. Después se cocina hasta que la clara y la yema estén firmes." }
+    "instruction": {"es": "Se cocina hasta que la clara y la yema estén firmes"},
+    "completionFeedback": {"es": "Se come cocido, con clara y yema firmes."}
   },
   "strings": {
-    "completeTitle": { "es": "Frío y bien cocido" },
-    "hint": { "es": "Primero se conserva frío; después se cocina" },
-    "retry": { "es": "Ese orden no es. Prueba otra vez" }
+    "hint": {"es": "¿Está listo si queda líquido?"},
+    "hintBody": {"es": "Firme significa que ya no están líquidas."}
   },
-  "library": { "rive": [], "svg": ["huevo-gallina"], "sfx": [] },
-  "defaults": { "items": ["frio", "cocido"], "pointsOnComplete": 10 }
+  "library": {"rive": [], "svg": ["huevo-gallina", "carton-3", "carton-3-frente", "cocina-ventana", "cocina-alacena", "cocina-refrigerador", "estufa-mesa", "llama", "olla", "olla-frente", "hervor", "sarten", "cuchara", "plato", "huevo-frito-crudo", "huevo-frito", "huevo-revuelto-crudo", "huevo-revuelto", "huevo-hervido", "mano-apunta"], "sfx": []},
+  "defaults": {
+    "items": ["hervido", "frito", "revuelto"],
+    "traveler": "huevo",
+    "origin": {"svg": "carton-3", "front": "carton-3-frente", "w": 600, "h": 170, "seats": [108, 300, 492], "base": 152},
+    "stove": {"svg": "estufa-mesa", "at": [154, 220], "scale": 0.86, "rest": [0, -76], "burner": [0, -50]},
+    "flame": {"svg": "llama", "width": 134, "count": 7},
+    "plate": {"svg": "plato", "at": [154, 264], "inside": [0, -15]},
+    "holdMs": 4000,
+    "pointsOnComplete": 10
+  }
 }
