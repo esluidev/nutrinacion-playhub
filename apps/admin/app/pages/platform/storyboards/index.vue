@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Los storyboards los registra Player desde su JSON: aquí no hay alta. -->
+    <!-- Solo para ver (decisión 013): Player registra, publica, escribe la guía y elimina. -->
     <UiPageHeader :title="t('platform.sbs.title')" :description="t('platform.sbs.desc')" />
 
     <div class="mb-6 flex flex-wrap items-center gap-2.5">
@@ -52,42 +52,8 @@
           <span class="uppercase">{{ (row.idiomas ?? []).join('·') }}</span>
         </span>
       </template>
-      <template #cell-acciones="{ row }">
-        <div class="flex items-center justify-end gap-1.5">
-          <UiButton
-            tone="neutral"
-            size="sm"
-            icon="pencil"
-            icon-only
-            :label="t('common.edit')"
-            :title="t('common.edit')"
-            @click.stop="navigateTo(`/platform/storyboards/${row.id}/editar`)"
-          />
-          <UiButton
-            tone="neutral"
-            size="sm"
-            icon="trash"
-            icon-only
-            :label="t('common.delete')"
-            :title="t('common.delete')"
-            @click.stop="pedirEliminar(row)"
-          />
-        </div>
-      </template>
     </UiDataTable>
 
-    <!-- La base frena el borrado si el storyboard ya se usó en un taller
-         (`talleres.storyboard_id` es ON DELETE RESTRICT). -->
-    <UiConfirmDialog
-      :open="!!borrando"
-      :title="t('platform.sbs.deleteTitle')"
-      :confirm-label="t('platform.sbs.deleteConfirm')"
-      :loading="eliminando"
-      @update:open="(v) => { if (!v) borrando = null }"
-      @confirm="confirmarEliminar"
-    >
-      <p>{{ t('platform.sbs.deleteWarn', { nombre: borrando ? loc(borrando.titulo) : '' }) }}</p>
-    </UiConfirmDialog>
   </div>
 </template>
 
@@ -99,8 +65,7 @@ import type { Localized } from '~/utils/types'
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.title', descKey: 'platform.sbs.desc' })
 
 const { t, locale } = useT()
-const { listStoryboards, eliminar } = usePlatformStoryboards()
-const { toast } = useToast()
+const { listStoryboards } = usePlatformStoryboards()
 
 const storyboards = ref<StoryboardFila[]>([])
 const total = ref(0)
@@ -122,7 +87,6 @@ const columns = computed(() => [
   { key: 'estado', label: t('platform.sbs.colState') },
   { key: 'propiedad', label: t('platform.sbs.colOwnership') },
   { key: 'contenido', label: t('platform.sbs.colContent') },
-  { key: 'acciones', label: '', align: 'right' as const },
 ])
 
 const estadoOpciones = computed(() => [
@@ -177,26 +141,4 @@ watch([q, estadoFiltro, tipoFiltro, idiomaFiltro], () => {
 })
 watch(page, cargar)
 onMounted(cargar)
-
-const borrando = ref<StoryboardFila | null>(null)
-const eliminando = ref(false)
-
-function pedirEliminar(row: StoryboardFila) {
-  borrando.value = row
-}
-
-async function confirmarEliminar() {
-  if (!borrando.value) return
-  eliminando.value = true
-  const { error } = await eliminar(borrando.value.id)
-  eliminando.value = false
-  if (error) {
-    // El caso típico: ya hay talleres usándolo y la FK lo impide.
-    toast.error(t('platform.sbs.deleteBlocked'))
-    return
-  }
-  toast.success(t('platform.sbs.deleted'))
-  borrando.value = null
-  await cargar()
-}
 </script>

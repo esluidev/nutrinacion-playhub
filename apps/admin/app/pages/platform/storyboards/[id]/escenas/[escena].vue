@@ -5,9 +5,12 @@
       :description="`${loc(sb.titulo)} · scenes/${escena.carpeta}/`"
     >
       <template #actions>
-        <!-- Probar es secundario: la acción de esta vista es guardar la guía. -->
         <UiButton v-if="urlRunner" tone="neutral" icon="play" :href="urlRunner" target="_blank" rel="noopener">
           {{ t('platform.sbs.testScene') }}
+        </UiButton>
+        <!-- Aquí solo se lee (decisión 013): la guía se escribe en Player. -->
+        <UiButton v-if="urlEnPlayer" tone="neutral" icon="external" :href="urlEnPlayer" target="_blank" rel="noopener">
+          {{ t('platform.sbs.editInPlayer') }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -15,7 +18,7 @@
     <UiCard>
       <div class="mb-1 flex items-center justify-between gap-3">
         <h3 class="ui-title">{{ t('platform.sbs.guideTitle') }}</h3>
-        <!-- Navegación entre escenas sin volver al detalle: la guía se escribe en tandas. -->
+        <!-- Navegación entre escenas sin volver al detalle. -->
         <div class="ui-group">
           <NuxtLink
             v-if="escenaAnterior"
@@ -50,21 +53,13 @@
       />
 
       <div class="space-y-5">
-        <UiTextarea
-          v-for="seccion in secciones"
-          :key="seccion.key"
-          v-model="guia[seccion.key][idiomaActivo]"
-          :label="seccion.label"
-          :hint="seccion.hint"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <UiButton tone="neutral" @click="navigateTo(`/platform/storyboards/${sb.id}`)">{{ t('common.cancel') }}</UiButton>
-          <UiButton :loading="guardando" @click="guardar">{{ t('common.save') }}</UiButton>
+        <div v-for="seccion in secciones" :key="seccion.key">
+          <p class="eyebrow mb-1.5">{{ seccion.label }}</p>
+          <p :class="['ui-text whitespace-pre-line', !seccion.texto && 'text-disabled']">
+            {{ seccion.texto || t('platform.sbs.emptyField') }}
+          </p>
         </div>
-      </template>
+      </div>
     </UiCard>
   </div>
 
@@ -78,17 +73,18 @@
 </template>
 
 <script setup lang="ts">
-import type { EscenaFila, SeccionGuia, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
+// La guía de una escena, para leerla: las doce secciones de la plantilla en el idioma elegido. Se
+// escribe en Player (decisión 013); «Editar en Player» lleva a esa misma escena allí.
+import type { EscenaFila, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
-import { carpetaDeCategoria, seccionesGuia } from '~/composables/usePlatformStoryboards'
+import { carpetaDeCategoria, seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.guideTitle', descKey: 'platform.sbs.desc' })
 
 const { t, locale } = useT()
 const route = useRoute()
-const { getStoryboard, actualizarGuia, getPlayerUrl } = usePlatformStoryboards()
-const { toast } = useToast()
+const { getStoryboard, getPlayerUrl } = usePlatformStoryboards()
 
 const sb = ref<StoryboardDetalle | null>(null)
 const cargando = ref(true)
@@ -107,19 +103,6 @@ const escena = computed<EscenaFila | null>(() => {
 const idiomas = computed(() => (sb.value?.idiomas?.length ? sb.value.idiomas : ['es']))
 const idiomaActivo = ref('es')
 const pestanasIdioma = computed(() => idiomas.value.map(l => ({ value: l, label: l.toUpperCase() })))
-
-// Las 12 secciones de la plantilla de la guía, siempre como objeto por idioma (columnas jsonb).
-const guia = reactive(Object.fromEntries(seccionesGuia.map(s => [s, {}])) as Record<SeccionGuia, Localized>)
-
-// La ruta cambia sin desmontar la página al navegar entre escenas (← →): resembrar siempre.
-watch(escena, (fila) => {
-  if (!fila) return
-  for (const s of seccionesGuia) {
-    for (const l of idiomas.value) {
-      guia[s][l] = fila[s]?.[l] ?? ''
-    }
-  }
-}, { immediate: true })
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -143,38 +126,14 @@ const urlRunner = computed(() => {
     eje: carpetaDeCategoria(sb.value.categoria), slug: sb.value.slug, modo: 'educator', idioma: sb.value.idiomas[0], escena: escena.value.carpeta,
   })
 })
+const urlEnPlayer = computed(() => (playerUrl.value && sb.value && escena.value
+  ? urlGestionEnPlayer(playerUrl.value, sb.value.categoria, sb.value.slug, escena.value.carpeta)
+  : null))
 
+// Las 12 secciones de la plantilla de la guía, con lo escrito en el idioma elegido.
 const secciones = computed(() => seccionesGuia.map(key => ({
   key,
   label: t(`platform.sbs.g_${key}`),
-  hint: t(`platform.sbs.g_${key}Hint`),
+  texto: escena.value?.[key]?.[idiomaActivo.value]?.trim() ?? '',
 })))
-
-const guardando = ref(false)
-
-function recortar(campo: Localized): Localized | null {
-  const salida: Localized = {}
-  for (const l of idiomas.value) {
-    const v = campo[l]?.trim()
-    if (v) salida[l] = v
-  }
-  return Object.keys(salida).length ? salida : null
-}
-
-async function guardar() {
-  if (!escena.value) return
-  guardando.value = true
-  const payload = Object.fromEntries(
-    seccionesGuia.map(s => [s, recortar(guia[s])]),
-  ) as Partial<Record<SeccionGuia, Localized | null>>
-  const { error } = await actualizarGuia(escena.value.id, payload)
-  guardando.value = false
-  if (error) {
-    toast.error(error)
-    return
-  }
-  // Reflejar lo guardado en la copia local: el detalle y el avance quedan al día al volver.
-  Object.assign(escena.value, payload)
-  toast.success(t('platform.sbs.guideSaved'))
-}
 </script>

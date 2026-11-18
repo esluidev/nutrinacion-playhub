@@ -7,13 +7,15 @@
         <UiButton v-if="urlRunner" tone="neutral" icon="play" :href="urlRunner" target="_blank" rel="noopener">
           {{ t('platform.sbs.test') }}
         </UiButton>
-        <!-- Editar es la acción de la consola: la única en lima. -->
-        <UiButton icon="pencil" :to="`/platform/storyboards/${sb.id}/editar`">{{ t('common.edit') }}</UiButton>
+        <!-- Aquí solo se ve (decisión 013): el storyboard, su publicación y su guía se cambian en Player. -->
+        <UiButton v-if="urlEnPlayer" tone="neutral" icon="external" :href="urlEnPlayer" target="_blank" rel="noopener">
+          {{ t('platform.sbs.editInPlayer') }}
+        </UiButton>
       </template>
     </UiPageHeader>
 
     <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <!-- Lo editorial (solo lectura acá; se cambia en Editar) -->
+      <!-- La cabecera de la guía y la publicación: se escriben en Player. -->
       <div class="ui-panel p-6 lg:col-span-2">
         <div class="mb-4 flex flex-wrap items-center gap-2">
           <h3 class="ui-title">{{ t('platform.sbs.information') }}</h3>
@@ -41,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Lo build-owned: se resincroniza repegando la metadata en Editar -->
+      <!-- Lo que viene del JSON del storyboard: lo registra Player. -->
       <div class="ui-panel">
         <div class="px-5 pb-3 pt-5">
           <h3 class="ui-title">{{ t('platform.sbs.fromBuildShort') }}</h3>
@@ -56,8 +58,8 @@
       </div>
     </div>
 
-    <!-- Escenas: la guía pedagógica se escribe por escena. Toda la fila abre la guía; probar
-         una escena es secundario (neutro), como el «Probar» del encabezado. -->
+    <!-- Escenas: toda la fila abre su guía, para leerla; probar una escena es secundario (neutro),
+         como el «Probar» del encabezado. -->
     <section class="ui-panel overflow-hidden">
       <div class="ui-panel-header">
         <h3 class="ui-title">{{ t('platform.sbs.fScenes') }}</h3>
@@ -80,15 +82,6 @@
             {{ t('platform.sbs.guideProgress', { n: avanceGuia(escena) }) }}
           </UiBadge>
           <div class="flex shrink-0 items-center gap-1.5">
-            <UiButton
-              tone="neutral"
-              size="sm"
-              icon="pencil"
-              :to="`/platform/storyboards/${sb!.id}/escenas/${escena.id}`"
-              @click.stop
-            >
-              {{ t('platform.sbs.editGuide') }}
-            </UiButton>
             <UiButton
               v-if="urlRunner"
               tone="neutral"
@@ -120,7 +113,7 @@
 <script setup lang="ts">
 import type { EscenaFila, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
-import { carpetaDeCategoria, seccionesGuia } from '~/composables/usePlatformStoryboards'
+import { carpetaDeCategoria, seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.title', descKey: 'platform.sbs.desc' })
@@ -149,6 +142,10 @@ onMounted(async () => {
 
 // El runner de Player en modo educador, con la carpeta de la categoría (docs/runner.md).
 const urlRunner = computed(() => urlEscena())
+// Donde se cambia: su detalle en la gestión de Player.
+const urlEnPlayer = computed(() => (playerUrl.value && sb.value
+  ? urlGestionEnPlayer(playerUrl.value, sb.value.categoria, sb.value.slug)
+  : null))
 function urlEscena(escena?: string): string | null {
   if (!playerUrl.value || !sb.value) return null
   return runnerUrl(playerUrl.value, {

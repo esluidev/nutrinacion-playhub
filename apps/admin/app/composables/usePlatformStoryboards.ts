@@ -3,12 +3,11 @@ import type { Localized } from '~/utils/types'
 import { urlDePlayer } from '~/composables/useStoryboards'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Catálogo de storyboards — consola del operador (Platform, solo superadmin).
+// Catálogo de storyboards — consola del operador (Platform, solo superadmin), SOLO PARA VER.
 //
-// Los storyboards los registra y actualiza Player desde su JSON (`sincronizar_storyboard`):
-// título, categoría, subcategoría, edición, enfoques de salud, idiomas, duración y escenas. Aquí
-// no se crean ni se edita esa metadata. Admin decide lo editorial: la publicación, dónde se
-// ofrece, si es de una organización y la guía del educador (`guias` y `guia_escenas`).
+// Todo lo del storyboard se cambia en Player (decisión 013): lo registra y actualiza desde su JSON
+// (`sincronizar_storyboard`), lo publica (estado, países y organización), escribe su guía del
+// educador (`guias` y `guia_escenas`) y lo elimina. Aquí se ve la lista, el detalle y la guía.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type EstadoPublicacion = Enums<'estado_publicacion'>
@@ -63,8 +62,6 @@ export interface StoryboardDetalle extends StoryboardFila {
   escenas: EscenaFila[]
 }
 
-export type DatosCabeceraGuia = Omit<GuiaCabecera, 'id'>
-
 const SELECT_FILA = `
   id, clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
   duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id,
@@ -73,6 +70,12 @@ const SELECT_FILA = `
 
 /** La carpeta de la categoría en el runner de Player: ALIMENTACION → alimentacion. */
 export const carpetaDeCategoria = (categoria: string) => categoria.toLowerCase().replace(/_/g, '-')
+
+/** Donde se cambia un storyboard: su detalle en la gestión de Player, o la guía de una escena. */
+export function urlGestionEnPlayer(playerUrl: string, categoria: string, slug: string, escena?: string): string {
+  const detalle = `${playerUrl.replace(/\/+$/, '')}/storyboards/${carpetaDeCategoria(categoria)}/${slug}`
+  return escena ? `${detalle}/guia/${escena}` : detalle
+}
 
 export function usePlatformStoryboards() {
   // El cliente se resuelve POR LLAMADA: construirlo en el cuerpo hace que invocar el
@@ -124,26 +127,6 @@ export function usePlatformStoryboards() {
     }
   }
 
-  async function actualizarCabeceraGuia(guiaId: number, datos: DatosCabeceraGuia) {
-    if (!isSupabaseConfigured()) return { error: null as string | null }
-    const { error } = await supabase().from('guias').update(datos).eq('id', guiaId)
-    return { error: error?.message ?? null }
-  }
-
-  // `null` limpia la sección: dejarla vacía en el formulario debe poder borrar lo guardado.
-  async function actualizarGuia(escenaId: number, guia: Partial<Record<SeccionGuia, Localized | null>>) {
-    if (!isSupabaseConfigured()) return { error: null as string | null }
-    const { error } = await supabase().from('guia_escenas').update(guia).eq('id', escenaId)
-    return { error: error?.message ?? null }
-  }
-
-  async function eliminar(id: number) {
-    if (!isSupabaseConfigured()) return { error: null as string | null }
-    // `workshops.storyboard_id` es ON DELETE RESTRICT: la base frena si ya se usó en un workshop.
-    const { error } = await supabase().from('storyboards').delete().eq('id', id)
-    return { error: error?.message ?? null }
-  }
-
   // La URL de Player vive en `configuracion` (clave `player_url`): Admin arma los enlaces de
   // «Probar» con ella, sin acoplarse a un host (`urlDePlayer`, también en la vista previa).
   const getPlayerUrl = urlDePlayer
@@ -151,9 +134,6 @@ export function usePlatformStoryboards() {
   return {
     listStoryboards,
     getStoryboard,
-    actualizarCabeceraGuia,
-    actualizarGuia,
-    eliminar,
     getPlayerUrl,
   }
 }
