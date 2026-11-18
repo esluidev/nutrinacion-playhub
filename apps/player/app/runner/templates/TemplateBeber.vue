@@ -47,7 +47,7 @@ import { createSips, hollowHalf, waterLine } from './beber'
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t, str } = useSceneText(props)
+const { t, str, raw, sheet } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
 
 const reduced = prefersReducedMotion()
@@ -163,9 +163,8 @@ function tap() {
 // La hoja de cierre: la pregunta de después de beber, si la escena la trae, y debajo el cierre.
 function finish() {
   emit('complete')
-  const question = str('after')
-  const closing = t(props.scene.meta.completionFeedback)
-  emit('feedback', { kind: 'success', title: question || closing, body: question ? closing || undefined : undefined })
+  const closing = props.scene.meta.completionFeedback
+  emit('feedback', str('after') ? sheet('success', raw('after'), closing) : sheet('success', closing))
 }
 
 // ---- Demostrar lo que toca (la mano, en useDemo): un toque sobre el vaso mientras no está lleno. Lo que la mano

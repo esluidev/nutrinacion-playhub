@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { NARRATOR_KEY } from '../audio/narration'
+import { vozDe } from '../audio/voz'
 import { box, EXTERIOR, useSceneText } from '../board'
 import { librarySvg } from '../content'
 import { playSound } from '../engine/sound'
@@ -38,12 +39,14 @@ const props = defineProps<TemplateProps>()
 defineEmits<{ feedback: [], progress: [], complete: [] }>()
 
 const narrate = inject(NARRATOR_KEY, null)
-const { t } = useSceneText(props)
+const { t, raw } = useSceneText(props)
 
 const title = computed(() => t(props.scene.strings?.title))
 const subtitle = computed(() => t(props.scene.strings?.subtitle))
-// Lo que suena al tocar la tarjeta: la frase de la escena («Hoy vamos a conocer el huevo»), o el título.
-const voice = computed(() => t(props.scene.meta.instruction) || title.value)
+// Lo que suena al tocar la tarjeta: la frase de la escena («Hoy vamos a conocer el huevo»), con su voz si la trae,
+// o el título.
+const intro = computed(() => (t(props.scene.meta.instruction) ? props.scene.meta.instruction : raw('title')))
+const voice = computed(() => t(intro.value))
 
 // ---- El escenario de la portada, de `defaults`: la vista de un lugar, que llena la tarjeta, `interior` (bajo techo)
 // o `exterior` (al aire libre: el cielo arriba y el suelo del lugar abajo), o ninguna (el suelo plano del área). Con
@@ -125,7 +128,7 @@ function tap() {
     hopping.value = true
     stopHop = world.after(700 + shown.length * 90, () => (hopping.value = false))
   })
-  if (voice.value) void narrate?.(voice.value)
+  if (voice.value) void narrate?.(vozDe([intro.value], props.locale))
 }
 
 // El título va en una sola línea a 96; si el del tema no cabe en el ancho, se reduce hasta caber.

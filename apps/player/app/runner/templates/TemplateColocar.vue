@@ -75,7 +75,7 @@ interface Piece {
   node: HTMLElement | null
 }
 
-const { t, str } = useSceneText(props)
+const { t, str, raw, sheet } = useSceneText(props)
 
 // defaults.items es el orden correcto; las fichas nunca empiezan en ese orden.
 const order = props.items.map(item => item.id)
@@ -167,13 +167,12 @@ function check() {
     pieces.forEach((p, i) => { p.delay = `${i * 120}ms`; replay(p.node, 'is-celebrating') })
     emit('progress', 1)
     emit('complete')
-    emit('feedback', { kind: 'success', title: str('completeTitle'), body: t(props.scene.meta.completionFeedback) })
+    emit('feedback', sheet('success', raw('completeTitle'), props.scene.meta.completionFeedback))
     return
   }
   misses += 1
   // Libre: la pista llega en el segundo error; guiado y pista, en el primero.
-  const hint = props.profile.scaffolding === 'libre' && misses < 2 ? str('retry') : str('hint')
-  emit('feedback', { kind: 'retry', title: hint })
+  emit('feedback', sheet('retry', raw(props.profile.scaffolding === 'libre' && misses < 2 ? 'retry' : 'hint')))
   slotNodes.value.forEach(node => replay(node, 'is-wrong'))
   world.after(700, () => pieces.forEach(back))
 }

@@ -1,77 +1,27 @@
 import type { InjectionKey } from 'vue'
 import { muted } from './settings'
 import { cancelSpeech, speak, speechActive } from './speech'
+import type { Voz } from './voz'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NARRATION — pre-recorded voice (VoiceBox) resolved BY TEXT, Web Speech fallback.
-//
-// Each storyboard authors an `audio.manifest.json` ({ key, text } per locale) and
-// scripts/generate_audio.py renders one wav per line (named by `key`). The runner
-// already has the EXACT text of every narration moment (instruction,
-// completionFeedback, knowledge `voice`, quiz question, closing line), so we look
-// that text up in the manifest: match → play the wav; no match → speak() it.
-//
-// Two namespaces: per-storyboard content, and the shared runner shell
-// (`content/runner/...`, when it exists — strings identical across storyboards,
-// resolved by locale, not by storyboard).
-//
-// Result: audio is a zero-scene-code, additive layer. Adding audio is just
-// authoring the manifest + generating — NO per-scene wiring, no keys in scenes.
+// La narración: lo que se dice en un momento (`Voz`, audio/voz.ts), tramo a tramo. Cada tramo suena con su grabación
+// si la tiene (`audio`, la clave del archivo en `<storyboard>/audio/<idioma>/<clave>.wav`, o `.mp3`) y, si no, con la
+// voz del navegador (speech.ts). La grabación se busca por su clave, nunca por el texto: cambiar lo que se ve no la
+// pierde. Las genera scripts/generate_audio.py a partir de los JSON del storyboard.
 // ─────────────────────────────────────────────────────────────────────────────
-
-interface Manifest {
-  locales?: Record<string, { lines?: { key: string, text: string }[] }>
-}
-
-// Eager: tiny JSON + url strings the runner needs the moment a storyboard plays.
-const manifestModules = import.meta.glob([
-  '../../../content/storyboards/*/*/audio.manifest.json',
-  '../../../content/runner/audio.manifest.json',
-], { eager: true }) as Record<string, { default?: Manifest } & Manifest>
 
 const audioModules = import.meta.glob([
   '../../../content/storyboards/*/*/audio/*/*.wav',
-  '../../../content/runner/audio/*/*.wav',
+  '../../../content/storyboards/*/*/audio/*/*.mp3',
 ], { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 
-const SB_MANIFEST_RE = /storyboards\/([^/]+)\/([^/]+)\/audio\.manifest\.json$/
-const SB_WAV_RE = /storyboards\/([^/]+)\/([^/]+)\/audio\/([^/]+)\/(.+)\.wav$/
-const RUNNER_MANIFEST_RE = /\/runner\/audio\.manifest\.json$/
-const RUNNER_WAV_RE = /\/runner\/audio\/([^/]+)\/(.+)\.wav$/
-const SHARED = 'shared' // namespace for runner-shell audio (no storyboard)
+const SB_AUDIO_RE = /storyboards\/([^/]+)\/([^/]+)\/audio\/([^/]+)\/(.+)\.(?:wav|mp3)$/
 
-// Forgiving but exact-ish: the manifest text is authored to match the runtime
-// text; this only absorbs whitespace/unicode noise, never wording.
-const norm = (text: string) => text.trim().replace(/\s+/g, ' ').normalize('NFC')
-
-// `${namespace}/${locale}/${key}` -> served wav url (namespace = `${cat}/${sb}` or `shared`)
-const wavUrls = new Map<string, string>()
+// `${categoría}/${storyboard}/${idioma}/${clave}` -> url servida
+const audioUrls = new Map<string, string>()
 for (const [path, url] of Object.entries(audioModules)) {
-  const sb = path.match(SB_WAV_RE)
-  if (sb) {
-    wavUrls.set(`${sb[1]}/${sb[2]}/${sb[3]}/${sb[4]}`, url)
-    continue
-  }
-  const rn = path.match(RUNNER_WAV_RE)
-  if (rn) wavUrls.set(`${SHARED}/${rn[1]}/${rn[2]}`, url)
-}
-
-// nested: `${namespace}/${locale}` -> (normalizedText -> wav url)
-const textIndex = new Map<string, Map<string, string>>()
-for (const [path, mod] of Object.entries(manifestModules)) {
-  const sm = path.match(SB_MANIFEST_RE)
-  const ns = sm ? `${sm[1]}/${sm[2]}` : RUNNER_MANIFEST_RE.test(path) ? SHARED : null
-  if (!ns) continue
-  const manifest = (mod.default ?? mod) as Manifest
-  for (const [locale, block] of Object.entries(manifest.locales ?? {})) {
-    const nsLoc = `${ns}/${locale}`
-    let byText = textIndex.get(nsLoc)
-    if (!byText) textIndex.set(nsLoc, (byText = new Map()))
-    for (const line of block.lines ?? []) {
-      const url = wavUrls.get(`${nsLoc}/${line.key}`)
-      if (url) byText.set(norm(line.text), url)
-    }
-  }
+  const m = path.match(SB_AUDIO_RE)
+  if (m) audioUrls.set(`${m[1]}/${m[2]}/${m[3]}/${m[4]}`, url)
 }
 
 export interface NarrationContext {
@@ -80,12 +30,9 @@ export interface NarrationContext {
   locale: string
 }
 
-const nsOf = (ctx: NarrationContext) => `${ctx.category}/${ctx.storyboardId}/${ctx.locale}`
-
-export function resolveNarration(ctx: NarrationContext, text: string): string | undefined {
-  const n = norm(text)
-  // per-storyboard first, then the shared runner-shell namespace (by locale)
-  return textIndex.get(nsOf(ctx))?.get(n) ?? textIndex.get(`${SHARED}/${ctx.locale}`)?.get(n)
+/** La grabación de una clave en el storyboard y el idioma de `ctx`, si existe. */
+export function resolveNarration(ctx: NarrationContext, audio: string): string | undefined {
+  return audioUrls.get(`${ctx.category}/${ctx.storyboardId}/${ctx.locale}/${audio}`)
 }
 
 /* ── Single shared <audio> player (a new clip replaces the previous one) ─────── */
@@ -144,27 +91,42 @@ function playFile(url: string, onState?: (speaking: boolean) => void): Promise<v
 
 /* ── Public API ───────────────────────────────────────────────────────────── */
 
-/** Narrate `text` for the storyboard/locale in `ctx`: play the matching wav if a
- *  manifest (storyboard or shared shell) has this line, else synthesize it.
- *
- *  CONTRATO: la promesa SIEMPRE resuelve (nunca rechaza) — al terminar el wav o
- *  la voz, inmediatamente con mute, al ser reemplazada por una narración nueva,
- *  o al cancelar. Se puede `await` sin timeouts de seguridad. `onState` sigue
- *  disponible para el estado intermedio "está sonando" (animaciones). */
-export function narrate(ctx: NarrationContext, text: string, onState?: (speaking: boolean) => void): Promise<void> {
-  if (muted.value) return Promise.resolve()
-  const url = resolveNarration(ctx, text)
+// Cada narración nueva o `cancelNarration()` corta la que sonaba, también entre dos de sus tramos.
+let turno = 0
+
+/** Un tramo: su grabación si existe; si no, la voz del navegador. */
+function sonar(ctx: NarrationContext, tramo: Voz[number], onState?: (speaking: boolean) => void): Promise<void> {
+  const url = tramo.audio ? resolveNarration(ctx, tramo.audio) : undefined
   if (url) return playFile(url, onState)
-  // The storyboard ships audio but this exact line isn't in its manifest →
-  // the text drifted from what was generated. Surface it in dev.
-  if (import.meta.dev && textIndex.has(nsOf(ctx))) {
-    console.warn(`[narration] no audio match in ${nsOf(ctx)} for: "${text.slice(0, 80)}" — check audio.manifest.json (using Web Speech)`)
+  // La escena nombra una grabación que todavía no existe: suena la voz del navegador. En desarrollo se avisa.
+  if (import.meta.dev && tramo.audio) {
+    console.warn(`[narración] falta audio/${ctx.locale}/${tramo.audio} en ${ctx.category}/${ctx.storyboardId}: suena la voz del navegador (scripts/generate_audio.py)`)
   }
-  return speak(text, onState)
+  return tramo.text ? speak(tramo.text, onState) : Promise.resolve()
+}
+
+/** Narra lo que se dice en un momento (`Voz`), tramo a tramo, en el storyboard y el idioma de `ctx`. Corta lo
+ *  que estuviera sonando.
+ *
+ *  CONTRATO: la promesa SIEMPRE resuelve (nunca rechaza) — al terminar el último tramo, inmediatamente con mute o
+ *  sin nada que decir, al ser reemplazada por una narración nueva, o al cancelar. Se puede `await` sin timeouts de
+ *  seguridad. `onState` dice si está sonando (para las animaciones): verdadero al empezar, falso al terminar. */
+export async function narrate(ctx: NarrationContext, voz: Voz, onState?: (speaking: boolean) => void): Promise<void> {
+  const mio = ++turno
+  if (muted.value || !voz.length) {
+    onState?.(false)
+    return
+  }
+  for (const tramo of voz) {
+    if (mio !== turno || muted.value) break
+    await sonar(ctx, tramo, speaking => onState?.(speaking && mio === turno))
+  }
+  if (mio === turno) onState?.(false)
 }
 
 /** Stop any narration — pre-recorded or synthesized. Resolves pending promises. */
 export function cancelNarration() {
+  turno += 1
   if (el) {
     el.pause()
     try {
@@ -186,5 +148,5 @@ export function narrationActive(): boolean {
 
 /* ── Scene-facing narrator (provided by the runner shell, see useNarrator) ──── */
 
-export type SceneNarrate = (text: string, onState?: (speaking: boolean) => void) => Promise<void>
+export type SceneNarrate = (voz: Voz, onState?: (speaking: boolean) => void) => Promise<void>
 export const NARRATOR_KEY: InjectionKey<SceneNarrate> = Symbol('playhub:narrate')

@@ -128,7 +128,7 @@ import type { DatosItem, FeedbackPayload, SupportSpec, TemplateProps } from '../
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t, str } = useSceneText(props)
+const { t, str, raw, sheet } = useSceneText(props)
 
 interface Route { stops: string[], body?: string }
 
@@ -386,7 +386,7 @@ function land(egg: Egg, card: Card, final: boolean) {
   }
   progress()
   // Un lugar de paso: qué pasa aquí y adónde siguen (`strings.next`); el huevo espera en el borde y la mano demuestra el tramo.
-  emit('feedback', { kind: 'info', title: t(card.item.name), body: [t(card.item.fact), str('next')].filter(Boolean).join(' ') })
+  emit('feedback', sheet('info', card.item.name, card.item.fact, raw('next')))
   phase.value = 'choose'
 }
 
@@ -396,8 +396,8 @@ function finish(egg: Egg, card: Card) {
   if (index >= 0 && !doneRoutes.value.includes(index)) doneRoutes.value = [...doneRoutes.value, index]
   egg.rest = true
   const route = routes[index]
-  const closing = route?.body ? str(route.body) : t(props.scene.meta.completionFeedback)
-  emit('feedback', { kind: 'success', title: t(card.item.name), body: [t(card.item.fact), closing].filter(Boolean).join(' ') })
+  const closing = route?.body ? raw(route.body) : props.scene.meta.completionFeedback
+  emit('feedback', sheet('success', card.item.name, card.item.fact, closing))
   if (doneRoutes.value.length === routes.length) {
     phase.value = 'done'
     progress()

@@ -1,9 +1,9 @@
 import { getCurrentScope, onScopeDispose } from 'vue'
-import { tr } from '~/types/i18n'
-import type { I18nText } from '~/types/i18n'
+import { textoDe, vozDe } from './audio/voz'
+import type { Parte } from './audio/voz'
 import { realTime } from './engine/world'
 import type { World } from './engine/world'
-import type { TemplateProps } from './types'
+import type { FeedbackKind, FeedbackPayload, TemplateProps, Texto } from './types'
 
 // Lo que comparten las plantillas: el tablero de 1280 × 600 en píxeles de diseño, la caja de cada pieza, el puntero en
 // coordenadas del tablero, los textos de la escena, el movimiento reducido y las animaciones con guion (cuadro a
@@ -112,11 +112,21 @@ export function islandTile(w: number, h: number) {
   }
 }
 
-/** Los textos de la escena en su idioma: `t` traduce un texto y `str`, una clave de `strings`. */
+/**
+ * Los textos de la escena en su idioma: `t` da lo que se ve de un texto y `str`, de una clave de `strings`; `raw`
+ * da el texto de una clave tal como está (con su voz, si la trae). `sheet` arma una hoja de feedback con textos de la
+ * escena: su título y su cuerpo se ven, y su voz sale de esos mismos textos (`vozDe`, audio/voz.ts). Una plantilla
+ * pasa los textos, no lo ya traducido, para que la hoja diga su voz.
+ */
 export function useSceneText(props: Pick<TemplateProps, 'scene' | 'locale'>) {
-  const t = (value: I18nText | null | undefined) => (value ? tr(value, props.locale) : '')
-  const str = (key: string | undefined) => (key ? t(props.scene.strings?.[key]) : '')
-  return { t, str }
+  const t = (value: Parte) => textoDe(value, props.locale)
+  const raw = (key: string | undefined): Texto | undefined => (key ? props.scene.strings?.[key] : undefined)
+  const str = (key: string | undefined) => t(raw(key))
+  const sheet = (kind: FeedbackKind, title: Parte, ...body: Parte[]): FeedbackPayload => {
+    const cuerpo = body.map(t).filter(Boolean).join(' ')
+    return { kind, title: t(title), ...(cuerpo ? { body: cuerpo } : {}), voice: vozDe([title, ...body], props.locale) }
+  }
+  return { t, str, raw, sheet }
 }
 
 /** El sistema pide movimiento reducido. */

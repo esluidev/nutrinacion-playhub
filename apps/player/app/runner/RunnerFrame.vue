@@ -94,7 +94,7 @@
     <div ref="stage" class="player-stage" tabindex="-1" :data-area="storyboard.category" :inert="Boolean(overlay)">
       <!-- La consigna: qué hacer en esta escena, fija. Se aparta mientras un panel la cubre. -->
       <div v-show="!guideOpen && !devicesOpen" class="consigna" :data-empty="!consigna">
-        <button type="button" class="mini-action" data-tone="sky" :aria-label="txt('listenInstruction')" :title="txt('listen')" @click="listen(consigna)">
+        <button type="button" class="mini-action" data-tone="sky" :aria-label="txt('listenInstruction')" :title="txt('listen')" @click="listen(introOf(active))">
           <UiIcon name="sound" />
         </button>
         <p class="consigna-text" aria-live="polite">{{ consigna }}</p>
@@ -265,7 +265,7 @@
             <p v-if="message?.body" class="sheet-text">{{ message.body }}</p>
           </div>
           <div class="feedback-actions">
-            <UiButton :tone="look.tone" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen([message?.title, message?.body].filter(Boolean).join('. '))" />
+            <UiButton :tone="look.tone" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen(message?.voice ?? [])" />
             <UiButton :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
           </div>
         </div>
@@ -339,9 +339,9 @@ import type { Component } from 'vue'
 import type { RunnerMode, StoryboardGuide } from '@playhub/ui/app/utils/runner-contract'
 import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
 import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
-import { tr } from '~/types/i18n'
-import type { I18nText } from '~/types/i18n'
 import { cancelNarration, narrate, NARRATOR_KEY } from './audio/narration'
+import { textoDe, vozDe } from './audio/voz'
+import type { Parte, Voz } from './audio/voz'
 import { muted, setMuted } from './audio/settings'
 import { itemsOf, librarySvg } from './content'
 import { cueInterface, cueSound, SCALE } from './engine/sound'
@@ -379,7 +379,7 @@ const emit = defineEmits<{
 }>()
 
 const txt = useRunnerText(() => props.locale)
-const text = (value: I18nText | null | undefined) => (value ? tr(value, props.locale) : '')
+const text = (value: Parte) => textoDe(value, props.locale)
 const uid = useId()
 const router = useRouter()
 
@@ -388,6 +388,10 @@ const profile = profileOf(props.storyboard.json.audience)
 const isGame = (scene: RunnerScene) => scene.json.template !== 'anuncio'
 // Quien conduce desde la consola: el educador y la persona en casa (la vista previa la conduce su app).
 const leads = props.mode === 'educator' || props.mode === 'home'
+// La narración del storyboard en su idioma. En casa suena sola: la introducción de cada escena al verse y cada hoja
+// al abrirse, porque no hay un educador que lo diga. En el taller la dice el educador; «Escuchar» sirve en todos.
+const narrationContext = { category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }
+const narrates = props.mode === 'home'
 // En casa, el niño: su apodo y su avatar, un animal de la librería (`avatar-<animal>`) en un círculo. Cada animal lleva
 // el tono de fondo que mejor lo separa de su pelaje, entre los tonos del kit para las personas (cielo, uva o rosa).
 // El runner no conoce al niño: mientras la app que lo abre no se los dé, es este de demostración.
@@ -396,7 +400,7 @@ const player: { apodo: string, avatar: keyof typeof AVATAR_TONES } = { apodo: 'J
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
 type FeedbackType = 'success' | 'info' | 'retry'
-interface Message { type: FeedbackType, title: string, body?: string, sequence: number }
+interface Message { type: FeedbackType, title: string, body?: string, voice: Voz, sequence: number }
 interface SceneState {
   visited: boolean
   /** Montada por adelantado, sin haberse visto todavía. */
@@ -542,6 +546,8 @@ const consigna = computed(() => {
   if (props.mode === 'device' && !session.open) return ''
   return showsConsigna(active.value) ? text(active.value.json.meta.instruction) : ''
 })
+// Lo que se dice al presentar una escena: su consigna con su voz (audio/voz.ts). En la Bienvenida no se ve, pero suena.
+const introOf = (scene: RunnerScene): Voz => vozDe([scene.json.meta.instruction], props.locale)
 
 const LOOKS: Record<FeedbackType, { tone: UiTone, icon: UiIconName }> = {
   success: { tone: 'lime', icon: 'check-circle' },
@@ -627,8 +633,12 @@ const FEEDBACK_SOUNDS = { success: 'acierto', retry: 'reintento', info: 'aviso' 
 let streak = 0
 function onFeedback(i: number, payload: FeedbackPayload) {
   const type = typeOf(payload.kind)
-  states[i]!.message = { type, title: payload.title, body: payload.body, sequence: ++sequence }
+  // Sin voz propia (una escena con su `scene.vue`), la hoja se lee como se ve.
+  const voice = payload.voice ?? vozDe([payload.title, payload.body], props.locale)
+  states[i]!.message = { type, title: payload.title, body: payload.body, voice, sequence: ++sequence }
   if (i !== current.value) return
+  // En casa, la hoja se dice sola al abrirse (corta lo que estuviera sonando).
+  if (narrates) listen(voice)
   if (type === 'retry') streak = 0
   cueSound(FEEDBACK_SOUNDS[type], type === 'success' ? { rate: SCALE[Math.min(streak, SCALE.length - 1)] } : undefined)
   if (type === 'success') streak += 1
@@ -651,6 +661,15 @@ function goTo(index: number, focus = true) {
   show(index, focus)
 }
 
+// En casa, la introducción de la escena suena cuando la escena ya se ve, si sigue siendo la actual y nada la tapa.
+function narrateIntro(index: number) {
+  if (!narrates) return
+  void sceneLoad.whenShown(index).then(() => {
+    if (unmounted || current.value !== index || blocked.value) return
+    listen(introOf(scenes[index]!))
+  })
+}
+
 function show(index: number, focus: boolean) {
   cancelNarration()
   // Pasar a otra escena no suena. La racha de aciertos empieza de nuevo.
@@ -660,6 +679,7 @@ function show(index: number, focus: boolean) {
   mountScene(index)
   burst.value = 0
   announce(txt('announceScene', { n: index + 1, name: active.value.title }))
+  narrateIntro(index)
   // La primera escena se cuenta a la app al aparecer el marco, después de «listo» (start).
   if (props.mode !== 'device' && loaded.value) emit('scene', index, active.value.folder)
   nextTick(() => {
@@ -863,12 +883,11 @@ async function toggleFullscreen() {
 }
 const onFullscreen = () => { fullscreen.value = Boolean(document.fullscreenElement) }
 
-function listen(value: string | undefined) {
-  if (!value) return
-  void narrate({ category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }, value)
+function listen(voz: Voz) {
+  void narrate(narrationContext, voz)
 }
 // Las escenas narran por aquí (la Bienvenida, al tocar a sus protagonistas), con la voz del storyboard.
-provide(NARRATOR_KEY, (value, onState) => narrate({ category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }, value, onState))
+provide(NARRATOR_KEY, (voz, onState) => narrate(narrationContext, voz, onState))
 
 // ── Sesión entre pestañas (demostración del servicio de taller) ──────────────
 type SessionMessage =

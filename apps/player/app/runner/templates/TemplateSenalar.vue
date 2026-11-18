@@ -82,7 +82,7 @@ import { createPointing } from './senalar'
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t, str } = useSceneText(props)
+const { t, str, sheet } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
 
 type Pair = [number, number]
@@ -199,7 +199,7 @@ function choose(i: number) {
     return
   }
   show(targets[item.id]?.value ?? spec.rest)
-  emit('feedback', { kind: 'info', title: t(item.name), body: t(item.fact) || undefined })
+  emit('feedback', sheet('info', item.name, item.fact))
 }
 
 // ---- Tocar una zona del personaje. Sin tarjeta elegida, la mano demuestra al momento un toque sobre una de las que
@@ -225,8 +225,7 @@ function point(zone: string) {
   show(targets[card.item.id]?.value ?? spec.rest)
   emit('progress', game.progress())
   if (result.all) emit('complete')
-  const body = [t(card.item.fact), result.all ? t(props.scene.meta.completionFeedback) : ''].filter(Boolean).join(' ')
-  emit('feedback', { kind: 'success', title: t(card.item.name), body: body || undefined })
+  emit('feedback', sheet('success', card.item.name, card.item.fact, result.all ? props.scene.meta.completionFeedback : null))
 }
 
 // ---- Demostrar lo que toca (la mano, en useDemo): un toque sobre la primera tarjeta sin resolver y, con una elegida,

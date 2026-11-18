@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
 import type { I18nText } from '~/types/i18n'
+import type { Voz } from './audio/voz'
 import type { StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Contrato del contenido del runner (estructura.md) y de sus plantillas (PLAYER-DESIGN.md).
@@ -9,6 +10,21 @@ export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'es
 /** Caras suaves de la paleta reutilizable del kit. Lima y night son del UI. */
 export type PieceTone = 'sun' | 'coral' | 'sky' | 'grape' | 'rose'
 
+/**
+ * Un texto de la escena que separa lo que se ve de lo que se dice (audio/voz.ts): `text`, lo que se ve, corto;
+ * `voice`, lo que se dice (en la introducción de una escena, la consigna y después su complemento), y `audio`, la
+ * clave de su grabación en `audio/<idioma>/<audio>.wav` del storyboard. Sin `voice`, se dice lo que se ve; sin
+ * grabación, lo dice la voz del navegador.
+ */
+export interface Narrado {
+  text: I18nText
+  voice?: I18nText
+  audio?: string
+}
+
+/** Un texto de la escena: por idioma (se ve y, en un momento que se narra, se lee) o narrado. */
+export type Texto = I18nText | Narrado
+
 /** `scenes/<escena>/scene.json`. */
 export interface SceneJson {
   id: string
@@ -17,10 +33,10 @@ export interface SceneJson {
   template?: TemplateName
   affirmations: string[]
   meta: {
-    instruction?: I18nText | null
-    completionFeedback?: I18nText | null
+    instruction?: Texto | null
+    completionFeedback?: Texto | null
   }
-  strings?: Record<string, I18nText>
+  strings?: Record<string, Texto>
   library: { rive: string[], svg: string[], sfx: string[] }
   defaults: {
     items?: string[]
@@ -32,8 +48,8 @@ export interface SceneJson {
 /** Un ítem del tema en `datos.json`. Los campos opcionales existen solo si una escena los usa. */
 export interface DatosItem {
   id: string
-  name: I18nText
-  displayName?: I18nText
+  name: Texto
+  displayName?: Texto
   tone?: PieceTone
   svg?: string
   rive?: string
@@ -60,9 +76,8 @@ export interface DatosItem {
    * Estaciones: el escenario de la tarjeta de la estación (616 × 536), siempre a la vista.
    */
   interior?: string
-  description?: I18nText
-  fact?: I18nText
-  voice?: I18nText
+  description?: Texto
+  fact?: Texto
   /**
    * Personaje de Rive del ítem (el que aparece al descubrirlo, el del origen de un recorrido), con los valores de su
    * View Model y el trigger con que responde cuando pasa algo con él (`accept`); sin trigger, no responde.
@@ -137,6 +152,8 @@ export interface FeedbackPayload {
   kind: FeedbackKind
   title: string
   body?: string
+  /** Lo que se narra de la hoja (`vozDe`, audio/voz.ts). Sin ella, se lee lo que se ve. */
+  voice?: Voz
 }
 
 /** Lo que recibe una plantilla. No sabe en qué modo corre ni para qué edición: llega el perfil. */

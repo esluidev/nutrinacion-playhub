@@ -67,7 +67,7 @@ import type { DatosItem, FeedbackPayload, SupportSpec, TemplateProps } from '../
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t } = useSceneText(props)
+const { t, sheet } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
 
 // ---- Medidas (tablero 1280 × 600, columna 120–1160). Una columna por ítem, de 320 y con 40 entre ellas: arriba la
@@ -156,7 +156,7 @@ function touch(i: number) {
   if (card.open) {
     // Mirar otra vez: el mismo descubrimiento, nada nuevo que ganar.
     cheer(i)
-    emit('feedback', { kind: 'info', title: t(card.item.fact), body: t(card.item.description) })
+    emit('feedback', sheet('info', card.item.fact, card.item.description))
     return
   }
   card.open = true
@@ -167,8 +167,7 @@ function touch(i: number) {
   emit('progress', opened / cards.length)
   if (all) emit('complete')
   // La hoja: de qué ave es (`fact`) y cómo es el huevo (`description`); al último, el cierre de la escena.
-  const body = [t(card.item.description), all ? t(props.scene.meta.completionFeedback) : ''].filter(Boolean).join(' ')
-  emit('feedback', { kind: 'success', title: t(card.item.fact), body })
+  emit('feedback', sheet('success', card.item.fact, card.item.description, all ? props.scene.meta.completionFeedback : null))
 }
 
 // ---- Demostrar lo que toca (la mano, en useDemo): un toque sobre lo que se ve del primero por destapar. Lo que la

@@ -80,7 +80,7 @@ import { createJourney } from './repasar'
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t } = useSceneText(props)
+const { t, sheet } = useSceneText(props)
 
 type Pair = [number, number]
 /**
@@ -181,8 +181,7 @@ function arrive(piece: Piece) {
   emit('progress', game.progress())
   const all = game.done()
   if (all) emit('complete')
-  const body = [t(piece.item.fact), all ? t(props.scene.meta.completionFeedback) : ''].filter(Boolean).join(' ')
-  emit('feedback', { kind: 'success', title: t(piece.item.name), body: body || undefined })
+  emit('feedback', sheet('success', piece.item.name, piece.item.fact, all ? props.scene.meta.completionFeedback : null))
   if (!all) return
   world.after(GROW_MS, () => { armed.value = true })
   world.after(GROWN_MS, () => characters.value.forEach(character => character?.fit()))

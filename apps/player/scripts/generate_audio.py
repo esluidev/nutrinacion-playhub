@@ -1,44 +1,45 @@
 #!/usr/bin/env python3
-"""Batch-generate StoryPlay narration audio with VoiceBox.
+"""Genera en lote las voces de un storyboard con VoiceBox.
 
-The kid-mode narration of each storyboard (scene instructions, completion
-feedback, knowledge-card voice, bean facts, quiz questions, closing line) is
-authored once in a per-storyboard `audio.manifest.json` next to the scenes.
-This script reads that manifest and renders one .wav per line into
-`<storyboard>/audio/<locale>/<key>.wav`, in batch — never one curl at a time.
+La narración vive en los propios JSON del storyboard (storyboard.json, datos.json
+y scenes/*/scene.json): cada texto narrado trae lo que se ve (`text`), lo que se
+dice (`voice`) y la clave de su grabación (`audio`). Este script recorre esos
+JSON, junta las grabaciones que piden y genera un .wav por clave e idioma en
+`<storyboard>/audio/<idioma>/<clave>.wav`. Sin `voice`, se dice el `text`.
 
-Full dev usage: scripts/README.md. How the manifest is authored (by hand, no
-automation) and how the runner plays it: docs/storyboards.md -> Narración (audio).
+Uso completo: scripts/README.md. El formato: la skill playhub-storyboard-games
+(references/estructura.md, «Textos narrados»).
 
-VoiceBox (http://127.0.0.1:17493) generates asynchronously, so each line is:
-  POST /generate            -> generation id (status "generating")
-  GET  /history/{id}         -> poll until status "completed" / "failed"
-  GET  /history/{id}/export-audio  -> download the wav
+Cada grabación recuerda lo que dice en `audio/<idioma>/voces.json`: si la voz
+cambia en el JSON, se vuelve a generar; si no, se salta. La voz del storyboard
+(motor, semilla, indicaciones de tono) va en `storyboard.json`, en `narration`.
 
-The cloned Spanish voice runs on the `qwen` engine (qwen_custom_voice rejects
-cloned profiles). Tone for 4-8 year olds is set per manifest via `instruct`;
-`personality` stays false so the exact scripted line is spoken verbatim.
+VoiceBox (http://127.0.0.1:17493) genera de forma asíncrona; por línea:
+  POST /generate            -> id de la generación (status "generating")
+  GET  /history/{id}         -> consulta hasta "completed" / "failed"
+  GET  /history/{id}/export-audio  -> descarga el wav
 
-Usage:
-  # one storyboard
-  python3 scripts/generate_audio.py content/storyboards/nutricion/los-frijoles/audio.manifest.json
+Uso:
+  # un storyboard (su carpeta o su storyboard.json)
+  python3 scripts/generate_audio.py content/storyboards/alimentacion/el-huevo
 
-  # every storyboard that has a manifest (batch over the whole catalogue)
+  # todos los storyboards de content/
   python3 scripts/generate_audio.py --all
 
-  # options
-  --locale es|all     locale(s) to render (default: every locale in the manifest)
-  --force             re-render lines whose .wav already exists
-  --concurrency N     parallel in-flight generations (default: 3)
-  --profile-id ID     override the auto-picked voice profile
-  --base-url URL      VoiceBox base url (default: http://127.0.0.1:17493)
-  --dry-run           list what would be generated, call nothing
+  # opciones
+  --locale es|all     idioma(s) a generar (por defecto, los del storyboard)
+  --force             volver a generar aunque la voz no haya cambiado
+  --concurrency N     generaciones en paralelo (por defecto: 3)
+  --profile-id ID     fijar el perfil de voz
+  --base-url URL      URL de VoiceBox (por defecto: http://127.0.0.1:17493)
+  --dry-run           listar lo que se generaría, sin llamar a nada
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -106,53 +107,105 @@ def generate_line(base: str, params: dict, dest: Path) -> tuple[str, float]:
     return gen_id, float(record.get("duration") or 0.0)
 
 
-# ── Manifest -> work list ───────────────────────────────────────────────────
-def build_jobs(manifest_path: Path, locales: list[str] | None, force: bool):
-    manifest = json.loads(manifest_path.read_text())
-    root = manifest_path.parent  # <storyboard>/
-    want = locales or list(manifest["locales"].keys())
-    jobs = []  # (locale, language, line, dest_path)
+# ── Los JSON del storyboard -> lista de trabajo ─────────────────────────────
+def is_narrated(value) -> bool:
+    return isinstance(value, dict) and "text" in value
+
+
+def localized(value, locale: str) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        text = value.get(locale) or value.get("es") or next(iter(value.values()), "")
+        return str(text).strip()
+    return ""
+
+
+def collect_lines(node, where: str, out: list) -> None:
+    """Los textos narrados con grabación (`audio`), con dónde están."""
+    if is_narrated(node):
+        if node.get("audio"):
+            out.append((where, node))
+        return
+    if isinstance(node, list):
+        for i, child in enumerate(node):
+            collect_lines(child, f"{where}[{i}]", out)
+    elif isinstance(node, dict):
+        for key, child in node.items():
+            collect_lines(child, f"{where}.{key}", out)
+
+
+def storyboard_root(path: Path) -> Path:
+    return path.parent if path.name == "storyboard.json" else path
+
+
+def storyboard_files(root: Path) -> list[Path]:
+    return [root / "storyboard.json", root / "datos.json", *sorted((root / "scenes").glob("*/scene.json"))]
+
+
+def build_jobs(root: Path, locales: list[str] | None, force: bool):
+    """Por idioma, cada clave con lo que dice. Una clave que dice dos cosas distintas es un error."""
+    story = json.loads((root / "storyboard.json").read_text())
+    want = locales or story.get("languages") or [story.get("defaultLanguage", "es")]
+    found: list = []
+    for path in storyboard_files(root):
+        if path.exists():
+            collect_lines(json.loads(path.read_text()), str(path.relative_to(root)), found)
+    jobs, errors = [], []
     for locale in want:
-        block = manifest["locales"].get(locale)
-        if not block:
-            print(f"  ! {manifest['storyboard']}: no '{locale}' locale in manifest, skipping")
-            continue
-        language = block.get("language", locale)
         out_dir = root / "audio" / locale
-        for line in block["lines"]:
-            dest = out_dir / f"{line['key']}.wav"
-            if dest.exists() and not force:
+        index_path = out_dir / "voces.json"
+        said = json.loads(index_path.read_text()) if index_path.exists() else {}
+        lines: dict[str, tuple[str, str]] = {}
+        for where, node in found:
+            key = node["audio"]
+            text = localized(node.get("voice") or node["text"], locale)
+            if key in lines and lines[key][0] != text:
+                errors.append(f"[{locale}] «{key}» dice dos cosas: {lines[key][1]} y {where}")
                 continue
-            jobs.append((locale, language, line, dest))
-    return manifest, jobs
+            lines[key] = (text, where)
+        for key, (text, _where) in sorted(lines.items()):
+            dest = out_dir / f"{key}.wav"
+            if not text or (dest.exists() and said.get(key) == text and not force):
+                continue
+            jobs.append((locale, {"key": key, "text": text}, dest))
+    return story, jobs, errors
 
 
-def gen_params(manifest: dict, language: str, line: dict, profile_id: str) -> dict:
+def gen_params(narration: dict, language: str, line: dict, profile_id: str) -> dict:
     params = {
         "profile_id": profile_id,
         "text": line["text"],
         "language": language,
-        "engine": manifest.get("engine", "qwen"),
-        "personality": manifest.get("personality", False),
-        "instruct": line.get("instruct", manifest.get("instruct")),
+        "engine": narration.get("engine", "qwen"),
+        "personality": narration.get("personality", False),
+        "instruct": narration.get("instruct"),
     }
-    seed = line.get("seed", manifest.get("seed"))
+    seed = narration.get("seed")
     if seed is not None:
         params["seed"] = seed
     return {k: v for k, v in params.items() if v is not None}
 
 
-def find_manifests(repo_root: Path) -> list[Path]:
-    # storyboards + the shared runner shell (content/runner/audio.manifest.json)
-    return sorted((repo_root / "content").rglob("audio.manifest.json"))
+def remember(dest: Path, key: str, text: str, lock) -> None:
+    """Anota en `voces.json` lo que dice la grabación recién generada."""
+    with lock:
+        index_path = dest.parent / "voces.json"
+        said = json.loads(index_path.read_text()) if index_path.exists() else {}
+        said[key] = text
+        index_path.write_text(json.dumps(dict(sorted(said.items())), ensure_ascii=False, indent=2) + "\n")
+
+
+def find_storyboards(app_root: Path) -> list[Path]:
+    return sorted(p.parent for p in (app_root / "content" / "storyboards").glob("*/*/storyboard.json"))
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Batch-generate StoryPlay narration audio.")
-    ap.add_argument("manifests", nargs="*", type=Path, help="audio.manifest.json path(s)")
-    ap.add_argument("--all", action="store_true", help="every storyboard with a manifest")
-    ap.add_argument("--locale", default=None, help="locale to render (default: all in manifest)")
-    ap.add_argument("--force", action="store_true", help="re-render existing .wav files")
+    ap = argparse.ArgumentParser(description="Genera en lote las voces de los storyboards.")
+    ap.add_argument("storyboards", nargs="*", type=Path, help="carpeta del storyboard o su storyboard.json")
+    ap.add_argument("--all", action="store_true", help="todos los storyboards de content/")
+    ap.add_argument("--locale", default=None, help="idioma a generar (por defecto, los del storyboard)")
+    ap.add_argument("--force", action="store_true", help="volver a generar aunque la voz no haya cambiado")
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--profile-id", default=None)
     ap.add_argument("--base-url", default=DEFAULT_BASE_URL)
@@ -160,52 +213,59 @@ def main() -> int:
     args = ap.parse_args()
 
     base = args.base_url.rstrip("/")
-    manifests = list(args.manifests)
+    roots = [storyboard_root(p) for p in args.storyboards]
     if args.all:
-        # repo root = two levels up from apps/player/scripts/
-        manifests += find_manifests(Path(__file__).resolve().parents[1])
-    if not manifests:
-        ap.error("pass a manifest path or --all")
+        # apps/player = un nivel por encima de scripts/
+        roots += find_storyboards(Path(__file__).resolve().parents[1])
+    if not roots:
+        ap.error("pasa la carpeta de un storyboard o --all")
 
-    # Health check up front so a dead server fails loud, not per-line.
+    # Comprobar VoiceBox antes de nada: si no está, que falle de una vez y no línea por línea.
     if not args.dry_run:
         try:
             api_get(base, "/health")
         except Exception as e:  # noqa: BLE001
-            sys.exit(f"VoiceBox unreachable at {base}: {e}")
+            sys.exit(f"VoiceBox no responde en {base}: {e}")
 
     locales = [args.locale] if args.locale and args.locale != "all" else None
     profiles_cache: dict[str, dict] = {}
     total_ok = total_fail = total_skip = 0
+    lock = threading.Lock()
 
-    for manifest_path in manifests:
-        if not manifest_path.exists():
-            print(f"✗ {manifest_path} not found")
+    for root in roots:
+        if not (root / "storyboard.json").exists():
+            print(f"✗ {root}: no tiene storyboard.json")
+            total_fail += 1
             continue
-        manifest, jobs = build_jobs(manifest_path, locales, args.force)
-        name = manifest.get("storyboard", manifest_path.parent.name)
+        story, jobs, errors = build_jobs(root, locales, args.force)
+        name = story.get("slug", root.name)
+        narration = story.get("narration", {})
+        for error in errors:
+            print(f"  ✗ {name}: {error}")
+        total_fail += len(errors)
         if not jobs:
-            print(f"• {name}: nothing to do (all rendered — use --force to redo)")
+            print(f"• {name}: nada que generar (todo al día; --force para rehacer)")
             continue
-        print(f"\n▶ {name}: {len(jobs)} line(s)")
+        print(f"\n▶ {name}: {len(jobs)} grabación(es)")
 
-        for locale, language, line, dest in jobs if args.dry_run else []:
-            print(f"  would render [{locale}] {line['key']}")
         if args.dry_run:
+            for locale, line, _dest in jobs:
+                print(f"  generaría [{locale}] {line['key']}: {line['text']}")
             total_skip += len(jobs)
             continue
 
-        # Resolve the profile once per locale.
+        # El perfil de voz, una vez por idioma.
         for locale in {j[0] for j in jobs}:
             if locale not in profiles_cache:
                 p = pick_profile(base, locale, args.profile_id)
                 profiles_cache[locale] = p
-                print(f"  voice [{locale}]: {p['name']} ({p['id']}) · engine={manifest.get('engine','qwen')}")
+                print(f"  voz [{locale}]: {p['name']} ({p['id']}) · motor={narration.get('engine', 'qwen')}")
 
         def work(job):
-            locale, language, line, dest = job
-            params = gen_params(manifest, language, line, profiles_cache[locale]["id"])
+            locale, line, dest = job
+            params = gen_params(narration, locale, line, profiles_cache[locale]["id"])
             _id, dur = generate_line(base, params, dest)
+            remember(dest, line["key"], line["text"], lock)
             return locale, line["key"], dest, dur
 
         with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as pool:
@@ -218,9 +278,9 @@ def main() -> int:
                     print(f"  ✓ [{locale}] {key}  ({dur:.1f}s)  → {dest.name}")
                 except Exception as e:  # noqa: BLE001
                     total_fail += 1
-                    print(f"  ✗ [{job[0]}] {job[2].name}: {e}")
+                    print(f"  ✗ [{job[0]}] {job[1]['key']}: {e}")
 
-    print(f"\nDone. {total_ok} generated, {total_fail} failed, {total_skip} dry-run.")
+    print(f"\nListo. {total_ok} generadas, {total_fail} con error, {total_skip} en simulacro.")
     return 1 if total_fail else 0
 
 

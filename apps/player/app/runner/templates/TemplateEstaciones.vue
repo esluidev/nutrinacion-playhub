@@ -116,7 +116,7 @@ import type { DatosItem, FeedbackPayload, TemplateProps } from '../types'
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t, str } = useSceneText(props)
+const { t, str, raw, sheet } = useSceneText(props)
 
 /** El origen común de las piezas (`defaults.origin`): su dibujo en dos capas, su lienzo y dónde se sienta cada pieza. */
 interface Origin { svg: string, front?: string, w: number, h: number, seats: number[], base: number }
@@ -365,7 +365,7 @@ function notYet(i: number) {
   early += 1
   if (hinted || (props.profile.scaffolding === 'libre' && early < 2)) return
   hinted = true
-  emit('feedback', { kind: 'retry', title: str('hint'), body: str('hintBody') || undefined })
+  emit('feedback', sheet('retry', raw('hint'), raw('hintBody')))
 }
 
 // Servir: el plato ocupa el lugar del utensilio y la hoja dice qué forma es (su nombre y su `fact`); a la última se le
@@ -384,8 +384,7 @@ function serve(i: number) {
     celebrating.value = true
     emit('complete')
   }
-  const body = [t(st.item.fact), all ? t(props.scene.meta.completionFeedback) : ''].filter(Boolean).join(' ')
-  emit('feedback', { kind: 'success', title: t(st.item.name), body: body || undefined })
+  emit('feedback', sheet('success', st.item.name, st.item.fact, all ? props.scene.meta.completionFeedback : null))
 }
 
 // El temblor de cada estación (el del motor): lo de dentro se inclina y se aplasta sobre su base, como un líquido.

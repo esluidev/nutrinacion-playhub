@@ -84,7 +84,7 @@ import type { OpeningPhase } from './abrir'
 const props = defineProps<TemplateProps>()
 const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [value: number], complete: [] }>()
 
-const { t, str } = useSceneText(props)
+const { t, str, raw, sheet } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
 
 type Pair = [number, number]
@@ -222,8 +222,7 @@ function open() {
     game.opened()
     phase.value = 'abierto'
     if (!reduced) wobbles.forEach((wobble, i) => wobble.kick(pieces[i]!.soft ? 1 : 0.7))
-    const question = str('opened')
-    if (question) emit('feedback', { kind: 'info', title: question })
+    if (str('opened')) emit('feedback', sheet('info', raw('opened')))
   })
 }
 
@@ -239,14 +238,13 @@ function tapPart(part: number) {
   shake(part, 0.8)
   const { item } = parts[part]!
   if (!result.first) {
-    emit('feedback', { kind: 'info', title: t(item.name), body: t(item.fact) || undefined })
+    emit('feedback', sheet('info', item.name, item.fact))
     return
   }
   parts[part]!.seen = true
   emit('progress', game.progress())
   if (result.all) emit('complete')
-  const body = [t(item.fact), result.all ? t(props.scene.meta.completionFeedback) : ''].filter(Boolean).join(' ')
-  emit('feedback', { kind: 'success', title: t(item.name), body: body || undefined })
+  emit('feedback', sheet('success', item.name, item.fact, result.all ? props.scene.meta.completionFeedback : null))
 }
 
 // ---- Demostrar lo que toca (la mano, en useDemo): un toque sobre el entero mientras está cerrado y, abierto, sobre la
