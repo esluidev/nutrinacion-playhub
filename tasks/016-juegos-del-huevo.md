@@ -418,3 +418,27 @@ Decisiones acordadas con Luis:
   - El «?» de Descubrimiento, en el gris del contorno, se perdía en el cielo (Luis: «los signos de interrogación no se notan ya que cambiaste el fondo»). Sobre un exterior va en `--board-sky-mark` (sky-200 sobre el sky-50 del cielo), con el contraste que tenía el gris sobre el blanco; sin exterior sigue en gris.
   - El huevo frito de la ficha «Bien cocido» (Retroalimentación) apenas se notaba sobre el blanco de la ficha (Luis: «el fondo se debe mantener… solo debes encontrar una forma de dar un poquito de contraste»). La clara lleva ahora un borde fino en un crema un paso más oscuro que su cara (#EFE7D1) por todo el contorno, y el contorno de arriba se alisó (tenía un quiebre que el borde dejaba ver). Cambió el dibujo, en `playhub/assets/huevo/huevo-frito.svg` y en la librería, así que también lo lleva Preparación.
   - Reglas en `PLAYER-DESIGN.md` («Piezas del tablero»), en la skill `playhub-storyboard-games` (`composicion.md`, «El exterior», y `estructura.md`) y en el README de escenarios, con el zip regenerado. Falta que Luis lo suba a claude.ai.
+- 2026-11-18 · La tienda, de la familia del granero (Luis: «solo se ve como un rectángulo azul oscuro sin una pared lateral que le brinde profundidad como la tiene el granero»). El maestro, `playhub/assets/building/tienda.svg`, se redibujó con `eslui-motion-design` y está copiado tal cual a la librería (`content/library/svg/tienda.svg`; el anterior quedó respaldado en el scratchpad de la sesión):
+  - **La pared lateral se lee.** Antes había una franja oscura a la derecha, pero la cornisa y el toldo pasaban por encima sin cambiar de color. Ahora la pared lateral, el costado de la cornisa y el costado del toldo se oscurecen juntos, como el techo del granero.
+  - **La cornisa es gruesa y redondeada,** con su brillo en el frente.
+  - **La puerta y el escaparate llevan marco crema,** como el portón del granero.
+  - **El azul baja de un 93 % de saturación a un 74 %,** cerca del 77 % del granero.
+  - **Mide lo que el granero:** está escalada al 110 % desde su base, unos 425 de ancho, apoyada en y 480.
+  - **Revisión:** sin degradados, filtros ni opacidades; `esluimotion inspect` sin avisos. Renderizada junto al granero y la casa, y en Origen dentro de su tarjeta, a 1280 × 800.
+  - **Falta:** la aprobación de Luis y la casa, que según él tampoco es del estilo del granero.
+- 2026-11-18 · Corrección de la entrada anterior. Luis rechazó la tienda más alta y escalada al 110 %: «¿cómo se te ocurre estirar la tienda?… lo importante son los estilos y, en el caso de la tienda, también la combinación de colores, que es terrible». La versión que queda:
+  - **Proporciones y tamaño de antes:** al 120 % desde su base, con la cornisa arriba en y 127.
+  - **La pared lateral de la versión anterior se mantiene.**
+  - **La combinación se cambia por una con acento cálido:** cornisa de madera con los marrones y el brillo del techo del granero, toldo coral y crema con su costado en sombra, puerta de madera como la de la casa con marco crema, y escaparate con marco crema.
+  - **Fachada azul,** elegida por Luis entre azul y verde.
+  - Instalada en el maestro y en la librería, que son iguales; sin degradados, filtros ni opacidades; `esluimotion inspect` sin avisos. Vista en Origen, sin errores en la consola. Falta la casa.
+- 2026-11-18 · La pared lateral de la tienda era demasiado ancha (Luis: «mucho más que el granero, y eso hace que la puerta se tenga que reducir en su ancho y se vea estirada»).
+  - **La pared lateral, como la del granero:** pasa de 58 a 19 en el dibujo. Escalada al 120 %, se ve de 22, lo mismo que la del granero (medido en el render).
+  - **La puerta, más ancha:** el marco pasa de 80 a 100 y la hoja, de 56 a 76.
+  - **Toldo y cornisa, recolocados:** el toldo se reparte en cinco rayas sobre el frente nuevo, con su costado estrecho, y la cornisa se oscurece desde la misma línea.
+  - Maestro y librería iguales; sin degradados, filtros ni opacidades; `esluimotion inspect` aprobado. Vista en su tarjeta de Origen.
+- 2026-11-18 · La casa, de la familia del granero. Ya tenía su construcción (techo grueso con brillo, franja bajo el techo y lado derecho en sombra); lo que la alejaba era el color. El amarillo estaba al 99 % de saturación y el techo coral al 85 %, más claro que la pared, frente al 77 % de la pared y el techo de madera más oscuro del granero.
+  - **Los cambios:** el amarillo baja al 86 % (al 78 % se veía mostaza); el techo es de teja terracota, más oscuro que la pared, elegido por Luis entre teja y madera; la chimenea es de ladrillo en el mismo tono.
+  - **El dibujo y las proporciones no cambian** (comprobado contra el original).
+  - Maestro (`playhub/assets/building/casa.svg`) y librería iguales; sin degradados, filtros ni opacidades; `esluimotion inspect` aprobado. Vista en Origen, sin errores en la consola.
+
