@@ -56,7 +56,7 @@ Entra el runner de Player (`apps/player/app/runner/`) y los efectos de pasar el 
 - **La skill `playhub-storyboard-games`** recoge el motor y los sonidos generados en `estructura.md`; el zip está regenerado y falta que Luis lo suba a claude.ai.
 - **La vibración** (8 ms al agarrar, 14 ms al soltar sobre una zona) solo existe en Android con motor de vibración. A confirmar por Luis si la quiere; se apaga desde el medidor para comparar.
 - **Sin tocar:** el desenfoque de fondo de las ventanas; cada personaje de Rive tiene su propio contexto gráfico.
-- **Después:** Educators instalable y con el mismo cuidado al tocar (campos a 14 px que hacen zoom en iPhone, arranque que espera a la red). Era lo acordado antes de la prueba de Flutter.
+- **Después:** Educators instalable y con el mismo cuidado al tocar (campos a 14 px que hacen zoom en iPhone, arranque que espera a la red). Era lo acordado antes de la prueba de Flutter y Luis lo confirmó el 2026-11-18 (ver el log): Educators y la app del hogar siguen en Nuxt como PWA. Falta: manifiesto, icono, pantalla de arranque y abrir sin las barras del navegador; el aviso para instalar (un toque en Android, los pasos en iPhone y iPad) y saber si ya está instalada; service worker para abrir al instante y sin red; campos a 16 px; pantalla encendida durante el taller; transiciones entre pantallas.
 
 ## Log
 
@@ -151,3 +151,7 @@ Entra el runner de Player (`apps/player/app/runner/`) y los efectos de pasar el 
   - Verificación: `npx vitest run`, 137 aprobadas; `npm run build`, aprobado; `check-ui.mjs` y `check-context.mjs`, aprobados. En el navegador (Chromium, contra el 3001), las tres hojas en pantalla: fondo `#b6e1f4`, `#ffe1a0` y `#d8eaae`; contra el escenario, 1,34, 1,22 y 1,24; el título y el texto contra la hoja, 4,8 a 1 en el acierto; el icono contra su símbolo, 7,9. La entrada se leyó instante a instante con las animaciones del navegador, porque el panel estaba en segundo plano y no pinta cuadros: la hoja pasa por −3,6 y −5,3 antes de asentarse y el símbolo por 1,06 (aviso y «otra vez») y 1,22 (acierto).
   - No verificado: verla moverse de corrido, en un dispositivo táctil, en Safari y con movimiento reducido.
   - Sin commit.
+- **2026-11-18. Educators y la app del hogar, en Nuxt como PWA (decisión de Luis):**
+  - Luis preguntó si Educators y la app del hogar irían mejor en Flutter (PWA ahora, nativa más adelante), con los juegos en web como están. Análisis con lo medido en la tarea 017: la fluidez del APK venía de que Flutter dibujaba el juego; con el juego en una WebView o un iframe se siente igual que hoy, y Flutter solo cambiaría el envoltorio. Como PWA, Flutter fue menos fluido en la tableta modesta y su arranque pesa unos 789 KB más 2,1–2,8 MB de motor, frente a 180 KB de Educators. Además pediría un segundo kit en Dart y QA doble, y revertiría la decisión 002.
+  - Después preguntó por qué Nuxt y no Vue solo. Educators corre como SPA, sin servidor; de Nuxt usa la capa del kit (20 de sus 28 componentes), las rutas por archivos y su middleware, `useState`, `useHead` y `runtimeConfig`, todo con equivalente en Vue. Vue solo ahorraría unos 20 KB al arrancar (medido el 2026-11-10: 54 frente a 74 KB), pero el kit tendría que publicarse también como librería de Vue y el repositorio tendría dos convenciones.
+  - Decisión de Luis: **Nuxt**, como PWA. Sin cambios de código.
