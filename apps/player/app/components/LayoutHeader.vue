@@ -33,7 +33,9 @@ const { isCollapsed, toggleCollapsed } = useSidebar()
 const { usuario, salir } = useSesion()
 
 const pageTitle = computed(() => 'Storyboards')
-const pageDescription = computed(() => (/^\/storyboards\/[^/]+\/[^/]+/.test(route.path)
-  ? 'Detalle del storyboard'
-  : 'Lo que compila Player: se registra y se publica desde aquí; la guía se escribe en Admin.'))
+const pageDescription = computed(() => {
+  if (/^\/storyboards\/[^/]+\/[^/]+\/guia/.test(route.path)) return 'Guía del educador'
+  if (/^\/storyboards\/[^/]+\/[^/]+/.test(route.path)) return 'Detalle del storyboard'
+  return 'Lo que compila Player: aquí se registra, se publica y se escribe su guía.'
+})
 </script>

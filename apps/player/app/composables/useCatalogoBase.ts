@@ -1,22 +1,27 @@
-import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import { STORYBOARDS } from '~/runner/content'
 import type { Json } from '../../../../supabase/database.types'
 import type { Localized } from '~/types/i18n'
 import { SECCIONES_GUIA, idiomasEscritos, resumenGuia } from '~/utils/catalogoResumen'
-import type { EscenaGuia, EstadoPublicacion, GuiaIdioma } from '~/utils/catalogoResumen'
+import type { CabeceraGuia, EscenaGuia, EstadoPublicacion, GuiaIdioma, SeccionGuia } from '~/utils/catalogoResumen'
 import { compararConBase, construirMetadata, diferenciasConBase, escenasQueSeQuitan, mensajeDeLaBase, validarMetadata } from '~/utils/storyboardMetadata'
 import type { Diferencia, EstadoCatalogo, FilaCatalogo, StoryboardMetadata } from '~/utils/storyboardMetadata'
 
-// El catálogo de la base frente al build (decisiones 006 y 007). Player registra o actualiza cada
-// storyboard con `sincronizar_storyboard` (solo la metadata del JSON) y lo publica con
-// `publicar_storyboard` (estado, países y organización). Solo el superadmin. La guía se escribe en
-// Admin y aquí solo se mira. Se leen TODOS los storyboards de la base: los que no tienen JSON en
-// este build se enseñan aparte, para archivarlos.
+// El catálogo de la base frente al build (decisiones 006, 007 y 013). Player es el único que lo
+// cambia: registra o actualiza cada storyboard con `sincronizar_storyboard` (solo la metadata del
+// JSON), lo publica con `publicar_storyboard` (estado, países y organización), escribe su guía
+// (`guias` y `guia_escenas`, la cabecera y cada escena) y lo elimina. Solo el superadmin; Admin solo
+// lo muestra. Se leen TODOS los storyboards de la base: los que no tienen JSON en este build se
+// enseñan aparte, para archivarlos o eliminarlos.
 
 export interface Pais { codigo: string, nombre: string, bandera: string | null }
 export interface Organizacion { id: number, nombre: string }
 
-/** Una fila de `storyboards` con las escenas de su guía, tal como la lee Player. */
+/** La cabecera de la guía con su id, para guardarla. */
+export interface CabeceraGuardada extends CabeceraGuia {
+  id: number
+}
+
+/** Una fila de `storyboards` con su guía (la cabecera y las escenas), tal como la lee Player. */
 export interface FilaBase extends FilaCatalogo {
   id: number
   clave: string
@@ -25,7 +30,19 @@ export interface FilaBase extends FilaCatalogo {
   paises_disponibles: string[]
   organizacion_id: number | null
   updated_at: string
+  guia: CabeceraGuardada | null
   escenas: EscenaGuia[]
+}
+
+/** La guía de un storyboard registrado, para escribirla. */
+export interface GuiaEditable {
+  cabecera: CabeceraGuardada | null
+  /** Las escenas en su orden, con su id en la base. */
+  escenas: (EscenaGuia & { id: number })[]
+  /** Los idiomas del storyboard: la guía se escribe en cada uno. */
+  idiomas: string[]
+  /** Un personalizado lleva «Adaptado a» en la cabecera. */
+  personalizado: boolean
 }
 
 /** Cómo está en la base un storyboard del build, y qué habría que hacer. */
@@ -71,8 +88,10 @@ interface FilaLeida {
   paises_disponibles: string[]
   organizacion_id: number | null
   updated_at: string
-  guias: { guia_escenas: EscenaGuia[] } | { guia_escenas: EscenaGuia[] }[] | null
+  guias: GuiaLeida | GuiaLeida[] | null
 }
+
+type GuiaLeida = CabeceraGuardada & { guia_escenas: EscenaGuia[] }
 
 const CLAVES_DEL_BUILD = new Set(STORYBOARDS.map(s => s.json.key))
 
@@ -83,24 +102,22 @@ export function useCatalogoBase() {
   const filas = useState<Record<string, FilaBase>>('catalogo-base', () => ({}))
   const paises = useState<Pais[]>('catalogo-base-paises', () => [])
   const organizaciones = useState<Organizacion[]>('catalogo-base-orgs', () => [])
-  const adminUrl = useState<string | null>('catalogo-base-admin-url', () => null)
   const cargado = useState('catalogo-base-cargado', () => false)
   const cargando = useState('catalogo-base-cargando', () => false)
   const error = useState<string | null>('catalogo-base-error', () => null)
 
   async function leer() {
     const supabase = useSupabaseClient()
-    const [storyboards, listaPaises, listaOrgs, configuracion] = await Promise.all([
+    const [storyboards, listaPaises, listaOrgs] = await Promise.all([
       supabase
         .from('storyboards')
         .select(`id, clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
                  idioma_principal, duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id,
-                 updated_at, guias ( guia_escenas ( orden, carpeta, titulo, ${SECCIONES_GUIA.join(', ')} ) )`)
+                 updated_at, guias ( id, version, descripcion, objetivo, publico, adaptado_a,
+                 guia_escenas ( id, orden, carpeta, titulo, ${SECCIONES_GUIA.join(', ')} ) )`)
         .order('slug'),
       supabase.from('paises').select('codigo, nombre, bandera').eq('activo', true).order('codigo'),
       supabase.from('organizaciones').select('id, nombre').order('nombre'),
-      // La URL de Admin, para enlazar la guía. Si la RLS no deja leerla, no hay enlace: no se inventa.
-      supabase.from('configuracion').select('valor').eq('clave', 'admin_url').maybeSingle(),
     ])
     if (storyboards.error) {
       error.value = `No se pudo leer el catálogo de la base: ${mensajeDeLaBase(storyboards.error.message)}`
@@ -109,15 +126,14 @@ export function useCatalogoBase() {
     error.value = null
     const leidas = ((storyboards.data as unknown) as FilaLeida[] | null) ?? []
     filas.value = Object.fromEntries(leidas.map(({ guias, ...fila }) => {
-      const guia = Array.isArray(guias) ? guias[0] : guias
-      const escenas = [...(guia?.guia_escenas ?? [])].sort((a, b) => a.orden - b.orden)
-      return [fila.clave, { ...fila, escenas }]
+      const leida = Array.isArray(guias) ? guias[0] : guias
+      const { guia_escenas: escenasLeidas = [], ...cabecera } = leida ?? {}
+      const escenas = [...escenasLeidas].sort((a, b) => a.orden - b.orden)
+      return [fila.clave, { ...fila, guia: leida ? (cabecera as CabeceraGuardada) : null, escenas }]
     }))
     paises.value = ((listaPaises.data ?? []) as { codigo: string, nombre: Record<string, string>, bandera: string | null }[])
       .map(p => ({ codigo: p.codigo, nombre: p.nombre?.es ?? p.codigo, bandera: p.bandera }))
     organizaciones.value = listaOrgs.data ?? []
-    const url = configuracion.error ? null : configuracion.data?.valor?.trim() || null
-    adminUrl.value = url ? urlEnEsteEquipo(url.replace(/\/+$/, '')) : null
     cargado.value = true
   }
 
@@ -170,14 +186,24 @@ export function useCatalogoBase() {
     }
   }
 
+  /** La guía de un storyboard registrado, para escribirla; null si no está en la base. */
+  function guiaDe(slug: string): GuiaEditable | null {
+    const meta = metadataDe(slug)
+    const fila = meta ? filas.value[meta.clave] : undefined
+    if (!fila) return null
+    return {
+      cabecera: fila.guia,
+      escenas: fila.escenas.filter((e): e is EscenaGuia & { id: number } => typeof e.id === 'number'),
+      idiomas: fila.idiomas.length ? fila.idiomas : ['es'],
+      personalizado: fila.organizacion_id !== null,
+    }
+  }
+
   /** Los storyboards que están en la base y no tienen JSON en este build. */
   const fueraDelBuild = computed(() => Object.values(filas.value).filter(f => !CLAVES_DEL_BUILD.has(f.clave)))
 
   const paisDe = (codigo: string): Pais => paises.value.find(p => p.codigo === codigo) ?? { codigo, nombre: codigo, bandera: null }
   const organizacionDe = (id: number | null): Organizacion | null => (id ? organizaciones.value.find(o => o.id === id) ?? null : null)
-
-  /** Dónde se escribe la guía de un storyboard registrado; null si no se conoce la URL de Admin. */
-  const urlGuiaEnAdmin = (id: number): string | null => (adminUrl.value ? `${adminUrl.value}/platform/storyboards/${id}` : null)
 
   /** Registra o actualiza el storyboard en la base con lo que dice su JSON. Devuelve el error, o null. */
   async function sincronizar(slug: string): Promise<string | null> {
@@ -205,6 +231,35 @@ export function useCatalogoBase() {
     return cambiarPublicacion(clave, { estado: 'ARCHIVADO', paises: fila.paises_disponibles, organizacionId: fila.organizacion_id })
   }
 
+  /** Guarda la cabecera de la guía. Un campo en null borra lo escrito. Devuelve el error, o null. */
+  async function guardarCabecera(guiaId: number, datos: CabeceraGuia): Promise<string | null> {
+    const { error: e } = await useSupabaseClient().from('guias').update(datos as never).eq('id', guiaId)
+    if (e) return mensajeDeLaBase(e.message)
+    await cargar()
+    return null
+  }
+
+  /** Guarda las secciones de la guía de una escena. Una sección en null borra lo escrito. Devuelve el error, o null. */
+  async function guardarEscena(escenaId: number, secciones: Record<SeccionGuia, Localized | null>): Promise<string | null> {
+    const { error: e } = await useSupabaseClient().from('guia_escenas').update(secciones as never).eq('id', escenaId)
+    if (e) return mensajeDeLaBase(e.message)
+    await cargar()
+    return null
+  }
+
+  /**
+   * Elimina un storyboard de la base, con su guía. La base lo frena si ya se usó en un workshop
+   * (`workshops.storyboard_id` restringe el borrado): entonces se archiva. Devuelve el error, o null.
+   */
+  async function eliminar(clave: string): Promise<string | null> {
+    const fila = filas.value[clave]
+    if (!fila) return 'Ese storyboard no está en la base.'
+    const { error: e } = await useSupabaseClient().from('storyboards').delete().eq('id', fila.id)
+    if (e) return mensajeDeLaBase(e.message)
+    await cargar()
+    return null
+  }
+
   async function cambiarPublicacion(clave: string, datos: { estado: EstadoPublicacion, paises: string[], organizacionId: number | null }): Promise<string | null> {
     const { error: e } = await useSupabaseClient().rpc('publicar_storyboard', {
       p_clave: clave,
@@ -219,7 +274,7 @@ export function useCatalogoBase() {
 
   return {
     cargado, cargando, error, paises, organizaciones, fueraDelBuild,
-    estadoDe, publicacionDe, paisDe, organizacionDe, urlGuiaEnAdmin,
-    sincronizar, publicar, archivar, cargar,
+    estadoDe, publicacionDe, guiaDe, paisDe, organizacionDe,
+    sincronizar, publicar, archivar, eliminar, guardarCabecera, guardarEscena, cargar,
   }
 }

@@ -218,6 +218,7 @@ export function mensajeDeLaBase(mensaje: string): string {
   if (mensaje.includes('archívalo en lugar de despublicarlo')) return 'Ya se usa en workshops, temarios o publicaciones: archívalo en lugar de volverlo a registrado o a revisión.'
   if (mensaje.includes('no puede cambiar de organización')) return 'Ya tiene workshops: no puede cambiar de organización.'
   if (mensaje.includes('no está en el catálogo de países')) return 'Alguno de los países elegidos ya no está activo en el catálogo.'
+  if (/violates foreign key constraint/i.test(mensaje) && mensaje.includes('workshops')) return 'Ya se usa en workshops: no se puede eliminar. Archívalo.'
   if (/JWT|jwt expired|refresh_token|not authenticated/i.test(mensaje)) return 'La sesión caducó: vuelve a entrar.'
   if (/permission denied|42501/i.test(mensaje)) return 'La base no te deja hacerlo: entra con una cuenta del equipo (superadmin).'
   if (/Failed to fetch|NetworkError|fetch failed|ECONNREFUSED/i.test(mensaje)) return 'No hay conexión con la base.'

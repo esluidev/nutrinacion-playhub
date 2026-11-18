@@ -280,6 +280,11 @@ describe('mensajeDeLaBase — lo que levanta la base al registrar y al publicar,
       .toBe('Algún código del JSON (categoría, subcategoría, edición, enfoque o idioma) no está en las listas de la base.')
   })
 
+  it('reconoce el borrado de un storyboard que ya se usó en un workshop', () => {
+    expect(mensajeDeLaBase('update or delete on table "storyboards" violates foreign key constraint "workshops_storyboard_id_fkey" on table "workshops"'))
+      .toBe('Ya se usa en workshops: no se puede eliminar. Archívalo.')
+  })
+
   it('reconoce la sesión caducada y la falta de conexión', () => {
     expect(mensajeDeLaBase('JWT expired')).toBe('La sesión caducó: vuelve a entrar.')
     expect(mensajeDeLaBase('TypeError: Failed to fetch')).toBe('No hay conexión con la base.')

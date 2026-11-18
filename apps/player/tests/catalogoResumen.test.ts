@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { idiomasEscritos, resumenGuia, siguientePaso, tonoGuia } from '~/utils/catalogoResumen'
+import { idiomasEscritos, pasaFiltroEstado, resumenGuia, siguientePaso, textoPorIdioma, tonoGuia } from '~/utils/catalogoResumen'
 import type { EscenaGuia } from '~/utils/catalogoResumen'
 
-// Lo que la gestión resume de la base: la guía escrita (que escribe Admin) y qué toca hacer ahora.
+// Lo que la gestión resume de la base: la guía escrita (se escribe en Player) y qué toca hacer ahora.
 
 const escena = (carpeta: string, parcial: Partial<EscenaGuia> = {}): EscenaGuia => ({
   orden: 1, carpeta, titulo: { es: carpeta }, ...parcial,
@@ -59,5 +59,41 @@ describe('siguientePaso — el hilo de JSON nuevo a publicado', () => {
     expect(siguientePaso('al_dia', { estado: 'PUBLICADO', paises: ['MX'] })).toMatch(/un país/)
     expect(siguientePaso('al_dia', { estado: 'PUBLICADO', paises: ['MX', 'CO'] })).toMatch(/2 países/)
     expect(siguientePaso('al_dia', { estado: 'ARCHIVADO', paises: ['MX'] })).toMatch(/^Archivado/)
+  })
+})
+
+describe('textoPorIdioma — un campo de la guía como se guarda', () => {
+  it('se queda con los idiomas del storyboard, recortados', () => {
+    expect(textoPorIdioma({ es: '  Descubrir ', en: 'Discover', fr: 'Découvrir' }, ['es', 'en'])).toEqual({ es: 'Descubrir', en: 'Discover' })
+  })
+
+  it('quita los idiomas en blanco', () => {
+    expect(textoPorIdioma({ es: 'Descubrir', en: '   ' }, ['es', 'en'])).toEqual({ es: 'Descubrir' })
+  })
+
+  it('en blanco del todo es null: borra lo guardado', () => {
+    expect(textoPorIdioma({ es: '', en: ' ' }, ['es', 'en'])).toBeNull()
+    expect(textoPorIdioma({}, ['es'])).toBeNull()
+  })
+})
+
+describe('pasaFiltroEstado — el filtro «Estado» de la lista', () => {
+  it('«Todos» deja pasar todo, también mientras se lee la base', () => {
+    expect(pasaFiltroEstado('todos', null, null)).toBe(true)
+    expect(pasaFiltroEstado('todos', 'sin_registrar', null)).toBe(true)
+  })
+
+  it('«Sin registrar» y «Desactualizado» miran el estado frente a la base', () => {
+    expect(pasaFiltroEstado('sin_registrar', 'sin_registrar', null)).toBe(true)
+    expect(pasaFiltroEstado('sin_registrar', 'al_dia', 'REGISTRADO')).toBe(false)
+    expect(pasaFiltroEstado('desactualizado', 'desactualizado', 'PUBLICADO')).toBe(true)
+    expect(pasaFiltroEstado('desactualizado', 'al_dia', 'PUBLICADO')).toBe(false)
+  })
+
+  it('un estado de publicación, solo en los registrados, al día o no', () => {
+    expect(pasaFiltroEstado('PUBLICADO', 'al_dia', 'PUBLICADO')).toBe(true)
+    expect(pasaFiltroEstado('PUBLICADO', 'desactualizado', 'PUBLICADO')).toBe(true)
+    expect(pasaFiltroEstado('PUBLICADO', 'al_dia', 'REGISTRADO')).toBe(false)
+    expect(pasaFiltroEstado('REGISTRADO', null, null)).toBe(false)
   })
 })

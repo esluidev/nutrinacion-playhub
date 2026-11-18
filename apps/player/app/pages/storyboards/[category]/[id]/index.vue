@@ -120,16 +120,29 @@
               <span v-else class="ui-caption">—</span>
             </template>
             <template #cell-acciones="{ row }">
-              <UiButton
-                v-if="row.hasContent"
-                tone="neutral"
-                size="sm"
-                icon="play"
-                icon-only
-                label="Probar esta escena"
-                title="Probar esta escena"
-                :to="playUrl(row.folder)"
-              />
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- La guía de la escena se escribe aquí; hace falta que la escena ya esté en la base. -->
+                <UiButton
+                  v-if="row.guia"
+                  tone="neutral"
+                  size="sm"
+                  icon="pencil"
+                  icon-only
+                  label="Escribir la guía de esta escena"
+                  title="Escribir la guía de esta escena"
+                  :to="`${rutaGuia}/${row.folder}`"
+                />
+                <UiButton
+                  v-if="row.hasContent"
+                  tone="neutral"
+                  size="sm"
+                  icon="play"
+                  icon-only
+                  label="Probar esta escena"
+                  title="Probar esta escena"
+                  :to="playUrl(row.folder)"
+                />
+              </div>
             </template>
           </UiDataTable>
         </div>
@@ -198,11 +211,11 @@
         <UiCard>
           <div class="mb-4 flex items-center justify-between gap-3">
             <h2 class="ui-title">Guía</h2>
-            <span class="ui-caption">Se escribe en Admin</span>
+            <UiButton v-if="publicacion" variant="outline" size="sm" icon="pencil" :to="rutaGuia">Cabecera</UiButton>
           </div>
 
           <p v-if="!publicacion" class="ui-text">
-            Cuando esté registrado, Admin podrá escribir su guía escena por escena, en cada idioma.
+            Cuando esté registrado, podrás escribir aquí su guía: la cabecera y cada escena, en cada idioma.
           </p>
 
           <div v-else class="space-y-4">
@@ -213,10 +226,10 @@
               </div>
               <UiProgress :value="g.escritas" :max="g.total || 1" :tone="tonoGuia(g.escritas, g.total)" :label="`Guía en ${nombreIdioma(g.idioma)}`" />
             </div>
-            <p class="ui-caption">El educador la ve en el runner dentro de Educators. Aquí solo se mira.</p>
-            <UiButton v-if="urlAdmin" variant="outline" size="sm" icon="external" :href="urlAdmin" target="_blank" rel="noopener">
-              Abrir en Admin
-            </UiButton>
+            <p class="ui-caption">
+              La guía de cada escena se escribe desde su fila, en «Escenas». El educador la lee en el runner dentro de
+              Educators, en el idioma del taller.
+            </p>
           </div>
         </UiCard>
       </div>
@@ -231,9 +244,9 @@
 </template>
 
 <script setup lang="ts">
-// Detalle de un storyboard del build (decisiones 006 y 007): lo que viene del JSON (lo único que
+// Detalle de un storyboard del build (decisiones 006, 007 y 013): lo que viene del JSON (lo que
 // Player registra en la base, con qué cambió si está desactualizado), su publicación (estado,
-// países y organización, que se deciden aquí) y su guía (que se escribe en Admin y aquí se mira).
+// países y organización) y su guía (la cabecera y cada escena), que se escriben aquí.
 import { uiPublicationTone, uiToneFor } from '@playhub/ui/app/utils/ui-tones'
 import { loadStoryboard } from '~/runner/content'
 import { ESTADO_CATALOGO, ESTADO_PUBLICACION, ORDEN_PUBLICACION, nombreIdioma, siguientePaso, tonoGuia } from '~/utils/catalogoResumen'
@@ -252,7 +265,7 @@ const sb = computed(() => {
 const loaded = loadStoryboard(category, id)
 
 const {
-  estadoDe, publicacionDe, organizacionDe, urlGuiaEnAdmin, sincronizar, publicar, paises, organizaciones,
+  estadoDe, publicacionDe, organizacionDe, sincronizar, publicar, paises, organizaciones,
   error: errorCatalogo, cargando, cargar,
 } = useCatalogoBase()
 const { toast } = useToast()
@@ -263,7 +276,7 @@ const estado = computed(() => estadoDe(id))
 const publicacion = computed(() => publicacionDe(id))
 const organizacion = computed(() => organizacionDe(publicacion.value?.organizacionId ?? null))
 const paso = computed(() => siguientePaso(estado.value?.estado ?? null, publicacion.value, estado.value?.errores ?? []))
-const urlAdmin = computed(() => (publicacion.value ? urlGuiaEnAdmin(publicacion.value.id) : null))
+const rutaGuia = `/storyboards/${category}/${id}/guia`
 
 // ── Lo que viene del JSON ─────────────────────────────────────────────────────
 const datosJson = computed(() => {
@@ -275,7 +288,7 @@ const datosJson = computed(() => {
     { label: 'Slug', valor: meta.slug, mono: true },
     { label: 'Versión del build', valor: meta.version_build ?? '—' },
     { label: 'Título', valor: localizado(meta.titulo) },
-    { label: 'Eje', valor: `${tipoLabel(sb.value.tipo)} (${meta.categoria})` },
+    { label: 'Categoría', valor: `${tipoLabel(sb.value.tipo)} (${meta.categoria})` },
     { label: 'Subcategoría', valor: meta.subcategoria ?? '—' },
     { label: 'Edición', valor: `${audienceLabel(sb.value.audience)} (${meta.edicion})` },
     { label: 'Enfoques de salud', valor: meta.enfoques_salud.join(', ') || '—' },

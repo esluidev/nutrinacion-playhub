@@ -5,7 +5,8 @@ import type { EscenaMetadata, EstadoCatalogo } from './storyboardMetadata'
 // ─────────────────────────────────────────────────────────────────────────────
 // Lo que la gestión de Player resume de la base para contarlo de un vistazo: los dos estados de
 // un storyboard (frente a la base y de publicación), cuánta guía hay escrita por idioma y por
-// escena (la escribe Admin; aquí solo se mira) y qué toca hacer ahora. Lógica PURA, con test.
+// escena (se escribe aquí, en Player: decisión 013), los campos de la guía con sus ayudas y qué toca
+// hacer ahora. Lógica PURA, con test.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type EstadoPublicacion = Enums<'estado_publicacion'>
@@ -27,14 +28,73 @@ export const ESTADO_PUBLICACION: Record<EstadoPublicacion, { label: string, desc
 
 export const ORDEN_PUBLICACION: EstadoPublicacion[] = ['REGISTRADO', 'EN_REVISION', 'PUBLICADO', 'ARCHIVADO']
 
+/**
+ * El filtro «Estado» de la lista: dónde está el storyboard en su ciclo (sin registrar o su estado de
+ * publicación) o si su JSON cambió desde el último registro (desactualizado, en cualquier estado).
+ */
+export type FiltroEstado = 'todos' | 'sin_registrar' | 'desactualizado' | EstadoPublicacion
+
+export const OPCIONES_FILTRO_ESTADO: { value: FiltroEstado, label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'sin_registrar', label: 'Sin registrar' },
+  { value: 'desactualizado', label: 'Desactualizado' },
+  ...ORDEN_PUBLICACION.map(value => ({ value, label: ESTADO_PUBLICACION[value].label })),
+]
+
+/** Si un storyboard pasa el filtro «Estado», con su estado frente a la base y el de publicación. */
+export function pasaFiltroEstado(filtro: FiltroEstado, base: EstadoCatalogo | null, publicacion: EstadoPublicacion | null): boolean {
+  if (filtro === 'todos') return true
+  if (filtro === 'sin_registrar' || filtro === 'desactualizado') return base === filtro
+  return base !== null && base !== 'sin_registrar' && publicacion === filtro
+}
+
 // Las secciones de la guía de cada escena (`guia_escenas`), por idioma. Mecánica y material se
 // completan cuando el juego está hecho; cualquiera con texto cuenta como «empezada».
 export const SECCIONES_GUIA = ['verbo', 'subtitulo', 'descripcion', 'objetivo', 'pedagogia', 'preguntas', 'psicologia',
   'cientifico', 'no_hace', 'consejos', 'mecanica', 'material'] as const
 export type SeccionGuia = (typeof SECCIONES_GUIA)[number]
 
-/** Una escena de la guía como la devuelve la base: lo del JSON más lo escrito en Admin. */
-export type EscenaGuia = EscenaMetadata & Partial<Record<SeccionGuia, Localized | null>>
+/** Una escena de la guía como la devuelve la base: lo del JSON más lo escrito en la guía. */
+export type EscenaGuia = EscenaMetadata & { id?: number } & Partial<Record<SeccionGuia, Localized | null>>
+
+/** Cada sección de la guía de una escena, con lo que se escribe en ella (la plantilla de la guía). */
+export const ETIQUETAS_GUIA: Record<SeccionGuia, { label: string, hint: string }> = {
+  verbo: { label: 'Verbo', hint: 'Qué hace el niño en esta escena, tal como está en la estructura.' },
+  subtitulo: { label: 'Subtítulo', hint: 'De qué va la escena en este taller.' },
+  descripcion: { label: 'Descripción', hint: 'Qué se enseña y qué descubre el niño. Dos o tres líneas.' },
+  objetivo: { label: 'Objetivo', hint: 'Qué logra el educador al terminar la escena.' },
+  pedagogia: { label: 'Pedagogía', hint: 'Cómo desarrolla el educador el contenido con el grupo: qué dice, qué pregunta y cómo cierra.' },
+  preguntas: { label: 'Preguntas e interacciones sugeridas', hint: 'Tres a cinco preguntas y una o dos cosas que el educador pide al grupo.' },
+  psicologia: { label: 'Psicología', hint: 'El estado propio de esta escena y cómo acompañarlo.' },
+  cientifico: { label: 'Científico', hint: 'Los términos que el educador necesita comprender y cómo explicarlos a esa edad. Sin fuentes.' },
+  no_hace: { label: 'Lo que esta escena no hace', hint: 'El límite con la escena vecina: qué no se dice todavía o qué ya se dijo.' },
+  consejos: { label: 'Consejos', hint: 'Dos o tres, solo de esta escena.' },
+  mecanica: { label: 'Mecánica', hint: 'Cómo funciona el juego de la escena. Se completa cuando el juego está implementado.' },
+  material: { label: 'Material', hint: 'Con qué participa quien no tiene dispositivo. Se completa junto con la mecánica.' },
+}
+
+/** La cabecera de la guía (tabla `guias`): lo que el educador lee antes de las escenas. */
+export interface CabeceraGuia {
+  version: string | null
+  descripcion: Localized | null
+  objetivo: Localized | null
+  publico: Localized | null
+  /** Solo en un personalizado: para quién es y a qué está adaptado. */
+  adaptado_a: Localized | null
+}
+
+/**
+ * Un texto por idioma como se guarda: solo los idiomas del storyboard, sin espacios sobrantes y sin
+ * cadenas vacías. Si no queda ninguno, null: dejar el campo en blanco borra lo guardado.
+ */
+export function textoPorIdioma(campo: Partial<Record<string, string>>, idiomas: string[]): Localized | null {
+  const salida: Localized = {}
+  for (const idioma of idiomas) {
+    const valor = campo[idioma]?.trim()
+    if (valor) salida[idioma] = valor
+  }
+  return Object.keys(salida).length ? salida : null
+}
 
 export interface GuiaIdioma {
   idioma: string
@@ -77,7 +137,7 @@ export function siguientePaso(
 ): string {
   if (errores.length) return 'El JSON tiene errores: corrígelos antes de registrarlo.'
   if (!estado) return 'Leyendo la base…'
-  if (estado === 'sin_registrar') return 'Regístralo en la base: así Admin podrá escribir su guía y se podrá publicar.'
+  if (estado === 'sin_registrar') return 'Regístralo en la base: así podrás escribir su guía y publicarlo.'
   if (estado === 'desactualizado') return 'Actualízalo en la base para que diga lo mismo que el JSON.'
   if (!publicacion) return 'La base dice lo mismo que el JSON.'
   switch (publicacion.estado) {
