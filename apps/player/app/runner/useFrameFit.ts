@@ -5,8 +5,10 @@ import type { Ref } from 'vue'
 // documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-*, la fila
 // de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). En el marco fija la
 // altura de la barra (--bar-h: los controles flotantes a la distancia del borde) y la de la banda
-// del pie (--footer-h, con el aire --footer-gap sobre sus botones, donde va su borde de nubes). `sinBandas` (la vista previa)
-// no reserva la barra ni el pie: la escena se encaja en todo el alto.
+// del pie (--footer-h, con el aire --footer-gap sobre sus botones, donde va su borde de nubes). `sinBarra` y `sinPie` no
+// reservan su alto (la vista previa no tiene ninguno de los dos): la escena se encaja en lo que queda y el pie conserva
+// su alto para la hoja de feedback. Los demás modos tienen los dos, también el dispositivo, aunque no lleve nada abajo:
+// el pie es el suelo del escenario en todos (Luis, 2026-11-18).
 
 const FRAME = { width: 1280, height: 800 }
 const SCENE = { width: 1280, height: 600 }
@@ -22,7 +24,7 @@ const CONTROL = { large: 44, phone: 48 }
 const GAP = { large: 28, phone: 20 }
 const CONSIGNA = { large: 56, phone: 48 }
 
-export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, sinBandas = false) {
+export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, { sinBarra = false, sinPie = false } = {}) {
   const compact = ref(false)
   const phone = ref(false)
   let observer: ResizeObserver | null = null
@@ -51,10 +53,10 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     const usePhone = isCompact && isPhone
     const edge = isCompact ? (isPhone ? EDGE.phone : EDGE.large) / scale : EDGE.large
     const control = usePhone ? CONTROL.phone : CONTROL.large
-    // Sin bandas, la barra no ocupa nada; el pie tampoco, pero conserva su alto para la hoja de feedback.
+    // Sin barra o sin pie, no ocupan nada; el pie conserva su alto para la hoja de feedback.
     const band = bands(edge, control, usePhone ? GAP.phone : GAP.large)
-    const bar = sinBandas ? 0 : band.bar
-    const footer = sinBandas ? 0 : band.footer
+    const bar = sinBarra ? 0 : band.bar
+    const footer = sinPie ? 0 : band.footer
     const pad = (inset: number, margin: number) => Math.max(inset / scale - margin, 0)
     const padTop = pad(top, edge)
     const padBottom = pad(bottom, edge)

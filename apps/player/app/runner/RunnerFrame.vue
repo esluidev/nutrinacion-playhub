@@ -66,6 +66,21 @@
         </button>
       </div>
       <div class="bar-end">
+        <!-- En un dispositivo, lo suyo en el mismo bloque: Pantalla completa (donde el navegador la permite) y Salir,
+             que lo saca solo a él del taller. -->
+        <div v-if="mode === 'device'" class="hud-group hud-tools" role="group" :aria-label="txt('tools')">
+          <UiButton
+            v-if="canFullscreen"
+            tone="neutral"
+            :icon="fullscreen ? 'compress' : 'expand'"
+            icon-only
+            :aria-pressed="fullscreen"
+            :label="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
+            :title="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
+            @click="toggleFullscreen"
+          />
+          <UiButton tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" :disabled="session.left || session.removed" @click="askLeave" />
+        </div>
         <!-- Lo del taller en un solo bloque: Ajustes, Reiniciar la escena y Salir (su icono en coral). -->
         <div v-if="mode !== 'device'" class="hud-group hud-tools" role="group" :aria-label="txt('tools')">
           <UiButton
@@ -299,6 +314,9 @@
         <div v-if="overlay.action" class="window-actions">
           <UiButton ref="overlayAction" icon="play" @click="resume">{{ txt('continue') }}</UiButton>
         </div>
+        <div v-else-if="overlay.cta" class="window-actions">
+          <UiButton ref="overlayAction" :icon="overlay.cta.icon" @click="overlay.cta.run">{{ overlay.cta.label }}</UiButton>
+        </div>
       </section>
     </div>
 
@@ -490,7 +508,7 @@ const devicesOpen = ref(false)
 const confirmOpen = ref(false)
 
 // Lo que sabe el dispositivo del taller: solo las órdenes de la sesión.
-const session = reactive({ open: false, closed: false, removed: false, scene: null as string | null, paused: false, held: false })
+const session = reactive({ open: false, closed: false, removed: false, left: false, scene: null as string | null, paused: false, held: false })
 const finished = ref(false)
 
 const blocked = computed(() => {
@@ -512,9 +530,30 @@ function fromRail(action: () => void) {
   action()
 }
 
-interface OverlayLook { icon: UiIconName, tone: UiTone, title: string, caption: string, text: string, action?: boolean }
+interface OverlayLook {
+  icon: UiIconName
+  tone: UiTone
+  title: string
+  caption: string
+  text: string
+  /** La pausa del educador: cerrar y «Continuar». */
+  action?: boolean
+  /** Otra acción de la ventana (entrar en pantalla completa, volver a entrar al taller). */
+  cta?: { label: string, icon: UiIconName, run: () => void }
+}
 const sceneCaption = () => txt('sceneCaption', { n: current.value + 1, total: scenes.length, name: active.value.title })
 const workshopCaption = () => txt('workshopCaption', { title: text(props.storyboard.json.title) })
+
+// Un teléfono en vertical (su lado corto, de menos de 600): el dispositivo pide girarlo.
+const phonePortrait = ref(false)
+let portraitQuery: MediaQueryList | null = null
+const onPortrait = () => { phonePortrait.value = portraitQuery?.matches ?? false }
+onMounted(() => {
+  portraitQuery = matchMedia('(orientation: portrait) and (max-width: 599px)')
+  onPortrait()
+  portraitQuery.addEventListener('change', onPortrait)
+})
+onUnmounted(() => portraitQuery?.removeEventListener('change', onPortrait))
 
 const overlay = computed<OverlayLook | null>(() => {
   if (finished.value || (props.mode === 'device' && session.closed && !session.removed)) {
@@ -522,6 +561,21 @@ const overlay = computed<OverlayLook | null>(() => {
   }
   if (props.mode === 'device') {
     if (session.removed) return { icon: 'devices', tone: 'sky', title: txt('removedTitle'), caption: workshopCaption(), text: txt('removedText') }
+    if (session.left) {
+      return { icon: 'exit', tone: 'sky', title: txt('leftTitle'), caption: workshopCaption(), text: txt('leftText'), cta: { label: txt('rejoin'), icon: 'play', run: rejoin } }
+    }
+    // El tablero es horizontal (una sola composición): en un teléfono en vertical se pide girarlo. Donde el navegador
+    // permite pantalla completa, la ventana ofrece entrar en ella, que además lo deja en horizontal.
+    if (phonePortrait.value) {
+      return {
+        icon: 'smartphone',
+        tone: 'sky',
+        title: txt('rotateTitle'),
+        caption: workshopCaption(),
+        text: txt('rotateText'),
+        ...(canFullscreen.value ? { cta: { label: txt('playFullscreen'), icon: 'expand' as const, run: () => void toggleFullscreen() } } : {}),
+      }
+    }
     if (!session.open) return { icon: 'devices', tone: 'sky', title: txt('waitingTitle'), caption: workshopCaption(), text: txt('waitingText') }
     if (session.paused || session.held) return { icon: 'pause', tone: 'sky', title: txt('pausedTitle'), caption: sceneCaption(), text: txt('pausedDevice') }
     return null
@@ -533,7 +587,7 @@ const overlay = computed<OverlayLook | null>(() => {
 })
 
 const overlayAction = ref<{ $el?: HTMLElement } | null>(null)
-watch(() => overlay.value?.action, (action) => {
+watch(() => overlay.value?.action || Boolean(overlay.value?.cta), (action) => {
   if (action) nextTick(() => (overlayAction.value?.$el as HTMLElement | undefined)?.focus({ preventScroll: true }))
 })
 
@@ -867,13 +921,20 @@ function toggleMute() {
   if (muted.value) cancelNarration()
 }
 
-// Pantalla completa solo donde el navegador la permite (no en iPhone).
+// Pantalla completa solo donde el navegador la permite (no en iPhone) y siempre tras un toque: ningún navegador deja
+// entrar sola a una página. Al entrar, el aparato se queda en horizontal donde se puede fijar (Android); al salir de
+// pantalla completa, se suelta solo.
 const canFullscreen = ref(false)
 const fullscreen = ref(false)
 async function toggleFullscreen() {
   try {
-    if (document.fullscreenElement) await document.exitFullscreen()
-    else await document.documentElement.requestFullscreen()
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+      return
+    }
+    await document.documentElement.requestFullscreen()
+    const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> }
+    await orientation.lock?.('landscape').catch(() => {})
   }
   catch {
     announce(txt('fullscreenUnsupported'))
@@ -1018,6 +1079,33 @@ function applyState(state: Extract<SessionMessage, { tipo: 'estado' }>) {
 }
 
 let presenceTimer: ReturnType<typeof setInterval> | undefined
+
+// Salir, en un dispositivo: lo saca solo a él (se despide y deja de dar señales); el taller sigue. Dentro de una app (la
+// del hogar), la app sabe adónde volver (`salir`); abierto por el enlace, queda la ventana para volver a entrar.
+function askLeave() {
+  confirm({
+    title: txt('leaveTitle'),
+    text: txt('leaveText'),
+    label: txt('exitAction'),
+    symbol: 'exit',
+    tone: 'coral',
+    action: leaveWorkshop,
+  })
+}
+function leaveWorkshop() {
+  cancelNarration()
+  clearInterval(presenceTimer)
+  if (me.value) post({ tipo: 'adios', id: me.value.id })
+  Object.assign(session, { left: true, open: false, held: false })
+  if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
+  if (props.embedded) emit('exit', current.value, active.value.folder)
+}
+function rejoin() {
+  session.left = false
+  post({ tipo: 'hola' })
+  presence()
+  presenceTimer = setInterval(presence, 2000)
+}
 // Al irse, el dispositivo se despide. Se quita al desmontar: con el canal ya cerrado, despedirse falla.
 const sayGoodbye = () => { if (!session.removed && me.value) post({ tipo: 'adios', id: me.value.id }) }
 function obey(accion: Extract<SessionMessage, { tipo: 'orden' }>['accion']) {
@@ -1043,6 +1131,8 @@ function onSessionMessage({ data }: MessageEvent<SessionMessage>) {
     }
   }
   else if (props.mode === 'device') {
+    // Quien salió ya no sigue la sesión hasta que vuelve a entrar.
+    if (session.left) return
     if (data.tipo === 'estado') applyState(data)
     else if (data.tipo === 'orden' && data.id === me.value?.id) obey(data.accion)
     else if (data.tipo === 'cierre' && !session.removed) {
@@ -1100,7 +1190,11 @@ const frame = ref<HTMLElement | null>(null)
 const probe = ref<HTMLElement | null>(null)
 // Cada vez que el marco se encaja (al montarse y con cada cambio de tamaño), la escena que se ve vuelve a ajustar lo
 // suyo. Puede pedírselo antes de que su personaje termine de cargar: él lo deja pasar y se ajusta solo al cargar.
-const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.(), props.mode === 'preview')
+// La vista previa no tiene consola ni pie: su escena se encaja en todo el alto.
+const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.(), {
+  sinBarra: props.mode === 'preview',
+  sinPie: props.mode === 'preview',
+})
 
 // En iOS un botón solo muestra su estado pulsado si la página escucha los toques: con esto responde al instante.
 const onTouchStart = () => {}
