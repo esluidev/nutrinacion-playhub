@@ -27,14 +27,20 @@
           :aria-label="device.pausado ? `${device.nombre}, ${txt('devicePaused').toLowerCase()}` : device.nombre"
           @click="emit('select', device.id === selected ? null : device.id)"
         >
-          <span class="ui-symbol" :data-tone="device.tono"><UiIcon name="user" /></span>
+          <span class="ui-symbol" :data-tone="device.tono">
+            <img v-if="device.avatar" :src="librarySvg(`avatar-${device.avatar}`)" alt="" decoding="sync">
+            <UiIcon v-else name="user" />
+          </span>
           <span v-if="device.pausado" class="ui-dot" data-tone="night"><UiIcon name="pause" /></span>
         </button>
       </li>
     </ul>
     <div class="device-card" :data-selected="Boolean(current)">
       <div class="device-card-head">
-        <span class="ui-symbol ui-symbol-sm" :data-tone="current?.tono ?? 'neutral'"><UiIcon name="user" /></span>
+        <span class="ui-symbol ui-symbol-sm" :data-tone="current?.tono ?? 'neutral'">
+          <img v-if="current?.avatar" :src="librarySvg(`avatar-${current.avatar}`)" alt="" decoding="sync">
+          <UiIcon v-else name="user" />
+        </span>
         <div>
           <p class="device-card-name">{{ current?.nombre ?? txt('noDevice') }}</p>
           <p class="ui-caption" aria-live="polite">{{ status }}</p>
@@ -53,12 +59,15 @@
 </template>
 
 <script setup lang="ts">
+import { librarySvg } from './content'
 import { useRunnerText } from './i18n'
 
 export interface DeviceView {
   id: string
   nombre: string
   tono: 'coral' | 'grape' | 'sun' | 'sky' | 'lime' | 'rose'
+  /** El animal de su avatar (`avatar-<animal>`); sin él, el icono de persona. */
+  avatar?: string
   pausado: boolean
   status: string
 }

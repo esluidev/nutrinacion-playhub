@@ -118,26 +118,18 @@
   .player-frame .hud-tools > .ui-button { flex: none; width: calc((var(--hud-long) - 2px) / 3); min-width: 0; }
   .player-frame .hud-tools > .exit-button { --tone-on: var(--color-coral-600); }
 
-  /* Dispositivo: el icono del participante, su única identidad, en la pieza blanca del HUD, como el avance.
-     «Listo» es local y nunca se envía. */
-  .participant { @apply gap-2; padding: 0 18px 0 6px; }
-  .participant .ui-symbol { @apply m-0; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); border-radius: var(--radius-chip); }
-  .participant .ui-symbol > .icon { width: 20px; height: 20px; }
-  .participant-name { @apply font-black; font-size: var(--text-counter); color: var(--color-ink); }
-
-  /* En casa, el niño: una insignia de jugador. El avatar es un animal de la librería (`avatar-*`) dentro de un círculo
-     que lo recorta, con el tinte de su tono de fondo; el dibujo trae su propio aire (la cabeza ocupa unas dos terceras
-     partes del círculo), así que queda pequeña y holgada dentro de él. El círculo mide lo que un control y va delante de
-     la pieza blanca, que sale de su centro: lleva un aro
-     blanco, el contorno de 1 y la base de toda pieza blanca del HUD; el aro empieza donde las demás piezas, en el
-     margen del marco. La pieza lleva el apodo, en tinta y en text-title,
-     con su aire a los lados; mide lo que su texto, hasta 240 en total, y un apodo más largo se corta con puntos
-     suspensivos. */
-  .player-chip { --avatar: var(--hud-control); @apply relative flex items-center; height: var(--hud-control); max-width: 240px; }
-  .player-avatar { @apply relative z-[1] block shrink-0 overflow-hidden rounded-full; width: var(--avatar); height: var(--avatar); margin-left: 4px; background: var(--tone-tint); box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-depth), 0 var(--ph-depth) 0 4px var(--color-depth); }
-  .player-avatar > img { @apply block size-full; }
-  .player-tag { @apply min-w-0; margin-left: calc(var(--avatar) / -2); padding: 0 18px 0 calc(var(--avatar) / 2 + 12px); }
-  .player-name { @apply min-w-0 truncate font-black; font-size: var(--text-title); line-height: 1.2; letter-spacing: -.01em; color: var(--color-ink); }
+  /* Quién juega (PerfilPieza.vue), en casa y en un dispositivo del taller: una pieza blanca del HUD, como el avance
+     y del mismo largo que las piezas de arriba. Dentro, el avatar en un cuadro con el tinte de su tono, la forma del
+     avatar del kit (`ui-avatar`), con el radio de las piezas pequeñas y el dibujo del animal con su propio aire, así
+     que la cabeza queda pequeña y holgada. Va centrado en el alto (5 de blanco arriba y abajo) y con 7 a la izquierda:
+     con el mismo aire que arriba se veía pegado al borde, porque la esquina redondeada de la pieza se come espacio
+     (Luis, 2026-11-18: «demasiado a la izquierda»). El apodo va al
+     lado, en tinta; si no cabe, se corta con puntos suspensivos. «Listo» (dispositivo) es local y nunca se envía. */
+  .profile-piece { @apply gap-2.5; width: var(--hud-long); padding: 0 14px 0 8px; }
+  .profile-avatar { @apply grid shrink-0 place-items-center overflow-hidden; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); border-radius: var(--radius-chip); background: var(--tone-tint); color: var(--tone-icon); }
+  .profile-avatar > img { @apply block size-full; }
+  .profile-avatar > .icon { width: 20px; height: 20px; }
+  .profile-name { @apply min-w-0 truncate font-black; font-size: var(--text-counter); line-height: 1.2; color: var(--color-ink); }
   .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
 
   /* ---- Escenario: el tono más suave del área del storyboard (data-area: alimentación → sol), como el suelo de un
@@ -206,6 +198,8 @@
   .device-avatar { @apply relative block rounded-control; }
   .device-avatar .ui-symbol { width: var(--ph-control); height: var(--ph-control); border-radius: var(--radius-control); }
   .device-avatar .ui-symbol > .icon { width: var(--ph-icon); height: var(--ph-icon); }
+  .device-avatar .ui-symbol, .device-card-head .ui-symbol { @apply overflow-hidden; }
+  :is(.device-avatar, .device-card-head) .ui-symbol > img { @apply block size-full; }
   .device-avatar[aria-pressed=true] .ui-symbol { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--tone-icon); }
   .device-avatar > .ui-dot { @apply absolute; right: -4px; top: -4px; }
   .device-avatar > .ui-dot .icon { @apply size-3; }

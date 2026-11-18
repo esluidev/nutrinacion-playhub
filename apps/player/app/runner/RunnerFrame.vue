@@ -13,8 +13,8 @@
          (runner.css, useFrameFit).
        La consola flota sobre el escenario, un elemento por esquina, todos del alto de un control y sin
        puntos ni tiempo:
-       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas). En un
-         dispositivo, el participante. En casa, el niño: su avatar (un animal, en un círculo) y su apodo.
+       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas). En casa y en un
+         dispositivo, quién juega (PerfilPieza): su avatar y su apodo, en una pieza blanca como las demás.
        - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque. Ajustes abre su riel: en el educador,
          pausa, sonido, pantalla completa (donde se puede) y dispositivos; en casa, sonido y pantalla completa.
        - Abajo, sobre la banda del pie: a la izquierda, Guía (educador) o Anterior (casa); a la derecha, Siguiente, que
@@ -38,20 +38,14 @@
   >
     <header v-if="mode !== 'preview'" class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
       <div class="bar-start">
+        <!-- En un dispositivo, quién es: un animal que no sobrevive a la sesión (o, desde la app del hogar, el perfil
+             del niño) y su «Listo». -->
         <template v-if="mode === 'device'">
-          <!-- El icono del participante es su única identidad; no sobrevive a la sesión. -->
-          <div class="hud-piece participant">
-            <span class="ui-symbol" :data-tone="me?.tono"><UiIcon name="user" /></span>
-            <span class="participant-name">{{ me?.nombre }}</span>
-          </div>
+          <PerfilPieza v-if="me" :avatar="me.avatar" :nombre="me.nombre" :tono="me.tono" />
           <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
         </template>
-        <!-- En casa, el niño: una insignia. Su avatar (un animal, en un círculo con el tinte de su tono y un aro
-             blanco) sobresale por delante de la pieza blanca del HUD, que lleva su apodo. -->
-        <div v-else-if="mode === 'home'" class="player-chip">
-          <span class="player-avatar" :data-tone="AVATAR_TONES[player.avatar]"><img :src="librarySvg(`avatar-${player.avatar}`)" alt="" decoding="sync"></span>
-          <span class="hud-piece player-tag"><span class="player-name">{{ player.apodo }}</span></span>
-        </div>
+        <!-- En casa, el niño que juega: con dos perfiles en el mismo aparato, dice cuál. -->
+        <PerfilPieza v-else-if="mode === 'home'" :avatar="player.avatar" :nombre="player.apodo" :tono="AVATAR_TONES[player.avatar]" />
         <!-- En el educador (la vista previa no tiene barra), dónde va el taller: la barra de avance del kit, del alto
              de un botón, en un desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza
              da un pequeño salto mientras la barra crece. -->
@@ -348,6 +342,7 @@ import { cueInterface, cueSound, SCALE } from './engine/sound'
 import { useRunnerText } from './i18n'
 import { fontsReady, isPreloaded, mark, preloadScene, preloadSvg, within } from './preload'
 import { profileOf } from './profiles'
+import PerfilPieza from './PerfilPieza.vue'
 import RunnerDevices from './RunnerDevices.vue'
 import type { DeviceView } from './RunnerDevices.vue'
 import RunnerGuide from './RunnerGuide.vue'
@@ -395,8 +390,11 @@ const narrates = props.mode === 'home'
 // En casa, el niño: su apodo y su avatar, un animal de la librería (`avatar-<animal>`) en un círculo. Cada animal lleva
 // el tono de fondo que mejor lo separa de su pelaje, entre los tonos del kit para las personas (cielo, uva o rosa).
 // El runner no conoce al niño: mientras la app que lo abre no se los dé, es este de demostración.
-const AVATAR_TONES = { oso: 'sky', zorro: 'sky', conejo: 'grape', gato: 'rose', rana: 'rose', leon: 'grape' } as const satisfies Record<string, UiTone>
-const player: { apodo: string, avatar: keyof typeof AVATAR_TONES } = { apodo: 'Jeffrey', avatar: 'zorro' }
+const AVATAR_TONES = { oso: 'sky', zorro: 'sky', conejo: 'grape', gato: 'rose', rana: 'rose', leon: 'grape' } as const satisfies Record<string, DeviceView['tono']>
+type Avatar = keyof typeof AVATAR_TONES
+// El nombre de cada animal, para un dispositivo que entra sin perfil (y los de prueba del educador).
+const AVATAR_NAMES: [Avatar, string][] = [['zorro', 'Zorro'], ['oso', 'Oso'], ['conejo', 'Conejo'], ['gato', 'Gato'], ['rana', 'Rana'], ['leon', 'León']]
+const player: { apodo: string, avatar: Avatar } = { apodo: 'Jeffrey', avatar: 'zorro' }
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
 type FeedbackType = 'success' | 'info' | 'retry'
@@ -893,7 +891,7 @@ provide(NARRATOR_KEY, (voz, onState) => narrate(narrationContext, voz, onState))
 type SessionMessage =
   | { tipo: 'estado', escena: string, pausa: boolean, reinicios: Record<string, number> }
   | { tipo: 'orden', id: string, accion: 'pausa' | 'libera' | 'reinicio' | 'quitar' }
-  | { tipo: 'presencia', id: string, nombre: string, tono: DeviceView['tono'], escena: string | null, pausado: boolean }
+  | { tipo: 'presencia', id: string, nombre: string, tono: DeviceView['tono'], avatar?: string, escena: string | null, pausado: boolean }
   | { tipo: 'hola' }
   | { tipo: 'adios', id: string }
   | { tipo: 'cierre' }
@@ -912,13 +910,12 @@ function publish() {
   })
 }
 
-interface Device { id: string, nombre: string, tono: DeviceView['tono'], prueba?: boolean, pausado: boolean, escena?: string | null, seen?: number, note?: string }
+interface Device { id: string, nombre: string, tono: DeviceView['tono'], avatar?: string, prueba?: boolean, pausado: boolean, escena?: string | null, seen?: number, note?: string }
 
-// Siete dispositivos de prueba: siguen la sesión y obedecen aquí mismo, para probar el panel sin
+// Seis dispositivos de prueba, uno por avatar: siguen la sesión y obedecen aquí mismo, para probar el panel sin
 // abrir pestañas. Una pestaña con ?mode=device se suma de verdad y va primero en la lista.
-const TEST_DEVICES: [string, DeviceView['tono']][] = [['Zorro', 'coral'], ['Búho', 'grape'], ['Abeja', 'sun'], ['Pez', 'sky'], ['Rana', 'lime'], ['Conejo', 'rose'], ['Tortuga', 'lime']]
 const devices = reactive(new Map<string, Device>(props.mode === 'educator'
-  ? TEST_DEVICES.map(([nombre, tono], i) => [`prueba-${i + 1}`, { id: `prueba-${i + 1}`, nombre, tono, prueba: true, pausado: false }])
+  ? AVATAR_NAMES.map(([avatar, nombre], i) => [`prueba-${i + 1}`, { id: `prueba-${i + 1}`, nombre, tono: AVATAR_TONES[avatar], avatar, prueba: true, pausado: false }])
   : []))
 const selectedDevice = ref<string | null>(null)
 
@@ -932,7 +929,7 @@ const deviceViews = computed<DeviceView[]>(() => [...devices.values()]
     const status = device.note || (device.pausado
       ? txt('devicePaused')
       : where ? txt('deviceAt', { n: at + 1, name: where.title }) : txt('deviceWaiting'))
-    return { id: device.id, nombre: device.nombre, tono: device.tono, pausado: device.pausado, status }
+    return { id: device.id, nombre: device.nombre, tono: device.tono, avatar: device.avatar, pausado: device.pausado, status }
   }))
 
 let noteTimer: ReturnType<typeof setTimeout> | undefined
@@ -980,21 +977,21 @@ function askRemoveDevice() {
   })
 }
 
-// Dispositivo: su identidad es un animal para esta pestaña; distinto de los de prueba.
-const ANIMALS: [string, DeviceView['tono']][] = [['Gato', 'coral'], ['Oso', 'grape'], ['León', 'sun'], ['Ballena', 'sky'], ['Koala', 'rose'], ['Ardilla', 'sun']]
-function deviceIdentity(): { id: string, nombre: string, tono: DeviceView['tono'] } {
+// Dispositivo: su identidad para esta pestaña es uno de los animales de los avatares, con su nombre y su tono.
+type Identity = { id: string, nombre: string, tono: DeviceView['tono'], avatar: Avatar }
+function deviceIdentity(): Identity {
   try {
     const saved = JSON.parse(sessionStorage.getItem('playhub-dispositivo') ?? 'null')
-    if (saved?.id) return saved
+    if (saved?.id && saved.avatar in AVATAR_TONES) return saved
   }
   catch { /* sin almacenamiento */ }
-  const [nombre, tono] = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]!
-  const identity = { id: Math.random().toString(36).slice(2, 10), nombre, tono }
+  const [avatar, nombre] = AVATAR_NAMES[Math.floor(Math.random() * AVATAR_NAMES.length)]!
+  const identity: Identity = { id: Math.random().toString(36).slice(2, 10), nombre, tono: AVATAR_TONES[avatar], avatar }
   try { sessionStorage.setItem('playhub-dispositivo', JSON.stringify(identity)) }
   catch { /* sin almacenamiento */ }
   return identity
 }
-const me = ref<{ id: string, nombre: string, tono: DeviceView['tono'] } | null>(null)
+const me = ref<Identity | null>(null)
 
 function presence() {
   if (!me.value) return
