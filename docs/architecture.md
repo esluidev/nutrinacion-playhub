@@ -21,8 +21,8 @@ Cada app vive en su subdominio y se despliega por separado. Para el navegador, l
 
 | App | Responsable de | No es responsable de |
 |---|---|---|
-| Admin | Organizaciones (con sus países, licencia, administradores y colaboradores), educadores y sus grupos, jornadas, workshops (su ciclo) y el planificador; la guía de los storyboards (Platform) | Construir juegos, registrarlos ni publicarlos; registrar personas (participantes) |
-| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización; solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | La guía (en Admin/Platform); ser la app del hogar, que no se construye ahora ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
+| Admin | Organizaciones (con sus países, licencia, administradores y colaboradores), educadores y sus grupos, jornadas, workshops (su ciclo) y el planificador; ver el catálogo de storyboards y su guía (Platform) | Construir juegos, registrarlos, publicarlos ni escribir su guía ([decisión 013](decisions/013-contenido-solo-desde-player.md)); registrar personas (participantes) |
+| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización) y escribir su guía (solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | Ser la app del hogar, que no se construye ahora ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
 | Educators | Experiencia del educador: entrar, ver sus talleres (semana y mes), abrir el taller con el runner incrustado (y darle la guía) y dar el feedback al terminar | Implementar juegos |
 
 ## Cómo se conectan las apps (hoy)
@@ -42,7 +42,7 @@ Las apps no comparten estado. El runner se incrusta con el contrato de [runner.m
 
 1. El equipo construye un storyboard y sus escenas en Player.
 2. Un superadmin lo registra en la base desde Player: la metadata de su JSON (`clave`, slug, categoría, edición, enfoques, idiomas…) y sus escenas. Player avisa cuando el build cambia y hay que actualizarlo.
-3. En Admin/Platform se escribe la guía; desde Player se publica en sus países (Player muestra cuánta guía hay en cada idioma).
+3. En Player se escribe su guía (la cabecera y cada escena, en cada idioma) y se publica en sus países. Admin/Platform solo lo muestra.
 4. Una organización programa un taller con un storyboard publicado en alguno de sus países (o personalizado para ella), suelto o dentro de una jornada.
 5. Educators muestra el taller en Mis talleres del educador; desde su ventana, «Iniciar taller» abre el runner incrustado en modo educador (Educators le da la guía) y «Ver guía» su preparación.
 6. Al terminar el taller en el runner, Educators lleva al educador al feedback del taller (calificación, asistentes, participación, claridad y comentarios; solo del grupo). Al finalizarlo, el taller queda completado.

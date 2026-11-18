@@ -28,7 +28,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 
 | Tabla | Qué guarda |
 |---|---|
-| `configuracion` | `admin_url` (el enlace de los correos de invitación y de la guía desde Player), `player_url` («Probar» en Admin) y `educators_url` (el enlace de acceso del educador, 0013) |
+| `configuracion` | `admin_url` (el enlace de los correos de invitación), `player_url` («Probar» en Admin) y `educators_url` (el enlace de acceso del educador, 0013) |
 | `paises` | El catálogo de países (nombre por idioma y bandera). Player elige de aquí los de cada storyboard; la organización, los suyos |
 | `tipos_organizacion`, `plantillas_correo` | Listas de referencia de Admin y la copy de los correos por idioma: las invitaciones (`enviar-invitacion`) y el enlace de acceso del educador (`enviar-acceso-educador`) |
 | `organizaciones` | La unidad de operación: datos, tipo y **`paises`, los países donde opera** (uno o más, del catálogo). Un solo titular por organización (`organizacion_administradores.titular`, índice único) |
@@ -59,7 +59,7 @@ storyboards (metadata del JSON + publicación) ── guias ── guia_escenas
 - **Quién decide qué del storyboard:**
   - el JSON, que Player registra con `sincronizar_storyboard`: la metadata y las escenas;
   - Player al publicar (`publicar_storyboard`): estado, países (del catálogo `paises`) y organización;
-  - Admin/Platform: la guía.
+  - Player al escribir la guía (`guias` y `guia_escenas`): la cabecera y cada escena, por idioma. Admin/Platform solo la muestra ([decisión 013](decisions/013-contenido-solo-desde-player.md)).
 - **Taxonomía:** enums con las listas cerradas de `catalogo.md`. La subcategoría y los enfoques deben ser de la lista de su categoría (`subcategoria_de_categoria`, `enfoques_de_categoria`). Player lo valida antes de registrar.
 - **Estados del storyboard:**
   - registrado (solo el equipo), en revisión (solo el equipo), publicado (exige al menos un país) y archivado;

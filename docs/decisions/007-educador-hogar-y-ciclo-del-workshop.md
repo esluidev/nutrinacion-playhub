@@ -3,6 +3,7 @@
 Fecha: 2026-10-16
 Estado: aceptada
 Sustituye a: no aplica. Precisa la [decisión 005](005-base-nueva-y-acceso-educador.md) (cómo entra el educador) y la [decisión 006](006-modelo-y-catalogo-desde-player.md) (publicación y países del storyboard).
+Precisada por la [decisión 013](013-contenido-solo-desde-player.md) (2026-11-17): la guía se escribe en Player y Admin solo la muestra.
 
 ## Contexto
 

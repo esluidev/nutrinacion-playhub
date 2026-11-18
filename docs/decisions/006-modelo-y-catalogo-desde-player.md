@@ -4,6 +4,7 @@ Fecha: 2026-10-15
 Estado: aceptada
 Sustituye a: no aplica. Precisa la [decisión 005](005-base-nueva-y-acceso-educador.md) en las tablas de la base nueva y la [decisión 003](003-runner-playhub.md) en quién registra el catálogo.
 Precisada por la [decisión 007](007-educador-hogar-y-ciclo-del-workshop.md) (2026-10-16): Player también publica (estado, países del catálogo y organización); estados del storyboard como un artículo y enums.
+Precisada por la [decisión 013](013-contenido-solo-desde-player.md) (2026-11-17): la guía se escribe en Player y Admin solo la muestra.
 
 ## Contexto
 
