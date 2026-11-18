@@ -1,59 +1,76 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="580" height="520" viewBox="0 0 580 520" role="img" aria-labelledby="title desc">
   <title id="title">Tienda</title>
-  <desc id="desc">Tienda de barrio de frente en colores planos y formas gruesas: cornisa turquesa fina, toldo a rayas menta y crema con ondas, fachada azul con su lado derecho y la franja bajo el toldo en sombra (la crema se confundía con el lienzo del player; el azul sale de la paleta de la referencia de assets), alféizar crema, escaparate con una manzana y dos huevos, y puerta turquesa con cristal. Sin texto, para que sirva en cualquier idioma, y sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
+  <desc id="desc">Tienda de barrio de la familia del granero y la casa, de frente con su pared lateral: fachada azul (en la saturación del granero, no el azul eléctrico de antes) con la pared derecha en sombra, estrecha como la del granero, y la franja bajo el toldo en sombra; cornisa de madera gruesa y redondeada con los marrones y el brillo del techo del granero, que dobla la esquina (el frente en luz y el costado en sombra); toldo a rayas coral y crema con ondas, abierto hacia delante, con su costado en sombra sobre la pared lateral; escaparate con marco crema, una manzana y dos huevos, y puerta de madera como la de la casa, con marco crema como el portón del granero, y cristal. El acento cálido (madera, coral y crema) evita que todo sea frío sobre frío. Conserva sus proporciones de tienda: no se estira para igualar la altura del granero. Sin texto, para que sirva en cualquier idioma, y sin sombra de apoyo: el suelo lo pone quien la coloca. Luz desde arriba a la izquierda. Fondo transparente.</desc>
   <defs>
-    <clipPath id="tienda-fachada-forma">
-      <path d="M108 206 H472 V436 Q472 462 446 462 H134 Q108 462 108 436 Z"/>
+    <clipPath id="tienda-pared-forma">
+      <path d="M118 236 H462 V454 Q462 480 436 480 H144 Q118 480 118 454 Z"/>
+    </clipPath>
+    <clipPath id="tienda-escaparate-cristal">
+      <rect x="146" y="352" width="148" height="88" rx="12"/>
     </clipPath>
   </defs>
 
-  <!-- Escalada desde su base para ocupar el lienzo como la casa: apoyada en y 480. -->
-  <g id="tienda" transform="translate(290 480) scale(1.2) translate(-290 -462)">
-    <g id="fachada">
-      <path d="M108 206 H472 V436 Q472 462 446 462 H134 Q108 462 108 436 Z" fill="#30A5F7"/>
-      <g clip-path="url(#tienda-fachada-forma)" fill="#1F88D6">
-        <rect x="100" y="282" width="380" height="30"/>
-        <rect x="446" y="200" width="30" height="270"/>
+  <!-- Del tamaño de siempre: al 120 % desde su base (x 291, y 480), apoyada en y 480. -->
+  <g id="tienda" transform="translate(291 480) scale(1.2) translate(-291 -480)">
+    <!-- La pared: el frente en luz, la pared lateral en sombra y, bajo el toldo, su sombra en los dos. -->
+    <g id="pared">
+      <path d="M118 236 H462 V454 Q462 480 436 480 H144 Q118 480 118 454 Z" fill="#4E9EE4"/>
+      <g clip-path="url(#tienda-pared-forma)">
+        <rect x="443" y="230" width="25" height="256" fill="#3585D0"/>
+        <rect x="112" y="286" width="331" height="40" fill="#3585D0"/>
+        <rect x="443" y="286" width="25" height="40" fill="#2E6CAD"/>
       </g>
     </g>
 
+    <!-- El escaparate: marco crema, cristal con su mostrador en sombra y lo que se vende. -->
     <g id="escaparate">
-      <rect x="136" y="322" width="198" height="122" rx="20" fill="#FFF4DE"/>
-      <rect x="140" y="326" width="190" height="114" rx="16" fill="#6BC7F0"/>
-      <path d="M156 360 V350 Q156 342 164 342 H180" fill="none" stroke="#C2EBFB" stroke-width="7" stroke-linecap="round"/>
-      <path d="M140 410 H330 V424 Q330 440 314 440 H156 Q140 440 140 424 Z" fill="#4FB0DD"/>
-      <g id="productos">
-        <path d="M196 359 C187 351 175 354 170 364 C162 380 171 401 182 408 C187 411 192 408 196 408 C201 408 205 411 211 407 C224 398 231 378 224 365 C218 353 205 351 196 359Z" fill="#F0675A"/>
-        <path d="M212 355 C222 364 224 379 217 391 C211 402 201 405 194 408 C200 407 205 411 211 407 C224 398 231 378 224 365 C222 360 217 356 212 355Z" fill="#D9503F"/>
-        <path d="M196 356 L193 343" stroke="#8C613D" stroke-width="5" stroke-linecap="round"/>
-        <path d="M198 353 Q204 337 220 338 Q216 354 198 353 Z" fill="#5DB86B"/>
-        <path d="M262 364 C252 364 244 380 244 390 C244 403 251 410 262 410 C273 410 280 403 280 390 C280 378 271 364 262 364Z" fill="#F8A264"/>
-        <path d="M268 366 C275 376 277 390 271 400 C268 406 262 409 257 410 C270 412 280 405 280 390 C280 380 274 370 268 366Z" fill="#EB8649"/>
-        <path d="M297 368 C288 368 281 382 281 392 C281 404 287 410 297 410 C307 410 313 404 313 392 C313 381 306 368 297 368Z" fill="#FFF1DE"/>
-        <path d="M302 370 C308 380 310 391 305 401 C302 406 298 409 293 410 C306 411 313 404 313 392 C313 382 307 373 302 370Z" fill="#EFDCC2"/>
+      <rect x="138" y="344" width="164" height="104" rx="18" fill="#FFF4DE"/>
+      <rect x="146" y="352" width="148" height="88" rx="12" fill="#6BC7F0"/>
+      <g clip-path="url(#tienda-escaparate-cristal)">
+        <rect x="140" y="352" width="160" height="10" fill="#4FB0DD"/>
+        <rect x="140" y="416" width="160" height="30" fill="#4FB0DD"/>
       </g>
-      <rect x="132" y="438" width="206" height="14" rx="7" fill="#FFF4DE"/>
+      <path d="M160 384 V376 Q160 369 167 369 H180" fill="none" stroke="#C2EBFB" stroke-width="6" stroke-linecap="round"/>
+      <g id="productos">
+        <path d="M199 377 C191 370 181 373 177 381 C170 395 178 413 187 419 C191 421 195 419 199 419 C203 419 207 421 212 418 C223 410 229 393 223 382 C218 372 207 370 199 377Z" fill="#F0675A"/>
+        <path d="M212 373 C221 381 222 394 216 404 C211 413 203 416 197 419 C202 418 207 421 212 418 C223 410 229 393 223 382 C221 378 217 374 212 373Z" fill="#D9503F"/>
+        <path d="M199 374 L196 363" stroke="#8C613D" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M201 371 Q206 357 220 358 Q217 372 201 371 Z" fill="#5DB86B"/>
+        <path d="M249 382 C240 382 233 396 233 405 C233 416 239 422 249 422 C259 422 265 416 265 405 C265 395 257 382 249 382Z" fill="#F8A264"/>
+        <path d="M254 384 C260 393 262 405 257 413 C254 418 249 421 245 422 C256 424 265 418 265 405 C265 396 260 388 254 384Z" fill="#EB8649"/>
+        <path d="M280 386 C272 386 266 398 266 407 C266 417 271 422 280 422 C289 422 294 417 294 407 C294 398 288 386 280 386Z" fill="#FFF1DE"/>
+        <path d="M284 388 C289 397 291 406 287 414 C284 418 281 421 277 422 C288 423 294 417 294 407 C294 399 289 391 284 388Z" fill="#EFDCC2"/>
+      </g>
+      <rect x="132" y="444" width="176" height="14" rx="7" fill="#FFF4DE"/>
     </g>
 
+    <!-- La puerta: marco crema, como el portón del granero; la hoja de madera con su lado en sombra y su cristal. -->
     <g id="puerta">
-      <path d="M352 462 V334 Q352 316 370 316 H430 Q448 316 448 334 V462 Z" fill="#2FB3AE"/>
-      <path d="M428 316 H430 Q448 316 448 334 V462 H428 Z" fill="#23968F"/>
-      <rect x="366" y="332" width="52" height="72" rx="10" fill="#6BC7F0"/>
-      <path d="M376 356 V348 Q376 342 384 342 H392" fill="none" stroke="#C2EBFB" stroke-width="6" stroke-linecap="round"/>
-      <rect x="402" y="414" width="9" height="28" rx="4.5" fill="#FFCB57"/>
+      <path d="M320 480 V350 Q320 328 342 328 H398 Q420 328 420 350 V480 Z" fill="#FFF4DE"/>
+      <path d="M332 480 V354 Q332 340 346 340 H394 Q408 340 408 354 V480 Z" fill="#C8804A"/>
+      <path d="M390 340 H394 Q408 340 408 354 V480 H390 Z" fill="#AE6A3B"/>
+      <rect x="346" y="354" width="40" height="52" rx="8" fill="#6BC7F0"/>
+      <path d="M355 374 V367 Q355 362 361 362 H367" fill="none" stroke="#C2EBFB" stroke-width="5" stroke-linecap="round"/>
+      <rect x="378" y="418" width="7" height="24" rx="3.5" fill="#FFCB57"/>
     </g>
 
+    <!-- El toldo: cinco rayas que se abren hacia delante y, sobre la pared lateral, su costado en sombra. Las ondas
+         de cada raya, un paso más oscuras. -->
     <g id="toldo">
-      <path d="M100 206 H163.3 L152.7 272 H84 Z M226.7 206 H290 V272 H221.3 Z M353.3 206 H416.7 L427.3 272 H358.7 Z" fill="#4FC0A0"/>
-      <path d="M163.3 206 H226.7 L221.3 272 H152.7 Z M290 206 H353.3 L358.7 272 H290 Z M416.7 206 H480 L496 272 H427.3 Z" fill="#FFF4DE"/>
-      <path d="M84 272 Q118.3 312 152.7 272 Z M221.3 272 Q255.7 312 290 272 Z M358.7 272 Q393 312 427.3 272 Z" fill="#3FA98A"/>
-      <path d="M152.7 272 Q187 312 221.3 272 Z M290 272 Q324.3 312 358.7 272 Z M427.3 272 Q461.7 312 496 272 Z" fill="#EFE0C0"/>
+      <path d="M118 236 H183 L173.6 292 H104 Z M248 236 H313 L312.8 292 H243.2 Z M378 236 H443 L452 292 H382.4 Z" fill="#F0675A"/>
+      <path d="M183 236 H248 L243.2 292 H173.6 Z M313 236 H378 L382.4 292 H312.8 Z" fill="#FFF4DE"/>
+      <path d="M443 236 H462 L482 292 H452 Z" fill="#C9463A"/>
+      <path d="M104 292 Q138.8 324 173.6 292 Z M243.2 292 Q278 324 312.8 292 Z M382.4 292 Q417.2 324 452 292 Z" fill="#D9503F"/>
+      <path d="M173.6 292 Q208.4 324 243.2 292 Z M312.8 292 Q347.6 324 382.4 292 Z" fill="#EFE0C0"/>
+      <path d="M452 292 Q467 314 482 292 Z" fill="#A93B30"/>
     </g>
 
+    <!-- La cornisa: gruesa y redondeada como el techo del granero; dobla la esquina: el frente en luz, con su brillo,
+         y el costado, sobre la pared lateral, en sombra. -->
     <g id="cornisa">
-      <rect x="96" y="166" width="388" height="44" rx="16" fill="#2FB3AE"/>
-      <path d="M96 192 H484 V194 Q484 210 468 210 H112 Q96 210 96 194 Z" fill="#23968F"/>
-      <path d="M118 179 H290" stroke="#7DD8D0" stroke-width="6" stroke-linecap="round"/>
+      <rect x="98" y="186" width="386" height="54" rx="22" fill="#9A5A3E"/>
+      <path d="M443 186 H462 Q484 186 484 208 V218 Q484 240 462 240 H443 Z" fill="#7E4631"/>
+      <path d="M122 203 H300" stroke="#B87650" stroke-width="8" stroke-linecap="round"/>
     </g>
   </g>
 </svg>
