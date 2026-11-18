@@ -33,6 +33,8 @@
       :style="posicion"
       @keydown="onListKey"
     >
+      <!-- Un filtro de barra dice arriba, al abrirse, qué filtra: su prefijo («Categoría»). -->
+      <li v-if="variant === 'toolbar' && prefix" role="presentation" class="eyebrow ui-listbox-legend">{{ prefix }}</li>
       <li
         v-for="(opt, i) in options"
         :key="String(opt.value)"
@@ -54,7 +56,8 @@
 interface Option { value: string | number | null, label: string }
 
 // Selector con menú propio (teclado: flechas, Enter, Escape). `form` es un campo de
-// formulario; `toolbar` es un filtro que se ajusta a su contenido («Tipo: Todos»).
+// formulario; `toolbar` es un filtro que se ajusta a su contenido («Tipo: Todos») y, al abrirse,
+// encabeza su menú con lo que filtra (el prefijo, como leyenda).
 const props = withDefaults(defineProps<{
   modelValue: string | number | null
   options: Option[]

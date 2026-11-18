@@ -284,6 +284,7 @@
   .ui-listbox { @apply absolute z-40 mt-1.5 max-h-72 overflow-y-auto border border-line bg-surface p-1.5; max-width: calc(100vw - 16px); border-radius: var(--radius-control); box-shadow: var(--shadow-float); }
   /* Inside a positioned popover (Reka, a portal): the popover places it, so it stays in flow. */
   .ui-listbox-floating { @apply relative z-50 mt-0; }
+  .ui-listbox-legend { @apply px-3 pb-1.5 pt-1; }   /* what a toolbar filter filters, above its options */
   .ui-option { @apply flex w-full items-center justify-between gap-2 px-3 text-left font-bold text-ink transition-colors; min-height: var(--ph-control-sm); border-radius: var(--radius-control-sm); font-size: var(--text-body); }
   .ui-option[data-active=true] { background: var(--color-sunken); }
   @media (hover: hover) { .ui-option:hover { background: var(--color-sunken); } }
