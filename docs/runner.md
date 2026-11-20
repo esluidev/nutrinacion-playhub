@@ -23,11 +23,13 @@ educator.nutrinacion.com                         player.nutrinacion.com
 |---|---|---|
 | `mode` | `educator`, `device`, `home` o `preview` | `educator` |
 | `lang` | Un idioma que declare el storyboard | El idioma por defecto del storyboard |
-| `escena` | Carpeta de una escena | La primera escena |
+| `escena` | Carpeta de una escena | La escena que el aparato recuerda (abajo) o, si no recuerda ninguna, la primera |
 | `sonidos` | `1` | Sin panel. Con él, un botón por cada sonido del motor para oírlo suelto y el nombre del último que sonó. No es parte del contrato |
 | `medir` | `1` | Sin medidor. Con él, sobre el runner salen los números del motor (cuadros por segundo, cuadros perdidos y lo que tarda un toque en verse) para probar en un dispositivo. No es parte del contrato: la app no lo manda |
 
 La URL no lleva nada sensible ni identificadores de la app: ni taller, ni sesión, ni datos personales. Se construye con `runnerUrl()`.
+
+**Al recargar** (Luis, 2026-11-20), el runner vuelve a la escena en la que iba, no al principio. En `educator` y `home` recuerda en el aparato la escena y cuáles estaban hechas (`app/runner/memory.ts`): en el educador, mientras dure la pestaña; en casa, por perfil del niño. Abierto directamente, además mantiene `escena` al día en la dirección. La escena vuelve desde su principio; las hechas conservan su marca. Al terminar el taller lo olvida. `device` sigue a la sesión y `preview`, a su app: no recuerdan nada. La app no tiene que hacer nada para esto.
 
 `preview` es la vista previa de Admin: solo el escenario (la consigna, el juego y su hoja de feedback), sin las bandas del marco: la escena se encaja en todo el alto y la hoja de feedback sube sobre ella. No lleva la consola del taller (el avance, la escena actual, Ajustes · Reiniciar · Salir, la guía ni Siguiente) ni abre la sesión con los dispositivos, y nunca manda `terminado` ni `salir`. Conduce la app con `ir` y `reiniciar`.
 

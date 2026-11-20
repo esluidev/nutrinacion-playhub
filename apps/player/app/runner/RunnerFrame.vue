@@ -358,6 +358,8 @@ import { muted, setMuted } from './audio/settings'
 import { itemsOf, librarySvg } from './content'
 import { cueInterface, cueSound, SCALE } from './engine/sound'
 import { useRunnerText } from './i18n'
+import { forgetMemory, memoryKey, openingScene, readMemory, urlWithScene, writeMemory } from './memory'
+import type { MemoryStore } from './memory'
 import { fontsReady, isPreloaded, mark, preloadScene, preloadSvg, within } from './preload'
 import { profileOf } from './profiles'
 import PerfilPieza from './PerfilPieza.vue'
@@ -432,6 +434,38 @@ const states = reactive<SceneState[]>(scenes.map(() => ({
   visited: false, warm: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
 })))
 
+// ── Lo que recuerda el aparato (memory.ts): recargar la página no devuelve el taller al principio. Guarda en qué
+// escena iba y cuáles estaban hechas: en el taller, mientras dure la pestaña del educador; en casa, por perfil del
+// niño, en el dispositivo. Un dispositivo sigue a la sesión y la vista previa, a su app: no recuerdan nada. Al volver,
+// la escena empieza desde su principio y las hechas conservan su marca. Al terminar el taller, se olvida.
+function storeFor(mode: RunnerMode): MemoryStore | null {
+  if (!import.meta.client) return null
+  try {
+    if (mode === 'educator') return window.sessionStorage
+    if (mode === 'home') return window.localStorage
+  }
+  catch { /* el navegador no deja guardar: sin memoria */ }
+  return null
+}
+const memoryStore = storeFor(props.mode)
+const memory = memoryKey(props.storyboard.json.key, props.mode, props.mode === 'home' ? `${player.avatar}-${player.apodo}` : undefined)
+const remembered = readMemory(memoryStore, memory)
+for (const folder of remembered?.done ?? []) {
+  const i = scenes.findIndex(scene => scene.folder === folder)
+  if (i >= 0) Object.assign(states[i]!, { completed: true, fraction: 1 })
+}
+// Abierto directamente, la dirección lleva la escena actual (?escena=): recargar abre en ella. Dentro de otra app, la
+// dirección es de ella y basta con la memoria.
+function remember() {
+  if (!memoryStore) return
+  const folder = scenes[current.value]!.folder
+  writeMemory(memoryStore, memory, { scene: folder, done: scenes.filter((_, i) => states[i]!.fraction >= 1).map(scene => scene.folder) })
+  if (!props.embedded) {
+    try { window.history.replaceState(window.history.state, '', urlWithScene(window.location.href, folder)) }
+    catch { /* la dirección se queda como estaba */ }
+  }
+}
+
 // ── Carga: nada aparece a medias. Lo primero que se ve se prepara antes de enseñar el marco (la letra, los dibujos
 // de la escena y su Rive, en preload.ts) y entonces aparece entero, de una vez. Cada escena se muestra cuando sus
 // personajes ya están pintados (useSceneLoad), y la que viene se monta por adelantado para que «Siguiente» la
@@ -457,8 +491,11 @@ function mountScene(i: number, warm = false) {
   nextTick(() => sceneLoad.settle(i))
 }
 
-// Empieza ya en la escena pedida (?escena=), para que el avance y el título no muestren la primera un instante.
-const current = ref(props.mode === 'device' ? 0 : Math.max(0, scenes.findIndex(s => s.folder === props.start)))
+// Empieza ya en la escena pedida (?escena=) o en la que recuerda, para que el avance y el título no muestren la primera
+// un instante.
+const current = ref(props.mode === 'device' ? 0 : openingScene(scenes.map(scene => scene.folder), props.start, remembered))
+// La escena con la que vuelve empieza desde su principio: no cuenta como hecha hasta jugarla otra vez.
+if (remembered) Object.assign(states[current.value]!, { completed: false, fraction: 0 })
 const active = computed(() => scenes[current.value]!)
 const activeState = computed(() => states[current.value]!)
 const isLast = computed(() => current.value === scenes.length - 1)
@@ -677,6 +714,7 @@ function onComplete(i: number) {
   state.fraction = 1
   if (props.mode === 'device') state.ready = true // local: nadie se entera
   publish()
+  remember()
 }
 
 // La hoja llega con su sonido: un acierto, un «otra vez» o un aviso. Si además completa la escena, suena solo eso.
@@ -739,6 +777,7 @@ function show(index: number, focus: boolean) {
     if (focus && props.mode !== 'device') stage.value?.focus({ preventScroll: true })
   })
   publish()
+  remember()
   warmNext()
 }
 
@@ -776,6 +815,7 @@ function restartScene(i: number) {
   streak = 0 // la racha de aciertos empieza de nuevo
   Object.assign(states[i]!, { message: null, completed: false, ready: false, fraction: 0 })
   states[i]!.generation += 1
+  remember()
   // Se monta de nuevo: vuelve a mostrarse cuando está completa.
   sceneLoad.open(i)
   nextTick(() => sceneLoad.settle(i))
@@ -796,6 +836,7 @@ function leave() {
 
 // Terminar (la última escena): dentro de Educators, el educador sigue en el feedback del taller.
 function terminar() {
+  forgetMemory(memoryStore, memory)
   if (!props.embedded) return leave()
   post({ tipo: 'cierre' })
   cancelNarration()
