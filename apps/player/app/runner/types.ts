@@ -5,7 +5,7 @@ import type { StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Contrato del contenido del runner (estructura.md) y de sus plantillas (PLAYER-DESIGN.md).
 
-export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'estaciones' | 'abrir' | 'beber' | 'senalar' | 'repasar'
+export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'estaciones' | 'abrir' | 'beber' | 'senalar' | 'repasar' | 'resumen'
 
 /** Caras suaves de la paleta reutilizable del kit. Lima y night son del UI. */
 export type PieceTone = 'sun' | 'coral' | 'sky' | 'grape' | 'rose'

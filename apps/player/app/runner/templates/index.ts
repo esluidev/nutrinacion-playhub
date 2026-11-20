@@ -8,6 +8,7 @@ import TemplateDestapar from './TemplateDestapar.vue'
 import TemplateEstaciones from './TemplateEstaciones.vue'
 import TemplateHistoria from './TemplateHistoria.vue'
 import TemplateRepasar from './TemplateRepasar.vue'
+import TemplateResumen from './TemplateResumen.vue'
 import TemplateSenalar from './TemplateSenalar.vue'
 
 // Plantillas del runner: una escena es una plantilla más su contenido. Cada una dibuja su
@@ -22,4 +23,5 @@ export const TEMPLATES: Record<TemplateName, Component> = {
   beber: TemplateBeber,
   senalar: TemplateSenalar,
   repasar: TemplateRepasar,
+  resumen: TemplateResumen,
 }

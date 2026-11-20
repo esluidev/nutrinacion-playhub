@@ -418,12 +418,14 @@
        alimentación): se distingue del lienzo sin oscurecerlo.
      - --board-slot-mark: su marca (el número del hueco y las flechas), un paso más oscura y con más color: se lee
        como tinta propia, no como una capa translúcida, que solo puede oscurecer y apagar.
+     - --board-sky: el cielo de los exteriores (sky-50), para una foto del álbum que pone un suelo bajo el cielo.
      - --board-sky-mark: una marca discreta sobre el cielo de un exterior (el «?» de Destapar). El cielo de los
        exteriores es sky-50; sky-200 guarda con él el contraste que tiene el gris del contorno sobre el blanco (1,2 a
        1), en el mismo matiz: el gris se perdía en el cielo. */
   .player-stage {
     --board-active: var(--color-sky-400);
     --board-sky-mark: var(--color-sky-200);
+    --board-sky: var(--color-sky-50);
     --board-slot: color-mix(in oklab, var(--tone-mid) 26%, color-mix(in oklab, var(--color-white) 93%, var(--color-black)));
     --board-slot-mark: color-mix(in oklab, var(--tone-mid) 36%, color-mix(in oklab, var(--color-white) 86%, var(--color-black)));
   }
@@ -698,6 +700,22 @@
   .tb-re-dentro .tb-ave { position: absolute; opacity: 0; }
   .tb-re-dentro .tb-ave[data-loaded] { opacity: 1; }
   .tb-re-ficha.is-wrong { animation: tb-wiggle 460ms ease; }
+
+  /* ---- Resumen · la Despedida, el álbum de fotos del taller (TemplateResumen.vue). Cada foto es la tarjeta con
+     escenario del tablero en una caja sin tamaño, en su centro, que el juego mueve, gira y escala solo con su
+     transformación. Dentro, su lienzo de 616 × 536 a escala: el lugar que la llena (o un suelo bajo el cielo de los
+     exteriores), sus dibujos, apoyados por el centro de su base, y sus personajes. La invitación, al quedarse,
+     lleva el contorno cielo de lo activo. Lo que pulsa la mano salta un poco. ---- */
+  .tb-rs-caja { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+  .tb-rs-foto.is-active { box-shadow: inset 0 0 0 4px var(--board-active); }
+  .tb-rs-foto.is-nudged { animation: tb-nudge 460ms ease; }
+  .tb-rs-vista { position: absolute; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); background: var(--board-sky); pointer-events: none; }
+  .tb-rs-lienzo { position: absolute; left: 0; top: 0; width: 616px; height: 536px; transform-origin: 0 0; }
+  .tb-rs-escenario { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+  .tb-rs-suelo { position: absolute; max-width: none; }
+  .tb-rs-pieza { position: absolute; max-width: none; translate: -50% -100%; transform-origin: 50% 100%; }
+  .tb-rs-lienzo .tb-ave { position: absolute; opacity: 0; }
+  .tb-rs-lienzo .tb-ave[data-loaded] { opacity: 1; }
 }
 
 @keyframes tb-nudge { 0%, 50%, 100% { translate: 0 0; } 25% { translate: 0 -14px; } 70% { translate: 0 -6px; } }

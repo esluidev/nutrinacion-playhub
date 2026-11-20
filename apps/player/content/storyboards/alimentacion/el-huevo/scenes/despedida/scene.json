@@ -1,0 +1,86 @@
+{
+  "id": "despedida",
+  "family": "resumen",
+  "template": "resumen",
+  "affirmations": [],
+  "meta": {
+    "instruction": {
+      "text": {"es": "Conocimos el huevo"},
+      "voice": {"es": "Conocimos el huevo. Hoy conocimos de dónde viene el huevo, sus partes y cómo cuidarlo antes de comerlo."}
+    },
+    "completionFeedback": {"es": "Fíjate si son claros, cafés o con manchitas."}
+  },
+  "strings": {
+    "origen": {"es": "De dónde viene el huevo"},
+    "descubrimiento": {"es": "Huevos de distintas aves"},
+    "propiedades": {"es": "Las partes del huevo"},
+    "preparacion": {"es": "Cómo cuidarlo antes de comerlo"},
+    "beneficio": {"es": "Lo que aporta el huevo"},
+    "invitacion": {"es": "Si ves huevos en tu casa o en una tienda"}
+  },
+  "library": {
+    "rive": ["aves", "nino"],
+    "svg": [
+      "exterior-corral", "granja", "exterior-campo",
+      "cocina-alacena-ancha", "plato-hondo", "huevo-clara", "huevo-yema", "huevo-cascara-punta", "huevo-cascara-base",
+      "cocina-ventana", "plato", "huevo-frito", "suelo-cancha",
+      "mostrador", "carton-3", "carton-3-frente", "huevo-pato", "huevo-gallina", "huevo-codorniz",
+      "mano-apunta"
+    ],
+    "sfx": []
+  },
+  "defaults": {
+    "photos": [
+      {
+        "id": "origen",
+        "scenery": "exterior-corral",
+        "pieces": [{"svg": "granja", "at": [52, 432], "scale": 0.74, "drop": 41}],
+        "characters": [{"rive": "aves", "values": {"ave": "gallina"}, "box": [-171, 183, 322]}]
+      },
+      {
+        "id": "descubrimiento",
+        "scenery": "exterior-campo",
+        "characters": [
+          {"rive": "aves", "values": {"ave": "gallina"}, "box": [-196, 183, 322]},
+          {"rive": "aves", "values": {"ave": "pata"}, "box": [5, 164, 343]},
+          {"rive": "aves", "values": {"ave": "codorniz"}, "box": [198, 239, 262]}
+        ]
+      },
+      {
+        "id": "propiedades",
+        "scenery": "cocina-alacena-ancha",
+        "pieces": [
+          {"svg": "plato-hondo", "at": [0, 498], "scale": 1.114},
+          {"svg": "huevo-clara", "at": [0, 475], "scale": 1.18},
+          {"svg": "huevo-yema", "at": [-25, 454], "scale": 1.18},
+          {"svg": "huevo-cascara-punta", "at": [-218, 532], "scale": 1.18},
+          {"svg": "huevo-cascara-base", "at": [218, 533], "scale": 1.18}
+        ]
+      },
+      {
+        "id": "preparacion",
+        "scenery": "cocina-ventana",
+        "pieces": [
+          {"svg": "plato", "at": [0, 459], "scale": 2.24},
+          {"svg": "huevo-frito", "at": [0, 425], "scale": 2.24}
+        ]
+      },
+      {
+        "id": "beneficio",
+        "floor": {"svg": "suelo-cancha", "w": 600, "h": 240},
+        "characters": [{"rive": "nino", "values": {"senala": "musculos"}, "flags": {"acercar": false}, "box": [0, 22, 429], "settle": 700}]
+      }
+    ],
+    "invitation": {
+      "scenery": "mostrador",
+      "pieces": [
+        {"svg": "carton-3", "at": [0, 414], "scale": 0.765, "drop": 18},
+        {"svg": "huevo-pato", "at": [-147, 396], "scale": 0.738},
+        {"svg": "huevo-gallina", "at": [0, 396], "scale": 0.671},
+        {"svg": "huevo-codorniz", "at": [147, 396], "scale": 0.492},
+        {"svg": "carton-3-frente", "at": [0, 414], "scale": 0.765, "drop": 18}
+      ]
+    },
+    "pointsOnComplete": 0
+  }
+}

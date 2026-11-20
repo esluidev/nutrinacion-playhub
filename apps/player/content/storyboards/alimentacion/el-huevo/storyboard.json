@@ -18,6 +18,7 @@
     { "folder": "hidratacion", "title": { "es": "Hidratación" } },
     { "folder": "preparacion", "title": { "es": "Preparación" } },
     { "folder": "beneficio", "title": { "es": "Beneficio" } },
-    { "folder": "retroalimentacion", "title": { "es": "Retroalimentación" } }
+    { "folder": "retroalimentacion", "title": { "es": "Retroalimentación" } },
+    { "folder": "despedida", "title": { "es": "Despedida" } }
   ]
 }
