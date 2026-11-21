@@ -285,7 +285,7 @@ function next() {
   const scene = active();
   if (!isTemplate(scene)) scene.fraction = 1;       // the Anuncio is done once it has been presented
   if (current < scenes.length - 1) { goTo(current + 1); return; }
-  confirm({ title: '¿Terminamos el taller?', description: mode === 'home' ? 'Puedes volver a jugarlo cuando quieras.' : 'El taller se cierra en esta pantalla y en los dispositivos conectados.', label: 'Terminar', symbol: 'check', tone: 'lime', action: leave }, $('next-button'));
+  confirm({ title: '¿Terminar el taller?', description: mode === 'home' ? 'Puedes volver a jugarlo cuando quieras.' : 'El taller se cierra en esta pantalla y en los dispositivos conectados.', label: 'Terminar', symbol: 'check', tone: 'lime', action: leave }, $('next-button'));
 }
 function previous() { goTo(current - 1); }
 function leave() { post({ tipo: 'cierre' }); location.href = './index.html'; }
@@ -559,7 +559,7 @@ $('confirm-action').addEventListener('click', () => {
 });
 
 // ---- Wiring
-$('exit').addEventListener('click', event => confirm({ title: '¿Salimos del taller?', description: mode === 'educator' ? 'El taller se cierra en esta pantalla y en los dispositivos conectados.' : 'Puedes volver a empezar cuando quieras.', label: 'Salir', symbol: 'exit', tone: 'coral', stats: [['Escena', `${current + 1} de ${scenes.length}`]], action: leave }, event.currentTarget));
+$('exit').addEventListener('click', event => confirm({ title: '¿Salir del taller?', description: mode === 'educator' ? 'El taller se cierra en esta pantalla y en los dispositivos conectados.' : 'Puedes volver a empezar cuando quieras.', label: 'Salir', symbol: 'exit', tone: 'coral', stats: [['Escena', `${current + 1} de ${scenes.length}`]], action: leave }, event.currentTarget));
 $('points-counter').addEventListener('click', event => openDialog('points-dialog', event.currentTarget));
 $('settings-button').addEventListener('click', () => setRail(!railOpen));
 $('sound-button').addEventListener('click', () => setMuted(!muted));
@@ -584,7 +584,7 @@ $('device-restart').addEventListener('click', () => {
 });
 $('device-remove').addEventListener('click', event => {
   const device = devices.get(selectedDevice); if (!device) return;
-  confirm({ title: `¿Quitamos a ${device.nombre}?`, description: 'El dispositivo sale del taller. Puede volver a entrar con el código.', label: 'Quitar', symbol: 'close', tone: 'coral', caption: 'Dispositivos', action: () => {
+  confirm({ title: `¿Quitar a ${device.nombre}?`, description: 'El dispositivo sale del taller. Puede volver a entrar con el código.', label: 'Quitar', symbol: 'close', tone: 'coral', caption: 'Dispositivos', action: () => {
     order(device, 'quitar'); devices.delete(device.id); selectedDevice = null; renderDevices();
   } }, event.currentTarget);
 });
@@ -611,7 +611,7 @@ $('feedback-listen').addEventListener('click', () => announce($('feedback-title'
 $('consigna-listen').addEventListener('click', () => announce($('consigna-text').textContent));     // audio pending
 $('restart-button').addEventListener('click', event => {
   const scene = active();
-  confirm({ title: '¿Reiniciamos esta escena?', description: 'El juego vuelve a empezar. Los puntos ya ganados se conservan.', label: 'Reiniciar', symbol: 'retry', tone: 'sun', caption: sceneCaption(), action: () => {
+  confirm({ title: '¿Reiniciar la escena?', description: 'El juego vuelve a empezar. Los puntos ya ganados se conservan.', label: 'Reiniciar', symbol: 'retry', tone: 'sun', caption: sceneCaption(), action: () => {
     scene.generation += 1; restartScene(scene); publish();
   } }, event.currentTarget);
 });

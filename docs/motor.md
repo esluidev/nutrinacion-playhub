@@ -124,10 +124,10 @@ Nada lleva barridos largos de tono, ondas cuadradas ni ecos, que es lo que suena
 | Acción | Cuándo suena | Quién lo pide | Qué es |
 |---|---|---|---|
 | `agarrar` | Se toma una pieza | El motor, en toda pieza | Burbuja: un «pop» que sube (300 a 620 Hz en 45 ms) |
-| `soltar` | Se deja en una zona válida, o llega a su sitio | El motor al soltar; la plantilla al llegar (`shift` con `arrive`, o al posarse tras un vuelo); Estaciones, al servir; Beber, en cada sorbo | Burbuja: un «plop» que baja (440 a 170 Hz) y se asienta |
-| `tocar` | Un toque sobre una pieza, que la hace saltar | El motor; Destapar (sobre una ya descubierta) y Anuncio; Estaciones, cuando se levanta el dedo antes de tiempo y lo de dentro tiembla; Abrir, en cada toque al entero y a una parte; Beber, sobre el vaso ya lleno; Señalar, al elegir una tarjeta y al tocar una zona del personaje | Burbuja: un «boing» que sube, con su brillo |
+| `soltar` | Se deja en una zona válida, o llega a su sitio | El motor al soltar; la plantilla al llegar (`shift` con `arrive`, o al posarse tras un vuelo); Estaciones, al servir; Beber, en cada sorbo; Comer, cuando el alimento elegido con un toque llega a la boca | Burbuja: un «plop» que baja (440 a 170 Hz) y se asienta |
+| `tocar` | Un toque sobre una pieza, que la hace saltar | El motor; Destapar (sobre una ya descubierta) y Anuncio; Estaciones, cuando se levanta el dedo antes de tiempo y lo de dentro tiembla; Abrir, en cada toque al entero y a una parte; Beber, sobre el vaso ya lleno; Señalar, al elegir una tarjeta y al tocar una zona del personaje; Comer, al tocar un alimento o su tarjeta y al tocar al personaje sin haber elegido | Burbuja: un «boing» que sube, con su brillo |
 | `volver` | Se suelta fuera y vuelve a su sitio | El motor | Aire que baja, corto |
-| `volar` | Algo sale volando hacia su sitio | Historia y Estaciones, al tocar una tarjeta | Aire rápido que sube |
+| `volar` | Algo sale volando hacia su sitio | Historia y Estaciones, al tocar una tarjeta; Comer, al darle al personaje el alimento elegido con un toque | Aire rápido que sube |
 | `destapar` | Algo se descubre | Destapar; Estaciones, al servir lo que no se veía hecho; Abrir, cuando el entero se abre | La carta que se voltea: un soplo grave y un golpe grave al caer |
 | `cocer` | Mientras se mantiene el dedo sobre lo que tarda | Estaciones, con `createSustain`: un grano cada 340 ms al empezar y cada 130 al final, hasta un 60 % más agudo | Burbuja pequeña que sube (520 a 860 Hz), la más baja de todas |
 | `listo` | Lo que tardaba quedó hecho | Estaciones | La campanilla de un temporizador de cocina: dos campanas rápidas que suben (do, mi), sin el soplo de la hoja |
@@ -169,7 +169,8 @@ Nada lleva barridos largos de tono, ondas cuadradas ni ecos, que es lo que suena
 | La mano que demuestra: el arrastre, mantener el dedo, el toque y pedirla al momento (`show`) | `useDemo.test.ts` | Origen, Descubrimiento, Preparación, Propiedades, Hidratación y Beneficio |
 | Abrir a toques y tocar las partes (las reglas de la plantilla Abrir) | `abrir.test.ts` | Propiedades, con clics. Sin probar con un dedo |
 | Contar los sorbos y el agua dentro del vaso (las reglas de la plantilla Beber) | `beber.test.ts` | Hidratación, con clics. Sin probar con un dedo |
-| Elegir lo que se busca y tocar su zona (las reglas de la plantilla Señalar) | `senalar.test.ts` | Beneficio, con clics. Sin probar con un dedo |
+| Elegir lo que se busca y tocar su zona (las reglas de la plantilla Señalar) | `senalar.test.ts` | Ninguna escena la usa desde el 2026-11-20 |
+| Darle de comer al personaje: cualquiera, en cualquier orden, uno a la vez (las reglas de la plantilla Comer) | `comer.test.ts` | Beneficio, con arrastres del ratón y con clics. Sin probar con un dedo |
 | Armar el recorrido: cada ficha solo se queda en su lugar (las reglas de la plantilla Repasar) | `repasar.test.ts` | Retroalimentación, con clics y con arrastres del ratón. Sin probar con un dedo |
 | Física libre | `engine.test.ts` | Ninguna escena la usa todavía |
 | Sonido | `engine.test.ts` (las recetas son cortas y suaves; la prioridad de la respuesta) y `useDrag.test.ts` (qué suena en cada gesto) | Cada acción dispara el suyo en las cuatro escenas del huevo y en la interfaz, medidos uno por uno. Nadie los ha oído todavía: se diseñaron por cómo suena cada material, sin poder escucharlos |
