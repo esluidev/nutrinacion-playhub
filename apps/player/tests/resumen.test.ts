@@ -20,7 +20,7 @@ describe('createAlbum', () => {
     expect(album.pass()).toEqual({ kind: 'logro', index: 2 })
     expect(album.top()).toBe(3)
     expect(album.done()).toBe(false)
-    expect(album.pass()).toEqual({ kind: 'invitacion' })
+    expect(album.pass()).toEqual({ kind: 'invitacion', index: 3 })
     expect(album.done()).toBe(true)
   })
 
@@ -45,30 +45,31 @@ describe('createAlbum', () => {
 
   it('sin logros, la invitación llega con el primer toque', () => {
     const album = createAlbum(0)
-    expect(album.pass()).toEqual({ kind: 'invitacion' })
+    expect(album.pass()).toEqual({ kind: 'invitacion', index: 0 })
     expect(album.done()).toBe(true)
   })
 
   it('no pasa de cinco logros', () => {
     const album = createAlbum(8)
     for (let i = 0; i < ALBUM_MAX; i += 1) expect(album.pass()?.kind).toBe('logro')
-    expect(album.pass()).toEqual({ kind: 'invitacion' })
+    expect(album.pass()).toEqual({ kind: 'invitacion', index: ALBUM_MAX })
   })
 })
 
 describe('collageSpots', () => {
-  it('hay un sitio por logro, de tres a cinco', () => {
-    for (let n = ALBUM_MIN; n <= ALBUM_MAX; n += 1) expect(collageSpots(n)).toHaveLength(n)
-    expect(collageSpots(2)).toEqual([])
-    expect(collageSpots(6)).toEqual([])
+  it('hay un sitio por foto, de tres a cinco logros más la invitación', () => {
+    for (let n = ALBUM_MIN; n <= ALBUM_MAX; n += 1) expect(collageSpots(n + 1)).toHaveLength(n + 1)
+    expect(collageSpots(3)).toEqual([])
+    expect(collageSpots(7)).toEqual([])
   })
 
-  it('ningún sitio pisa la pila ni se sale del tablero', () => {
-    // La pila mide 360 × 315 en el centro; una foto posada, 222 × 194, con un margen por su giro.
+  it('ningún sitio pisa el centro ni se sale del tablero', () => {
+    // En el centro, la pila (360 × 315) y al final la foto del grupo (420 × 366); una foto posada mide 222 × 194, con un
+    // margen por su giro.
     const half = { w: 222 / 2 + 10, h: 194 / 2 + 10 }
-    for (let n = ALBUM_MIN; n <= ALBUM_MAX; n += 1) {
+    for (let n = ALBUM_MIN + 1; n <= ALBUM_MAX + 1; n += 1) {
       for (const spot of collageSpots(n)) {
-        expect(Math.abs(spot.x - 640)).toBeGreaterThan(180 + half.w - 20)
+        expect(Math.abs(spot.x - 640)).toBeGreaterThan(210 + half.w - 30)
         expect(spot.x - half.w).toBeGreaterThanOrEqual(120)
         expect(spot.x + half.w).toBeLessThanOrEqual(1160)
         expect(spot.y - half.h).toBeGreaterThanOrEqual(0)

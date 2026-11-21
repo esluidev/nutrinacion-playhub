@@ -28,6 +28,8 @@
       @click="tapCard(i)"
     >
       <span class="tb-es-escena">
+        <!-- El escenario se compone en el lienzo de la tarjeta de 320 × 280 (308 × 268 por dentro) y crece con ella. -->
+        <span class="tb-es-lienzo" :style="{ scale: `${INNER_K}` }">
         <img v-if="st.item.interior" class="tb-es-interior" :src="librarySvg(st.item.interior)" alt="" decoding="sync">
         <!-- El fogón: la estufa, su llama, el utensilio con lo de dentro y lo que se mueve encima. Su origen es el
              centro de la base de la estufa. -->
@@ -53,6 +55,7 @@
         <img v-if="plate" class="tb-es-apoyado" :src="librarySvg(plate.svg)" alt="" decoding="sync" :style="at(plate.at)">
         <span class="tb-es-servido" :class="{ 'is-celebrating': celebrating }" :style="{ ...at(servedAt), '--delay': `${i * 90}ms` }">
           <img v-if="st.item.station?.served" class="tb-es-apoyado" :src="librarySvg(st.item.station.served)" alt="" decoding="sync" :style="{ scale: `${st.item.station.servedScale ?? 1}` }">
+        </span>
         </span>
       </span>
     </button>
@@ -141,30 +144,43 @@ const dur = (ms: number) => (reduced ? 0 : ms)
 // El tiempo de juego de la escena: con el tablero en pausa, los vuelos, las piezas y la cocción se quedan quietos.
 const world = useWorld(() => props.blocked)
 
-// ---- Medidas (tablero 1280 × 600, columna 120–1160). Arriba, una tarjeta por estación, de 320 × 280 y con 40 entre
-// ellas. Su escenario ocupa la tarjeta entera por dentro del marco (308 × 268): ahí se colocan el fogón y el plato, en
-// coordenadas del escenario. Abajo, a 40 de las tarjetas, el origen centrado, con una pieza por estación en sus
-// asientos. La pieza (lienzo de 164 × 192) mide 150 de alto y se agarra por una zona de 160. El conjunto va centrado
-// en el alto. ----
-const CARD = { w: 320, h: 280 }
-const GAP = 40
+// ---- Medidas (tablero 1280 × 600). Arriba, una tarjeta por estación, con 28 entre ellas. Su escenario se compone en
+// el lienzo de una tarjeta de 320 × 280 (308 × 268 por dentro del marco): ahí se colocan el fogón y el plato, en
+// coordenadas del escenario, y el lienzo crece con la tarjeta, que va al 108 % (346 × 302): las tres juntas ocupan
+// 1094, un poco más que la columna (Luis, 2026-11-20: «aumenta un poquito las tarjetas con sus elementos»). Abajo, a 40
+// de las tarjetas, el origen centrado, al 88 % del dibujo que trae la escena, con una pieza por estación en sus
+// asientos («reduce un poquito la base»). La pieza (lienzo de 164 × 192) mide 132 de alto y se agarra por una zona de
+// 150. El conjunto va centrado en el alto. ----
 const LINE = 6
+const BASE_CARD = { w: 320, h: 280 }
+const CARD_K = 1.08
+const CARD_W = BASE_CARD.w * CARD_K
+// El lienzo del escenario crece lo mismo a lo ancho y a lo alto: la tarjeta toma su alto de él.
+const INNER_K = (CARD_W - LINE * 2) / (BASE_CARD.w - LINE * 2)
+const CARD = { w: CARD_W, h: (BASE_CARD.h - LINE * 2) * INNER_K + LINE * 2 }
+const GAP = 28
 const STOVE = { at: stove?.at ?? [154, 220], scale: stove?.scale ?? 1, rest: stove?.rest ?? [0, 0], burner: stove?.burner ?? [0, 0] }
-const EGG = { h: 150, w: 150 * 164 / 192 }
-const GRAB = 160
+const ORIGIN_K = 0.88
+const EGG = { h: 150 * ORIGIN_K, w: 150 * ORIGIN_K * 164 / 192 }
+const GRAB = 150
 const TOP_GAP = 40
-const SEAT_PITCH = 192
+const SEAT_PITCH = 192 * ORIGIN_K
 const count = props.items.length
 const columnX = (i: number) => 640 - (count * CARD.w + (count - 1) * GAP) / 2 + i * (CARD.w + GAP)
-const originSize = { w: origin?.w ?? SEAT_PITCH * count, h: origin?.h ?? EGG.h, base: origin?.base ?? EGG.h }
+const originSize = {
+  w: (origin?.w ?? SEAT_PITCH * count / ORIGIN_K) * ORIGIN_K,
+  h: (origin?.h ?? 150) * ORIGIN_K,
+  base: (origin?.base ?? 150) * ORIGIN_K,
+}
 // Lo que asoma la pieza por encima del origen.
 const rise = Math.max(0, EGG.h - originSize.base)
 const CARD_Y = (600 - (CARD.h + TOP_GAP + rise + originSize.h)) / 2
 const ORIGIN = { x: 640 - originSize.w / 2, y: CARD_Y + CARD.h + TOP_GAP + rise, w: originSize.w, h: originSize.h }
-const seats = origin?.seats ?? props.items.map((_, i) => originSize.w / 2 + (i - (count - 1) / 2) * SEAT_PITCH)
+const seats = origin?.seats ? origin.seats.map(x => x * ORIGIN_K) : props.items.map((_, i) => originSize.w / 2 + (i - (count - 1) / 2) * SEAT_PITCH)
 const seatOf = (i: number): Point => ({ x: ORIGIN.x + seats[i % seats.length]!, y: ORIGIN.y + originSize.base - EGG.h / 2 })
-// Dentro del utensilio la pieza llega más pequeña y se desvanece: lo que queda es el dibujo de la estación.
-const IN_SCALE = 0.46
+// Dentro del utensilio la pieza llega más pequeña y se desvanece: lo que queda es el dibujo de la estación. Llega al
+// tamaño que tenía en el lienzo de la tarjeta (0,46 de 150), que crece con ella.
+const IN_SCALE = 0.46 * INNER_K / ORIGIN_K
 // Las lenguas de la llama, repartidas a lo ancho del quemador: las de los extremos, más altas; las de dentro, de
 // alturas distintas. Cada una baila a su ritmo y desfasada de las demás, para que el fuego no lata como un bloque.
 const lastTongue = (flame?.count ?? 0) - 1
@@ -222,8 +238,8 @@ const servedAt: [number, number] = plate ? [plate.at[0] + plate.inside[0], plate
 
 // Un punto del fogón de una estación, en el tablero.
 const inBoard = (i: number, point: Pair): Point => ({
-  x: columnX(i) + LINE + STOVE.at[0]! + point[0]! * STOVE.scale,
-  y: CARD_Y + LINE + STOVE.at[1]! + point[1]! * STOVE.scale,
+  x: columnX(i) + LINE + (STOVE.at[0]! + point[0]! * STOVE.scale) * INNER_K,
+  y: CARD_Y + LINE + (STOVE.at[1]! + point[1]! * STOVE.scale) * INNER_K,
 })
 // Dónde cae lo que llega (un poco por encima de donde descansa) y dónde está la llama (para la mano).
 const spotOf = (i: number): Point => {

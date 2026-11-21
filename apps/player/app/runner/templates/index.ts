@@ -3,6 +3,7 @@ import type { TemplateName } from '../types'
 import TemplateAbrir from './TemplateAbrir.vue'
 import TemplateAnuncio from './TemplateAnuncio.vue'
 import TemplateBeber from './TemplateBeber.vue'
+import TemplateComer from './TemplateComer.vue'
 import TemplateColocar from './TemplateColocar.vue'
 import TemplateDestapar from './TemplateDestapar.vue'
 import TemplateEstaciones from './TemplateEstaciones.vue'
@@ -22,6 +23,7 @@ export const TEMPLATES: Record<TemplateName, Component> = {
   abrir: TemplateAbrir,
   beber: TemplateBeber,
   senalar: TemplateSenalar,
+  comer: TemplateComer,
   repasar: TemplateRepasar,
   resumen: TemplateResumen,
 }

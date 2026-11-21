@@ -1,7 +1,8 @@
 <template>
-  <!-- Historia · Recorrido (Reconocer), en dos columnas que pesan lo mismo. A la izquierda, la granja: el granero
-       grande al fondo y, delante, la gallina con su nido al lado y, echados en el nido, los huevos, uno por camino. A la
-       derecha, una tarjeta por cada lugar al que puede llegar el huevo, una encima de otra (la tienda y la casa).
+  <!-- Historia · Recorrido (Reconocer), con la composición de Comer (Luis, 2026-11-20). En el centro, la granja: el
+       granero grande al fondo y, delante, la gallina con su nido al lado y, echados en el nido, los huevos, uno por
+       camino. A cada lado, una tarjeta por lugar al que puede llegar el huevo (la tienda a la izquierda y la casa a la
+       derecha), con su borde de arriba en la línea del techo del granero.
        Lo que se puede hacer lo dice la mano. En cada tramo (del
        nido al primer lugar y de un lugar de paso al siguiente), si nadie toca, una mano demuestra el arrastre: presiona
        el huevo, lleva una copia translúcida hasta una de ellas (alternando), que reacciona como al soltar encima, y se
@@ -142,39 +143,44 @@ const dur = (ms: number) => (reduced ? 0 : ms)
 // El tiempo de juego de la escena: con el tablero en pausa, el vuelo y las piezas se quedan quietos y siguen al volver.
 const world = useWorld(() => props.blocked)
 
-// ---- Medidas (tablero 1280 × 600, columna 120–1160). Dos columnas que pesan lo mismo, centradas en x 385 y 984:
-// así la base del origen empieza donde empieza la columna (x 120) y las tarjetas terminan donde termina (x 1160).
-// A la derecha, las tarjetas de los lugares (352 × 264, con 32 entre ellas: las dos ocupan de y 20 a y 580), una
-// encima de otra y centradas en el alto. Lo de dentro de cada tarjeta crece con ella (`K`).
-// A la izquierda, la granja: el granero grande al fondo (su dibujo mide unos 402 × 363 a este tamaño), con la base 52
-// por encima de donde se apoyan, delante, la gallina y, pegado a ella, su nido con los huevos echados dentro, uno por
-// camino, lo más cercano a las tarjetas: de ahí sale el vuelo. Sin base, la gallina y el nido se apoyan donde acaba la
-// columna derecha; con base, es el canto de delante de la base el que queda ahí. Entre
-// columnas queda el aire para el vuelo. Dentro de cada tarjeta, el lugar arriba, grande y dentro de ella, y el sitio
-// del huevo delante, sobre el suelo. ----
-const CARD = { w: 352, h: 264, gap: 32 }
-const COLUMN = { left: 385, right: 984 }
+// ---- Medidas (tablero 1280 × 600, columna 120–1160), con la composición de Comer (Luis, 2026-11-20: «para la escena
+// de origen puedes hacer la misma composición que esta de beneficios»). En el centro, la granja: el granero al fondo,
+// pequeño (al 70 %: su dibujo mide unos 281 × 254) y centrado en el tablero, medio tapado por lo que va delante, para
+// que lo primero que se lea sea la gallina con su nido (Luis: «el granero ocupa demasiado espacio, atrae demasiado la
+// atención y eso limita el tamaño de las tarjetas»), con la base 52 por encima de donde se apoyan, delante, la
+// gallina y, pegado a ella, su nido con los huevos echados dentro, uno por camino: de ahí sale el vuelo. Con base, su
+// canto de delante queda en y 580, como la isla del personaje de Comer; sin base, la gallina y el nido se apoyan ahí.
+// La base va bajo el granero y el nido juntos. A cada lado, en el borde de la columna, las tarjetas de los lugares (360 × 270, la
+// proporción de un exterior; caben así de grandes porque el granero es pequeño): la mitad a la izquierda y la otra mitad a la derecha, arriba de la columna (y 20), en el
+// mismo sitio que las de Comer: lo que equilibra el tablero es que las tarjetas estén arriba, a los lados, y el origen
+// abajo, en el centro, en todas las escenas (Luis: «lo que se busca es equilibrio en todas las escenas»). Si a un lado
+// van dos, una debajo de otra con 32 entre ellas. Dentro de cada tarjeta, el lugar arriba, grande y dentro de ella, y
+// el sitio del huevo delante, sobre el suelo. ----
+const CARD = { w: 360, h: 270, gap: 32 }
 const origin = props.items[0]!
 const others = props.items.slice(1)
-const stackH = others.length * CARD.h + Math.max(others.length - 1, 0) * CARD.gap
-const stackTop = 300 - stackH / 2
-const stackBottom = stackTop + stackH
-// Con base (`ground`), el grupo sube lo que la base asoma por delante de la gallina y el nido (34): el canto de
-// delante de la base queda a la altura del final de la columna derecha, y las dos columnas terminan en la misma línea.
-const LIFT = origin.ground ? 34 : 0
-const FRONT = stackBottom - 4 - LIFT
-const FARM = { cx: COLUMN.left, bottom: FRONT - 52, w: 540, h: 540 * 520 / 580 }
-const HEN = { cx: COLUMN.left - 92, bottom: FRONT + 14, size: 280 }
+// Con base (`ground`), el grupo sube lo que la base asoma por delante de la gallina y el nido (34).
+// La base, la gallina y el nido van a 1,15 de su medida: llenan el centro y la parte de abajo del tablero, debajo de
+// las tarjetas (Luis: «y aprovechar el área jugable»). El granero, al 70 % de la suya, va detrás. Lo que viaja no
+// crece: mide lo mismo en el nido que en el cartón de cada lugar.
+const G = 1.15
+const LIFT = origin.ground ? 34 * G : 0
+const FRONT = 580 - 4 * G - LIFT
+const BARN_K = 0.7
+const FARM = { cx: 640, bottom: FRONT - 52 * G, w: 540 * BARN_K, h: 540 * BARN_K * 520 / 580 }
+/** El techo del granero: lo más alto de su dibujo (de 90 a 480 en su lienzo de 580 × 520). */
+const FARM_TOP = FARM.bottom - FARM.h * (480 - 90) / 520
+const HEN = { cx: FARM.cx - 92 * G, bottom: FRONT + 14 * G, size: 280 * G }
 // El apoyo del origen (un nido), a 250 de ancho, 100 a la derecha del centro de la columna y con su pie 4 por debajo
 // de donde se apoya el grupo: entero detrás y su capa de delante por delante de lo que viaja.
 const nest = supports[origin.id]
-const NEST_W = 250
-const WAIT = { x: COLUMN.left + 100, y: FRONT + 4 }
+const NEST_W = 250 * G
+const WAIT = { x: FARM.cx + 100 * G, y: FRONT + 4 * G }
 const NEST = nest ? { x: WAIT.x - NEST_W / 2, y: WAIT.y - NEST_W * nest.h / nest.w, w: NEST_W, h: NEST_W * nest.h / nest.w, k: NEST_W / nest.w } : null
 // La base del origen (`ground` del ítem), si la trae: la isla de su lugar (`ISLAND`, board.ts), suelta bajo todo el
 // grupo. El granero se apoya al fondo de la isla; la gallina y el nido quedan delante, sobre ella. Va centrada bajo el
 // granero y el nido juntos (15 a la derecha del centro del granero).
-const GROUND = { w: ISLAND.w, x: FARM.cx + 15 - ISLAND.w / 2, y: FARM.bottom - ISLAND.back }
+const GROUND = { w: ISLAND.w * G, x: FARM.cx + (15 - ISLAND.w / 2) * G, y: FARM.bottom - ISLAND.back * G }
 // Dentro de la tarjeta con escenario (`sceneryCard`, board.ts), el marco (LINE: el contorno de 3 y un margen blanco de
 // 3) y, por dentro, el exterior del lugar (`exterior` del ítem, de 616 × 456), que la llena: el cielo arriba y el suelo
 // abajo. El edificio (lienzo 580 × 520, apoyado en 480) va centrado y apoyado al fondo del suelo, a 0,40 de su lienzo:
@@ -218,7 +224,15 @@ function holderOf(item: DatosItem) {
   const k = HOLDER_W * K / spec.w
   return { spec, k, w: spec.w * k, h: spec.h * k, x: (CARD.w - spec.w * k) / 2, y: LINE + INTERIOR_STAND * K / 2 - (spec.h - (spec.drop ?? 0)) * k }
 }
-const cards = others.map((item, i) => ({ item, x: COLUMN.right - CARD.w / 2, y: stackTop + i * (CARD.h + CARD.gap), holder: holderOf(item) }))
+// Las tarjetas: la primera mitad a la izquierda y el resto a la derecha.
+const leftCount = Math.ceil(others.length / 2)
+const sideRows = Math.max(leftCount, others.length - leftCount, 1)
+const CARDS_TOP = Math.min(20, 580 - (sideRows * CARD.h + (sideRows - 1) * CARD.gap))
+const cards = others.map((item, i) => {
+  const left = i < leftCount
+  const row = left ? i : i - leftCount
+  return { item, x: left ? 120 : 1160 - CARD.w, y: CARDS_TOP + row * (CARD.h + CARD.gap), holder: holderOf(item) }
+})
 type Card = typeof cards[number]
 const cardOf = (id: string) => cards.find(card => card.item.id === id)
 const cardNodes: Record<string, HTMLElement | null> = {}
@@ -249,24 +263,22 @@ function spotOf(id: string, k = 0): Point {
 }
 
 // ---- Los caminos que existen: uno por cada par de paradas seguidas de algún recorrido. No se dibujan: dan la forma del
-// vuelo del huevo. Entre columnas, en arco por arriba; entre dos tarjetas de la misma columna, por el aire entre
-// columnas; el que se salta lugares, en diagonal y un poco combado hacia arriba, por encima del granero y la gallina. ----
+// vuelo del huevo. Del nido a una tarjeta y de una tarjeta a la del otro lado, en arco por encima del granero: lo más
+// alto del vuelo queda 30 sobre su techo. Entre dos tarjetas del mismo lado, por el aire de en medio. ----
 interface Leg { key: string, from: string, to: string, a: Point, c: Point, b: Point }
-function makeLeg(from: string, to: string, skips: number): Leg {
+const APEX = FARM_TOP - 30
+function makeLeg(from: string, to: string): Leg {
   const a = from === origin.id ? farmSpot : spotOf(from)
   const b = spotOf(to)
   const c = Math.abs(b.x - a.x) < 80
-    ? { x: Math.min(a.x, b.x) - 560, y: (a.y + b.y) / 2 }
-    : skips
-      ? { x: a.x + (b.x - a.x) * 0.6, y: a.y + (b.y - a.y) * 0.3 }
-      : { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - 170 }
+    ? { x: a.x < 640 ? a.x + 420 : a.x - 420, y: (a.y + b.y) / 2 }
+    : { x: (a.x + b.x) / 2, y: 2 * APEX - (a.y + b.y) / 2 }
   return { key: `${from}>${to}`, from, to, a, b, c }
 }
-const indexOf = (id: string) => props.items.findIndex(item => item.id === id)
 const legs = new Map<string, Leg>()
 routes.forEach(route => route.stops.slice(1).forEach((to, j) => {
   const from = route.stops[j]!
-  if (!legs.has(`${from}>${to}`)) legs.set(`${from}>${to}`, makeLeg(from, to, Math.abs(indexOf(to) - indexOf(from)) - 1))
+  if (!legs.has(`${from}>${to}`)) legs.set(`${from}>${to}`, makeLeg(from, to))
 }))
 const legList = [...legs.values()]
 

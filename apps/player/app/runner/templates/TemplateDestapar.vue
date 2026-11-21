@@ -70,17 +70,20 @@ const emit = defineEmits<{ feedback: [payload: FeedbackPayload], progress: [valu
 const { t, sheet } = useSceneText(props)
 const text = useRunnerText(() => props.locale)
 
-// ---- Medidas (tablero 1280 × 600, columna 120–1160). Una columna por ítem, de 320 y con 40 entre ellas: arriba la
-// tarjeta con escenario, de 320 × 280; debajo, a 24 del dibujo más alto, lo que se ve, en su nido. Si la escena trae
-// una base (`defaults.ground`), los nidos se apoyan en ella. El conjunto, con la base, va centrado en el alto del
-// tablero. ----
-const CARD = { w: 320, h: 280 }
-const GAP = 40
+// ---- Medidas (tablero 1280 × 600, columna 120–1160). Arriba, una tarjeta con escenario por ítem, al 108 % de 320 × 280
+// (346 × 302, con su escenario y su personaje), con 28 entre ellas: las tres juntas ocupan 1094, un poco más que la
+// columna, como en Preparación. Debajo, a 24 del dibujo más alto, lo que se ve, en su nido. Si la escena trae una base
+// (`defaults.ground`), los nidos se apoyan en ella, que va al 85 % y con los nidos más juntos, a su paso: así no sobra
+// suelo a los lados (Luis, 2026-11-20: «su base es demasiado grande… reducir el ancho del piso… y juntar un poco más
+// los nidos»). El conjunto, con la base, va centrado en el alto del tablero. ----
+const CARD_K = 1.08
+const CARD = { w: 320 * CARD_K, h: 280 * CARD_K }
+const GAP = 28
 const SCENERY = sceneryCard(CARD.w, CARD.h)
 const columnX = (i: number) => 640 - (props.items.length * CARD.w + (props.items.length - 1) * GAP) / 2 + i * (CARD.w + GAP)
 // El personaje (el lienzo de Rive de las aves: las patas al 85 % de su alto) grande y apoyado en el suelo de la
 // tarjeta; sin suelo, apoyado cerca del borde de abajo.
-const CHARACTER = { size: 250, feet: 0.85 }
+const CHARACTER = { size: 250 * CARD_K, feet: 0.85 }
 const groundOf = (item: DatosItem) => (item.exterior ? SCENERY.stand : CARD.h - 30)
 const characterBox = (item: DatosItem) =>
   box((CARD.w - CHARACTER.size) / 2, groundOf(item) - CHARACTER.size * CHARACTER.feet, CHARACTER.size, CHARACTER.size)
@@ -103,17 +106,20 @@ const eggH = (item: DatosItem) => (item.sizeScale ?? 0.68) * EGG_H
 // Lo que asoma por encima de su apoyo el dibujo más alto.
 const rise = Math.max(0, ...props.items.map(item => eggH(item) * (SHELL.base - SHELL.top) - SEAT.y))
 const OBJECT_TOP_GAP = 24
-// La base de la fila (`defaults.ground`): la isla larga del lugar donde están los nidos (`ISLAND_ROW`, board.ts), del
-// ancho de la columna del juego y centrada en el tablero. Los nidos se apoyan en ella y la isla asoma por delante de
-// ellos: eso cuenta para centrar el conjunto.
+// La base de la fila (`defaults.ground`): la isla larga del lugar donde están los nidos (`ISLAND_ROW`, board.ts), al
+// 85 % (884 de ancho) y centrada en el tablero. Los nidos se apoyan en ella, a su paso (306 entre uno y otro, con el
+// tramo de cerca en medio), y la isla asoma por delante de ellos: eso cuenta para centrar el conjunto. Sin base, cada
+// uno va debajo de su tarjeta.
 const ground = props.scene.defaults.ground as string | undefined
-const block = CARD.h + OBJECT_TOP_GAP + rise + NEST.h + (ground ? ISLAND_ROW.front : 0)
+const ROW_K = 0.85
+const block = CARD.h + OBJECT_TOP_GAP + rise + NEST.h + (ground ? ISLAND_ROW.front * ROW_K : 0)
 const CARD_Y = (600 - block) / 2
-// La zona que se toca: de lo más alto de lo que se ve al pie de su apoyo, de 280 de ancho.
-const OBJECT = { w: 280, y: CARD_Y + CARD.h + OBJECT_TOP_GAP - 12, h: rise + 12 + NEST.h }
+// La zona que se toca: de lo más alto de lo que se ve al pie de su apoyo, de 260 de ancho (con los nidos a su paso,
+// quedan 46 entre una y otra).
+const OBJECT = { w: 260, y: CARD_Y + CARD.h + OBJECT_TOP_GAP - 12, h: rise + 12 + NEST.h }
 const nestTop = OBJECT.h - NEST.h
 const nestLeft = (OBJECT.w - NEST.w) / 2
-const BASE = { w: ISLAND_ROW.w, x: 640 - ISLAND_ROW.w / 2, y: OBJECT.y + OBJECT.h - ISLAND_ROW.rest }
+const BASE = { w: ISLAND_ROW.w * ROW_K, x: 640 - ISLAND_ROW.w * ROW_K / 2, y: OBJECT.y + OBJECT.h - ISLAND_ROW.rest * ROW_K }
 const nestBox = () => box(nestLeft, nestTop, NEST.w, NEST.h)
 /** Lo que se ve, en su zona: centrado en su asiento y con la base de lo dibujado sobre él. */
 function eggRect(item: DatosItem) {
@@ -125,7 +131,10 @@ function eggBox(item: DatosItem) {
   const rect = eggRect(item)
   return box(rect.x, rect.y, rect.w, rect.h)
 }
-const objectX = (i: number) => columnX(i) + (CARD.w - OBJECT.w) / 2
+const nestCenter = (i: number) => (ground
+  ? 640 + (i - (props.items.length - 1) / 2) * ISLAND_ROW.pitch * ROW_K
+  : columnX(i) + CARD.w / 2)
+const objectX = (i: number) => nestCenter(i) - OBJECT.w / 2
 const riveOf = (item: DatosItem) => libraryRive(item.character?.rive)
 
 // ---- El juego. ----
