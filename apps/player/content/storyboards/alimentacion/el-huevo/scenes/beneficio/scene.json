@@ -1,32 +1,36 @@
 {
   "id": "beneficio",
-  "family": "senalar",
-  "template": "senalar",
+  "family": "simular",
+  "template": "comer",
   "affirmations": ["A4"],
   "meta": {
     "instruction": {"es": "¿Dónde le sirve a tu cuerpo?"},
     "completionFeedback": {"es": "Mi cuerpo crece y usa muchas comidas."}
   },
-  "strings": {
-    "zone.cara": {"es": "La cara"},
-    "zone.cuerpo": {"es": "El cuerpo"}
-  },
-  "library": {"rive": ["nino"], "svg": ["isla-cancha", "cocina-alacena", "cocina-ventana", "plato-hondo", "huevo-clara", "huevo-yema", "mano-apunta"], "sfx": []},
+  "library": {"rive": ["nino"], "svg": ["isla-cancha", "cocina-alacena", "cocina-ventana", "plato", "huevo-clara-cocida", "huevo-yema-cocida", "mano-apunta"], "sfx": []},
   "defaults": {
     "items": ["proteina", "vitaminas"],
-    "character": {"rive": "nino", "pose": "senala", "rest": "nada", "close": "acercar", "accept": "aceptar", "deny": "negar", "feet": 0.9625, "height": 0.8742},
-    "ground": "isla-cancha",
-    "zones": {
-      "cara": [0.27, 0, 0.46, 0.375],
-      "cuerpo": [0.225, 0.45, 0.55, 0.52]
+    "character": {
+      "rive": "nino", "pose": "senala", "rest": "nada", "close": "acercar", "accept": "aceptar",
+      "eat": "comer", "taste": "gusto", "eatMs": 2400,
+      "feet": 0.9625, "height": 0.8742, "mouth": [0.5, 0.25], "body": [0.225, 0.02, 0.55, 0.95]
     },
+    "ground": "isla-cancha",
     "targets": {
-      "proteina": {"zone": "cuerpo", "value": "musculos"},
-      "vitaminas": {"zone": "cara", "value": "ojos"}
+      "proteina": {"value": "musculos", "taste": "rico"},
+      "vitaminas": {"value": "ojos", "taste": "rico"}
     },
     "cards": {
-      "proteina": {"interior": "cocina-alacena", "pieces": [{"svg": "plato-hondo", "at": [150, 246], "scale": 0.66}, {"svg": "huevo-clara", "at": [150, 223], "scale": 0.7}]},
-      "vitaminas": {"interior": "cocina-ventana", "pieces": [{"svg": "plato-hondo", "at": [150, 246], "scale": 0.66}, {"svg": "huevo-yema", "at": [150, 217], "scale": 0.7}]}
+      "proteina": {
+        "interior": "cocina-alacena",
+        "pieces": [{"svg": "plato", "at": [150, 248], "scale": 1.2}],
+        "food": {"svg": "huevo-clara-cocida", "size": [80, 88], "at": [150, 230], "scale": 1.9}
+      },
+      "vitaminas": {
+        "interior": "cocina-ventana",
+        "pieces": [{"svg": "plato", "at": [150, 248], "scale": 1.2}],
+        "food": {"svg": "huevo-yema-cocida", "size": [76, 64], "at": [150, 230], "scale": 1.75}
+      }
     },
     "pointsOnComplete": 10
   }

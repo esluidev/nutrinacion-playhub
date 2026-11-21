@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 88" width="80" height="88" role="img" aria-labelledby="huevo-clara-cocida-title huevo-clara-cocida-desc">
+  <title id="huevo-clara-cocida-title">Clara de huevo cocida</title>
+  <desc id="huevo-clara-cocida-desc">La clara de medio huevo hervido bien cocido, sin su yema: la misma mitad del huevo hervido (huevo-hervido), de pie y con el corte de frente, blanca y opaca, con su lado en sombra a la derecha y, en el centro, el hueco redondo donde estaba la yema, con su pared en sombra arriba a la izquierda. Se apoya en el centro de su base (x 40, y 86). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <g id="huevo-clara-cocida">
+    <path id="clara" d="M40 4C16 4 6 33 6 52C6 71 21 84 40 84C59 84 74 71 74 52C74 33 64 4 40 4Z" fill="#FFFDF7"/>
+    <path id="clara-sombra" d="M57 10C68 20 74 39 74 52C74 71 59 84 40 84C32 84 24 81.6 18 77.6C42 81.6 65 65 65 42C65 30 62 19 57 10Z" fill="#E6DFCB"/>
+    <circle id="hueco" cx="40" cy="54" r="17" fill="#EFE7D1"/>
+    <path id="hueco-pared" d="M23 54A17 17 0 0 1 57 54A17 17 0 0 0 40 43.5A17 17 0 0 0 23 54Z" fill="#E6DFCB"/>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 64" width="76" height="64" role="img" aria-labelledby="huevo-yema-cocida-title huevo-yema-cocida-desc">
+  <title id="huevo-yema-cocida-title">Yema de huevo cocida</title>
+  <desc id="huevo-yema-cocida-desc">La yema de un huevo hervido bien cocido, sacada de la clara: redonda, firme y sin brillo, en el amarillo del huevo hervido, con su sombra en media luna abajo a la derecha, una luz suave arriba a la izquierda y tres granitos que dicen que está cocida. Se apoya en el centro de su base (x 38, y 62). Colores planos, luz desde arriba a la izquierda, sin sombra de apoyo.</desc>
+  <defs>
+    <clipPath id="huevo-yema-cocida-forma"><path d="M5 40C5 20 19 5 38 5C57 5 71 20 71 40C71 54 57 62 38 62C19 62 5 54 5 40Z"/></clipPath>
+  </defs>
+  <g id="huevo-yema-cocida">
+    <path id="yema-sombra" d="M5 40C5 20 19 5 38 5C57 5 71 20 71 40C71 54 57 62 38 62C19 62 5 54 5 40Z" fill="#E5A82E"/>
+    <g clip-path="url(#huevo-yema-cocida-forma)">
+      <path id="yema" d="M5 40C5 20 19 5 38 5C57 5 71 20 71 40C71 54 57 62 38 62C19 62 5 54 5 40Z" fill="#F7C143" transform="translate(-5 -5)"/>
+    </g>
+    <path id="yema-luz" d="M14 30C17 19 26 12 37 11C29 15 22 22 19 32Z" fill="#FBD877"/>
+    <circle id="granito-1" cx="46" cy="27" r="2.2" fill="#E5A82E"/>
+    <circle id="granito-2" cx="30" cy="42" r="1.8" fill="#E5A82E"/>
+    <circle id="granito-3" cx="52" cy="44" r="2" fill="#E5A82E"/>
+  </g>
+</svg>

@@ -71,6 +71,15 @@
         "characters": [{"rive": "nino", "values": {"senala": "musculos"}, "flags": {"acercar": false}, "box": [0, 22, 429], "settle": 700}]
       }
     ],
+    "group": {
+      "pieces": [
+        {"svg": "carton-3", "at": [0, 459], "scale": 0.5, "drop": 18},
+        {"svg": "huevo-gallina", "at": [-96, 459], "scale": 0.43, "drop": 16},
+        {"svg": "huevo-gallina", "at": [0, 459], "scale": 0.43, "drop": 16},
+        {"svg": "huevo-gallina", "at": [96, 459], "scale": 0.43, "drop": 16},
+        {"svg": "carton-3-frente", "at": [0, 459], "scale": 0.5, "drop": 18}
+      ]
+    },
     "invitation": {
       "scenery": "mostrador",
       "pieces": [
