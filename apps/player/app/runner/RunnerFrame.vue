@@ -289,8 +289,9 @@
       </div>
       <!-- La navegación, abajo a la derecha: dos botones de solo icono, separados como los de la hoja del feedback, para que
            deje sitio a la consigna (Luis, 2026-11-20; juntos en un bloque se veían como un solo elemento): en el taller,
-           Guía y Siguiente en blanco; en casa, Anterior y Siguiente en cielo, para que el niño los encuentre de un vistazo. Siguiente lleva el icono de reproducir
-           (Terminar, el check); en casa queda desactivado hasta que el juego de la escena está hecho, y Anterior, en la
+           Guía y Siguiente en blanco; en casa, Anterior y Siguiente en cielo, para que el niño los encuentre de un vistazo. Anterior y Siguiente llevan un
+           ángulo, como en iOS, porque el triángulo de reproducir parecía un botón de reproducir y no de avanzar (Luis,
+           2026-11-21). Terminar, el check; en casa queda desactivado hasta que el juego de la escena está hecho, y Anterior, en la
            primera escena. Su nombre está en su etiqueta y en su título. -->
       <div v-if="leads" class="footer-end">
         <div class="footer-nav" role="group" :aria-label="txt('navigation')">
@@ -299,7 +300,7 @@
             v-else
             class="previous-button"
             tone="sky"
-            icon="play"
+            icon="chevron-left"
             icon-only
             :label="`${txt('previous')}: ${scenes[current - 1]?.title ?? ''}`"
             :disabled="current === 0"
@@ -309,8 +310,9 @@
           <UiButton
             ref="nextButton"
             class="next-button"
+            :class="{ 'is-chevron': !isLast }"
             :tone="finishReady ? 'lime' : mode === 'home' ? 'sky' : 'neutral'"
-            :icon="isLast ? 'check' : 'play'"
+            :icon="isLast ? 'check' : 'chevron-right'"
             icon-only
             :label="isLast ? txt('finishWorkshop') : `${nextLabel}: ${upcoming?.title ?? ''}`"
             :disabled="!canAdvance"

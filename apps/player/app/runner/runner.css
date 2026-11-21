@@ -301,13 +301,11 @@
   .consigna-cierre span { font-weight: var(--font-weight-semibold, 600); font-size: var(--text-body); line-height: 1.3; letter-spacing: 0; color: var(--color-muted); }
   /* La navegación: dos botones de solo icono, separados por 12, como escuchar y cerrar en la hoja del feedback. */
   .footer-nav { @apply flex items-center gap-3; }
-  /* El icono de reproducir del kit es un triángulo lleno con un trazo de 1: con un trazo de 3,5 y uniones redondas
-     sus puntas se suavizan, como el resto de iconos de trazo redondo; un poco más pequeño para que el trazo no lo
-     agrande. Solo el triángulo lleno (el check de Terminar conserva su trazo). */
-  .player-frame :is(.next-button, .previous-button) .icon { width: 16px; height: 16px; }
-  .player-frame :is(.next-button, .previous-button) .icon path[fill=currentColor] { stroke-width: 3.5; stroke-linejoin: round; }
-  /* Anterior (en casa) es el espejo de Siguiente: el mismo triángulo, mirando atrás y a la izquierda del texto. */
-  .player-frame .previous-button .icon { scale: -1 1; }
+  /* Terminar (el check) va un poco más pequeño que los demás iconos del pie. */
+  .player-frame .next-button .icon { width: 16px; height: 16px; }
+  /* Anterior y Siguiente llevan un ángulo (`chevron-left` y `chevron-right`), como en iOS, más grande y con un trazo
+     de 3: el triángulo de reproducir parecía un botón de reproducir y no de avanzar (Luis, 2026-11-21). */
+  .player-frame :is(.previous-button, .next-button.is-chevron) .icon { width: 24px; height: 24px; stroke-width: 3; }
   /* Cambio de panel: uno sale y después entra el otro. Al abrir, los controles bajan y después sube la hoja. Al
      cerrar, la hoja baja y después suben los controles. La hoja llega a los bordes de la pantalla, bajo la barra de
      inicio y junto al notch. */
