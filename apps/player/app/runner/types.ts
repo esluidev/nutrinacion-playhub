@@ -5,7 +5,7 @@ import type { StoryboardJson, TipoStoryboard } from '~/types/storyboard'
 
 // Contrato del contenido del runner (estructura.md) y de sus plantillas (PLAYER-DESIGN.md).
 
-export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'estaciones' | 'abrir' | 'beber' | 'senalar' | 'repasar' | 'resumen'
+export type TemplateName = 'anuncio' | 'destapar' | 'colocar' | 'historia' | 'estaciones' | 'abrir' | 'beber' | 'senalar' | 'comer' | 'repasar' | 'resumen'
 
 /** Caras suaves de la paleta reutilizable del kit. Lima y night son del UI. */
 export type PieceTone = 'sun' | 'coral' | 'sky' | 'grape' | 'rose'
@@ -146,7 +146,12 @@ export interface Profile {
   scaffolding: 'guiado' | 'pista' | 'libre'
 }
 
-export type FeedbackKind = 'success' | 'complete' | 'retry' | 'selection' | 'info'
+/**
+ * Lo que dice una plantilla. `closing` es el cierre de la última escena (la Despedida): no sube hoja; ocupa el lugar de
+ * la consigna en el pie, con su voz, y Terminar se activa (Luis, 2026-11-20: «al mostrar el feedback aquí creo que se
+ * hace un paso innecesario»).
+ */
+export type FeedbackKind = 'success' | 'complete' | 'retry' | 'selection' | 'info' | 'closing'
 
 export interface FeedbackPayload {
   kind: FeedbackKind

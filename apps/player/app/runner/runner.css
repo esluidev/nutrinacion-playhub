@@ -43,8 +43,7 @@
     --bar-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth));
     --footer-h: calc(var(--edge) + var(--hud-control) + var(--ph-depth) + var(--footer-gap));
     /* Dónde empieza la escena dentro del escenario. Lo fija useFrameFit en cada medida: el aire que sobra por encima
-       de la consigna y el tablero, que van centrados entre la barra y el pie, más la fila de la consigna. Este valor
-       solo vale hasta la primera medida. */
+       del tablero, que va centrado entre la barra y el pie. Este valor solo vale hasta la primera medida. */
     --scene-top: calc(var(--footer-h) - var(--bar-h));
     --rail-gap: 4px;
     /* El borde de nubes del pie y de la hoja del feedback: seis lomos de distinto tamaño que se repiten a lo ancho,
@@ -96,12 +95,13 @@
   .hud-piece { @apply relative isolate flex items-center; height: var(--hud-control); border-radius: var(--ph-radius); background: var(--color-depth); box-shadow: 0 var(--piece-depth, var(--ph-depth)) 0 var(--color-depth); }
   .hud-piece::before { content: ''; position: absolute; z-index: -1; inset: 1px 1px 0; border-radius: calc(var(--ph-radius) - 1px); background: var(--color-surface); pointer-events: none; }
 
-  /* El avance del taller (educador): la claqueta, la barra de progreso del kit y el chevron de un desplegable que lista
-     las escenas. Es un botón: sube y se hunde como uno. */
+  /* El avance del taller: la claqueta, la barra de progreso del kit y, en el educador, el chevron de un desplegable que
+     lista las escenas. Ahí es un botón: sube y se hunde como uno. En casa no se pulsa: sin chevron y sin moverse. */
   .scene-card { gap: 10px; width: var(--hud-long); padding: 0 12px; border: 0; font: inherit; appearance: none; cursor: pointer; transition: transform var(--ph-duration) var(--ease-playful), box-shadow var(--ph-duration); }
   /* Subir al pasar es de ratón: en una pantalla táctil el «pasar» se queda pegado después de tocar. */
-  @media (hover: hover) { .scene-card:hover { transform: translateY(-1px); } }
-  .scene-card:active { --piece-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  @media (hover: hover) { button.scene-card:hover { transform: translateY(-1px); } }
+  button.scene-card:active { --piece-depth: var(--ph-depth-pressed); transform: translateY(var(--ph-press-offset)); }
+  div.scene-card { cursor: default; }
   .scene-card:focus-visible { outline: none; }
   .scene-card:focus-visible::after { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 3px; border-radius: var(--radius-pill); background: var(--color-focus); transform: translateX(-50%); }
   /* La claqueta de Lucide en el icono del cielo (data-tone=sky), el tono propio de la consola (Guía); la barra del alto
@@ -126,9 +126,14 @@
      (Luis, 2026-11-18: «demasiado a la izquierda»). El apodo va al
      lado, en tinta; si no cabe, se corta con puntos suspensivos. «Listo» (dispositivo) es local y nunca se envía. */
   .profile-piece { @apply gap-2.5; width: var(--hud-long); padding: 0 14px 0 8px; }
-  .profile-avatar { @apply grid shrink-0 place-items-center overflow-hidden; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); border-radius: var(--radius-chip); background: var(--tone-tint); color: var(--tone-icon); }
+  /* El avatar, en un círculo con el tinte de su tono: los avatares se dibujan para un círculo (Luis, 2026-11-20: redondo,
+     no con el radio de las piezas pequeñas). El mismo en el avance de casa y en la pieza del perfil del dispositivo. */
+  .profile-avatar { @apply grid shrink-0 place-items-center overflow-hidden rounded-full; width: calc(var(--hud-control) - 12px); height: calc(var(--hud-control) - 12px); background: var(--tone-tint); color: var(--tone-icon); }
   .profile-avatar > img { @apply block size-full; }
   .profile-avatar > .icon { width: 20px; height: 20px; }
+  /* En casa, el avance lleva el avatar del niño en el sitio de la claqueta: el mismo aire a la izquierda que en la pieza
+     del perfil (8; con 6 se veía «demasiado a la izquierda»). */
+  .home-card { padding-left: 8px; }
   .profile-name { @apply min-w-0 truncate font-black; font-size: var(--text-counter); line-height: 1.2; color: var(--color-ink); }
   .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
 
@@ -154,16 +159,14 @@
 
   /* ---- Consigna: la cabecera del tablero. Qué hacer en esta escena, fija: no cambia con cada acción (eso lo hace el
      feedback). Texto con la acción pequeña de escuchar del kit, nunca un botón del HUD. La escena empieza debajo. ---- */
-  .consigna { @apply absolute inset-x-0 z-[5] flex items-center justify-center gap-3; top: var(--consigna-top, 0px); height: var(--consigna-h, 56px); padding: 0 var(--gutter); }
-  .consigna[data-empty=true] { visibility: hidden; }
-  .consigna .mini-action { @apply m-0; width: 44px; height: 44px; }
-  .consigna .mini-action > .icon { width: 22px; height: 22px; }
-  .consigna-text { @apply m-0 min-w-0 truncate; font-weight: var(--font-weight-black, 900); font-size: var(--text-headline); line-height: 1.2; letter-spacing: -.01em; color: var(--color-ink); }
 
-  /* ---- Paneles laterales: la guía (a la izquierda, junto a su botón) y los dispositivos (a la derecha, junto al
-     riel). Sin velo: los paneles flotan sobre la escena con la sombra flotante del kit; la escena se pausa. ---- */
+  /* ---- Paneles laterales: la guía y los dispositivos, los dos a la derecha, junto al botón que los abre. Sin velo: los
+     paneles flotan sobre la escena con la sombra flotante del kit; la escena se pausa. ---- */
   .side-panel { @apply absolute z-30 flex flex-col overflow-hidden bg-surface; top: 16px; bottom: 16px; width: 480px; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
-  .side-panel[data-side=left] { left: var(--gutter); }
+  /* La guía, a la derecha, sobre su botón, que va abajo a la derecha, en el pie, junto a Siguiente (Luis, 2026-11-20;
+     antes iba a la izquierda, cuando su botón estaba ahí). Baja hasta 12 sobre el botón, entrando en el aire del pie
+     (--footer-gap), con el mismo alto que los demás paneles: a 16 del escenario se veía «bastante separado». */
+  .side-panel[data-side=end] { right: var(--gutter); top: calc(var(--footer-gap) + 20px); bottom: calc(12px - var(--footer-gap)); }
   /* Dispositivos se abre desde el riel de Ajustes: a su izquierda, a 12, y alineado arriba con él (el riel, de un
      control más 16, va centrado bajo el engranaje). */
   .side-panel[data-side=right] { top: 8px; right: calc(var(--gutter) + var(--hud-long) - (var(--hud-long) - 2px) / 6 + (var(--hud-control) + 16px) / 2 + 12px); }
@@ -258,6 +261,8 @@
   .window-symbol .icon { width: 22px; height: 22px; }
   .window-titles { @apply min-w-0 flex-1; }
   .window-text { @apply mt-3 font-semibold leading-relaxed; font-size: var(--text-body); color: var(--color-ink); text-wrap: pretty; }
+  /* De qué escena o taller se trata, debajo del texto: complementario, en el gris de lo secundario. */
+  .window-caption { @apply mt-2 font-extrabold text-muted; font-size: var(--text-caption); }
   .window-stats { @apply mt-3 grid gap-3; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
   .window-box { @apply rounded-control bg-canvas; padding: 10px 14px; }
   .window-figure { @apply mt-1 font-black tabular-nums; font-size: var(--text-lead); line-height: 1.15; }
@@ -274,9 +279,28 @@
      sube sobre él siempre con escuchar y cerrar (nunca con Siguiente), y los controles se apartan hasta
      cerrarla. Plana: la hoja no proyecta sombra. Su tinte sigue los avisos del kit: éxito → lima · información →
      cielo; el reintento amable → sol. ---- */
-  .player-footer { @apply relative grid items-center gap-6; grid-template-columns: 200px minmax(0, 1fr) auto; padding: var(--footer-gap) var(--gutter) calc(var(--edge) + var(--ph-depth)); }
-  .footer-end { @apply flex items-center gap-3; grid-column: 3; justify-self: end; } /* se queda en su columna; el feedback flota sobre el pie */
-  .player-frame :is(.footer-start .ui-button, .next-button) { min-width: 140px; }
+  /* El pie: a la izquierda la consigna, que toma lo que deja la navegación; a la derecha, la navegación. */
+  /* Un botón blanco del pie (Guía; Siguiente en el taller) lleva su contorno y su base en el gris de línea fuerte del kit,
+     no en el de profundidad: sobre el tinte del pie, ese gris casi desaparece y el botón se veía más pequeño que los de
+     color, aunque mide lo mismo (Luis, 2026-11-20: «¿el botón blanco es más pequeño que los de color?»). */
+  .player-footer .ui-button[data-tone=neutral]:not(:disabled) { --tone-edge: var(--color-line-strong); }
+  .player-footer { @apply relative grid items-center gap-6; grid-template-columns: minmax(0, 1fr) auto; padding: var(--footer-gap) var(--gutter) calc(var(--edge) + var(--ph-depth)); }
+  .footer-start { @apply flex min-w-0; grid-column: 1; grid-row: 1; }
+  .footer-end { @apply flex items-center; grid-column: 2; grid-row: 1; justify-self: end; } /* el feedback flota sobre el pie */
+  /* La consigna (Luis, 2026-11-20): texto plano, como cuando iba arriba: escuchar, del tamaño estándar de los botones
+     del pie (un control de solo icono) y suave en cielo, como escuchar en la hoja del feedback, y el texto en tinta, en
+     negrita, en text-heading; en una línea o, si no cabe, en dos (en teléfonos, en text-title, para que dos líneas
+     quepan en el alto de un control). */
+  .consigna { @apply flex min-w-0 items-center gap-4; }
+  .consigna .listen-button { flex: none; --tone-fill: var(--tone-tint); --tone-edge: var(--tone-top); --tone-on: var(--tone-strong); }
+  .consigna-text { @apply m-0 min-w-0; font-weight: var(--font-weight-black, 900); font-size: var(--text-heading); line-height: 1.2; letter-spacing: -.01em; color: var(--color-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .player-page[data-phone] .consigna-text { font-size: var(--text-title); }
+  /* El cierre de la última escena, en el lugar de la consigna: su título, como la consigna, y debajo su texto, más pequeño. */
+  .consigna-cierre { display: flex; flex-direction: column; gap: 2px; -webkit-line-clamp: unset; }
+  .consigna-cierre strong { font-weight: inherit; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .consigna-cierre span { font-weight: var(--font-weight-semibold, 600); font-size: var(--text-body); line-height: 1.3; letter-spacing: 0; color: var(--color-muted); }
+  /* La navegación: dos botones de solo icono, separados por 12, como escuchar y cerrar en la hoja del feedback. */
+  .footer-nav { @apply flex items-center gap-3; }
   /* El icono de reproducir del kit es un triángulo lleno con un trazo de 1: con un trazo de 3,5 y uniones redondas
      sus puntas se suavizan, como el resto de iconos de trazo redondo; un poco más pequeño para que el trazo no lo
      agrande. Solo el triángulo lleno (el check de Terminar conserva su trazo). */
@@ -300,10 +324,11 @@
   .feedback-slot { @apply pointer-events-none absolute inset-0 z-10 flex items-center; padding: 0 var(--gutter); }
   .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 380ms cubic-bezier(.34, 1.4, .64, 1) 140ms, visibility 0s linear 0s; }
   .feedback-slot .ui-feedback[data-visible=false] { opacity: 1; visibility: hidden; transform: translateY(130%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1), visibility 0s linear 220ms; }
-  /* El símbolo y el texto conservan las medidas del feedback del kit (símbolo 64, título text-title, descripción
-     text-body). */
-  .feedback-slot .ui-feedback-symbol { width: calc(var(--ph-control) + 16px); height: calc(var(--ph-control) + 16px); border-radius: calc(var(--radius-card) + 2px); background: var(--tone-fill); color: var(--tone-on); box-shadow: none; }
-  .feedback-slot .ui-feedback-symbol > .icon { width: 32px; height: 32px; stroke-width: 2.6; }
+  /* El símbolo, del alto de un control y con su radio, como cerrar al otro lado: con las medidas del feedback del kit
+     (64) casi llegaba al borde de nubes de la hoja (Luis, 2026-11-20). El texto conserva las del kit (título
+     text-title, descripción text-body). */
+  .feedback-slot .ui-feedback-symbol { width: var(--ph-control); height: var(--ph-control); border-radius: var(--ph-radius); background: var(--tone-fill); color: var(--tone-on); box-shadow: none; }
+  .feedback-slot .ui-feedback-symbol > .icon { width: 26px; height: 26px; stroke-width: 2.6; }
   /* Escuchar, en la hoja: el botón del kit en el tono de la hoja, en suave (la cara, el tinte 100; la base, el 300; el
      icono, el tono fuerte del texto). En blanco era lo más claro de la hoja y no jugaba con su color; cerrar sigue
      siendo el botón lleno. */
@@ -350,6 +375,9 @@
     .player-page .mini-action::before { inset: min(-6px, calc(50% - 22px / var(--player-scale, 1))); }
   }
   .player-frame[data-compact] .side-panel { top: 8px; bottom: 8px; }
+  /* La guía, cerca de su botón: baja hasta 12 sobre él, entrando en el aire del pie, con el mismo alto que los demás paneles
+     (Luis, 2026-11-20: «se ve bastante separado»). */
+  .player-frame[data-compact] .side-panel[data-side=end] { top: calc(var(--footer-gap) + 4px); bottom: calc(12px - var(--footer-gap)); }
 
   /* ---- Chispas al completar un juego: salen del centro del tablero y caen, en los tonos de las piezas y el lima ---- */
   .spark-burst { position: absolute; z-index: 25; left: 50%; top: calc(var(--scene-top, 0px) + var(--scene-h, 600px) / 2); width: 0; height: 0; pointer-events: none; }
@@ -380,9 +408,6 @@
 @layer components {
   /* ---- Tablero: 1280 × 600, sin fondo, centrado entre la barra y el pie, a la escala del UI ------ */
   .tb-scene { @apply absolute; inset: var(--scene-top) 0 auto; height: var(--scene-h, 600px); }
-  /* Una escena sin consigna (la Bienvenida) no deja vacía esa fila: su tablero sube la mitad y queda centrado en todo
-     el escenario, entre la consola y el pie. */
-  .tb-scene[data-sin-consigna] { translate: 0 calc(var(--consigna-h, 56px) / -2); }
   .tb-board { position: absolute; left: 50%; top: 50%; width: 1280px; height: 600px; transform: translate(-50%, -50%) scale(var(--scene-fit, 1)); touch-action: none; }
   .tb-board[data-blocked] { pointer-events: none; }
   /* Un tablero en pausa (una ventana, un panel o la pausa) se queda quieto de verdad: lo que se anima se
@@ -434,7 +459,7 @@
      encogen un poco. Los huecos donde caen llevan la misma forma. */
   .tb-pieza { padding: 0; border: 0; appearance: none; border-radius: var(--radius-board); -webkit-tap-highlight-color: transparent; }
   /* El foco de todo lo que se toca en el tablero. */
-  :is(.tb-pieza, .tb-hv-agarre, .tb-ab-toque, .tb-be-vaso, .tb-se-zona):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+  :is(.tb-pieza, .tb-hv-agarre, .tb-ab-toque, .tb-be-vaso, .tb-se-zona, .tb-co-cuerpo, .tb-co-agarre):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
 
   /* El texto dentro del tablero escala con él (hasta unos 0,35 en el teléfono más pequeño): nada por debajo de 28 px
      del tablero. Nombre de una pieza: una etiqueta blanca en la tinta de la pieza (preadolescencia y adolescencia). */
@@ -444,7 +469,7 @@
      una tarjeta con su escenario (la vista de un lugar, su interior o su exterior, que la llena o, sin lugar, el
      suelo plano en el tinte del área) y, dentro, los protagonistas, que aparecen uno tras otro y saltan al tocar la tarjeta.
      Debajo, el título (el tamaño del tema del día, --text-hero, a 0,8: 96), que se reduce si no cabe en una línea, y
-     la línea que lo presenta, del tamaño de la consigna y en el gris de apoyo. Todo va en una columna centrada en el
+     la línea que lo presenta, en text-headline (28) y en el gris de apoyo. Todo va en una columna centrada en el
      alto del tablero por lo que mide (con una línea, dos o ninguna). ---- */
   .tb-an { position: absolute; inset: 50% 0 auto; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; }
   .tb-an-protagonistas { position: relative; flex: none; width: 100%; }
@@ -594,6 +619,8 @@
   .tb-es-carta { cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .tb-es-carta.is-held { scale: 1.03; box-shadow: inset 0 0 0 4px var(--board-active); }
   .tb-es-escena { position: absolute; inset: 6px; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); pointer-events: none; }
+  /* El lienzo del escenario: el de una tarjeta de 320 × 280 por dentro del marco, que crece con la tarjeta (INNER_K). */
+  .tb-es-lienzo { position: absolute; left: 0; top: 0; width: 308px; height: 268px; transform-origin: 0 0; }
   .tb-es-interior { inset: 0; width: 100%; height: 100%; object-fit: fill; }
   .tb-es-fogon, .tb-es-comida, .tb-es-util, .tb-es-servido { position: absolute; width: 0; height: 0; }
   .tb-es-fogon { transform-origin: 0 0; }
@@ -664,6 +691,7 @@
     .tb-ab-entero, .tb-ab-toque { transition: none; }
     .tb-an-figura, .tb-an-figura img.is-hopping, .tb-ficha[data-state=colocada], .tb-ficha.is-celebrating { animation: none; }
     .tb-hv-carta.is-landing, .tb-hv-huevo { animation: none !important; }
+    .tb-co-comida { animation: none !important; }
     .tb-hv-exterior, .tb-hv-interior, .tb-hv-carton { transition: none; scale: 1; }
     .tb-es-lengua img, .tb-es-util, .tb-es-comida, .tb-es-comida img, .tb-es-servido { animation: none !important; }
     .tb-es-lengua { transition: none !important; }
@@ -685,6 +713,28 @@
   .tb-se-personaje { position: absolute; pointer-events: none; opacity: 0; }
   .tb-se-personaje[data-loaded] { opacity: 1; animation: tb-entra 260ms ease-out both; }
   .tb-se-zona { position: absolute; z-index: 4; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  /* ---- Comer (Simular: darle de comer al personaje; TemplateComer.vue). En el centro, el personaje, suelto y de pie en
+     la isla de su lugar (`tb-base`), que entra cuando ya está pintado. A cada lado, una tarjeta por alimento con su
+     escenario (un interior o un exterior, que la llena dentro del marco) y lo que no se mueve (el plato), apoyado por el
+     centro de su base; lo de dentro crece o se encoge con la tarjeta. El alimento va encima, fuera de la tarjeta, en su
+     propia capa: se mueve solo con transformaciones (su caja lleva la posición y su dibujo, el tamaño y la opacidad).
+     La tarjeta sigue el patrón de las piezas: quieta; activa (su alimento elegido con un toque), en cielo, sin crecer,
+     porque su alimento va aparte; resuelta, apagada, con el plato vacío. El cuerpo del personaje es una zona sin
+     dibujo que se toca. ---- */
+  .tb-co-dentro { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+  .tb-co-carta img { max-width: none; transition: opacity 240ms ease; }
+  .tb-co-carta.is-over { scale: 1; }
+  .tb-co-carta.is-found img { opacity: .45; }
+  .tb-co-vista { border-radius: calc(var(--radius-board) - 6px); object-fit: fill; }
+  .tb-co-pieza { translate: -50% -100%; transform-origin: 50% 100%; }
+  .tb-co-personaje { position: absolute; pointer-events: none; opacity: 0; }
+  .tb-co-personaje[data-loaded] { opacity: 1; animation: tb-entra 260ms ease-out both; }
+  .tb-co-cuerpo { position: absolute; z-index: 4; padding: 0; border: 0; background: none; appearance: none; border-radius: var(--radius-board); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .tb-co-caja { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }
+  .tb-co-comida { position: absolute; max-width: none; pointer-events: none; transform-origin: 50% 50%; }
+  .tb-co-comida.is-hopping { animation: tb-hop 1100ms ease-in-out; }
+  .tb-co-agarre { position: absolute; left: 0; top: 0; z-index: 10; padding: 0; border: 0; background: none; appearance: none; border-radius: 50%; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  .tb-co-agarre.is-dragging { cursor: grabbing; }
   /* ---- Repasar (Recordar; TemplateRepasar.vue). Armar el recorrido: los lugares numerados y las fichas son los del
      tablero (`tb-ranura`, `tb-numero`, `tb-flecha` y `tb-ficha`, arriba). Aquí, lo que lleva cada ficha: sus dibujos,
      apoyados por el centro de su base, y su personaje, si lo tiene, que entra ya pintado y recortado por el marco de
@@ -707,7 +757,10 @@
      exteriores), sus dibujos, apoyados por el centro de su base, y sus personajes. La invitación, al quedarse,
      lleva el contorno cielo de lo activo. Lo que pulsa la mano salta un poco. ---- */
   .tb-rs-caja { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
-  .tb-rs-foto.is-active { box-shadow: inset 0 0 0 4px var(--board-active); }
+  /* La foto del grupo, al final: cae en el centro como una foto que se deja sobre la mesa, derecha (Luis: «la tarjeta
+     final déjala recta, no la gires»), por encima del collage. */
+  .tb-rs-grupo { position: absolute; z-index: 60; pointer-events: none; animation: tb-rs-cae 520ms var(--ease-playful) both; }
+  @media (prefers-reduced-motion: reduce) { .tb-rs-grupo { animation: none; } }
   .tb-rs-foto.is-nudged { animation: tb-nudge 460ms ease; }
   .tb-rs-vista { position: absolute; overflow: hidden; border-radius: calc(var(--radius-board) - 6px); background: var(--board-sky); pointer-events: none; }
   .tb-rs-lienzo { position: absolute; left: 0; top: 0; width: 616px; height: 536px; transform-origin: 0 0; }
@@ -724,6 +777,7 @@
 @keyframes tb-celebrate { 0% { translate: 0 0; scale: 1; rotate: 0deg; } 30% { translate: 0 -30px; scale: 1.08; rotate: -4deg; } 55% { translate: 0 -10px; rotate: 3deg; } 75% { translate: 0 -16px; rotate: -1deg; } 100% { translate: 0 0; scale: 1; rotate: 0deg; } }
 @keyframes tb-aparece { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 @keyframes tb-entra { from { opacity: 0; } }
+@keyframes tb-rs-cae { from { opacity: 0; translate: 0 -48px; scale: 1.12; } 55% { opacity: 1; } }
 @keyframes tb-hop { 0%, 72%, 100% { translate: 0 0; } 80% { translate: 0 -22px; } 88% { translate: 0 0; } 93% { translate: 0 -8px; } }
 @keyframes tb-an-salto { 0%, 55%, 86%, 100% { translate: 0 0; } 30% { translate: 0 -34px; } 72% { translate: 0 -10px; } }
 @keyframes tb-hv-giro { 0%, 100% { rotate: -8deg; } 50% { rotate: 8deg; } }

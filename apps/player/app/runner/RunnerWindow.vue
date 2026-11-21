@@ -1,16 +1,17 @@
 <template>
   <!-- Ventana del taller (puntos, confirmaciones): la anatomía de los paneles laterales sobre el
-       velo. <dialog> nativo: foco atrapado y Escape los da el navegador. -->
+       velo. <dialog> nativo: foco atrapado y Escape los da el navegador. Arriba, la pregunta; debajo, su texto y, después,
+       de qué escena o taller se trata (`caption`), que es complementario: no va encima del título (Luis, 2026-11-20). -->
   <dialog ref="el" class="panel-window" :aria-labelledby="`${uid}-title`" @close="onClose" @cancel.prevent="emit('update:open', false)">
     <div class="panel-head">
       <span class="ui-symbol window-symbol" :data-tone="tone" aria-hidden="true"><UiIcon :name="symbol" /></span>
       <div class="window-titles">
-        <p v-if="caption" class="panel-caption">{{ caption }}</p>
         <h2 :id="`${uid}-title`" class="ui-heading">{{ title }}</h2>
       </div>
       <UiButton tone="neutral" size="sm" icon="close" icon-only :label="closeLabel" @click="emit('update:open', false)" />
     </div>
     <p v-if="text" class="window-text">{{ text }}</p>
+    <p v-if="caption" class="window-caption">{{ caption }}</p>
     <div v-if="stats?.length" class="window-stats">
       <div v-for="[name, value] in stats" :key="name" class="window-box">
         <p class="panel-label">{{ name }}</p>

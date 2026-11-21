@@ -1,6 +1,6 @@
 <template>
   <!-- Quién juega, arriba a la izquierda: una pieza blanca de la consola, del largo de las de arriba, con el avatar
-       dentro (la cabeza de un animal en un cuadro con el tinte de su tono, la forma del avatar del kit) y el apodo al
+       dentro (la cabeza de un animal en un círculo con el tinte de su tono: los avatares se dibujan para un círculo) y el apodo al
        lado. No se pulsa. La misma en casa y en un dispositivo del taller: con dos perfiles en un mismo aparato, o con
        varios dispositivos en el taller, dice quién es. Un apodo largo se corta y se lee entero al pasar el cursor. -->
   <div class="hud-piece profile-piece" :title="nombre">

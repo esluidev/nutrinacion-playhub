@@ -13,11 +13,13 @@
          (runner.css, useFrameFit).
        La consola flota sobre el escenario, un elemento por esquina, todos del alto de un control y sin
        puntos ni tiempo:
-       - Arriba a la izquierda, el avance del taller (en el educador, un desplegable con las escenas). En casa y en un
-         dispositivo, quién juega (PerfilPieza): su avatar y su apodo, en una pieza blanca como las demás.
+       - Arriba a la izquierda, el avance del taller: en el educador, un desplegable con las escenas; en casa, la misma
+         pieza sin desplegable. En un dispositivo, quién juega (PerfilPieza): su avatar y su apodo, en una pieza blanca
+         como las demás.
        - Arriba a la derecha, Ajustes · Reiniciar · Salir en un solo bloque. Ajustes abre su riel: en el educador,
          pausa, sonido, pantalla completa (donde se puede) y dispositivos; en casa, sonido y pantalla completa.
-       - Abajo, sobre la banda del pie: a la izquierda, Guía (educador) o Anterior (casa); a la derecha, Siguiente, que
+       - Abajo, sobre la banda del pie: a la izquierda, la consigna (escuchar y su texto), siempre a la vista; a la
+         derecha, la navegación en un bloque: Guía (educador) o Anterior (casa) y Siguiente, que
          lleva el icono de reproducir (Terminar, el check). En casa los dos se activan según la escena: Anterior, desde
          la segunda; Siguiente, cuando el juego de la escena está hecho. En el educador, Anterior queda en las teclas
          (← y Re Pág) y en la lista. La hoja de feedback sube sobre el pie, siempre con escuchar y cerrar: nunca lleva
@@ -44,8 +46,23 @@
           <PerfilPieza v-if="me" :avatar="me.avatar" :nombre="me.nombre" :tono="me.tono" />
           <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
         </template>
-        <!-- En casa, el niño que juega: con dos perfiles en el mismo aparato, dice cuál. -->
-        <PerfilPieza v-else-if="mode === 'home'" :avatar="player.avatar" :nombre="player.apodo" :tono="AVATAR_TONES[player.avatar]" />
+        <!-- En casa, dónde va el storyboard y quién juega: la pieza del avance del educador, sin desplegable (el niño va
+             escena a escena con Anterior y Siguiente), con el avatar del niño en el sitio de la claqueta, sin apodo
+             (Luis, 2026-11-20: «el avatar da contexto del niño y siempre se mantiene el progreso»). El avatar, con la
+             forma del de la pieza del perfil: la cabeza del animal en un círculo con el tinte de su tono. -->
+        <div
+          v-else-if="mode === 'home'"
+          ref="sceneCard"
+          class="hud-piece scene-card home-card"
+          role="group"
+          :aria-label="`${player.apodo} · ${txt('sceneProgress', { n: current + 1, total: scenes.length, percent })}`"
+          :title="`${player.apodo} · ${sceneCaption()}`"
+        >
+          <span class="profile-avatar" :data-tone="AVATAR_TONES[player.avatar]" aria-hidden="true">
+            <img :src="librarySvg(`avatar-${player.avatar}`)" alt="" decoding="sync">
+          </span>
+          <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
+        </div>
         <!-- En el educador (la vista previa no tiene barra), dónde va el taller: la barra de avance del kit, del alto
              de un botón, en un desplegable (su chevron lo dice) que lista las escenas. Al completar un juego, la pieza
              da un pequeño salto mientras la barra crece. -->
@@ -101,13 +118,6 @@
 
     <!-- El escenario y sus piezas toman el tono del área del storyboard (runner.css). -->
     <div ref="stage" class="player-stage" tabindex="-1" :data-area="storyboard.category" :inert="Boolean(overlay)">
-      <!-- La consigna: qué hacer en esta escena, fija. Se aparta mientras un panel la cubre. -->
-      <div v-show="!guideOpen && !devicesOpen" class="consigna" :data-empty="!consigna">
-        <button type="button" class="mini-action" data-tone="sky" :aria-label="txt('listenInstruction')" :title="txt('listen')" @click="listen(introOf(active))">
-          <UiIcon name="sound" />
-        </button>
-        <p class="consigna-text" aria-live="polite">{{ consigna }}</p>
-      </div>
 
       <template v-for="(scene, i) in scenes" :key="`${scene.folder}-${states[i]!.generation}`">
         <template v-if="states[i]!.visited || states[i]!.warm">
@@ -121,7 +131,6 @@
             :data-scene="i"
             :data-pending="!sceneLoad.scenes[i]!.shown || undefined"
             :data-warm="i !== current || undefined"
-            :data-sin-consigna="!showsConsigna(scene) || undefined"
           >
             <div class="tb-board" :data-template="scene.json.template ?? 'propia'" :data-blocked="i !== current || blocked || undefined">
               <component
@@ -237,24 +246,23 @@
     </div>
 
     <footer class="player-footer" :inert="Boolean(overlay)">
-      <div v-if="mode === 'educator'" class="footer-start">
-        <UiButton tone="neutral" icon="book" :aria-expanded="guideOpen" :title="txt('guideKey')" @click="setGuide(!guideOpen)">{{ txt('guide') }}</UiButton>
-      </div>
-      <!-- En casa, en el sitio de Guía va Anterior, el espejo de Siguiente: vuelve a la escena de antes, que conserva
-           su estado. En la primera escena no hay a dónde volver y queda desactivado. Los dos van en color (cielo),
-           para que el niño los encuentre de un vistazo. -->
-      <div v-else-if="mode === 'home'" class="footer-start">
-        <UiButton
-          class="previous-button"
-          tone="sky"
-          icon="play"
-          :disabled="current === 0"
-          :aria-label="`${txt('previous')}: ${scenes[current - 1]?.title ?? ''}`"
-          :title="txt('previousKey')"
-          @click="previous"
-        >
-          {{ txt('previous') }}
-        </UiButton>
+      <!-- La consigna, siempre a la vista, abajo a la izquierda (Luis, 2026-11-20): escuchar y su texto plano, como cuando
+           iba arriba, en una fila sobre el tablero que le quitaba sitio y atención al juego. Se aparta con la navegación
+           mientras sube una hoja. -->
+      <div class="footer-start">
+        <!-- Al cerrar la última escena, su cierre (la invitación de la Despedida) ocupa el lugar de la consigna: su título y,
+             debajo, su texto, con su voz; no sube hoja. -->
+        <div v-if="mode !== 'preview' && closing" class="consigna is-closing">
+          <UiButton tone="sky" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen(closing.voice)" />
+          <p class="consigna-text consigna-cierre" aria-live="polite">
+            <strong>{{ closing.title }}</strong>
+            <span v-if="closing.body">{{ closing.body }}</span>
+          </p>
+        </div>
+        <div v-else-if="mode !== 'preview' && hasInstruction" class="consigna">
+          <UiButton tone="sky" class="listen-button" icon="sound" icon-only :label="txt('listenInstruction')" :title="txt('listen')" @click="listen(introOf(active))" />
+          <p class="consigna-text" aria-live="polite">{{ text(active.json.meta.instruction) }}</p>
+        </div>
       </div>
       <!-- La hoja del feedback: sube sobre el pie con el tinte del tono de su tipo. -->
       <span class="feedback-sheet" :data-tone="look.tone" aria-hidden="true" />
@@ -279,23 +287,37 @@
           </div>
         </div>
       </div>
+      <!-- La navegación, abajo a la derecha: dos botones de solo icono, separados como los de la hoja del feedback, para que
+           deje sitio a la consigna (Luis, 2026-11-20; juntos en un bloque se veían como un solo elemento): en el taller,
+           Guía y Siguiente en blanco; en casa, Anterior y Siguiente en cielo, para que el niño los encuentre de un vistazo. Siguiente lleva el icono de reproducir
+           (Terminar, el check); en casa queda desactivado hasta que el juego de la escena está hecho, y Anterior, en la
+           primera escena. Su nombre está en su etiqueta y en su título. -->
       <div v-if="leads" class="footer-end">
-        <!-- Siguiente va en blanco, como Guía y como los elementos de arriba (a prueba; Luis, 2026-11-13): las cuatro
-             esquinas del marco, iguales. Antes iban los dos en cielo (2026-11-10); en lima, Siguiente pasaba
-             desapercibido sobre el escenario. En casa va en cielo, como Anterior (Luis, 2026-11-13: «lo que basta es que
-             sean de colores»), y queda desactivado hasta que el juego de la escena está hecho. -->
-        <UiButton
-          ref="nextButton"
-          class="next-button"
-          :tone="mode === 'home' ? 'sky' : 'neutral'"
-          :disabled="!canAdvance"
-          :icon-right="isLast ? 'check' : 'play'"
-          :aria-label="isLast ? txt('finishWorkshop') : `${nextLabel}: ${upcoming?.title ?? ''}`"
-          :title="txt('nextKey')"
-          @click="next"
-        >
-          {{ nextLabel }}
-        </UiButton>
+        <div class="footer-nav" role="group" :aria-label="txt('navigation')">
+          <UiButton v-if="mode === 'educator'" tone="neutral" icon="book" icon-only :label="txt('guide')" :aria-expanded="guideOpen" :title="txt('guideKey')" @click="setGuide(!guideOpen)" />
+          <UiButton
+            v-else
+            class="previous-button"
+            tone="sky"
+            icon="play"
+            icon-only
+            :label="`${txt('previous')}: ${scenes[current - 1]?.title ?? ''}`"
+            :disabled="current === 0"
+            :title="txt('previousKey')"
+            @click="previous"
+          />
+          <UiButton
+            ref="nextButton"
+            class="next-button"
+            :tone="finishReady ? 'lime' : mode === 'home' ? 'sky' : 'neutral'"
+            :icon="isLast ? 'check' : 'play'"
+            icon-only
+            :label="isLast ? txt('finishWorkshop') : `${nextLabel}: ${upcoming?.title ?? ''}`"
+            :disabled="!canAdvance"
+            :title="txt('nextKey')"
+            @click="next"
+          />
+        </div>
       </div>
     </footer>
 
@@ -426,12 +448,16 @@ interface SceneState {
   generation: number
   fraction: number
   completed: boolean
+  /** Ya celebró (las chispas) en esta partida: una vez cada vez que se juega, aunque el aparato ya la tuviera hecha. */
+  celebrated: boolean
+  /** Su cierre, si la plantilla lo dio (`closing`): sustituye a la consigna en el pie. */
+  closing: { title: string, body?: string, voice: Voz } | null
   ready: boolean
   message: Message | null
 }
 
 const states = reactive<SceneState[]>(scenes.map(() => ({
-  visited: false, warm: false, generation: 0, fraction: 0, completed: false, ready: false, message: null,
+  visited: false, warm: false, generation: 0, fraction: 0, completed: false, celebrated: false, closing: null, ready: false, message: null,
 })))
 
 // ── Lo que recuerda el aparato (memory.ts): recargar la página no devuelve el taller al principio. Guarda en qué
@@ -500,6 +526,10 @@ const active = computed(() => scenes[current.value]!)
 const activeState = computed(() => states[current.value]!)
 const isLast = computed(() => current.value === scenes.length - 1)
 const nextLabel = computed(() => (isLast.value ? txt('finish') : txt('next')))
+/** El cierre de la escena actual (`closing`), en lugar de su consigna. */
+const closing = computed(() => activeState.value.closing)
+/** La última escena ya está hecha: Terminar se activa, en lima, porque es lo que sigue. */
+const finishReady = computed(() => isLast.value && activeState.value.completed)
 // En casa se pasa a la siguiente escena cuando el juego de esta está hecho; una escena sin juego (la Bienvenida) deja
 // pasar siempre. El educador conduce: pasa cuando quiere.
 const canAdvance = computed(() => props.mode !== 'home' || !isGame(active.value) || activeState.value.completed)
@@ -629,12 +659,10 @@ watch(() => overlay.value?.action || Boolean(overlay.value?.cta), (action) => {
 })
 
 // ── Consigna y feedback ───────────────────────────────────────────────────────
-// La consigna se ve sobre el tablero de todo juego que la trae; la Bienvenida no la muestra (es la frase que suena).
+// La consigna de todo juego que la trae va abajo a la izquierda, siempre a la vista; la Bienvenida no la muestra (es la
+// frase que suena al tocar su tarjeta).
 const showsConsigna = (scene: RunnerScene) => isGame(scene) && Boolean(text(scene.json.meta.instruction))
-const consigna = computed(() => {
-  if (props.mode === 'device' && !session.open) return ''
-  return showsConsigna(active.value) ? text(active.value.json.meta.instruction) : ''
-})
+const hasInstruction = computed(() => showsConsigna(active.value) && !(props.mode === 'device' && !session.open))
 // Lo que se dice al presentar una escena: su consigna con su voz (audio/voz.ts). En la Bienvenida no se ve, pero suena.
 const introOf = (scene: RunnerScene): Voz => vozDe([scene.json.meta.instruction], props.locale)
 
@@ -683,7 +711,8 @@ function onProgress(i: number, value: number) {
   state.fraction = state.completed ? 1 : value
 }
 
-// Chispas: una ráfaga por juego completado, en los tonos de las piezas y el lima.
+// Chispas: una ráfaga cada vez que se completa un juego, en los tonos de las piezas y el lima. También si el aparato ya lo
+// tenía hecho de antes (la memoria): quien lo juega otra vez lo termina otra vez (Luis, 2026-11-20, en la Despedida).
 const SPARKS = 22
 const SPARK_TONES = ['sun', 'coral', 'sky', 'grape', 'rose', 'lime'] as const
 const burst = ref(0)
@@ -703,7 +732,8 @@ const sceneCard = ref<HTMLElement | null>(null)
 
 function onComplete(i: number) {
   const state = states[i]!
-  if (!state.completed && i === current.value) {
+  if (!state.celebrated && i === current.value) {
+    state.celebrated = true
     burst.value += 1
     clearTimeout(burstTimer)
     burstTimer = setTimeout(() => { burst.value = 0 }, 1600)
@@ -722,9 +752,16 @@ function onComplete(i: number) {
 const FEEDBACK_SOUNDS = { success: 'acierto', retry: 'reintento', info: 'aviso' } as const
 let streak = 0
 function onFeedback(i: number, payload: FeedbackPayload) {
-  const type = typeOf(payload.kind)
   // Sin voz propia (una escena con su `scene.vue`), la hoja se lee como se ve.
   const voice = payload.voice ?? vozDe([payload.title, payload.body], props.locale)
+  // El cierre de la última escena no sube hoja: ocupa el lugar de la consigna y, en casa, se dice solo. Su sonido es el de
+  // completar la escena, que ya suena.
+  if (payload.kind === 'closing') {
+    states[i]!.closing = { title: payload.title, body: payload.body, voice }
+    if (i === current.value && narrates) listen(voice)
+    return
+  }
+  const type = typeOf(payload.kind)
   states[i]!.message = { type, title: payload.title, body: payload.body, voice, sequence: ++sequence }
   if (i !== current.value) return
   // En casa, la hoja se dice sola al abrirse (corta lo que estuviera sonando).
@@ -813,7 +850,9 @@ const previous = () => goTo(current.value - 1)
 
 function restartScene(i: number) {
   streak = 0 // la racha de aciertos empieza de nuevo
-  Object.assign(states[i]!, { message: null, completed: false, ready: false, fraction: 0 })
+  // Su hoja se va con ella y, si se estaba oyendo, deja de sonar.
+  if (i === current.value) cancelNarration()
+  Object.assign(states[i]!, { message: null, closing: null, completed: false, celebrated: false, ready: false, fraction: 0 })
   states[i]!.generation += 1
   remember()
   // Se monta de nuevo: vuelve a mostrarse cuando está completa.

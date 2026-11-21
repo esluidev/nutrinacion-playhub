@@ -24,6 +24,11 @@ const props = defineProps<{
    * pose, no a medio camino.
    */
   settle?: number
+  /**
+   * Cuánto espera, en ms, para empezar a moverse, ya pintado y quieto en su primer cuadro: varios personajes que se
+   * montan a la vez (las aves de las fotos de la Despedida) no se mueven al unísono. Cuenta desde que la escena se ve.
+   */
+  delay?: number
 }>()
 
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -41,6 +46,20 @@ let disposed = false
 // vez que cambia el que ocupa, se vuelve a ajustar la superficie donde se pinta, para que no se vea pixelado.
 let sizes: ResizeObserver | null = null
 let settling: ReturnType<typeof setTimeout> | undefined
+// La espera para empezar a moverse (`delay`): pendiente hasta que la escena se ve, y en curso mientras corre.
+let pendingDelay = props.delay ?? 0
+let waiting: ReturnType<typeof setTimeout> | undefined
+function startAfterDelay() {
+  if (!player) return
+  if (!pendingDelay) { player.play(); return }
+  player.pause()
+  const ms = pendingDelay
+  pendingDelay = 0
+  waiting = setTimeout(() => {
+    waiting = undefined
+    if (!disposed && !props.paused) player?.play()
+  }, ms)
+}
 
 function say(trigger: string) {
   if (!vm || !player) {
@@ -77,7 +96,7 @@ watch(() => [props.values, props.flags], apply, { deep: true })
 watch(() => props.paused, (paused) => {
   if (!player || !loaded.value) return
   if (paused) player.pause()
-  else player.play()
+  else if (!waiting) startAfterDelay()
 })
 
 onMounted(async () => {
@@ -112,6 +131,7 @@ onMounted(async () => {
           if (disposed) return
           loaded.value = true
           if (props.paused) player?.pause()
+          else startAfterDelay()
           release?.()
         }
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -132,6 +152,7 @@ onBeforeUnmount(() => {
   disposed = true
   opened = false
   clearTimeout(settling)
+  clearTimeout(waiting)
   sizes?.disconnect()
   sizes = null
   player?.cleanup()

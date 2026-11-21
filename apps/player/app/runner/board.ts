@@ -55,11 +55,12 @@ export function detailCard(art: { w: number, h: number } = { w: 704, h: 536 }) {
 }
 
 /**
- * La isla larga: la isla de un lugar a lo ancho de la columna del juego (`isla-corral-larga`, `isla-pasto-larga`),
- * para una fila de cosas sueltas (los nidos de Destapar). Lo que lleva se apoya en `rest` y la isla asoma `front` por
- * delante, hasta su canto.
+ * La isla larga: la isla de un lugar a lo ancho de la columna del juego (`isla-corral-larga`, `isla-pasto-larga`), o
+ * la base que no es de ningún lugar (`tarima-larga`), para una fila de cosas sueltas (los nidos de Destapar). Lo que lleva se apoya en `rest`, centrado cada `pitch` desde
+ * el centro (en x 160, 520 y 880: entre uno y otro va el tramo de cerca o las matas de la isla), y la isla asoma
+ * `front` por delante, hasta su canto. Se puede usar más pequeña: todo se escala con ella.
  */
-export const ISLAND_ROW = { w: 1040, h: 166, rest: 128, front: 35 }
+export const ISLAND_ROW = { w: 1040, h: 166, rest: 128, front: 35, pitch: 360 }
 
 /**
  * La tarjeta con escenario (PLAYER-DESIGN, «Piezas del tablero»): dentro del contorno de 3 y un margen blanco de 3

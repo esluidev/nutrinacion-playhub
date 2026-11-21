@@ -2,8 +2,8 @@ import type { Ref } from 'vue'
 
 // Espacio de diseño 1280 × 800 con zoom al área segura de la pantalla (PLAYER-DESIGN.md).
 // Mide la pantalla con una sonda (`probe`, con los insets de env(safe-area-*)) y fija en el
-// documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-*, la fila
-// de la consigna y el encaje del tablero (--scene-fit, nunca mayor que 1). En el marco fija la
+// documento las variables que lee runner.css: --player-scale, --frame-w/-h, --safe-* y el encaje
+// del tablero (--scene-fit, nunca mayor que 1). La consigna no ocupa fila: es la primera hoja de la escena. En el marco fija la
 // altura de la barra (--bar-h: los controles flotantes a la distancia del borde) y la de la banda
 // del pie (--footer-h, con el aire --footer-gap sobre sus botones, donde va su borde de nubes). `sinBarra` y `sinPie` no
 // reservan su alto (la vista previa no tiene ninguno de los dos): la escena se encaja en lo que queda y el pie conserva
@@ -22,7 +22,6 @@ const DEPTH = 4
 const CONTROL = { large: 44, phone: 48 }
 // El aire del pie sobre sus botones: ahí va el borde de nubes de la banda y de la hoja del feedback.
 const GAP = { large: 28, phone: 20 }
-const CONSIGNA = { large: 56, phone: 48 }
 
 export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, { sinBarra = false, sinPie = false } = {}) {
   const compact = ref(false)
@@ -63,11 +62,10 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     const padSide = pad(side, GUTTER)
     const frameWidth = box.width / scale
     const frameHeight = box.height / scale
-    const consigna = usePhone ? CONSIGNA.phone : CONSIGNA.large
     const room = frameHeight - padTop - padBottom - bar - footer
     const stageWidth = frameWidth - 2 * padSide
-    const sceneFit = Math.min(stageWidth / SCENE.width, (room - consigna) / SCENE.height, 1)
-    const spare = Math.max(room - consigna - SCENE.height * sceneFit, 0) / 2
+    const sceneFit = Math.min(stageWidth / SCENE.width, room / SCENE.height, 1)
+    const spare = Math.max(room - SCENE.height * sceneFit, 0) / 2
     const root = document.documentElement.style
     const px = (value: number) => `${value.toFixed(3)}px`
     root.setProperty('--player-scale', scale.toFixed(5))
@@ -77,11 +75,9 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     root.setProperty('--safe-b', px(padBottom))
     root.setProperty('--safe-l', px(padSide))
     root.setProperty('--safe-r', px(padSide))
-    root.setProperty('--consigna-h', px(consigna))
-    root.setProperty('--consigna-top', px(spare))
     root.setProperty('--scene-h', px(SCENE.height * sceneFit))
     root.setProperty('--scene-fit', sceneFit.toFixed(5))
-    el.style.setProperty('--scene-top', px(spare + consigna))
+    el.style.setProperty('--scene-top', px(spare))
     el.style.setProperty('--edge', px(edge))
     el.style.setProperty('--bar-h', px(bar))
     el.style.setProperty('--footer-h', px(band.footer))
@@ -105,7 +101,7 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     coarse?.removeEventListener('change', fit)
     document.body.removeAttribute('data-phone')
     const root = document.documentElement.style
-    for (const name of ['--player-scale', '--frame-w', '--frame-h', '--safe-t', '--safe-b', '--safe-l', '--safe-r', '--consigna-h', '--consigna-top', '--scene-h', '--scene-fit']) {
+    for (const name of ['--player-scale', '--frame-w', '--frame-h', '--safe-t', '--safe-b', '--safe-l', '--safe-r', '--scene-h', '--scene-fit']) {
       root.removeProperty(name)
     }
   })
