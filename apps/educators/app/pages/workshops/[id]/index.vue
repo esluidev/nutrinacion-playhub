@@ -82,8 +82,13 @@
                 <UiIcon v-for="n in 5" :key="n" :name="n <= taller.cierre!.calificacion ? 'star-solid' : 'star'" :class="['size-6', n <= taller.cierre!.calificacion ? 'text-(--tone-fill)' : 'text-disabled']" />
               </dd>
             </div>
-            <div><dt class="ui-caption">{{ t('cierre.asistentes') }}</dt><dd class="ui-title">{{ taller.cierre!.asistentes }}</dd></div>
+            <div>
+              <dt class="ui-caption">{{ t('cierre.asistentes') }}</dt>
+              <dd class="ui-title">{{ taller.cierre!.asistentes }}</dd>
+              <dd v-if="taller.cierre!.ninas !== null" class="ui-caption mt-0.5">{{ t('cierre.desglose', { ninas: taller.cierre!.ninas, ninos: taller.cierre!.ninos ?? 0 }) }}</dd>
+            </div>
             <div><dt class="ui-caption">{{ t('cierre.participacion') }}</dt><dd class="ui-title">{{ t(`cierre.participacion.${taller.cierre!.participacion}`) }}</dd></div>
+            <div v-if="taller.cierre!.dispositivos !== null"><dt class="ui-caption">{{ t('cierre.dispositivos') }}</dt><dd class="ui-title">{{ taller.cierre!.dispositivos }}</dd></div>
           </dl>
         </section>
 

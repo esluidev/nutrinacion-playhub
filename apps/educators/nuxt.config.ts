@@ -18,8 +18,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      // Dónde vive el runner de Player: Educators abre el taller ahí, en modo educador.
-      playerUrl: process.env.NUXT_PUBLIC_PLAYER_URL || 'http://localhost:3001',
       // Supabase con la anon key y las funciones educador_* (sin Supabase Auth). Sin estas dos
       // variables, Educators funciona en modo demo con los datos de prueba de app/fixtures/.
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,

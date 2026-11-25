@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import datos from '~/fixtures/talleres.json'
-import { agenda, cierreCompleto, escenasDeLaGuia, escenasYDuracion, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
+import { agenda, cierreCompleto, conLosDeHoy, ninosDe, escenasDeLaGuia, escenasYDuracion, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
 import type { Cierre, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 const HOY = new Date(2026, 9, 14, 9, 30) // 14 de octubre de 2026
@@ -78,12 +78,13 @@ describe('workshops de la base', () => {
       horaFin: '10:30',
       lugar: 'Sede central · Aula 2B',
       grupo: '3.º A',
+      grupoAbierto: false,
       asistentesEstimados: 26,
       idioma: 'es',
       modalidad: 'presencial',
       estadoWorkshop: 'finalizado',
       motivoCancelacion: null,
-      cierre: { calificacion: 4, asistentes: 23, participacion: 'alta', claridad: 'clara', costo: 'Ordenar el recorrido en el primer intento.', faltoMaterial: '' },
+      cierre: { calificacion: 4, asistentes: 23, ninas: null, ninos: null, participacion: 'alta', claridad: 'clara', costo: 'Ordenar el recorrido en el primer intento.', faltoMaterial: '', dispositivos: null },
     })
   })
 
@@ -236,6 +237,45 @@ describe('talleres por día', () => {
   })
 })
 
+describe('la agenda de hoy al día', () => {
+  const hoy = '2026-11-25'
+  const lista = [
+    taller({ id: 'a', fecha: hoy, horaInicio: '09:00' }),
+    taller({ id: 'b', fecha: hoy, horaInicio: '11:00' }),
+    taller({ id: 'c', fecha: '2026-11-26' }),
+  ]
+
+  it('sin cambios, la misma lista (no se vuelve a pintar)', () => {
+    const r = conLosDeHoy(lista, [lista[1]!, lista[0]!], hoy)
+    expect(r.lista).toBe(lista)
+    expect(r.seFueron).toBe(false)
+  })
+
+  it('cambia los de hoy por los recién pedidos: uno cancelado, otro a otra hora y uno nuevo', () => {
+    const r = conLosDeHoy(lista, [
+      { ...lista[0]!, estadoWorkshop: 'cancelado', motivoCancelacion: 'Lluvia' },
+      { ...lista[1]!, horaInicio: '12:00' },
+      taller({ id: 'd', fecha: hoy, horaInicio: '15:00' }),
+    ], hoy)
+    expect(r.lista.map(t => t.id).sort()).toEqual(['a', 'b', 'c', 'd'])
+    expect(r.lista.find(t => t.id === 'a')!.estadoWorkshop).toBe('cancelado')
+    expect(r.lista.find(t => t.id === 'b')!.horaInicio).toBe('12:00')
+    expect(r.seFueron).toBe(false)
+  })
+
+  it('si uno dejó de ser de hoy, avisa para pedir la lista entera', () => {
+    const r = conLosDeHoy(lista, [lista[0]!], hoy)
+    expect(r.lista.map(t => t.id).sort()).toEqual(['a', 'c'])
+    expect(r.seFueron).toBe(true)
+  })
+
+  it('uno que se movió a hoy no queda repetido', () => {
+    const r = conLosDeHoy(lista, [lista[0]!, lista[1]!, { ...lista[2]!, fecha: hoy }], hoy)
+    expect(r.lista.filter(t => t.id === 'c')).toHaveLength(1)
+    expect(r.lista.find(t => t.id === 'c')!.fecha).toBe(hoy)
+  })
+})
+
 describe('textos del taller', () => {
   it('muestra el horario aunque falte el fin', () => {
     expect(horario(taller({}))).toBe('10:00 – 10:30')
@@ -275,12 +315,35 @@ describe('entrada con correo y PIN', () => {
 })
 
 describe('cierre del facilitador', () => {
-  it('pide calificación, asistentes y las dos observaciones; el texto libre es opcional', () => {
-    expect(cierreCompleto({ calificacion: 4, asistentes: 20, participacion: 'alta', claridad: 'clara' })).toBe(true)
-    expect(cierreCompleto({ asistentes: 20, participacion: 'alta', claridad: 'clara' })).toBe(false)
-    expect(cierreCompleto({ calificacion: 6, asistentes: 20, participacion: 'alta', claridad: 'clara' })).toBe(false)
-    expect(cierreCompleto({ calificacion: 4, asistentes: 20, participacion: 'alta' })).toBe(false)
-    expect(cierreCompleto({ calificacion: 4, participacion: 'alta', claridad: 'clara' })).toBe(false)
+  const BASE = { calificacion: 4, asistentes: 20, ninas: 11, ninos: 9, participacion: 'alta', claridad: 'clara' } as const
+  it('pide calificación, asistentes, niñas y niños y las dos observaciones; el texto libre es opcional', () => {
+    expect(cierreCompleto(BASE)).toBe(true)
+    expect(cierreCompleto({ ...BASE, calificacion: undefined })).toBe(false)
+    expect(cierreCompleto({ ...BASE, calificacion: 6 })).toBe(false)
+    expect(cierreCompleto({ ...BASE, claridad: undefined })).toBe(false)
+    expect(cierreCompleto({ ...BASE, asistentes: undefined })).toBe(false)
+  })
+  it('en una audiencia cerrada, niñas y niños hacen falta y suman los asistentes', () => {
+    expect(cierreCompleto({ ...BASE, ninas: null, ninos: null })).toBe(false)
+    expect(cierreCompleto({ ...BASE, ninas: 12, ninos: 9 })).toBe(false)
+    expect(cierreCompleto({ ...BASE, ninas: 20, ninos: 0 })).toBe(true)
+  })
+  it('en una abierta (una feria) basta el total, sin niñas ni niños', () => {
+    expect(cierreCompleto({ ...BASE, asistentes: 150, ninas: null, ninos: null }, true)).toBe(true)
+    expect(cierreCompleto({ ...BASE, asistentes: 150, ninas: 80, ninos: 70 }, true)).toBe(false)
+  })
+  it('los dispositivos son opcionales; si van, un entero desde cero', () => {
+    expect(cierreCompleto({ ...BASE, dispositivos: null })).toBe(true)
+    expect(cierreCompleto({ ...BASE, dispositivos: 0 })).toBe(true)
+    expect(cierreCompleto({ ...BASE, dispositivos: 9 })).toBe(true)
+    expect(cierreCompleto({ ...BASE, dispositivos: -1 })).toBe(false)
+    expect(cierreCompleto({ ...BASE, dispositivos: 2.5 })).toBe(false)
+  })
+  it('los niños salen de los asistentes menos las niñas', () => {
+    expect(ninosDe(23, 12)).toBe(11)
+    expect(ninosDe(23, 0)).toBe(23)
+    expect(ninosDe(23, undefined)).toBeNull()
+    expect(ninosDe(23, 24)).toBeNull()
   })
 })
 

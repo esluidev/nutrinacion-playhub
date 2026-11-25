@@ -24,7 +24,7 @@ import { talleresPorDia } from '~/utils/talleres'
 
 const { t } = useT()
 const { educador } = useSesion()
-const { talleres, taller, cargando, error, cargar } = useTalleres()
+const { talleres, taller, cargando, error, cargar, actualizarHoy } = useTalleres()
 const { abierto, cerrar } = useTallerAbierto()
 // Al salir hacia el taller, su preparación o el cierre, la ventana no debe reabrirse al volver.
 onBeforeUnmount(cerrar)
@@ -35,6 +35,17 @@ const { fecha, vista, irA } = useCalendario()
 onMounted(() => {
   if (!cargando.value) void cargar()
 })
+
+// Mientras está a la vista, cada minuto, solo los de hoy (unos pocos KB): la agenda abierta en el aula muestra lo que
+// Admin canceló, movió o asignó para hoy sin que el educador toque nada. Con la pantalla bloqueada o en otra app, nada.
+const CADA_MINUTO = 60_000
+let reloj: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  reloj = setInterval(() => {
+    if (document.visibilityState === 'visible') void actualizarHoy()
+  }, CADA_MINUTO)
+})
+onBeforeUnmount(() => clearInterval(reloj))
 
 const porDia = computed(() => talleresPorDia(talleres.value))
 const conTalleres = computed(() => new Set(Object.keys(porDia.value)))

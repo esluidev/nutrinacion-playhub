@@ -1,6 +1,6 @@
 import datos from '~/fixtures/talleres.json'
 import { sesionNoValida, useSupabaseClient } from '~/utils/supabase'
-import { cierreDesdeBase, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
+import { cierreDesdeBase, conLosDeHoy, diaRelativo, tallerDesdeBase, tallerDesdeFixture } from '~/utils/talleres'
 import type { Cierre, CierreBase, GuiaTaller, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 // Talleres del educador en todas sus organizaciones (educador_workshops), la guía de cada uno
@@ -21,6 +21,11 @@ function talleresDemo(cierres: Record<string, Cierre>): Taller[] {
     return cierres[taller.id] ? { ...taller, cierre: cierres[taller.id] } : taller
   })
 }
+
+// Cuándo se leyeron por última vez: al volver a la pestaña o a la ventana se vuelven a pedir si tienen más de unos
+// segundos (varias piezas de la misma página usan la misma lista y cada una recibe el aviso).
+const FRESCO_MS = 5_000
+let leidosEn = 0
 
 export function useTalleres() {
   const { token, demo, caducada } = useSesion()
@@ -52,9 +57,32 @@ export function useTalleres() {
     }
     talleres.value = ((data ?? []) as unknown as WorkshopBase[]).map(tallerDesdeBase)
     carga.value = { lista: true, cargando: false, error: false }
+    leidosEn = Date.now()
   }
 
   if (import.meta.client && !carga.value.lista && !carga.value.cargando && !carga.value.error) void cargar()
+  // Al volver a la pestaña o a la ventana, otra vez y sin tapar lo que se ve: así aparece lo que Admin asignó, movió o
+  // canceló mientras tanto (como al volver a «Mis talleres»).
+  useAlVolver(() => {
+    if (carga.value.lista && !carga.value.cargando && Date.now() - leidosEn > FRESCO_MS) void cargar()
+  })
+
+  /**
+   * Solo los talleres de hoy otra vez (unos pocos KB; `educador_workshops` con la fecha de hoy): «Mis talleres» los pide
+   * cada minuto mientras está a la vista, para que la agenda abierta muestre lo que Admin canceló, movió o asignó para
+   * hoy. Si alguno dejó de ser de hoy, pide la lista entera para verlo donde quedó.
+   */
+  async function actualizarHoy() {
+    if (demo || !token.value || !carga.value.lista || carga.value.cargando) return
+    const hoy = diaRelativo(0)
+    const { data, error } = await useSupabaseClient().rpc('educador_workshops', { p_token: token.value, p_desde: hoy, p_hasta: hoy })
+    if (sesionNoValida(error)) return caducada()
+    // Si mientras tanto empezó a leerse la lista entera, manda esa.
+    if (error || carga.value.cargando) return
+    const { lista, seFueron } = conLosDeHoy(talleres.value, ((data ?? []) as unknown as WorkshopBase[]).map(tallerDesdeBase), hoy)
+    talleres.value = lista
+    if (seFueron) void cargar()
+  }
 
   /** La primera carga, sin datos todavía: las vistas muestran que esperan en vez de «sin talleres». */
   const cargando = computed(() => !carga.value.lista && !carga.value.error)
@@ -104,12 +132,14 @@ export function useTalleres() {
     return escenas
   }
 
-  /** El runner dijo «listo»: empieza la ejecución real. Solo cuenta si el workshop está publicado. */
-  async function iniciar(id: string): Promise<boolean> {
-    if (demo || !token.value || taller(id)?.estadoWorkshop !== 'publicado') return false
-    const { error } = await useSupabaseClient().rpc('educador_iniciar', { p_token: token.value, p_workshop_id: Number(id) })
+  /** El runner dijo «listo»: empieza la ejecución real y abre la conexión del taller (tarea 013), cuyo código y llave
+   *  se le pasan al runner para que otros dispositivos se unan. Solo si el workshop está publicado; si no, null. */
+  async function iniciar(id: string): Promise<{ codigo: string, llave: string } | null> {
+    if (demo || !token.value || taller(id)?.estadoWorkshop !== 'publicado') return null
+    const { data, error } = await useSupabaseClient().rpc('educador_iniciar', { p_token: token.value, p_workshop_id: Number(id) })
     if (sesionNoValida(error)) await caducada()
-    return !error
+    const conexion = data as unknown as { codigo?: string, llave?: string } | null
+    return !error && conexion?.codigo && conexion.llave ? { codigo: conexion.codigo, llave: conexion.llave } : null
   }
 
   /** El runner dijo «terminado» (vale también si el workshop ya se finalizó mientras tanto). */
@@ -118,8 +148,10 @@ export function useTalleres() {
     if (demo || !token.value || !t || t.estadoWorkshop === 'cancelado') return false
     const { error } = await useSupabaseClient().rpc('educador_terminar', { p_token: token.value, p_workshop_id: Number(id) })
     if (sesionNoValida(error)) await caducada()
+    // Al terminar, la base cierra la conexión y deja cuántos dispositivos se unieron: el cierre los muestra.
+    if (!error) await cargar()
     return !error
   }
 
-  return { talleres, cargando, error, cargar, taller, guardarCierre, guia, iniciar, terminar }
+  return { talleres, cargando, error, cargar, actualizarHoy, taller, guardarCierre, guia, iniciar, terminar }
 }

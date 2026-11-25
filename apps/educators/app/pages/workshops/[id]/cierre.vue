@@ -1,7 +1,9 @@
 <template>
   <!-- Feedback del taller, como en la app original: el paso final al terminar el taller en el runner
-       (calificación, niños, participación y comentarios, más lo que pide la constitución: solo
-       observaciones del grupo). Al finalizar, el taller queda completado; se puede corregir después.
+       (calificación, asistentes, participación y comentarios, más lo que pide la constitución: solo
+       observaciones del grupo). En una audiencia cerrada, de los asistentes, cuántas eran niñas: los
+       niños salen de la resta (tarea 021); en una abierta (una feria) basta el total. Cuántos
+       dispositivos se unieron es opcional y lo anota el educador (tarea 021). Al finalizar, el taller queda completado; se puede corregir después.
        Un taller cancelado no tiene feedback. Una sola tarjeta, del ancho de la ventana grande del kit
        (640, `UiDialog` lg): en el teléfono ocupa el ancho de la pantalla. -->
   <div v-if="taller && puedeIniciarse(taller)" class="mx-auto w-full max-w-[640px]">
@@ -11,7 +13,22 @@
         <p class="ui-text mt-1">{{ t('cierre.texto') }}</p>
       </header>
       <Estrellas v-model="form.calificacion" :label="t('cierre.calificacion')" :etiqueta="n => t('cierre.estrellas', { n })" />
-      <Contador v-model="form.asistentes" :label="t('cierre.asistentes')" />
+      <div class="space-y-4">
+        <Contador v-model="form.asistentes" :label="t('cierre.asistentes')" />
+        <p v-if="taller.grupoAbierto" class="ui-caption">{{ t('cierre.abierta') }}</p>
+        <div v-else class="flex flex-wrap items-end gap-x-8 gap-y-3">
+          <Contador v-model="form.ninas" :label="t('cierre.ninas')" :invalido="ninasDeMas" />
+          <div>
+            <p class="field-label">{{ t('cierre.ninos') }}</p>
+            <p class="ui-title flex h-(--ph-control) items-center tabular-nums">{{ ninos ?? '—' }}</p>
+          </div>
+        </div>
+        <p v-if="ninasDeMas" class="field-error">{{ t('cierre.ninasDeMas') }}</p>
+      </div>
+      <div>
+        <Contador v-model="form.dispositivos" :label="t('cierre.dispositivos')" />
+        <p class="field-help">{{ t('cierre.dispositivosAyuda') }}</p>
+      </div>
       <OpcionesGrupo
         v-model="form.participacion"
         :label="t('cierre.participacion')"
@@ -47,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { cierreCompleto, puedeIniciarse } from '~/utils/talleres'
+import { cierreCompleto, ninosDe, puedeIniciarse } from '~/utils/talleres'
 import type { Claridad, Participacion } from '~/utils/talleres'
 
 const { t } = useT()
@@ -56,11 +73,14 @@ const { taller: buscar, cargando, guardarCierre } = useTalleres()
 const { toast } = useToast()
 
 const taller = computed(() => buscar(String(route.params.id)))
-const form = reactive<{ calificacion?: number, asistentes: number, participacion?: Participacion, claridad?: Claridad, costo: string, faltoMaterial: string }>({
+const form = reactive<{ calificacion?: number, asistentes?: number, ninas?: number, dispositivos?: number, participacion?: Participacion, claridad?: Claridad, costo: string, faltoMaterial: string }>({
   asistentes: 0,
   costo: '',
   faltoMaterial: '',
 })
+// Los niños salen de los asistentes menos las niñas; más niñas que asistentes no cuadra.
+const ninos = computed(() => ninosDe(form.asistentes ?? 0, form.ninas))
+const ninasDeMas = computed(() => typeof form.ninas === 'number' && form.ninas > (form.asistentes ?? 0))
 // El formulario parte del feedback que ya tenía (se puede corregir) o de los asistentes previstos.
 // Los talleres pueden llegar después de abrir la página: se rellena una vez, cuando están.
 let relleno = false
@@ -71,6 +91,8 @@ watch(taller, (actual) => {
   Object.assign(form, {
     calificacion: previo?.calificacion,
     asistentes: previo?.asistentes ?? actual.asistentesEstimados ?? 0,
+    ninas: previo?.ninas ?? undefined,
+    dispositivos: previo?.dispositivos ?? actual.dispositivosUnidos ?? undefined,
     participacion: previo?.participacion,
     claridad: previo?.claridad,
     costo: previo?.costo ?? '',
@@ -81,8 +103,17 @@ const incompleto = ref(false)
 const guardando = ref(false)
 
 async function guardar() {
-  const cierre = { ...form, costo: form.costo.trim(), faltoMaterial: form.faltoMaterial.trim() }
-  if (!taller.value || !cierreCompleto(cierre)) {
+  const abierto = taller.value?.grupoAbierto ?? false
+  const cierre = {
+    ...form,
+    asistentes: form.asistentes ?? 0,
+    ninas: abierto ? null : form.ninas ?? null,
+    ninos: abierto ? null : ninos.value,
+    dispositivos: form.dispositivos ?? null,
+    costo: form.costo.trim(),
+    faltoMaterial: form.faltoMaterial.trim(),
+  }
+  if (!taller.value || !cierreCompleto(cierre, abierto)) {
     incompleto.value = true
     return
   }

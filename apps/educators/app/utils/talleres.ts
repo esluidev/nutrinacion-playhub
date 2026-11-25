@@ -11,10 +11,16 @@ export type Claridad = 'poco_clara' | 'clara' | 'muy_clara'
 export interface Cierre {
   calificacion: number // 1–5: cómo salió la sesión, según el facilitador
   asistentes: number
+  // Cuántas eran niñas y cuántos niños (tarea 021): números del grupo, no personas. En una audiencia
+  // cerrada hacen falta y suman los asistentes; en una abierta (una feria) van los dos en null.
+  ninas: number | null
+  ninos: number | null
   participacion: Participacion
   claridad: Claridad
   costo: string
   faltoMaterial: string
+  // Cuántos dispositivos se unieron al taller (tarea 021), si los hubo; lo anota el educador.
+  dispositivos: number | null
 }
 
 export type Idioma = 'es' | 'en'
@@ -39,13 +45,16 @@ export interface Taller {
   fecha: string // YYYY-MM-DD
   horaInicio: string
   horaFin: string // '' si no tiene
-  lugar: string // dónde: el de la jornada y su detalle («Sede central · Aula 3A»), o el suyo; '' si no tiene
-  grupo: string // '' si no tiene
+  lugar: string // dónde: el lugar y su espacio («Sede central · Aula 3A»); '' si no tiene
+  grupo: string // la audiencia («2.º B», «Público general»); '' si no tiene
+  grupoAbierto: boolean // audiencia abierta: el cierre va solo con el total
   asistentesEstimados: number | null
   idioma: Idioma // el del contenido: el runner se abre en este idioma, no en el de la interfaz
   modalidad: Modalidad
   estadoWorkshop: EstadoWorkshop
   motivoCancelacion: string | null
+  // Cuántos dispositivos se unieron por la conexión del taller (tarea 013); rellena el cierre.
+  dispositivosUnidos?: number
   cierre?: Cierre
 }
 
@@ -53,10 +62,13 @@ export interface Taller {
 export interface CierreBase {
   calificacion: number
   asistentes: number
+  ninas?: number | null
+  ninos?: number | null
   participacion: string
   claridad: string
   costo: string | null
   faltoMaterial: string | null
+  dispositivos?: number | null
 }
 
 /** Un workshop tal como lo devuelve educador_workshops (supabase/migrations/0006; el título, 0016). */
@@ -69,8 +81,9 @@ export interface WorkshopBase {
   fecha: string
   horaInicio: string | null
   horaFin: string | null
-  lugar: string | null // dentro de una jornada, el detalle («Aula 3A»); suelto, el lugar
-  grupo: string | null
+  lugar: string | null // dentro de una jornada, el espacio («Aula 3A»); suelto, el lugar y su espacio
+  grupo: string | null // el nombre de la audiencia
+  grupoAbierto?: boolean // audiencia abierta (tarea 021)
   asistentesEstimados: number | null
   idioma: string
   modalidad: string
@@ -79,6 +92,7 @@ export interface WorkshopBase {
   estado?: string // la asignación: pendiente, en_curso o completado
   iniciadoEn?: string | null
   terminadoEn?: string | null
+  dispositivosUnidos?: number | null
   cierre: CierreBase | null
 }
 
@@ -97,14 +111,17 @@ export function cierreDesdeBase(c: CierreBase): Cierre {
   return {
     calificacion: c.calificacion,
     asistentes: c.asistentes,
+    ninas: c.ninas ?? null,
+    ninos: c.ninos ?? null,
     participacion: elegir(c.participacion, PARTICIPACIONES, 'media'),
     claridad: elegir(c.claridad, CLARIDADES, 'clara'),
     costo: c.costo ?? '',
     faltoMaterial: c.faltoMaterial ?? '',
+    dispositivos: c.dispositivos ?? null,
   }
 }
 
-/** Dónde es el taller: dentro de una jornada, su lugar y el detalle del taller; suelto, el suyo. */
+/** Dónde es el taller: dentro de una jornada, su lugar y el espacio del taller; suelto, ya viene compuesto. */
 export function lugarDelTaller(lugar: string | null, jornada: { ubicacion: string } | null): string {
   return [jornada?.ubicacion, lugar].map(x => x?.trim()).filter(Boolean).join(' · ')
 }
@@ -125,11 +142,13 @@ export function tallerDesdeBase(w: WorkshopBase): Taller {
     horaFin: w.horaFin ?? '',
     lugar: lugarDelTaller(w.lugar, w.jornada),
     grupo: w.grupo?.trim() ?? '',
+    grupoAbierto: w.grupoAbierto ?? false,
     asistentesEstimados: w.asistentesEstimados ?? null,
     idioma: w.idioma === 'en' ? 'en' : 'es',
     modalidad: elegir(w.modalidad, MODALIDADES, 'presencial'),
     estadoWorkshop: elegir(w.estadoWorkshop, ESTADOS_WORKSHOP, 'publicado'),
     motivoCancelacion: w.motivoCancelacion?.trim() || null,
+    ...(typeof w.dispositivosUnidos === 'number' ? { dispositivosUnidos: w.dispositivosUnidos } : {}),
     ...(w.cierre ? { cierre: cierreDesdeBase(w.cierre) } : {}),
   }
 }
@@ -236,10 +255,24 @@ export function correoValido(valor: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim())
 }
 
-/** Un cierre está completo con la calificación, los asistentes reales y las dos observaciones. */
-export function cierreCompleto(c: Partial<Cierre>): c is Cierre {
+/**
+ * Un cierre está completo con la calificación, los asistentes reales y las dos observaciones. En una
+ * audiencia cerrada, además, cuántas eran niñas y cuántos niños, que suman los asistentes; en una
+ * abierta, los dos van vacíos (tarea 021). Los dispositivos son opcionales; si van, un entero desde cero.
+ */
+export function cierreCompleto(c: Partial<Cierre>, abierto = false): c is Cierre {
   const calificada = typeof c.calificacion === 'number' && c.calificacion >= 1 && c.calificacion <= 5
-  return calificada && typeof c.asistentes === 'number' && c.asistentes >= 0 && Boolean(c.participacion) && Boolean(c.claridad)
+  const base = calificada && typeof c.asistentes === 'number' && c.asistentes >= 0 && Boolean(c.participacion) && Boolean(c.claridad)
+  if (!base || (c.dispositivos != null && !(Number.isInteger(c.dispositivos) && c.dispositivos >= 0))) return false
+  if (abierto) return c.ninas == null && c.ninos == null
+  return typeof c.ninas === 'number' && typeof c.ninos === 'number' && c.ninas >= 0 && c.ninos >= 0
+    && c.ninas + c.ninos === c.asistentes
+}
+
+/** Los niños, de los asistentes y las niñas; null si aún no se sabe o no cuadra. */
+export function ninosDe(asistentes: number, ninas: number | undefined | null): number | null {
+  if (typeof ninas !== 'number' || ninas < 0 || ninas > asistentes) return null
+  return asistentes - ninas
 }
 
 /** Una escena de la guía como la da `educador_guia`: los campos del runner más su orden, su título y el material (0015). */
@@ -263,4 +296,21 @@ export function escenasDeLaGuia(guia: GuiaTaller): (EscenaGuia & { carpeta: stri
 /** URL del runner de Player en modo educador, para incrustarlo (docs/runner.md), en el idioma del workshop. */
 export function urlDelTaller(playerUrl: string, taller: Taller): string {
   return runnerUrl(playerUrl, { eje: taller.storyboard.eje, slug: taller.storyboard.slug, modo: 'educator', idioma: taller.idioma })
+}
+
+/**
+ * La lista con los talleres de hoy recién pedidos en lugar de los que tenía de hoy (la agenda abierta se pone al día
+ * cada minuto pidiendo solo los de hoy). Si no cambió nada, la misma lista, para no volver a pintar. `seFueron` dice si
+ * alguno de los que eran de hoy ya no está: se movió a otro día o se lo quitaron, y hay que pedir la lista entera para
+ * verlo donde quedó.
+ */
+export function conLosDeHoy(talleres: Taller[], deHoy: Taller[], hoy: string): { lista: Taller[], seFueron: boolean } {
+  const antes = talleres.filter(t => t.fecha === hoy)
+  const porId = (a: Taller, b: Taller) => a.id.localeCompare(b.id)
+  if (JSON.stringify([...antes].sort(porId)) === JSON.stringify([...deHoy].sort(porId))) return { lista: talleres, seFueron: false }
+  const ahora = new Set(deHoy.map(t => t.id))
+  return {
+    lista: [...talleres.filter(t => t.fecha !== hoy && !ahora.has(t.id)), ...deHoy],
+    seFueron: antes.some(t => !ahora.has(t.id)),
+  }
 }
