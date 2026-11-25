@@ -6,17 +6,8 @@
 // La carga es perezosa y por organización: al invocarse con un contexto distinto al último
 // cargado, se refresca solo.
 
-import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
-
-// La URL de Educators (`configuracion.educators_url`, 0013), para el enlace de acceso. En
-// desarrollo, si está vacía, la de este equipo en el puerto de Educators; por Tailscale, el nombre
-// de este equipo (equipo-local).
-export async function urlDeEducators(): Promise<string | null> {
-  if (!isSupabaseConfigured()) return null
-  const { data } = await useSupabaseClient().from('configuracion').select('valor').eq('clave', 'educators_url').maybeSingle()
-  const url = (data?.valor ?? '').trim() || (import.meta.dev ? 'http://localhost:3002' : '')
-  return url ? urlEnEsteEquipo(url.replace(/\/+$/, '')) : null
-}
+// La URL de Educators (`configuraciones.educators_url`, 0013), para el enlace de acceso.
+export const urlDeEducators = () => urlDeApp('educators')
 
 // El enlace de acceso de un educador: abre en Educators la página donde elige su PIN.
 export function enlaceAcceso(base: string, token: string): string {
@@ -112,6 +103,9 @@ function iniciales(nombre: string, apellido: string | null) {
   return `${nombre.charAt(0)}${(apellido ?? '').charAt(0)}`.toUpperCase() || '?'
 }
 
+// La última lectura de la lista, compartida por todas las piezas que la usan (utils/alDia.ts).
+const lectura = lecturaNueva()
+
 export function useEducators() {
   const demo = !isSupabaseConfigured()
   const { orgActiva } = useContexto()
@@ -122,11 +116,12 @@ export function useEducators() {
     () => ({ orgId: null, educators: demo ? DEMO_EDUCATORS : [], groups: demo ? DEMO_GROUPS : [], loading: false }),
   )
 
-  async function refresh() {
+  async function leer() {
     if (demo) return
     const oid = orgActiva.value?.id
     if (!oid) return
-    state.value.loading = true
+    // Solo la primera lectura de una organización se ve cargando: volver a leer no tapa lo que ya se ve.
+    if (state.value.orgId !== oid) state.value.loading = true
     const supabase = useSupabaseClient()
 
     // Los miembros se embeben por la FK directa a `educadores`: la compuesta (educador_id,
@@ -197,11 +192,9 @@ export function useEducators() {
     state.value.loading = false
   }
 
-  // Carga perezosa: al entrar con una organización distinta a la última cargada.
-  if (import.meta.client && !demo) {
-    const oid = orgActiva.value?.id ?? null
-    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
-  }
+  // Leer y anotar cuándo; al entrar a la página y al volver a la pestaña, otra vez si hace falta (utils/alDia.ts).
+  const refresh = () => leerAnotando(lectura, leer)
+  if (!demo) useAlDia(lectura, () => state.value.orgId, refresh)
 
   const educators = computed(() => state.value.educators)
   const groups = computed(() => state.value.groups)
@@ -219,7 +212,7 @@ export function useEducators() {
   }
 
   // Los miembros ACTIVOS de un grupo (por id: dos grupos pueden llamarse igual). Son los que se
-  // asignan al elegir el grupo en el asistente; un inactivo no recibe talleres.
+  // asignan al elegir el grupo en «Nuevo Taller»; un inactivo no recibe talleres.
   function getGroupMembers(groupId: number) {
     return activeEducators.value.filter(e => e.grupoIds.includes(groupId))
   }

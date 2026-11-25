@@ -43,16 +43,20 @@
     </div>
 
     <!-- Navegación: el sidebar es el ESPEJO del contexto activo — muestra SOLO la sección
-         del tipo actual (Platform u organización), nunca secciones apiladas; la lista la decide
-         useSidebar según el rol. El lugar actual lo pinta el kit (ui-nav-item con aria-current). -->
+         del tipo actual (Platform u organización), nunca las dos apiladas; sus grupos y la lista
+         los decide useSidebar según el rol. Plegado, el título de cada grupo es una línea. El
+         lugar actual lo pinta el kit (ui-nav-item con aria-current). -->
     <nav class="scrollbar-thin flex-1 overflow-y-auto px-3.5 pb-4 pt-1">
-      <div v-if="seccion">
-        <p :class="['eyebrow mb-2 px-3', isCollapsed ? 'lg:hidden' : '']">
-          {{ t(seccion.titleKey) }}
-        </p>
+      <div v-for="(grupo, g) in grupos ?? []" :key="g" :class="g > 0 && 'mt-5'">
+        <template v-if="grupo.titleKey">
+          <p :class="['eyebrow mb-2 px-3', isCollapsed ? 'lg:hidden' : '']">
+            {{ t(grupo.titleKey) }}
+          </p>
+          <div v-if="isCollapsed" class="mx-3 mb-2 hidden h-px bg-line lg:block" />
+        </template>
         <div class="space-y-1">
           <NuxtLink
-            v-for="item in seccion.items"
+            v-for="item in grupo.items"
             :key="item.path"
             :to="item.path"
             :title="isCollapsed ? t(item.labelKey) : undefined"
@@ -101,7 +105,7 @@ defineEmits<{
 
 const { t } = useT()
 const route = useRoute()
-const { seccion } = useSidebar()
+const { grupos } = useSidebar()
 
 function isActive(path: string) {
   // Los "home" de sección matchean exacto: por prefijo se comerían a sus hermanos.

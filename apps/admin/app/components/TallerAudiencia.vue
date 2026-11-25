@@ -1,24 +1,10 @@
 <template>
-  <!-- Paso «Grupo»: a quién va el taller y cómo. El título (sale del storyboard), el grupo que asiste
-       y cuántos, el idioma del contenido (si el storyboard tiene más de uno), la modalidad y notas
-       para el educador. -->
-  <div class="ui-panel">
-    <div class="ui-panel-body grid grid-cols-1 gap-5 sm:grid-cols-2">
-      <UiInput
-        id="wizard-title"
-        v-model="state.title"
-        :label="t('wizard.fTitle')"
-        :placeholder="t('wizard.fTitlePh')"
-        required
-        class="sm:col-span-2"
-      />
-      <UiInput
-        id="wizard-group"
-        v-model="state.group"
-        :label="t('wizard.fGroup')"
-        :placeholder="t('wizard.fGroupPh')"
-        :hint="t('wizard.fGroupHint')"
-      />
+  <!-- «Audiencia» de «Nuevo Taller» (tarea 023): a quién va el taller y cómo. La audiencia (de la lista, o una nueva
+       ahí mismo) y cuántos se esperan, el idioma del contenido (si el storyboard tiene más de uno), la modalidad y notas
+       para el educador. El nombre del taller va en su propia sección, la primera. -->
+  <div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <AudienciaSelector v-model="state.audienciaId" :error="marcar && !state.audienciaId ? t('wizard.errAudience') : undefined" />
       <UiInput
         id="wizard-capacity"
         v-model="state.capacity"
@@ -70,12 +56,7 @@
 import { MODALIDADES } from '~/composables/useWorkshops'
 
 const { t } = useT()
-const { state, selectedStoryboard } = useWorkshopWizard()
-
-// El título sale del storyboard si aún no tiene (también cuando el storyboard llegó ya elegido).
-onMounted(() => {
-  if (!state.value.title.trim() && selectedStoryboard.value) state.value.title = selectedStoryboard.value.title
-})
+const { state, intentado: marcar, selectedStoryboard } = useWorkshopWizard()
 
 // El idioma del contenido sale de los que declara el storyboard; con uno solo, no se pregunta.
 const idiomas = computed(() => (selectedStoryboard.value?.languages ?? [])

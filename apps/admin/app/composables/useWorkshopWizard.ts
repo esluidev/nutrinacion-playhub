@@ -1,7 +1,7 @@
-import type { Modalidad } from '~/composables/useWorkshops'
-import type { EleccionJornada, JornadaFila } from '~/composables/useJornadas'
-import { eleccionJornada, validarDatosJornada } from '~/composables/useJornadas'
+import type { Modalidad, Workshop } from '~/composables/useWorkshops'
 import { ampliarJornada, fechaEnJornada, lugarDelTaller } from '~/utils/jornadas'
+import { faltasDelTaller, primeraIncompleta } from '~/utils/nuevoTaller'
+import { leerPertenencia, pertenenciaDe, valorDePertenencia } from '~/utils/pertenencia'
 
 export type EducatorSelectionMode = 'individual' | 'group'
 export type WizardModalidad = Modalidad
@@ -16,8 +16,10 @@ export interface WizardState {
   educatorIds: number[]
   groupIds: number[]
   title: string
-  location: string      // suelto, el lugar; dentro de una jornada, el detalle («Aula 3A»)
-  group: string         // el grupo que asiste («2.º B»)
+  lugarId: number | null      // fuera de una jornada, su lugar; dentro, el de ella (lo pone la base)
+  espacio: string             // dónde dentro del lugar («Aula 3A»)
+  audienciaId: number | null  // a quién se atiende («2.º B», «Público general»)
+  programaId: number | null   // dentro de un programa (opcional); dentro de una jornada, el de ella
   language: string      // el idioma del contenido: uno de los del storyboard
   notes: string
   capacity: string
@@ -26,41 +28,42 @@ export interface WizardState {
   timeEnd: string
   modalidad: WizardModalidad
   estado: WizardEstado
-  jornada: EleccionJornada
+  jornadaId: number | null    // dentro de una jornada: toma su lugar, sus días y su programa
   // Los días a los que se amplía la jornada en curso elegida (confirmado), para que quepa la fecha.
   ampliacion: DiasJornada | null
 }
 
-// El asistente de un taller nuevo, en cinco pasos: storyboard, educadores, cuándo y dónde, grupo y
-// resumen (donde se elige cómo se guarda: publicado, en revisión o borrador). Entra con
-// `?storyboard=`, `?fecha=` (desde el planificador) o `?jornada=<id>&fecha=` (desde el panel de la
-// jornada o «Agregar otro taller a esta jornada»). En «Cuándo y dónde» va suelto o dentro de una
-// jornada: una en curso o una nueva (se escribe en su diálogo y se crea al guardar, antes del
-// taller). Dentro de una jornada, el día es uno de los suyos y el lugar del taller es el detalle; una
-// en curso se puede ampliar con otro día. No se propone jornada por la fecha: dos jornadas la misma
-// semana en lugares distintos lo harían equivocarse.
+// «Nuevo Taller» en una sola tarjeta (tarea 023), con sus secciones a la vista: nombre, storyboard, educadores, cuándo y
+// dónde (a qué pertenece, su fecha, su hora, su lugar de la lista y su espacio) y audiencia; abajo se elige cómo se
+// guarda: publicado, en revisión o borrador. Cada sección dice lo que le falta (`faltas`, utils/nuevoTaller.ts) y,
+// después de pulsar «Publicar» (`intentado`), sus campos lo marcan. Entra con `?storyboard=`, `?fecha=` (desde el planificador), `?programa=<id>` (desde la ficha
+// del programa) o `?jornada=<id>&fecha=` (desde la ficha o el panel de la jornada, o «Agregar otro taller a esta
+// jornada»). «Pertenece a» (tarea 023) es una sola pregunta: suelto, un programa (la fecha cae en las suyas) o una
+// jornada (el día es uno de los suyos y el lugar el de ella; el taller solo añade su espacio). Una jornada se puede
+// ampliar con otro día. Las jornadas y los programas se crean en su sección, nunca aquí. No se propone jornada por la
+// fecha: dos jornadas la misma semana en lugares distintos lo harían equivocarse.
+//
+// El detalle de un taller (tarea 023) es la misma tarjeta y se edita igual: `cargarTaller` pone el taller guardado en el
+// estado, `sinGuardar` dice si algo cambió y `guardarCambios` lo guarda todo de una vez.
 export function useWorkshopWizard() {
   const route = useRoute()
   const { t, locale } = useT()
-  const { orgActiva } = useContexto()
   const { getStoryboard } = useStoryboards()
+  // El taller que se edita en su detalle (null en «Nuevo Taller»).
+  const editando = useState<number | null>('wizard-editando', () => null)
   const { getEducator, getGroup, getGroupMembers } = useEducators()
+  const { getLugar } = useLugares()
+  const { getPrograma } = useProgramas()
+  // Las jornadas de la organización (la lista compartida), para elegir una y limitar la fecha.
+  const { jornadas, getJornada, refresh: refreshJornadas, cambiarDias } = useJornadas()
+  const { getWorkshop, guardarTaller, createTaller } = useWorkshops()
 
-  const currentStep = useState('wizard-step', () => 1)
-  const direction = useState<'forward' | 'backward'>('wizard-direction', () => 'forward')
+  // Ya se pulsó «Publicar» con algo por completar: los campos que faltan se marcan.
+  const intentado = useState('wizard-intentado', () => false)
   const isSubmitting = useState('wizard-submitting', () => false)
   const isSuccess = useState('wizard-success', () => false)
   // Lo último guardado: su jornada y su fecha, para «Agregar otro taller a esta jornada».
   const ultimo = useState<{ jornadaId: number | null, fecha: string } | null>('wizard-ultimo', () => null)
-
-  // Las jornadas de la organización, para elegir una y limitar la fecha.
-  const jornadas = useState<JornadaFila[]>('wizard-jornadas', () => [])
-  const jornadasDe = useState<number | null>('wizard-jornadas-org', () => null)
-  if (import.meta.client && orgActiva.value && jornadasDe.value !== orgActiva.value.id) {
-    const oid = orgActiva.value.id
-    jornadasDe.value = oid
-    useJornadas().listar(oid).then((lista) => { jornadas.value = lista })
-  }
 
   function leerQuery() {
     const q = route.query
@@ -68,6 +71,7 @@ export function useWorkshopWizard() {
       storyboardId: q.storyboard ? Number(q.storyboard) : null,
       fecha: (q.fecha ?? q.date) ? String(q.fecha ?? q.date) : '',
       jornadaId: q.jornada ? Number(q.jornada) || null : null,
+      programaId: q.programa ? Number(q.programa) || null : null,
     }
   }
 
@@ -79,8 +83,10 @@ export function useWorkshopWizard() {
       educatorIds: [],
       groupIds: [],
       title: '',
-      location: '',
-      group: '',
+      lugarId: null,
+      espacio: '',
+      audienciaId: null,
+      programaId: q.programaId,
       language: 'es',
       notes: '',
       capacity: '25',
@@ -89,7 +95,7 @@ export function useWorkshopWizard() {
       timeEnd: '',
       modalidad: 'PRESENCIAL',
       estado: 'PUBLICADO',
-      jornada: eleccionJornada(q.jornadaId),
+      jornadaId: q.jornadaId,
       ampliacion: null,
     }
   }
@@ -119,46 +125,46 @@ export function useWorkshopWizard() {
       .filter(m => (vistos.has(m.id) ? false : (vistos.add(m.id), true)))
   })
 
-  // ── Jornada ──────────────────────────────────────────────────────────────────
-  // La jornada en curso elegida (tal como está guardada).
-  const selectedJornada = computed(() => {
-    const e = state.value.jornada
-    return e.modo === 'existente' ? jornadas.value.find(j => j.id === e.jornadaId) ?? null : null
-  })
+  // ── A qué pertenece: suelto, un programa o una jornada ─────────────────────────
+  const pertenencia = computed(() => pertenenciaDe(state.value.jornadaId, state.value.programaId))
+  const valorPertenencia = computed(() => valorDePertenencia(pertenencia.value))
+  function elegirPertenencia(valor: string | number | null) {
+    const { jornadaId, programaId } = leerPertenencia(valor)
+    state.value.jornadaId = jornadaId
+    state.value.programaId = programaId
+  }
 
-  // La jornada con la que se va a guardar: la en curso (con su ampliación, si se confirmó) o la
-  // nueva tal como se está escribiendo. Para la revisión, el lugar efectivo y los límites de la fecha.
+  // La jornada elegida (tal como está guardada).
+  const selectedJornada = computed(() => getJornada(state.value.jornadaId))
+
+  // La jornada con la que se va a guardar, con su ampliación si se confirmó. Para la revisión, el lugar efectivo y
+  // los límites de la fecha.
   const jornadaEfectiva = computed(() => {
-    const e = state.value.jornada
-    if (e.modo === 'nueva') {
-      const n = e.nueva
-      return { nombre: n.nombre.trim(), ubicacion: n.ubicacion.trim(), fecha_inicio: n.fecha_inicio, fecha_fin: n.fecha_fin || n.fecha_inicio, nueva: true, ampliada: false }
-    }
     const j = selectedJornada.value
     if (!j) return null
     const a = state.value.ampliacion
-    return { nombre: j.nombre, ubicacion: j.ubicacion, fecha_inicio: a?.fecha_inicio ?? j.fecha_inicio, fecha_fin: a?.fecha_fin ?? j.fecha_fin, nueva: false, ampliada: !!a }
+    return { nombre: j.nombre, ubicacion: j.ubicacion, programaId: j.programa_id, fecha_inicio: a?.fecha_inicio ?? j.fecha_inicio, fecha_fin: a?.fecha_fin ?? j.fecha_fin, ampliada: !!a }
   })
 
-  // «Sede central · Aula 3A» dentro de una jornada; suelto, su lugar.
-  const lugarEfectivo = computed(() => lugarDelTaller({ ubicacion: state.value.location }, jornadaEfectiva.value))
-
-  // Con una jornada nueva, la fecha vive entre sus días (min/max). Con una en curso no se limita el
-  // calendario: otro día ofrece ampliarla (comprobarFecha).
-  const dateMin = computed(() => (state.value.jornada.modo === 'nueva' ? jornadaEfectiva.value?.fecha_inicio || undefined : undefined))
-  const dateMax = computed(() => (state.value.jornada.modo === 'nueva' ? jornadaEfectiva.value?.fecha_fin || undefined : undefined))
-  const dateFueraDeJornada = computed(() => {
-    const j = jornadaEfectiva.value
-    return state.value.jornada.modo === 'nueva' && !!j?.fecha_inicio && !!state.value.date && !fechaEnJornada(j, state.value.date)
+  // El programa con el que queda: el de su jornada, si va en una; si no, el elegido (o ninguno).
+  // El taller tiene que caer en sus fechas (lo exige la base).
+  const programaEfectivo = computed(() => getPrograma(jornadaEfectiva.value ? jornadaEfectiva.value.programaId : state.value.programaId))
+  const dateFueraDePrograma = computed(() => {
+    const p = programaEfectivo.value
+    return !!p && !!state.value.date && !fechaEnJornada(p, state.value.date)
   })
 
-  // La jornada está respondida: suelto, una en curso elegida o una nueva completa.
-  const jornadaLista = computed(() => {
-    const e = state.value.jornada
-    if (e.modo === 'existente') return !!selectedJornada.value
-    if (e.modo === 'nueva') return validarDatosJornada(e.nueva) === null
-    return true
-  })
+  // «Sede central · Aula 3A»: el lugar (el de la jornada, si va en una) y su espacio.
+  const lugarEfectivo = computed(() => lugarDelTaller(
+    jornadaEfectiva.value ? jornadaEfectiva.value.ubicacion : getLugar(state.value.lugarId)?.nombre,
+    state.value.espacio,
+  ))
+
+  // Dentro de un programa (sin jornada), la fecha vive entre sus fechas. Con una jornada no se limita el calendario:
+  // otro día ofrece ampliarla (comprobarFecha). Uno ya publicado, en su detalle, se mueve desde hoy.
+  const fechaDesde = useState('wizard-fecha-desde', () => '')
+  const dateMin = computed(() => [!state.value.jornadaId ? programaEfectivo.value?.fecha_inicio ?? '' : '', fechaDesde.value].sort().at(-1) || undefined)
+  const dateMax = computed(() => (!state.value.jornadaId ? programaEfectivo.value?.fecha_fin : undefined))
 
   // Ampliar la jornada en curso: la fecha que no cabe y los días que tendría. La última fecha
   // aceptada (dentro de sus días o con la ampliación confirmada) es a la que se vuelve con «No».
@@ -216,30 +222,28 @@ export function useWorkshopWizard() {
     else comprobarFecha()
   }
 
-  // Los vigilantes de la jornada, una sola vez: los registra la página del asistente (varios
+  // Los vigilantes de la jornada, una sola vez: los registra la página de «Nuevo Taller» (varios
   // componentes usan este composable y cada uno los duplicaría).
   function vigilarJornada() {
     watch(() => selectedJornada.value?.id, (id, antes) => {
       if (id !== antes) alElegirJornada()
     })
-    // Fuera de una jornada en curso no hay nada que ampliar.
-    watch(() => state.value.jornada.modo, (modo) => {
-      if (modo !== 'existente') {
+    // Fuera de una jornada no hay nada que ampliar.
+    watch(() => state.value.jornadaId, (id) => {
+      if (!id) {
         state.value.ampliacion = null
         ampliarPendiente.value = null
       }
     })
-    // Una jornada nueva y un taller sin fecha: la fecha, su primer día.
-    watch(() => state.value.jornada.nueva.fecha_inicio, (inicio) => {
-      if (state.value.jornada.modo === 'nueva' && inicio && !state.value.date) state.value.date = inicio
-    })
   }
 
   function selectStoryboard(id: number) {
+    // El nombre sigue al storyboard mientras no se haya escrito otro.
+    const antes = selectedStoryboard.value?.title
     state.value.storyboardId = id
     const sb = getStoryboard(id)
     if (sb) {
-      if (!state.value.title) {
+      if (!state.value.title.trim() || state.value.title === antes) {
         state.value.title = sb.title
       }
       if (!sb.languages.includes(state.value.language)) {
@@ -290,116 +294,162 @@ export function useWorkshopWizard() {
     return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
   }
 
-  // Un grupo vale si tiene al menos un educador activo: un grupo vacío no asigna a nadie y un
-  // taller publicado necesita educador. La fecha fuera de una jornada en curso no bloquea el botón:
-  // al seguir se pregunta si se amplía.
-  const canProceed = computed(() => {
-    switch (currentStep.value) {
-      case 1: return state.value.storyboardId !== null
-      case 2: return state.value.educatorMode === 'group'
-        ? selectedGroupsMembers.value.length > 0
-        : state.value.educatorIds.length > 0
-      case 3: return state.value.date !== '' && state.value.timeStart !== '' && jornadaLista.value && !dateFueraDeJornada.value
-      case 4: return state.value.title.trim() !== ''
-      case 5: return true
-      default: return false
-    }
-  })
+  // Lo que falta para publicar, por sección. Un grupo cuenta por sus miembros activos: uno vacío no asigna a nadie, y un
+  // taller publicado necesita educador.
+  const faltas = computed(() => faltasDelTaller({
+    titulo: state.value.title,
+    storyboardId: state.value.storyboardId,
+    educadores: state.value.educatorMode === 'group' ? selectedGroupsMembers.value.length : state.value.educatorIds.length,
+    fecha: state.value.date,
+    hora: state.value.timeStart,
+    lugarId: state.value.lugarId,
+    enJornada: !!selectedJornada.value,
+    fueraDelPrograma: dateFueraDePrograma.value,
+    audienciaId: state.value.audienciaId,
+  }))
+  const primeraSinCompletar = computed(() => primeraIncompleta(faltas.value))
 
-  const steps = computed(() => [
-    { id: 1, label: t('wizard.stepStoryboard') },
-    { id: 2, label: t('wizard.stepEducators') },
-    { id: 3, label: t('wizard.stepWhen') },
-    { id: 4, label: t('wizard.stepGroup') },
-    { id: 5, label: t('wizard.stepSummary') },
-  ])
-
-  function goToStep(step: number) {
-    if (step < currentStep.value) {
-      direction.value = 'backward'
-      currentStep.value = step
-    }
-    else if (step > currentStep.value && canProceed.value) {
-      if (currentStep.value === 3 && !comprobarFecha()) return
-      direction.value = 'forward'
-      currentStep.value = step
-    }
-  }
-
-  function nextStep() {
-    if (canProceed.value && currentStep.value < 5) {
-      if (currentStep.value === 3 && !comprobarFecha()) return
-      direction.value = 'forward'
-      currentStep.value++
-    }
-  }
-
-  function prevStep() {
-    if (currentStep.value > 1) {
-      direction.value = 'backward'
-      currentStep.value--
-    }
-  }
-
-  // Guarda el taller. Con una jornada nueva, primero la crea; con una en curso ampliada, primero
-  // amplía sus días. Devuelve la jornada y la fecha del taller (para «Crear y agregar otro»), o null
-  // si algo falló (con su aviso).
-  async function submit(): Promise<{ jornadaId: number | null, fecha: string } | null> {
-    if (!state.value.storyboardId) return null
-    isSubmitting.value = true
-    const { toast } = useToast()
-    const api = useJornadas()
-
-    let jornadaId: number | null = null
-    let creada: number | null = null
-    const eleccion = state.value.jornada
-    if (eleccion.modo === 'existente' && selectedJornada.value) {
-      jornadaId = selectedJornada.value.id
-      if (state.value.ampliacion) {
-        const { error } = await api.cambiarDias(jornadaId, state.value.ampliacion)
-        if (error) {
-          isSubmitting.value = false
-          toast.error(error)
-          return null
-        }
-      }
-    }
-    else if (eleccion.modo === 'nueva') {
-      if (!orgActiva.value) {
-        isSubmitting.value = false
-        toast.error(t('ctx.noOrgActive'))
-        return null
-      }
-      const { id, error } = await api.crear(orgActiva.value.id, eleccion.nueva)
-      if (error || !id) {
-        isSubmitting.value = false
-        if (error) toast.error(error)
-        return null
-      }
-      jornadaId = creada = id
-    }
-
-    // Una asignación por educador; si vino de un grupo, se recuerda el grupo. Grupos con
-    // miembros solapados no duplican asignaciones (unique en la base, y aquí se dedupe).
+  // Una asignación por educador; si vino de un grupo, se recuerda el grupo. Grupos con miembros solapados no duplican
+  // asignaciones (unique en la base, y aquí se dedupe).
+  function asignacionesElegidas() {
     const crudas = state.value.educatorMode === 'group'
       ? selectedGroups.value.flatMap(g => getGroupMembers(g.id).map(m => ({ educadorId: m.id, grupoId: g.id })))
       : state.value.educatorIds.map(id => ({ educadorId: id, grupoId: null as number | null }))
     const vistos = new Set<number>()
-    const asignaciones = crudas.filter((a) => {
+    return crudas.filter((a) => {
       if (vistos.has(a.educadorId)) return false
       vistos.add(a.educadorId)
       return true
     })
+  }
 
-    const { createTaller } = useWorkshops()
-    const { id, error } = await createTaller({
+  // ── El detalle: el taller guardado en la misma tarjeta ──────────────────────────
+  // El estado con lo que tiene guardado. Sin nombre propio, el del storyboard (como en «Nuevo Taller»).
+  function estadoDeTaller(w: Workshop): WizardState {
+    return {
+      storyboardId: w.storyboardId,
+      educatorMode: 'individual',
+      educatorIds: w.asignados.map(a => a.id),
+      groupIds: [],
+      title: w.editable.titulo || getStoryboard(w.storyboardId)?.title || '',
+      lugarId: w.editable.lugarId,
+      espacio: w.editable.espacio,
+      audienciaId: w.editable.audienciaId,
+      programaId: w.editable.programaId,
+      language: w.language,
+      notes: w.notes,
+      capacity: w.capacity ? String(w.capacity) : '',
+      date: w.date,
+      timeStart: w.editable.horaInicio,
+      timeEnd: w.editable.horaFin,
+      modalidad: w.modalidad,
+      estado: w.estado === 'EN_REVISION' || w.estado === 'PUBLICADO' ? w.estado : 'BORRADOR',
+      jornadaId: w.editable.jornadaId,
+      ampliacion: null,
+    }
+  }
+
+  // Lo que cuenta para saber si algo cambió: los datos y a quién se asigna (un grupo cuenta por sus miembros).
+  function huella(s: WizardState, educadores: number[]) {
+    return JSON.stringify([
+      s.title.trim(), s.storyboardId, s.date, s.timeStart, s.timeEnd, s.jornadaId, s.jornadaId ? null : s.lugarId,
+      s.jornadaId ? null : s.programaId, s.espacio.trim(), s.audienciaId, s.capacity, s.language, s.modalidad,
+      s.notes.trim(), s.ampliacion, [...educadores].sort((a, b) => a - b),
+    ])
+  }
+
+  // Pone el taller en la tarjeta: lo guardado, sin preguntas pendientes (y sin marcas, si es otro taller). Uno publicado
+  // se mueve desde hoy.
+  function cargarTaller(w: Workshop) {
+    if (editando.value !== w.id) intentado.value = false
+    editando.value = w.id
+    isSubmitting.value = false
+    ampliarPendiente.value = null
+    fechaAceptada.value = w.date
+    fechaDesde.value = w.estado === 'PUBLICADO' ? hoyLocal() : ''
+    state.value = estadoDeTaller(w)
+  }
+
+  // ¿La tarjeta tiene lo que este taller tiene guardado? Y, con el que se edita, si hay algo sin guardar.
+  function coincideCon(w: Workshop) {
+    return huella(state.value, asignacionesElegidas().map(a => a.educadorId)) === huella(estadoDeTaller(w), w.asignados.map(a => a.id))
+  }
+  const sinGuardar = computed(() => {
+    const w = editando.value ? getWorkshop(editando.value) : undefined
+    return !!w && !coincideCon(w)
+  })
+
+  // Guarda los cambios del taller que se edita. Con una jornada ampliada, primero amplía sus días. Devuelve si se
+  // guardó (si no, con su aviso).
+  async function guardarCambios(): Promise<boolean> {
+    const id = editando.value
+    if (!id || !state.value.storyboardId) return false
+    isSubmitting.value = true
+    const { toast } = useToast()
+    const jornadaId = selectedJornada.value?.id ?? null
+    if (jornadaId && state.value.ampliacion) {
+      const { error } = await cambiarDias(jornadaId, state.value.ampliacion)
+      if (error) {
+        isSubmitting.value = false
+        toast.error(error)
+        return false
+      }
+    }
+    const { error } = await guardarTaller(id, {
       titulo: state.value.title,
       storyboardId: state.value.storyboardId,
       fecha: state.value.date,
       horaInicio: state.value.timeStart,
       horaFin: state.value.timeEnd,
-      ubicacion: state.value.location,
-      grupo: state.value.group,
+      jornadaId,
+      lugarId: state.value.lugarId,
+      espacio: state.value.espacio,
+      audienciaId: state.value.audienciaId,
+      programaId: state.value.programaId,
+      capacidad: state.value.capacity ? Number(state.value.capacity) : null,
+      idioma: state.value.language,
+      modalidad: state.value.modalidad,
+      notas: state.value.notes,
+      asignaciones: asignacionesElegidas(),
+    })
+    isSubmitting.value = false
+    if (error) {
+      toast.error(error)
+      return false
+    }
+    // Cuántos talleres lleva cada jornada (y sus días) pudo cambiar.
+    void refreshJornadas()
+    return true
+  }
+
+  // Guarda el taller. Con una jornada ampliada, primero amplía sus días. Devuelve la jornada y la fecha del taller
+  // (para «Agregar otro taller a esta jornada»), o null si algo falló (con su aviso).
+  async function submit(): Promise<{ jornadaId: number | null, fecha: string } | null> {
+    if (!state.value.storyboardId) return null
+    isSubmitting.value = true
+    const { toast } = useToast()
+
+    const jornadaId = selectedJornada.value?.id ?? null
+    if (jornadaId && state.value.ampliacion) {
+      const { error } = await cambiarDias(jornadaId, state.value.ampliacion)
+      if (error) {
+        isSubmitting.value = false
+        toast.error(error)
+        return null
+      }
+    }
+
+    const asignaciones = asignacionesElegidas()
+    const { error } = await createTaller({
+      titulo: state.value.title,
+      storyboardId: state.value.storyboardId,
+      fecha: state.value.date,
+      horaInicio: state.value.timeStart,
+      horaFin: state.value.timeEnd,
+      lugarId: jornadaId ? null : state.value.lugarId,
+      espacio: state.value.espacio,
+      audienciaId: state.value.audienciaId,
+      programaId: jornadaId ? null : state.value.programaId,
       idioma: state.value.language,
       notas: state.value.notes,
       capacidad: state.value.capacity ? Number(state.value.capacity) : null,
@@ -410,8 +460,6 @@ export function useWorkshopWizard() {
     })
 
     if (error) {
-      // La jornada recién creada sin su taller no se vería en ninguna parte: se deshace.
-      if (creada && !id) await api.descartarSiVacia(creada)
       isSubmitting.value = false
       toast.error(error)
       return null
@@ -421,21 +469,19 @@ export function useWorkshopWizard() {
     return ultimo.value
   }
 
-  // Al abrir el asistente se vuelven a pedir las jornadas: una creada o ampliada en esta misma
-  // sesión tiene que verse como está. La lista se vacía mientras tanto para no comprobar la fecha
-  // contra días viejos; al llegar, la jornada preseleccionada se aplica (vigilarJornada).
+  // Al abrir «Nuevo Taller» se vuelven a pedir las jornadas: una creada o ampliada en esta misma sesión tiene que verse
+  // como está; al llegar, la jornada preseleccionada se aplica (vigilarJornada).
   function resetWizard() {
-    currentStep.value = 1
-    direction.value = 'forward'
+    editando.value = null
+    fechaDesde.value = ''
+    intentado.value = false
     isSubmitting.value = false
     isSuccess.value = false
     ultimo.value = null
     ampliarPendiente.value = null
     fechaAceptada.value = ''
-    jornadas.value = []
     state.value = estadoInicial()
-    const oid = orgActiva.value?.id
-    if (oid) useJornadas().listar(oid).then((lista) => { jornadas.value = lista })
+    void refreshJornadas()
   }
 
   // «Lunes, 9 de noviembre de 2026», en el idioma de la UI.
@@ -446,22 +492,26 @@ export function useWorkshopWizard() {
   }
 
   return {
-    currentStep,
-    direction,
     state,
-    steps,
+    intentado,
+    faltas,
+    primeraSinCompletar,
     isSubmitting,
     isSuccess,
     ultimo,
     hasPreselectedStoryboard,
     hasPreselectedDate,
     jornadas,
+    pertenencia,
+    valorPertenencia,
+    elegirPertenencia,
     selectedJornada,
     jornadaEfectiva,
+    programaEfectivo,
+    dateFueraDePrograma,
     lugarEfectivo,
     dateMin,
     dateMax,
-    dateFueraDeJornada,
     ampliarPendiente,
     comprobarFecha,
     confirmarAmpliar,
@@ -471,16 +521,16 @@ export function useWorkshopWizard() {
     selectedEducators,
     selectedGroups,
     selectedGroupsMembers,
-    canProceed,
     selectStoryboard,
     toggleEducator,
     toggleGroup,
     onTimeStartChange,
-    goToStep,
-    nextStep,
-    prevStep,
     submit,
     resetWizard,
+    cargarTaller,
+    coincideCon,
+    sinGuardar,
+    guardarCambios,
     formatDateLong,
   }
 }

@@ -1,10 +1,10 @@
 // Reglas puras de las jornadas (utils/jornadas.ts): las que siguen en curso, el lugar efectivo de un
-// taller, ampliar una jornada para que quepa un día, el agrupado de la lista de talleres y las bandas
+// taller, ampliar una jornada para que quepa un día y las bandas
 // de la vista de semana del planificador.
 import { describe, expect, it } from 'vitest'
 import {
-  agruparPorJornada, ampliarJornada, bandasSemana, diasDeJornada, diasParaElegir, jornadasDelDia, jornadasEnCurso,
-  lugarDelTaller, rangoJornada, sumarDias,
+  ampliarJornada, bandasSemana, diasDeJornada, diasParaElegir, filasDeBandas, jornadasDelDia,
+  jornadasEnCurso, lugarDelTaller, rangoJornada, sumarDias, talleresPorDia,
 } from '~/utils/jornadas'
 
 const SEMANA = { id: 1, nombre: 'Semana de la nutrición', fecha_inicio: '2026-11-09', fecha_fin: '2026-11-13' }   // lunes a viernes
@@ -39,17 +39,16 @@ describe('jornadasEnCurso', () => {
 })
 
 describe('lugarDelTaller', () => {
-  const SEDE = { ubicacion: 'Sede central' }
-  it('dentro de una jornada, su lugar y el detalle del taller', () => {
-    expect(lugarDelTaller({ ubicacion: 'Aula 3A' }, SEDE)).toBe('Sede central · Aula 3A')
+  it('el lugar y su espacio', () => {
+    expect(lugarDelTaller('Sede central', 'Aula 3A')).toBe('Sede central · Aula 3A')
   })
-  it('sin detalle, solo el lugar de la jornada', () => {
-    expect(lugarDelTaller({ ubicacion: null }, SEDE)).toBe('Sede central')
-    expect(lugarDelTaller({ ubicacion: '  ' }, SEDE)).toBe('Sede central')
+  it('sin espacio, solo el lugar', () => {
+    expect(lugarDelTaller('Sede central', null)).toBe('Sede central')
+    expect(lugarDelTaller('Sede central', '  ')).toBe('Sede central')
   })
-  it('suelto, su propio lugar (o nada)', () => {
-    expect(lugarDelTaller({ ubicacion: 'Escuela Norte' }, null)).toBe('Escuela Norte')
-    expect(lugarDelTaller({ ubicacion: null }, null)).toBe('')
+  it('sin lugar todavía (un borrador), el espacio o nada', () => {
+    expect(lugarDelTaller(null, 'Aula 3A')).toBe('Aula 3A')
+    expect(lugarDelTaller(null, null)).toBe('')
   })
 })
 
@@ -108,17 +107,28 @@ describe('bandasSemana', () => {
   })
 })
 
-describe('agruparPorJornada', () => {
-  const w = (id: number, jornada: typeof SEMANA | null) => ({ id, jornada })
-  it('un grupo por jornada en el orden de sus fechas y los sueltos al final', () => {
-    const grupos = agruparPorJornada([w(1, null), w(2, SEMANA), w(3, DIA), w(4, SEMANA), w(5, MES)])
-    expect(grupos.map(g => g.jornada?.id ?? null)).toEqual([3, 1, 2, null])
-    expect(grupos[1]!.workshops.map(x => x.id)).toEqual([2, 4])
-    expect(grupos[3]!.workshops.map(x => x.id)).toEqual([1])
+describe('las filas de las bandas de la semana', () => {
+  it('las que no se cruzan comparten fila; las que se cruzan bajan', () => {
+    const filas = filasDeBandas([{ desde: 1, hasta: 3 }, { desde: 2, hasta: 2 }, { desde: 4, hasta: 7 }, { desde: 3, hasta: 5 }])
+    expect(filas.map(b => b.fila)).toEqual([1, 2, 1, 2])
   })
-  it('sin sueltos no hay grupo vacío al final; sin jornadas, un solo grupo suelto', () => {
-    expect(agruparPorJornada([w(1, DIA)]).map(g => g.jornada?.id ?? null)).toEqual([2])
-    expect(agruparPorJornada([w(1, null), w(2, null)]).map(g => g.jornada)).toEqual([null])
-    expect(agruparPorJornada([])).toEqual([])
+})
+
+describe('los días de la ficha de una jornada', () => {
+  const w = (id: number, date: string) => ({ id, date })
+  it('todos sus días, también los vacíos, con sus talleres en el orden en que llegan', () => {
+    const { dias, sinDia } = talleresPorDia(SEMANA, [w(1, '2026-11-11'), w(2, '2026-11-09'), w(3, '2026-11-11')])
+    expect(dias.map(d => d.fecha)).toEqual(['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13'])
+    expect(dias.map(d => d.talleres.map(x => x.id))).toEqual([[2], [], [1, 3], [], []])
+    expect(sinDia).toEqual([])
+  })
+  it('sin fecha o fuera de sus días, aparte', () => {
+    const { dias, sinDia } = talleresPorDia(DIA, [w(1, ''), w(2, '2026-12-01'), w(3, DIA.fecha_inicio)])
+    expect(dias.map(d => d.talleres.map(x => x.id))).toEqual([[3]])
+    expect(sinDia.map(x => x.id)).toEqual([1, 2])
+  })
+  it('más larga que el máximo: solo los días con talleres', () => {
+    const { dias } = talleresPorDia(MES, [w(1, '2026-11-20'), w(2, '2026-11-05')])
+    expect(dias.map(d => d.fecha)).toEqual(['2026-11-05', '2026-11-20'])
   })
 })

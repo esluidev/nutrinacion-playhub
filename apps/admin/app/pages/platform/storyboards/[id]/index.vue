@@ -2,7 +2,7 @@
   <div v-if="sb">
     <UiPageHeader :title="loc(sb.titulo)" :description="sb.slug">
       <template #actions>
-        <!-- El runner vive en Player: el enlace se arma con la URL de Player de `configuracion`. Sin esa
+        <!-- El runner vive en Player: el enlace se arma con la URL de Player de `configuraciones`. Sin esa
              clave (o en demo) el botón no aparece — un "Probar" que no abre nada es peor. -->
         <UiButton v-if="urlRunner" tone="neutral" icon="play" :href="urlRunner" target="_blank" rel="noopener">
           {{ t('platform.sbs.test') }}
@@ -38,6 +38,11 @@
             <div>
               <p class="eyebrow mb-1">{{ t('platform.sbs.fCountries') }}</p>
               <p class="text-body font-extrabold text-ink">{{ sb.paises_disponibles.length ? sb.paises_disponibles.join(', ') : t('platform.sbs.noCountries') }}</p>
+            </div>
+            <!-- La app del hogar (tarea 022): se decide en Player, como el resto de la publicación. -->
+            <div>
+              <p class="eyebrow mb-1">{{ t('platform.sbs.fHome') }}</p>
+              <p class="text-body font-extrabold text-ink">{{ sb.publicado_hogar ? t('platform.sbs.homeYes') : t('platform.sbs.homeNo') }}</p>
             </div>
           </div>
         </div>

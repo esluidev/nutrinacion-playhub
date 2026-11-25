@@ -36,7 +36,7 @@
         <UiBadge :tone="row.activo ? 'lime' : 'neutral'" :dot="row.activo">{{ row.activo ? t('collabs.active') : t('collabs.inactive') }}</UiBadge>
       </template>
       <template #cell-acciones="{ row }">
-        <!-- Acciones de tabla: neutras, como en el kit -->
+        <!-- Acciones de tabla, neutras: restablecer su contraseña, editar (su estado) y quitarlo de la organización -->
         <div class="flex items-center justify-end gap-2">
           <!-- Olvidó su contraseña: el titular o soporte le genera un enlace (decisión 009) -->
           <UiButton
@@ -49,12 +49,8 @@
             :title="t('auth.recovery.action')"
             @click.stop="restableciendo = row"
           />
-          <UiButton v-if="row.activo" variant="outline" size="sm" @click.stop="cambiarActivo(row, false)">
-            {{ t('collabs.deactivate') }}
-          </UiButton>
-          <UiButton v-else variant="outline" size="sm" @click.stop="cambiarActivo(row, true)">
-            {{ t('collabs.reactivate') }}
-          </UiButton>
+          <UiButton tone="neutral" size="sm" icon="pencil" icon-only :label="t('common.edit')" :title="t('common.edit')" @click.stop="abrirEdicion(row)" />
+          <UiButton tone="neutral" size="sm" icon="trash" icon-only :label="t('collabs.remove')" :title="t('collabs.remove')" @click.stop="quitando = row" />
         </div>
       </template>
     </UiDataTable>
@@ -118,6 +114,38 @@
       <p>{{ t('invLink.revokeWarn', { nombre: revocando ? (nombreInvitado(revocando) ?? revocando.email ?? '') : '' }) }}</p>
     </UiConfirmDialog>
 
+    <!-- Editar: su estado (los datos de la persona son de su perfil) -->
+    <UiDialog :open="!!editando" :title="t('collabs.editTitle')" @update:open="(v) => { if (!v) editando = null }">
+      <template v-if="editando">
+        <div class="flex items-center gap-3">
+          <UiAvatar :name="editando.nombre" :initials="editando.initials" />
+          <div class="min-w-0">
+            <p class="truncate text-body font-extrabold text-ink">{{ editando.nombre }}</p>
+            <p class="truncate text-caption font-semibold text-muted">{{ editando.email }}</p>
+          </div>
+        </div>
+        <div class="mt-5">
+          <UiSwitch v-model="activoEditado" :label="t('collabs.activeLabel')" />
+          <p class="field-help">{{ t('collabs.activeHelp') }}</p>
+        </div>
+      </template>
+      <template #actions>
+        <UiButton :loading="enCurso" icon="check" @click="guardarEdicion">{{ t('common.save') }}</UiButton>
+      </template>
+    </UiDialog>
+
+    <!-- Quitarlo de la organización: en coral, con confirmación -->
+    <UiConfirmDialog
+      :open="!!quitando"
+      :title="t('collabs.removeTitle', { nombre: quitando?.nombre ?? '' })"
+      :confirm-label="t('collabs.remove')"
+      :loading="enCurso"
+      @update:open="(v) => { if (!v) quitando = null }"
+      @confirm="confirmarQuitar"
+    >
+      <p>{{ t('collabs.removeText') }}</p>
+    </UiConfirmDialog>
+
     <EnlaceRecuperacion
       :open="!!restableciendo"
       :email="restableciendo?.email"
@@ -133,7 +161,7 @@ import type { ColaboradorFila, InvitacionPendiente } from '~/composables/useCola
 definePageMeta({ layout: 'dashboard' })
 
 const { t, locale } = useT()
-const { colaboradores, loading, setActivo, listInvitacionesPendientes, revocarInvitacion } = useColaboradores()
+const { colaboradores, loading, setActivo, quitar, listInvitacionesPendientes, revocarInvitacion } = useColaboradores()
 const { esTitularOrgActiva, esSuperadmin } = useContexto()
 const { toast } = useToast()
 
@@ -171,13 +199,36 @@ async function cargarPendientes() {
 // «Reenviar correo»: toast del resultado y la lista se vuelve a leer con el estado nuevo.
 const { reenviando, reenviar } = useReenvioInvitacion(cargarPendientes)
 
-async function cambiarActivo(c: ColaboradorFila, activo: boolean) {
-  const { error } = await setActivo(c.id, activo)
-  if (error) {
-    toast.error(error)
-    return
+// Editar: su estado, con el interruptor (nunca un botón «Desactivar» en la fila)
+const editando = ref<ColaboradorFila | null>(null)
+const activoEditado = ref(true)
+function abrirEdicion(c: ColaboradorFila) {
+  editando.value = c
+  activoEditado.value = c.activo
+}
+async function guardarEdicion() {
+  const c = editando.value
+  if (!c) return
+  if (activoEditado.value !== c.activo) {
+    enCurso.value = true
+    const { error } = await setActivo(c.id, activoEditado.value)
+    enCurso.value = false
+    if (error) { toast.error(error); return }
   }
-  toast.success(activo ? t('collabs.reactivated') : t('collabs.deactivated'))
+  toast.success(t('collabs.saved'))
+  editando.value = null
+}
+
+const quitando = ref<ColaboradorFila | null>(null)
+async function confirmarQuitar() {
+  const c = quitando.value
+  if (!c) return
+  enCurso.value = true
+  const { error } = await quitar(c.id)
+  enCurso.value = false
+  quitando.value = null
+  if (error) { toast.error(error); return }
+  toast.success(t('collabs.removed'))
 }
 
 async function copiarEnlace(token: string) {

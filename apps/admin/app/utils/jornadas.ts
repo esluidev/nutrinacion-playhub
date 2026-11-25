@@ -1,10 +1,10 @@
 // Reglas puras de las jornadas (decisión 011): una jornada es dónde y cuándo se va, un lugar y uno
-// o varios días. Se crea o se elige al programar un taller; sus talleres caen en sus días y heredan
-// su lugar (el del taller pasa a ser el detalle: «Aula 3A»). Vive en el planificador (una banda
-// sobre sus días) y en los talleres (agrupados por jornada).
+// o varios días. Se crea o se elige al programar un taller; sus talleres caen en sus días y toman su
+// lugar (tarea 021: lo pone la base); el taller añade su espacio («Aula 3A»). Vive en el
+// planificador (una banda sobre sus días) y en los talleres («Pertenece a»).
 // Fechas como 'YYYY-MM-DD' (días del calendario, utils/fechas.ts): se comparan como texto.
-// Funciones puras: las alimentan usePlanner, useWorkshopWizard, JornadaSelector y la lista de
-// talleres; los tests las ejercitan directo.
+// Funciones puras: las alimentan usePlanner, useWorkshopWizard, la sección de Jornadas y la lista
+// de talleres; los tests las ejercitan directo.
 
 import { aFecha, fechaCorta, isoLocal } from './fechas'
 
@@ -15,7 +15,7 @@ export interface JornadaRango {
   fecha_fin: string
 }
 
-/** Lo que un taller sabe de su jornada: sus días y su lugar. */
+/** Lo que un taller sabe de su jornada: sus días y el nombre de su lugar. */
 export interface JornadaResumen extends JornadaRango {
   ubicacion: string
 }
@@ -63,12 +63,18 @@ export function jornadasEnCurso<J extends JornadaRango>(jornadas: J[], hoy: stri
     .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio) || a.nombre.localeCompare(b.nombre))
 }
 
-// Dónde es el taller. Dentro de una jornada, el lugar de la jornada y, si lo hay, el detalle del
-// taller: «Sede central · Aula 3A». Suelto, su propio lugar. Vacío si no se sabe.
-export function lugarDelTaller(taller: { ubicacion: string | null }, jornada: { ubicacion: string } | null): string {
-  const propio = taller.ubicacion?.trim() ?? ''
-  if (!jornada) return propio
-  return [jornada.ubicacion.trim(), propio].filter(Boolean).join(' · ')
+/** Para la lista de su sección: primero las que no han terminado, por su inicio; las terminadas al final, la más
+ *  reciente arriba. */
+export function ordenarJornadas<J extends JornadaRango>(jornadas: J[], hoy: string): J[] {
+  const vivas = jornadasEnCurso(jornadas, hoy)
+  const terminadas = jornadas.filter(j => j.fecha_fin < hoy).sort((a, b) => b.fecha_fin.localeCompare(a.fecha_fin))
+  return [...vivas, ...terminadas]
+}
+
+// Dónde es el taller: su lugar y, si lo hay, su espacio: «Sede central · Aula 3A». Dentro de una
+// jornada, el lugar es el de ella (lo pone la base). Vacío si no se sabe.
+export function lugarDelTaller(lugar: string | null | undefined, espacio: string | null | undefined): string {
+  return [lugar?.trim(), espacio?.trim()].filter(Boolean).join(' · ')
 }
 
 // Los días que tendría la jornada para que el día quepa: se alarga por el lado que haga falta.
@@ -78,6 +84,32 @@ export function ampliarJornada(j: Pick<JornadaRango, 'fecha_inicio' | 'fecha_fin
     fecha_inicio: fecha && fecha < j.fecha_inicio ? fecha : j.fecha_inicio,
     fecha_fin: fecha && fecha > j.fecha_fin ? fecha : j.fecha_fin,
   }
+}
+
+/**
+ * Los días de la ficha de una jornada, cada uno con sus talleres en el orden en que llegan. Con hasta `max` días, todos,
+ * también los que aún no tienen talleres (para agregarles uno); más larga, solo los que tienen. Los talleres sin fecha o
+ * fuera de sus días (un borrador a medias) van aparte, en `sinDia`.
+ */
+export function talleresPorDia<W extends { date: string }>(
+  j: Pick<JornadaRango, 'fecha_inicio' | 'fecha_fin'>,
+  talleres: W[],
+  max = 14,
+): { dias: { fecha: string, talleres: W[] }[], sinDia: W[] } {
+  const n = diasDeJornada(j)
+  const porFecha = new Map<string, W[]>(n <= max ? Array.from({ length: n }, (_, i) => [sumarDias(j.fecha_inicio, i), []]) : [])
+  const sinDia: W[] = []
+  for (const w of talleres) {
+    if (!w.date || !fechaEnJornada(j, w.date)) {
+      sinDia.push(w)
+      continue
+    }
+    porFecha.set(w.date, [...(porFecha.get(w.date) ?? []), w])
+  }
+  const dias = [...porFecha.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([fecha, lista]) => ({ fecha, talleres: lista }))
+  return { dias, sinDia }
 }
 
 /** Las jornadas que pasan por un día, ordenadas por inicio (para marcar el día en la vista de mes). */
@@ -111,27 +143,14 @@ export function bandasSemana<J extends JornadaRango>(jornadas: J[], lunes: strin
     .sort((a, b) => a.jornada.fecha_inicio.localeCompare(b.jornada.fecha_inicio) || diasDeJornada(b.jornada) - diasDeJornada(a.jornada))
 }
 
-export interface GrupoPorJornada<W, J extends JornadaRango> {
-  jornada: J | null   // null = los talleres sueltos, siempre al final
-  workshops: W[]
-}
-
-// La lista de talleres agrupada por jornada: un grupo por jornada, en el orden de sus fechas,
-// y los sueltos al final (si hay). Dentro de cada grupo se conserva el orden que llega.
-export function agruparPorJornada<W extends { jornada: JornadaRango | null }, J extends JornadaRango = NonNullable<W['jornada']>>(workshops: W[]): GrupoPorJornada<W, J>[] {
-  const grupos = new Map<number, GrupoPorJornada<W, J>>()
-  const sueltos: W[] = []
-  for (const w of workshops) {
-    if (!w.jornada) {
-      sueltos.push(w)
-      continue
-    }
-    const g = grupos.get(w.jornada.id) ?? { jornada: w.jornada as J, workshops: [] }
-    g.workshops.push(w)
-    grupos.set(w.jornada.id, g)
-  }
-  const lista = [...grupos.values()]
-    .sort((a, b) => a.jornada!.fecha_inicio.localeCompare(b.jornada!.fecha_inicio) || a.jornada!.nombre.localeCompare(b.jornada!.nombre))
-  if (sueltos.length) lista.push({ jornada: null, workshops: sueltos })
-  return lista
+/** Cada banda en su fila, la primera libre: dos jornadas que no se cruzan en la semana comparten fila; las que se cruzan
+ *  bajan a la siguiente. Filas desde 1, en el orden en que llegan (bandasSemana). */
+export function filasDeBandas<B extends { desde: number, hasta: number }>(bandas: B[]): (B & { fila: number })[] {
+  const finDeFila: number[] = []
+  return bandas.map((b) => {
+    let fila = finDeFila.findIndex(fin => fin < b.desde)
+    if (fila === -1) fila = finDeFila.push(b.hasta) - 1
+    else finDeFila[fila] = b.hasta
+    return { ...b, fila: fila + 1 }
+  })
 }

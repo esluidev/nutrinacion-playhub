@@ -1,327 +1,205 @@
 <template>
-  <div v-if="workshop" class="max-w-[980px] mx-auto">
-    <!-- Header -->
+  <!-- El detalle de un taller (tarea 023): la misma tarjeta de «Nuevo Taller» y se edita igual. Nombre, storyboard,
+       educadores, cuándo y dónde, y audiencia, a la vista y con sus campos mientras no se ha dado (borrador, en revisión
+       o publicado sin empezar); todo se guarda junto con un solo «Guardar Cambios» al pie, y «Cancelar» lo descarta.
+       Dado, la tarjeta solo se lee. En la cabecera, la acción del estado (Publicar, Enviar a Revisión, Cancelar Taller o
+       Reprogramar) y el menú ⋮ con lo que se usa poco: Devolver a Borrador, Duplicar, Archivar y, aparte y en coral,
+       Eliminar (solo si no se ha dado; lo exige la base). A la derecha, lo que pasa con el taller: su estado, el cierre
+       del educador, los dispositivos que se unieron y su historial. -->
+  <div v-if="workshop" class="w-full">
     <header class="ui-page-header">
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-3">
-          <h1 class="ui-heading min-w-0 truncate">
-            {{ workshop.title }}
-          </h1>
-          <UiBadge :tone="workshop.tone" dot class="shrink-0">
-            {{ workshop.statusLabel }}
-          </UiBadge>
+          <h1 class="ui-heading min-w-0 truncate">{{ workshop.title }}</h1>
+          <UiBadge :tone="workshop.tone" dot class="shrink-0">{{ workshop.statusLabel }}</UiBadge>
         </div>
         <p class="ui-text mt-1.5">{{ subtitulo }}</p>
       </div>
 
+      <!-- La acción del estado. Con cambios sin guardar, «Guardar Cambios» es el único lima y esta pasa a contorno (y
+           guarda antes de cambiar el estado). -->
       <div class="ui-page-header-actions">
-        <UiButton v-if="puedeEditar" variant="outline" icon="pencil" @click="abrirEdicion">{{ t('common.edit') }}</UiButton>
-        <!-- Las acciones del ciclo según el estado guardado; la base rechaza lo que no cabe. -->
-        <template v-if="workshop.estado === 'BORRADOR' || workshop.estado === 'EN_REVISION'">
-          <UiButton v-if="workshop.estado === 'BORRADOR'" variant="outline" icon="send" @click="accion(enviarARevision, t('workshops.sentReview'))">
-            {{ t('workshops.sendReview') }}
-          </UiButton>
-          <UiButton v-else variant="outline" icon="pencil" @click="accion(volverABorrador, t('workshops.backDraft'))">
-            {{ t('workshops.backToDraft') }}
-          </UiButton>
-          <UiButton icon="check" @click="accion(publicarTaller, t('workshops.published'))">
-            {{ t('workshops.publish') }}
-          </UiButton>
-        </template>
-        <!-- Secundaria: una acción destructiva no es la más visible de la vista (el coral, en su confirmación) -->
-        <UiButton v-else-if="workshop.estado === 'PUBLICADO'" variant="outline" icon="ban" @click="motivo = ''; cancelando = true">
+        <UiButton v-if="workshop.estado === 'BORRADOR'" variant="outline" icon="send" :disabled="ocupado" @click="pasarA('EN_REVISION')">
+          {{ t('workshops.sendReview') }}
+        </UiButton>
+        <UiButton
+          v-if="workshop.estado === 'BORRADOR' || workshop.estado === 'EN_REVISION'"
+          :variant="sinGuardar ? 'outline' : 'primary'"
+          icon="check"
+          :disabled="ocupado"
+          @click="pasarA('PUBLICADO')"
+        >
+          {{ t('workshops.publish') }}
+        </UiButton>
+        <UiButton v-else-if="workshop.estado === 'PUBLICADO'" variant="outline" icon="ban" :disabled="ocupado" @click="motivo = ''; cancelando = true">
           {{ t('workshops.cancel') }}
         </UiButton>
         <UiButton v-else-if="workshop.status === 'sin_realizar' || workshop.estado === 'CANCELADO'" icon="calendar" @click="nuevaFecha = ''; reprogramando = true">
           {{ t('workshops.reschedule') }}
         </UiButton>
-
-        <!-- Menú ⋯ -->
-        <RekaPopoverRoot v-model:open="menuAbierto">
-          <RekaPopoverTrigger as-child>
-            <UiButton variant="outline" icon="more-vertical" icon-only :label="t('workshops.more')" />
-          </RekaPopoverTrigger>
-          <RekaPopoverPortal>
-            <RekaPopoverContent align="end" :side-offset="6" class="ui-listbox ui-listbox-floating w-60">
-              <button type="button" class="ui-option justify-start gap-2.5" @click="duplicar">
-                <UiIcon name="copy" class="size-4 text-subtle" />
-                {{ t('workshops.duplicate') }}
-              </button>
-              <button v-if="puedeArchivar" type="button" class="ui-option justify-start gap-2.5" @click="menuAbierto = false; archivando = true">
-                <UiIcon name="package" class="size-4 text-subtle" />
-                {{ t('workshops.archive') }}
-              </button>
-              <template v-if="workshop.estado === 'BORRADOR' || workshop.estado === 'EN_REVISION'">
-                <div class="mx-2 my-1 h-px bg-line" />
-                <button
-                  type="button"
-                  data-tone="coral"
-                  class="ui-option justify-start gap-2.5 text-(--tone-strong) hover:bg-(--tone-wash)"
-                  @click="menuAbierto = false; eliminando = true"
-                >
-                  <UiIcon name="trash" class="size-4" />
-                  {{ t('workshops.delete') }}
-                </button>
-              </template>
-              <p class="ui-caption mx-3 mb-2 mt-1.5">{{ t('workshops.menuHelp') }}</p>
-            </RekaPopoverContent>
-          </RekaPopoverPortal>
-        </RekaPopoverRoot>
+        <MenuAcciones :acciones="acciones" :ayuda="puedeEditar ? undefined : t('workshops.deleteGiven')" @select="alElegir" />
       </div>
     </header>
 
-    <!-- Panel principal -->
-    <div class="ui-panel overflow-hidden">
-      <!-- Barra de info: la hora lleva el tono de la sesión -->
-      <div class="border-b border-line px-6 py-5">
-        <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-          <div v-for="info in infoBar" :key="info.label" class="flex flex-col gap-1">
-            <div class="flex items-center gap-1.5">
-              <UiIcon :name="info.icon" class="size-3.5 text-subtle" />
-              <span class="eyebrow">{{ info.label }}</span>
+    <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <!-- Dos tercios: la tarjeta de «Nuevo Taller» -->
+      <div class="ui-panel overflow-hidden lg:col-span-2">
+        <!-- 1 · Nombre -->
+        <TallerSeccion id="nombre" :numero="1" :titulo="t('wizard.secName')" :completa="!faltas.nombre.length" :falta="falta('nombre')" :marcar="intentado">
+          <UiInput
+            v-if="puedeEditar"
+            id="taller-nombre"
+            v-model="state.title"
+            :label="t('wizard.fName')"
+            :placeholder="t('wizard.fTitlePh')"
+            :error="intentado && !state.title.trim() ? t('wizard.errName') : undefined"
+            required
+          />
+          <p v-else class="text-body font-extrabold text-ink">{{ workshop.title }}</p>
+        </TallerSeccion>
+
+        <!-- 2 · Storyboard: se cambia como los educadores -->
+        <TallerSeccion id="storyboard" :numero="2" :titulo="t('wizard.stepStoryboard')" :completa="!faltas.storyboard.length" :falta="falta('storyboard')" :marcar="intentado" class="border-t border-line">
+          <template v-if="puedeEditar" #accion>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="eligiendoStoryboard = true">{{ t('wizard.change') }}</button>
+          </template>
+          <div v-if="selectedStoryboard" class="flex items-center gap-4">
+            <UiSymbol icon="book" size="md" v-bind="uiAreaAttrs(selectedStoryboard.area)" />
+            <div class="min-w-0">
+              <p class="text-body font-extrabold text-ink">{{ selectedStoryboard.title }}</p>
+              <p class="ui-caption mt-0.5">{{ [selectedStoryboard.category, selectedStoryboard.targetAge, selectedStoryboard.duration, tCount(t, 'storyboards.scenes', selectedStoryboard.scenesCount)].join(' · ') }}</p>
+              <NuxtLink :to="`/organizacion/storyboards/${selectedStoryboard.id}`" class="ui-link mt-1.5 gap-1.5 text-caption" data-tone="sky">
+                <UiIcon name="external" class="size-3.5" />
+                {{ t('workshops.viewStoryboard') }}
+              </NuxtLink>
             </div>
-            <span
-              :data-tone="info.tonoSesion ? workshop.tone : undefined"
-              :class="[
-                'text-body font-extrabold leading-snug',
-                info.tonoSesion ? 'tabular-nums text-(--tone-strong)' : 'text-ink',
-              ]"
-            >{{ info.value }}</span>
           </div>
-        </div>
-      </div>
+          <p v-else class="ui-text">{{ workshop.storyboard }} · {{ t('workshops.sbUnavailable') }}</p>
+        </TallerSeccion>
 
-      <!-- La jornada: a cuál pertenece, con su lugar y sus días, y cambiarla (suelto, una en curso o
-           una nueva; la fecha debe caer en sus días) -->
-      <div class="flex flex-wrap items-center gap-3 border-b border-line px-6 py-4">
-        <UiSymbol size="sm" icon="calendar" :tone="workshop.jornada ? 'lime' : 'neutral'" />
-        <div class="min-w-0 flex-1">
-          <p class="eyebrow">{{ t('workshops.fJornada') }}</p>
-          <p class="text-body font-extrabold text-ink">
-            <template v-if="workshop.jornada">{{ workshop.jornada.nombre }} <span class="font-bold text-muted">· {{ workshop.jornada.ubicacion }} · {{ rangoJornada(workshop.jornada, locale) }}</span></template>
-            <template v-else>{{ t('workshops.noJornada') }}</template>
-          </p>
-        </div>
-        <UiButton v-if="puedeEditar" variant="outline" size="sm" icon="pencil" @click="abrirJornada">{{ t('workshops.changeJornada') }}</UiButton>
-      </div>
-
-      <!-- Storyboard vinculado: su símbolo lleva el tono de su área educativa -->
-      <div class="px-6 py-6">
-        <p class="eyebrow mb-3.5">{{ t('workshops.storyboardLinked') }}</p>
-        <div v-if="storyboard" class="flex items-start gap-4">
-          <UiSymbol icon="book" size="md" v-bind="uiAreaAttrs(storyboard.area)" />
-          <div class="min-w-0 flex-1">
-            <p class="text-body font-extrabold text-ink">{{ storyboard.title }}</p>
-            <p class="ui-caption mb-3 mt-0.5">
-              {{ storyboard.category }} · {{ t(`storyboards.${storyboard.pertenencia}`) }} · {{ storyboard.duration }} · {{ tCount(t, 'storyboards.scenes', storyboard.scenesCount) }} · {{ storyboard.targetAge }}
-            </p>
-            <NuxtLink
-              :to="'/organizacion/storyboards/' + storyboard.id"
-              class="ui-link gap-1.5 text-caption"
-              data-tone="sky"
-            >
-              <UiIcon name="external" class="size-3.5" />
-              {{ t('workshops.viewStoryboard') }}
-            </NuxtLink>
-          </div>
-        </div>
-        <div v-else class="ui-text">{{ t('workshops.sbUnavailable') }}</div>
-      </div>
-
-      <!-- Educador asignado -->
-      <div class="border-t border-line px-6 py-6">
-        <div class="mb-3.5 flex items-center justify-between gap-3">
-          <p class="eyebrow">{{ t('workshops.educatorAssigned') }}</p>
-          <UiButton v-if="puedeEditar" variant="outline" size="sm" icon="users" @click="nuevoEducador = ''; nuevoGrupo = ''; gestionandoEducadores = true">
-            {{ t('workshops.changeEducators') }}
-          </UiButton>
-        </div>
-        <div v-if="educator" class="flex items-start gap-4">
-          <UiAvatar :name="educator.nombre" :initials="educator.initials" size="lg" />
-          <div class="min-w-0 flex-1">
-            <p class="text-body font-extrabold text-ink">{{ educator.nombre }}</p>
-            <p class="ui-caption mb-3 mt-0.5">{{ educator.profesion }}</p>
-            <div class="flex flex-col gap-2">
-              <div class="flex items-center gap-2 text-caption font-semibold text-muted">
-                <UiIcon name="mail" class="size-3.5 shrink-0 text-subtle" />
-                {{ educator.email }}
-              </div>
-              <div class="flex items-center gap-2 text-caption font-semibold text-muted">
-                <UiIcon name="phone" class="size-3.5 shrink-0 text-subtle" />
-                {{ educator.telefono }}
+        <!-- 3 · Educadores -->
+        <TallerSeccion id="educadores" :numero="3" :titulo="t('wizard.stepEducators')" :completa="!faltas.educadores.length" :falta="falta('educadores')" :marcar="intentado" class="border-t border-line">
+          <template v-if="puedeEditar && hayEducadores" #accion>
+            <button type="button" class="ui-link text-caption" data-tone="sky" @click="eligiendoEducadores = true">{{ t('wizard.change') }}</button>
+          </template>
+          <!-- Dado: los que lo tuvieron, con el grupo del que vinieron -->
+          <div v-if="!puedeEditar" class="flex flex-wrap gap-x-6 gap-y-3">
+            <div v-for="a in workshop.asignados" :key="a.id" class="flex min-w-0 items-center gap-3">
+              <UiAvatar :name="a.nombre" />
+              <div class="min-w-0">
+                <p class="truncate text-body font-extrabold text-ink">{{ a.nombre }}</p>
+                <p class="ui-caption mt-px truncate">{{ a.grupo ?? getEducator(a.id)?.profesion }}</p>
               </div>
             </div>
-            <!-- El grupo por el que se le asignó (si vino de uno). Sin significado propio: tono estable por nombre -->
-            <div v-if="workshop.asignados[0]?.grupo" class="mt-3">
-              <UiBadge :tone="uiToneFor(workshop.asignados[0].grupo)">{{ workshop.asignados[0].grupo }}</UiBadge>
+            <p v-if="!workshop.asignados.length" class="ui-text">{{ t('workshops.unassigned') }}</p>
+          </div>
+          <div v-else-if="state.educatorMode === 'individual' && selectedEducators.length" class="flex flex-wrap gap-x-6 gap-y-3">
+            <div v-for="edu in selectedEducators" :key="edu.id" class="flex min-w-0 items-center gap-3">
+              <UiAvatar :name="edu.nombre" :initials="edu.initials" />
+              <div class="min-w-0">
+                <p class="truncate text-body font-extrabold text-ink">{{ edu.nombre }}</p>
+                <p class="ui-caption mt-px truncate">{{ grupoDe(edu.id) ?? edu.profesion }}</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else class="ui-text">{{ t('workshops.noEducator') }}</div>
+          <div v-else-if="state.educatorMode === 'group' && selectedGroups.length" class="flex flex-wrap gap-x-6 gap-y-3">
+            <div v-for="g in selectedGroups" :key="g.id" class="flex min-w-0 items-center gap-3">
+              <UiSymbol icon="users" size="md" :tone="uiToneFor(g.nombre)" />
+              <div class="min-w-0">
+                <p class="truncate text-body font-extrabold text-ink">{{ g.nombre }}</p>
+                <p class="ui-caption mt-px">{{ tCount(t, 'wizard.groupMembers', getGroupMembers(g.id).length) }}</p>
+              </div>
+            </div>
+          </div>
+          <button v-else type="button" class="ui-slot" @click="eligiendoEducadores = true">
+            <UiIcon name="user-plus" />
+            {{ t('wizard.pickEducatorsSlot') }}
+          </button>
+          <p v-if="puedeEditar && intentado && hayEducadores && faltas.educadores.length" class="field-error mt-2">{{ t('wizard.groupEmpty') }}</p>
+        </TallerSeccion>
 
-        <!-- El taller puede tener VARIOS asignados (directos o vía grupo) -->
-        <div v-if="workshop.asignados.length > 1" class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span class="eyebrow">{{ t('workshops.alsoAssigned') }}</span>
-          <span
-            v-for="a in workshop.asignados.slice(1)"
-            :key="a.id"
-            class="inline-flex items-center gap-1.5 text-caption font-bold text-muted"
-          >
-            <UiAvatar :name="a.nombre" size="sm" />
-            {{ a.nombre }}<template v-if="a.grupo"> · {{ a.grupo }}</template>
-          </span>
+        <!-- 4 · Cuándo y dónde -->
+        <TallerSeccion id="cuando" :numero="4" :titulo="t('wizard.stepWhen')" :completa="!faltas.cuando.length" :falta="falta('cuando')" :marcar="intentado" class="border-t border-line">
+          <TallerCuandoDonde v-if="puedeEditar" />
+          <dl v-else class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            <div v-for="d in datosCuando" :key="d.label">
+              <dt class="eyebrow">{{ d.label }}</dt>
+              <dd class="mt-0.5 text-body font-extrabold text-ink">{{ d.value }}</dd>
+            </div>
+          </dl>
+        </TallerSeccion>
+
+        <!-- 5 · Audiencia -->
+        <TallerSeccion id="audiencia" :numero="5" :titulo="t('wizard.stepAudience')" :completa="!faltas.audiencia.length" :falta="falta('audiencia')" :marcar="intentado" class="border-t border-line">
+          <TallerAudiencia v-if="puedeEditar" />
+          <dl v-else class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            <div v-for="d in datosAudiencia" :key="d.label" :class="d.ancho && 'sm:col-span-2'">
+              <dt class="eyebrow">{{ d.label }}</dt>
+              <dd :class="['mt-0.5', d.ancho ? 'ui-text' : 'text-body font-extrabold text-ink']">{{ d.value }}</dd>
+            </div>
+          </dl>
+        </TallerSeccion>
+
+        <!-- El pie, para todo lo que se ajuste -->
+        <div v-if="puedeEditar" class="ui-panel-footer flex flex-wrap items-center justify-end gap-3">
+          <p v-if="sinGuardar" class="ui-caption mr-auto">{{ t('workshops.unsaved') }}</p>
+          <UiButton tone="neutral" :disabled="!sinGuardar || ocupado" @click="descartar">{{ t('common.cancel') }}</UiButton>
+          <UiButton icon="check" :disabled="!sinGuardar || enCurso" :loading="isSubmitting" @click="guardar">{{ t('workshops.saveChanges') }}</UiButton>
         </div>
       </div>
 
-      <!-- Ejecución real y feedback del workshop (los escribe el educador desde Educators).
-           Observación del grupo, nunca de una persona. -->
-      <div v-if="workshop.asignados.some(a => a.iniciadoEn || a.feedback)" class="border-t border-line px-6 py-6">
-        <p class="eyebrow mb-3.5">{{ t('workshops.execution') }}</p>
-        <div class="space-y-4">
-          <div v-for="a in workshop.asignados.filter(x => x.iniciadoEn || x.feedback)" :key="a.id" class="flex items-start gap-4">
-            <UiAvatar :name="a.nombre" size="sm" />
-            <div class="min-w-0 flex-1">
+      <!-- Un tercio: lo que pasa con el taller -->
+      <div class="flex flex-col gap-6">
+        <section class="ui-panel">
+          <div class="ui-panel-header"><h2 class="ui-title">{{ t('workshops.stateTitle') }}</h2></div>
+          <p class="ui-text px-6 py-5">{{ textoDelEstado }}</p>
+        </section>
+
+        <!-- Lo que el educador cuenta al terminar en Educators. Del grupo, nunca de una persona. -->
+        <section class="ui-panel">
+          <div class="ui-panel-header"><h2 class="ui-title">{{ t('workshops.closingTitle') }}</h2></div>
+          <div v-if="cierres.length" class="divide-y divide-line">
+            <div v-for="a in cierres" :key="a.id" class="px-6 py-5">
               <p class="text-body font-extrabold text-ink">{{ a.nombre }}</p>
               <p class="ui-caption mt-0.5">{{ ejecucion(a) }}</p>
-              <dl v-if="a.feedback" class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+              <dl v-if="a.feedback" class="mt-3 grid grid-cols-2 gap-x-6 gap-y-3">
                 <div><dt class="eyebrow">{{ t('workshops.rating') }}</dt><dd class="text-body font-extrabold text-ink">{{ a.feedback.calificacion }}/5</dd></div>
                 <div><dt class="eyebrow">{{ t('workshops.attendees') }}</dt><dd class="text-body font-extrabold text-ink">{{ a.feedback.asistentes_reales }}</dd></div>
                 <div><dt class="eyebrow">{{ t('workshops.participation') }}</dt><dd class="text-body font-extrabold text-ink">{{ t(`workshops.participacion.${a.feedback.participacion_grupo}`) }}</dd></div>
                 <div><dt class="eyebrow">{{ t('workshops.clarity') }}</dt><dd class="text-body font-extrabold text-ink">{{ t(`workshops.claridad.${a.feedback.claridad_contenido}`) }}</dd></div>
-                <div v-if="a.feedback.dificultades_grupo" class="col-span-2 sm:col-span-4"><dt class="eyebrow">{{ t('workshops.hardest') }}</dt><dd class="ui-text">{{ a.feedback.dificultades_grupo }}</dd></div>
-                <div v-if="a.feedback.material_faltante" class="col-span-2 sm:col-span-4"><dt class="eyebrow">{{ t('workshops.missingMaterial') }}</dt><dd class="ui-text">{{ a.feedback.material_faltante }}</dd></div>
+                <div v-if="a.feedback.dificultades_grupo" class="col-span-2"><dt class="eyebrow">{{ t('workshops.hardest') }}</dt><dd class="ui-text">{{ a.feedback.dificultades_grupo }}</dd></div>
+                <div v-if="a.feedback.material_faltante" class="col-span-2"><dt class="eyebrow">{{ t('workshops.missingMaterial') }}</dt><dd class="ui-text">{{ a.feedback.material_faltante }}</dd></div>
               </dl>
             </div>
           </div>
-        </div>
-      </div>
+          <p v-else class="ui-text px-6 py-5">{{ seDara ? t('workshops.closingPending') : t('workshops.closingNone') }}</p>
+        </section>
 
-      <!-- Cancelación y reprogramaciones: lo que cambió en su ciclo -->
-      <div v-if="workshop.motivoCancelacion || workshop.reprogramaciones" class="border-t border-line px-6 py-6">
-        <p class="eyebrow mb-3">{{ t('workshops.history') }}</p>
-        <p v-if="workshop.motivoCancelacion" class="ui-text">{{ t('workshops.cancelledReason', { motivo: workshop.motivoCancelacion }) }}</p>
-        <p v-if="workshop.reprogramaciones" class="ui-text">
-          {{ workshop.reprogramaciones === 1 ? t('workshops.rescheduledOnce') : t('workshops.rescheduledTimes', { n: workshop.reprogramaciones }) }}
-        </p>
-      </div>
+        <!-- Los dispositivos que se unieron con el QR (tarea 013) y cuánto estuvieron conectados en promedio -->
+        <section class="ui-panel">
+          <div class="ui-panel-header"><h2 class="ui-title">{{ t('workshops.devicesTitle') }}</h2></div>
+          <dl v-if="dispositivos" class="grid grid-cols-2 gap-x-6 px-6 py-5">
+            <div><dt class="eyebrow">{{ t('workshops.devicesJoined') }}</dt><dd class="text-body font-extrabold tabular-nums text-ink">{{ dispositivos }}</dd></div>
+            <div><dt class="eyebrow">{{ t('workshops.devicesAverage') }}</dt><dd class="text-body font-extrabold tabular-nums text-ink">{{ t('workshops.minutes', { n: minutosPorDispositivo }) }}</dd></div>
+          </dl>
+          <p v-else class="ui-text px-6 py-5">{{ seDara ? t('workshops.devicesPending') : t('workshops.devicesNone') }}</p>
+        </section>
 
-      <!-- Notas -->
-      <div v-if="workshop.notes" class="border-t border-line px-6 py-6">
-        <p class="eyebrow mb-3">{{ t('workshops.notes') }}</p>
-        <p class="ui-text">{{ workshop.notes }}</p>
+        <section class="ui-panel">
+          <div class="ui-panel-header"><h2 class="ui-title">{{ t('workshops.history') }}</h2></div>
+          <div class="px-6 py-5">
+            <p v-if="workshop.motivoCancelacion" class="ui-text">{{ t('workshops.cancelledReason', { motivo: workshop.motivoCancelacion }) }}</p>
+            <p v-if="workshop.reprogramaciones" class="ui-text">
+              {{ workshop.reprogramaciones === 1 ? t('workshops.rescheduledOnce') : t('workshops.rescheduledTimes', { n: workshop.reprogramaciones }) }}
+            </p>
+            <p v-if="!workshop.motivoCancelacion && !workshop.reprogramaciones" class="ui-text">{{ t('workshops.historyNone') }}</p>
+          </div>
+        </section>
       </div>
     </div>
 
-    <!-- Editar los datos (no el estado). Uno finalizado o cancelado cambia de fecha al reprogramarse. -->
-    <UiDialog :open="editando" :title="t('workshops.editTitle')" size="lg" @update:open="(v) => editando = v">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <UiInput v-model="form.titulo" class="sm:col-span-2" :label="t('workshops.fTitle')" :placeholder="storyboard?.title" />
-        <div class="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-3">
-          <!-- Con jornada, la fecha vive entre sus días (la base lo exige; para salir, «Cambiar jornada») -->
-          <UiInput
-            v-model="form.fecha"
-            type="date"
-            :label="t('workshops.fDate')"
-            :min="fechaMin"
-            :max="workshop.jornada?.fecha_fin"
-            :disabled="!fechaEditable"
-            :hint="fechaHint"
-          />
-          <UiInput v-model="form.horaInicio" type="time" :label="t('workshops.fStart')" />
-          <UiInput v-model="form.horaFin" type="time" :label="t('workshops.fEnd')" />
-        </div>
-        <!-- Suelto, el lugar. Con jornada, el lugar es el suyo (encima) y aquí va el detalle -->
-        <div v-if="workshop.jornada" class="sm:col-span-2">
-          <p class="mb-2 flex items-center gap-2 text-body font-semibold text-muted">
-            <UiIcon name="map-pin" class="size-4 shrink-0 text-subtle" />
-            {{ t('wizard.jornadaPlace') }}:
-            <span class="font-extrabold text-ink">{{ workshop.jornada.ubicacion }}</span>
-          </p>
-          <UiInput
-            v-model="form.ubicacion"
-            :label="t('wizard.fLocationDetail')"
-            :placeholder="t('wizard.fLocationDetailPh')"
-            :hint="t('wizard.fLocationEffective', { lugar: lugarDelTaller(form, workshop.jornada) })"
-            optional
-          />
-        </div>
-        <UiInput v-else v-model="form.ubicacion" :label="t('workshops.fLocation')" :placeholder="t('workshops.fLocationPh')" />
-        <UiInput v-model="form.grupo" :label="t('workshops.fGroup')" :placeholder="t('workshops.fGroupPh')" />
-        <UiInput v-model="form.capacidad" type="number" :label="t('workshops.fCapacity')" />
-        <UiSelect v-model="form.modalidad" :options="modalidades" :label="t('workshops.fModality')" />
-        <UiSelect v-if="idiomas.length > 1" v-model="form.idioma" :options="idiomas" :label="t('workshops.fLanguage')" />
-        <UiTextarea v-model="form.notas" class="sm:col-span-2" :label="t('workshops.notes')" optional :rows="3" />
-      </div>
-      <p v-if="errorEdicion" class="field-error mt-3">{{ errorEdicion }}</p>
-      <template #actions>
-        <UiButton :loading="enCurso" icon="check" @click="guardarEdicion">{{ t('workshops.saveChanges') }}</UiButton>
-      </template>
-    </UiDialog>
-
-    <!-- Cambiar la jornada: suelto, una en curso o una nueva (el mismo selector del asistente). La
-         fecha del taller debe caer en sus días (la base lo exige): si no cabe en la elegida, se
-         ofrece ampliarla; una nueva tiene que incluirla. -->
-    <UiDialog :open="cambiandoJornada" :title="t('workshops.changeJornada')" size="lg" @update:open="(v) => cambiandoJornada = v">
-      <p class="ui-text mb-4">{{ workshop.date ? t('workshops.changeJornadaText', { fecha: formattedDate }) : t('workshops.changeJornadaNoDate') }}</p>
-      <JornadaSelector id="detalle-jornada" v-model="eleccion" :jornadas="jornadas" :fecha="workshop.date" />
-      <p v-if="avisoLugar" class="ui-caption mt-4">{{ avisoLugar }}</p>
-      <p v-if="errorJornada" class="field-error mt-3">{{ errorJornada }}</p>
-      <template #actions>
-        <UiButton :loading="enCurso" icon="check" @click="guardarJornada()">{{ t('common.save') }}</UiButton>
-      </template>
-    </UiDialog>
-
-    <!-- La jornada elegida no llega a la fecha del taller: ¿se amplía? -->
-    <UiConfirmDialog
-      :open="!!ampliarDetalle"
-      :title="ampliarDetalle ? t(ampliarDetalle.antes ? 'wizard.extendTitleFrom' : 'wizard.extendTitle', { dia: formattedShortDate }) : ''"
-      tone="lime"
-      symbol="calendar"
-      :confirm-label="t('wizard.extendConfirm')"
-      :cancel-label="t('common.cancel')"
-      :loading="enCurso"
-      @update:open="(v) => { if (!v) ampliarDetalle = null }"
-      @confirm="guardarJornada(true)"
-    >
-      <p v-if="ampliarDetalle">
-        {{ t('wizard.extendText', { nombre: ampliarDetalle.nombre, dias: ampliarDetalle.dias, nuevos: ampliarDetalle.nuevos }) }}
-      </p>
-    </UiConfirmDialog>
-
-    <!-- Educadores: se suman y se quitan al momento, de uno en uno o un grupo entero. Uno publicado
-         conserva al menos uno. -->
-    <UiDialog :open="gestionandoEducadores" :title="t('workshops.educatorsTitle')" @update:open="(v) => gestionandoEducadores = v">
-      <ul class="divide-y divide-line">
-        <li v-for="a in workshop.asignados" :key="a.asignacionId" class="flex items-center gap-3 py-2.5">
-          <UiAvatar :name="a.nombre" size="sm" />
-          <span class="min-w-0 flex-1 truncate text-body font-bold text-ink">
-            {{ a.nombre }}<template v-if="a.grupo"> · {{ a.grupo }}</template>
-          </span>
-          <UiButton
-            variant="outline"
-            size="sm"
-            :disabled="enCurso || (workshop.estado === 'PUBLICADO' && workshop.asignados.length === 1)"
-            @click="quitarEducador(a.asignacionId, a.nombre)"
-          >
-            {{ t('common.remove') }}
-          </UiButton>
-        </li>
-        <li v-if="!workshop.asignados.length" class="ui-text py-2.5">{{ t('workshops.noAssigned') }}</li>
-      </ul>
-      <p v-if="workshop.estado === 'PUBLICADO' && workshop.asignados.length === 1" class="ui-caption mt-2">
-        {{ t('workshops.pubNeedsEducator') }}
-      </p>
-      <div v-if="educadoresDisponibles.length" class="mt-5 flex items-end gap-3">
-        <UiSelect v-model="nuevoEducador" :options="educadoresDisponibles" :label="t('workshops.assignTo')" :placeholder="t('workshops.pickEducator')" class="min-w-0 flex-1" />
-        <UiButton :disabled="!nuevoEducador" :loading="enCurso" icon="plus" @click="sumarEducador">{{ t('workshops.assign') }}</UiButton>
-      </div>
-      <p v-else class="ui-caption mt-5">{{ t('workshops.noMoreEducators') }}</p>
-      <!-- Un grupo entero: una asignación por miembro que aún no esté -->
-      <div v-if="activeGroups.length" class="mt-4 flex items-end gap-3">
-        <UiSelect v-model="nuevoGrupo" :options="gruposDisponibles" :label="t('workshops.assignGroup')" :placeholder="t('workshops.pickGroup')" class="min-w-0 flex-1" />
-        <UiButton variant="outline" :disabled="!nuevoGrupo" :loading="enCurso" icon="users" @click="sumarGrupo">{{ t('workshops.assign') }}</UiButton>
-      </div>
-    </UiDialog>
+    <TallerStoryboardDialog v-model:open="eligiendoStoryboard" />
+    <TallerEducadoresDialog v-model:open="eligiendoEducadores" />
 
     <!-- Cancelar: se confirma; el motivo le llega al educador -->
     <UiConfirmDialog
@@ -357,12 +235,12 @@
       <p>{{ t('workshops.archiveWarn', { titulo: workshop.title }) }}</p>
     </UiConfirmDialog>
 
-    <!-- Eliminar: permanente, se confirma en serio -->
+    <!-- Eliminar: permanente, se confirma en coral -->
     <UiConfirmDialog
       :open="eliminando"
       :title="t('workshops.deleteTitle')"
       :confirm-label="t('workshops.deleteConfirm')"
-      :loading="eliminandoEnCurso"
+      :loading="enCurso"
       @update:open="(v) => eliminando = v"
       @confirm="confirmarEliminar"
     >
@@ -373,258 +251,111 @@
   <!-- Cargando (la lista llega async al refrescar la página) -->
   <div v-else-if="cargando" class="ui-panel ui-text p-10 text-center">{{ t('common.loading') }}</div>
 
-  <!-- Not Found -->
   <div v-else class="ui-panel">
-    <UiEmptyState
-      icon="alert"
-      :title="t('workshops.notFound')"
-      :text="t('workshops.notFoundText')"
-    >
-      <UiButton variant="outline" size="sm" @click="navigateTo('/organizacion/workshops')">
-        {{ t('workshops.backToList') }}
-      </UiButton>
+    <UiEmptyState icon="alert" :title="t('workshops.notFound')" :text="t('workshops.notFoundText')">
+      <UiButton variant="outline" size="sm" @click="navigateTo('/organizacion/workshops')">{{ t('workshops.backToList') }}</UiButton>
     </UiEmptyState>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { UiIconName } from '@playhub/ui/app/utils/ui-icons'
-import { MODALIDADES } from '~/composables/useWorkshops'
-import type { Modalidad, Workshop } from '~/composables/useWorkshops'
-import type { EleccionJornada, JornadaFila } from '~/composables/useJornadas'
-import { eleccionJornada, validarDatosJornada } from '~/composables/useJornadas'
-import { ampliarJornada, fechaEnJornada, lugarDelTaller, rangoJornada } from '~/utils/jornadas'
+import type { AccionDelMenu } from '~/components/MenuAcciones.vue'
+import type { Workshop } from '~/composables/useWorkshops'
+import type { SeccionTaller } from '~/utils/nuevoTaller'
+import { enumerar } from '~/utils/nuevoTaller'
+import { rangoJornada } from '~/utils/jornadas'
 
 definePageMeta({ layout: 'dashboard' })
 
 const { t, locale } = useT()
 const route = useRoute()
+const { toast } = useToast()
 const {
   getWorkshop, loading: cargando, enviarARevision, volverABorrador, publicarTaller, cancelarTaller,
-  reprogramarTaller, archivarTaller, duplicarTaller, eliminarTaller, actualizarTaller, cambiarJornada,
-  asignarEducador, asignarGrupo, quitarAsignacion,
+  reprogramarTaller, archivarTaller, duplicarTaller, eliminarTaller, segundosConectados,
 } = useWorkshops()
-const { getStoryboard } = useStoryboards()
-const { getEducator, activeEducators, activeGroups, getGroupMembers } = useEducators()
-const { orgActiva } = useContexto()
-const { toast } = useToast()
-
-const menuAbierto = ref(false)
-const eliminando = ref(false)
-const eliminandoEnCurso = ref(false)
-const cancelando = ref(false)
-const reprogramando = ref(false)
-const archivando = ref(false)
-const enCurso = ref(false)
-const motivo = ref('')
-const nuevaFecha = ref('')
-const hoy = hoyLocal()
+const { getEducator, getGroupMembers } = useEducators()
+const {
+  state, intentado, faltas, primeraSinCompletar, isSubmitting, sinGuardar,
+  selectedStoryboard, selectedEducators, selectedGroups,
+  comprobarFecha, cargarTaller, coincideCon, guardarCambios, vigilarJornada,
+} = useWorkshopWizard()
 
 const workshopId = Number(route.params.id)
 const workshop = computed(() => getWorkshop(workshopId))
-const puedeArchivar = computed(() => !!workshop.value && ['BORRADOR', 'EN_REVISION', 'FINALIZADO', 'CANCELADO'].includes(workshop.value.estado))
-// Se edita mientras no se haya dado: ni archivado, ni empezado, ni realizado.
-const puedeEditar = computed(() => !!workshop.value && workshop.value.estado !== 'ARCHIVADO'
-  && !workshop.value.asignados.some(a => a.iniciadoEn || a.feedback))
-const fechaEditable = computed(() => !!workshop.value && ['BORRADOR', 'EN_REVISION', 'PUBLICADO'].includes(workshop.value.estado))
+const hoy = hoyLocal()
 
-// ── Editar los datos ─────────────────────────────────────────────────────────
-const editando = ref(false)
-const errorEdicion = ref('')
-const form = reactive({
-  titulo: '', fecha: '', horaInicio: '', horaFin: '', ubicacion: '', grupo: '', capacidad: '',
-  idioma: 'es', modalidad: 'PRESENCIAL' as Modalidad, notas: '',
+// Se dio (o se empezó): lo que pasó ya no cambia.
+const empezado = computed(() => !!workshop.value?.asignados.some(a => a.iniciadoEn || a.feedback))
+// Se edita (y se elimina) mientras no se ha dado: borrador, en revisión o publicado sin empezar.
+const puedeEditar = computed(() => {
+  const e = workshop.value?.estado
+  return e === 'BORRADOR' || e === 'EN_REVISION' || (e === 'PUBLICADO' && !empezado.value)
 })
-const modalidades = computed(() => MODALIDADES.map(value => ({ value, label: t(`workshops.modality.${value}`) })))
-const idiomas = computed(() => (storyboard.value?.languages ?? [])
-  .map(l => ({ value: l, label: t(`lang.${l}`) === `lang.${l}` ? l.toUpperCase() : t(`lang.${l}`) })))
-const jornadas = ref<JornadaFila[]>([])
+// Todavía se va a dar: el cierre y los dispositivos llegarán.
+const seDara = computed(() => ['BORRADOR', 'EN_REVISION', 'PUBLICADO'].includes(workshop.value?.estado ?? ''))
 
-// La fecha de uno publicado va desde hoy; con jornada, además, dentro de sus días.
-const fechaMin = computed(() => {
-  const w = workshop.value
-  const desde = [w?.estado === 'PUBLICADO' ? hoy : '', w?.jornada?.fecha_inicio ?? ''].sort().at(-1)
-  return desde || undefined
-})
-const fechaHint = computed(() => {
-  const w = workshop.value
-  if (!fechaEditable.value) return t('workshops.fDateHint')
-  if (!w?.jornada) return undefined
-  return t('wizard.fDateInJornada', { nombre: w.jornada.nombre, desde: fechaCorta(w.jornada.fecha_inicio, locale.value), hasta: fechaCorta(w.jornada.fecha_fin, locale.value) })
-})
+// La tarjeta sigue al taller guardado: al llegar, y cuando cambia (otra pestaña, otra app, un cambio de estado) si no
+// hay nada sin guardar. Con cambios a medias, se quedan. Los vigilantes de la jornada van después: cargar el taller no
+// cuenta como elegir su jornada.
+watch(workshop, (w, antes) => {
+  if (w && (!antes || antes.id !== w.id || coincideCon(antes))) cargarTaller(w)
+}, { immediate: true })
+vigilarJornada()
 
-async function cargarJornadas() {
-  const orgId = orgActiva.value?.id
-  jornadas.value = orgId ? await useJornadas().listar(orgId) : []
+const eligiendoStoryboard = ref(false)
+const eligiendoEducadores = ref(false)
+const hayEducadores = computed(() => (state.value.educatorMode === 'group' ? selectedGroups.value.length : selectedEducators.value.length) > 0)
+// El grupo del que vino un educador ya asignado.
+const grupoDe = (id: number) => workshop.value?.asignados.find(a => a.id === id)?.grupo ?? null
+
+// Lo que le falta a una sección, en su cabecera (como en «Nuevo Taller»).
+function falta(seccion: SeccionTaller): string {
+  if (!puedeEditar.value) return ''
+  const f = faltas.value[seccion]
+  if (!f.length) return ''
+  if (f.includes('fueraDelPrograma')) return t('wizard.missOutsideProgram')
+  if (seccion === 'storyboard' || seccion === 'educadores') return t('wizard.missPick')
+  const partes = f.map(x => t(`wizard.miss.${x}`))
+  return t(partes.length > 1 ? 'wizard.missMany' : 'wizard.missOne', { lo: enumerar(partes, t('wizard.and')) })
 }
 
-async function abrirEdicion() {
-  const w = workshop.value
-  if (!w) return
-  Object.assign(form, {
-    titulo: w.editable.titulo, fecha: w.date, horaInicio: w.editable.horaInicio, horaFin: w.editable.horaFin,
-    ubicacion: w.editable.ubicacion, grupo: w.group, capacidad: w.capacity ? String(w.capacity) : '',
-    idioma: w.language, modalidad: w.modalidad, notas: w.notes,
-  })
-  errorEdicion.value = ''
-  editando.value = true
+function irA(seccion: SeccionTaller) {
+  document.getElementById(`seccion-${seccion}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-async function guardarEdicion() {
-  errorEdicion.value = ''
-  if (workshop.value?.estado === 'PUBLICADO' && (!form.fecha || !form.horaInicio)) {
-    errorEdicion.value = t('workshops.pubNeedsDate')
-    return
-  }
-  if (form.horaInicio && form.horaFin && form.horaFin <= form.horaInicio) {
-    errorEdicion.value = t('workshops.endAfterStart')
-    return
-  }
-  enCurso.value = true
-  const { error } = await actualizarTaller(workshopId, {
-    ...form,
-    capacidad: form.capacidad ? Number(form.capacidad) : null,
-  })
-  enCurso.value = false
-  if (error) {
-    errorEdicion.value = error
-    return
-  }
-  editando.value = false
-  toast.success(t('workshops.saved'))
-}
-
-// ── La jornada ───────────────────────────────────────────────────────────────
-const cambiandoJornada = ref(false)
-const eleccion = ref<EleccionJornada>(eleccionJornada())
-const errorJornada = ref('')
-// La jornada en curso elegida no llega a la fecha del taller: lo que se pregunta antes de ampliarla.
-const ampliarDetalle = ref<{ nombre: string, dias: string, nuevos: string, antes: boolean } | null>(null)
-
-async function abrirJornada() {
-  eleccion.value = eleccionJornada(workshop.value?.editable.jornadaId ?? null)
-  errorJornada.value = ''
-  ampliarDetalle.value = null
-  cambiandoJornada.value = true
-  await cargarJornadas()
-}
-
-const formattedShortDate = computed(() => (workshop.value?.date ? fechaCorta(workshop.value.date, locale.value) : ''))
-
-// El lugar del taller al cambiar: si sale de su jornada se queda con el lugar completo; si entra
-// en una desde suelto, su lugar pasa a ser el detalle (salvo que sea el mismo de la jornada).
-const lugarDestino = computed(() => {
-  const e = eleccion.value
-  if (e.modo === 'existente') return jornadas.value.find(j => j.id === e.jornadaId)?.ubicacion ?? ''
-  if (e.modo === 'nueva') return e.nueva.ubicacion
-  return ''
-})
-const avisoLugar = computed(() => {
-  const w = workshop.value
-  if (!w) return ''
-  const detalle = w.editable.ubicacion.trim()
-  if (eleccion.value.modo === 'suelto') {
-    return w.jornada ? t('workshops.jornadaPlaceKeep', { lugar: lugarDelTaller(w.editable, w.jornada) }) : ''
-  }
-  if (!w.jornada && detalle && detalle !== lugarDestino.value.trim()) return t('workshops.jornadaPlaceDetail', { lugar: detalle })
-  return ''
-})
-
-// Guarda la elección. `ampliar`: ya se confirmó ampliar la jornada en curso hasta la fecha.
-async function guardarJornada(ampliar = false) {
-  const w = workshop.value
-  if (!w) return
-  errorJornada.value = ''
-  const e = eleccion.value
-  const api = useJornadas()
-  // De suelto a una jornada con el mismo lugar, el detalle sobra.
-  const detalle = !w.jornada && w.editable.ubicacion.trim() && w.editable.ubicacion.trim() === lugarDestino.value.trim() ? '' : undefined
-
-  if (e.modo === 'suelto') {
-    if (!w.jornada) { cambiandoJornada.value = false; return }
-    await guardarCambioJornada(null, lugarDelTaller(w.editable, w.jornada))
-    return
-  }
-
-  if (e.modo === 'existente') {
-    const j = jornadas.value.find(x => x.id === e.jornadaId)
-    if (!j) { errorJornada.value = t('jornada.pickRequired'); return }
-    if (j.id === w.editable.jornadaId) { cambiandoJornada.value = false; return }
-    if (w.date && !fechaEnJornada(j, w.date)) {
-      const dias = ampliarJornada(j, w.date)
-      if (!ampliar) {
-        ampliarDetalle.value = { nombre: j.nombre, dias: rangoJornada(j, locale.value), nuevos: rangoJornada(dias, locale.value), antes: w.date < j.fecha_inicio }
-        return
-      }
-      enCurso.value = true
-      const { error } = await api.cambiarDias(j.id, dias)
-      enCurso.value = false
-      if (error) { ampliarDetalle.value = null; errorJornada.value = error; return }
-    }
-    ampliarDetalle.value = null
-    await guardarCambioJornada(j.id, detalle)
-    return
-  }
-
-  // Nueva: completa y con la fecha del taller dentro de sus días; se crea y el taller pasa a ella.
-  const falta = validarDatosJornada(e.nueva)
-  if (falta) { errorJornada.value = t(falta); return }
-  const dias = { fecha_inicio: e.nueva.fecha_inicio, fecha_fin: e.nueva.fecha_fin || e.nueva.fecha_inicio }
-  if (w.date && !fechaEnJornada(dias, w.date)) { errorJornada.value = t('jornada.mustIncludeDate', { fecha: formattedShortDate.value }); return }
-  if (!orgActiva.value) return
-  enCurso.value = true
-  const { id, error } = await api.crear(orgActiva.value.id, e.nueva)
-  enCurso.value = false
-  if (error || !id) { errorJornada.value = error ?? ''; return }
-  if (!(await guardarCambioJornada(id, detalle))) await api.descartarSiVacia(id)
-}
-
-async function guardarCambioJornada(jornadaId: number | null, ubicacion?: string) {
-  enCurso.value = true
-  const { error } = await cambiarJornada(workshopId, jornadaId, ubicacion)
-  enCurso.value = false
-  if (error) {
-    errorJornada.value = error
+// Uno publicado lo pide todo (lo exige la base): si falta algo, se marca y la página baja a la primera sección
+// incompleta; una fecha fuera de su jornada pregunta antes si se amplía.
+function listoParaPublicar(): boolean {
+  intentado.value = true
+  const primera = primeraSinCompletar.value
+  if (primera) {
+    irA(primera)
     return false
   }
-  cambiandoJornada.value = false
-  toast.success(t('workshops.jornadaChanged'))
-  return true
+  return comprobarFecha()
 }
 
-// ── Educadores ───────────────────────────────────────────────────────────────
-const gestionandoEducadores = ref(false)
-const nuevoEducador = ref<string | number | null>('')
-const nuevoGrupo = ref<string | number | null>('')
-const educadoresDisponibles = computed(() => {
-  const asignados = new Set(workshop.value?.asignados.map(a => a.id) ?? [])
-  return activeEducators.value.filter(e => !asignados.has(e.id)).map(e => ({ value: e.id, label: e.nombre }))
-})
-const gruposDisponibles = computed(() => activeGroups.value.map(g => ({ value: g.id, label: `${g.nombre} · ${tCount(t, 'wizard.groupMembers', getGroupMembers(g.id).length)}` })))
-
-async function sumarEducador() {
-  if (!nuevoEducador.value) return
-  if (await accion(id => asignarEducador(id, Number(nuevoEducador.value)), t('workshops.assigned'))) nuevoEducador.value = ''
+// ── Guardar o descartar ──────────────────────────────────────────────────────
+async function guardar() {
+  if (workshop.value?.estado === 'PUBLICADO' && !listoParaPublicar()) return
+  if (await guardarCambios()) toast.success(t('workshops.saved'))
 }
 
-async function sumarGrupo() {
-  if (!nuevoGrupo.value) return
-  const grupoId = Number(nuevoGrupo.value)
-  const miembros = getGroupMembers(grupoId).map(m => m.id)
-  enCurso.value = true
-  const { error, asignados } = await asignarGrupo(workshopId, grupoId, miembros)
-  enCurso.value = false
-  if (error) {
-    toast.error(error)
-    return
-  }
-  toast.success(asignados ? tCount(t, 'workshops.groupAssigned', asignados) : t('workshops.groupAllAssigned'))
-  nuevoGrupo.value = ''
+function descartar() {
+  if (workshop.value) cargarTaller(workshop.value)
+  intentado.value = false
 }
 
-async function quitarEducador(asignacionId: number, nombre: string) {
-  await accion(() => quitarAsignacion(asignacionId), t('workshops.removedEducator', { nombre }))
-}
+// ── El ciclo ─────────────────────────────────────────────────────────────────
+const enCurso = ref(false)
+const ocupado = computed(() => enCurso.value || isSubmitting.value)
+const cancelando = ref(false)
+const reprogramando = ref(false)
+const archivando = ref(false)
+const eliminando = ref(false)
+const motivo = ref('')
+const nuevaFecha = ref('')
 
 // Una acción del ciclo: si la base la rechaza, su mensaje dice por qué (p. ej., «asigna al menos un educador»).
 async function accion(fn: (id: number) => Promise<{ error: string | null }>, ok: string) {
@@ -637,6 +368,34 @@ async function accion(fn: (id: number) => Promise<{ error: string | null }>, ok:
   }
   toast.success(ok)
   return true
+}
+
+// Enviar a revisión o publicar. Con cambios sin guardar, primero se guardan.
+async function pasarA(estado: 'EN_REVISION' | 'PUBLICADO') {
+  if (estado === 'PUBLICADO' && !listoParaPublicar()) return
+  if (sinGuardar.value && !(await guardarCambios())) return
+  if (estado === 'PUBLICADO') await accion(publicarTaller, t('workshops.published'))
+  else await accion(enviarARevision, t('workshops.sentReview'))
+}
+
+// El menú ⋮: según el estado, y Eliminar al final (deshabilitado si ya se dio).
+const acciones = computed<AccionDelMenu[]>(() => {
+  const e = workshop.value?.estado
+  const lista: AccionDelMenu[] = []
+  if (e === 'EN_REVISION') lista.push({ key: 'borrador', label: t('workshops.backToDraft'), icon: 'pencil' })
+  lista.push({ key: 'duplicar', label: t('workshops.duplicate'), icon: 'copy' })
+  if (e === 'BORRADOR' || e === 'EN_REVISION' || e === 'FINALIZADO' || e === 'CANCELADO') {
+    lista.push({ key: 'archivar', label: t('workshops.archive'), icon: 'package' })
+  }
+  lista.push({ key: 'eliminar', label: t('workshops.delete'), icon: 'trash', peligro: true, disabled: !puedeEditar.value })
+  return lista
+})
+
+async function alElegir(key: string) {
+  if (key === 'borrador') await accion(volverABorrador, t('workshops.backDraft'))
+  else if (key === 'duplicar') await duplicar()
+  else if (key === 'archivar') archivando.value = true
+  else if (key === 'eliminar') eliminando.value = true
 }
 
 async function confirmarCancelar() {
@@ -655,7 +414,6 @@ async function confirmarArchivar() {
 }
 
 async function duplicar() {
-  menuAbierto.value = false
   const { id, error } = await duplicarTaller(workshopId)
   if (error) {
     toast.error(error)
@@ -666,43 +424,62 @@ async function duplicar() {
 }
 
 async function confirmarEliminar() {
-  eliminandoEnCurso.value = true
-  const { error } = await eliminarTaller(workshopId)
-  eliminandoEnCurso.value = false
-  if (error) {
-    toast.error(error)
-    return
+  if (await accion(eliminarTaller, t('workshops.deleted'))) {
+    eliminando.value = false
+    navigateTo('/organizacion/workshops')
   }
-  eliminando.value = false
-  toast.success(t('workshops.deleted'))
-  navigateTo('/organizacion/workshops')
 }
-const storyboard = computed(() => workshop.value ? getStoryboard(workshop.value.storyboardId) : undefined)
-const educator = computed(() => workshop.value ? getEducator(workshop.value.educatorId) : undefined)
 
+// ── Lo que se muestra ────────────────────────────────────────────────────────
+// «Sábado 28 nov 2026 · 09:30 – 10:00 · Hospital Bloom · Sala Especial»
+const fechaLarga = (iso: string) => {
+  const dia = aFecha(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { weekday: 'long' })
+  return `${dia.charAt(0).toUpperCase()}${dia.slice(1)} ${fechaCorta(iso, locale.value)}`
+}
 const subtitulo = computed(() => {
-  const base = orgActiva.value?.nombre ?? t('common.myOrg')
-  const j = workshop.value?.jornada
-  return j ? `${base} · ${t('workshops.jornadaLabel', { nombre: j.nombre, rango: rangoJornada(j, locale.value) })}` : base
+  const w = workshop.value
+  if (!w) return ''
+  return [w.date ? fechaLarga(w.date) : t('workshops.noDate'), w.time.replace(' - ', ' – '), w.location === '—' ? '' : w.location]
+    .filter(Boolean).join(' · ')
 })
 
-const formattedDate = computed(() => {
-  if (!workshop.value?.date) return '—'
-  const s = aFecha(workshop.value.date).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  return s.charAt(0).toUpperCase() + s.slice(1)
+// Qué significa el estado en que está y qué sigue.
+const textoDelEstado = computed(() => {
+  const w = workshop.value
+  if (!w) return ''
+  if (w.estado === 'PUBLICADO' && empezado.value) return t('workshops.stateText.EN_CURSO')
+  if (w.estado === 'FINALIZADO') return t(w.status === 'completado' ? 'workshops.stateText.REALIZADO' : 'workshops.stateText.SIN_REALIZAR')
+  return t(`workshops.stateText.${w.estado}`)
 })
 
-// La hora (tonoSesion) se pinta con el tono de la sesión, como en el planner y en Educators.
-interface InfoItem { label: string, value: string, icon: UiIconName, tonoSesion?: boolean }
-const infoBar = computed<InfoItem[]>(() => [
-  { label: t('workshops.fDate'), value: formattedDate.value, icon: 'calendar' },
-  { label: t('workshops.time'), value: workshop.value?.time || '—', icon: 'clock', tonoSesion: true },
-  { label: t('workshops.fLocation'), value: workshop.value?.location || '—', icon: 'map-pin' },
-  { label: t('workshops.fGroup'), value: [workshop.value?.group, workshop.value?.capacity ? t('workshops.estimated', { n: workshop.value.capacity }) : ''].filter(Boolean).join(' · ') || '—', icon: 'user' },
-  { label: t('workshops.fModality'), value: workshop.value ? t(`workshops.modality.${workshop.value.modalidad}`) : '—', icon: 'building' },
-  { label: t('workshops.fLanguage'), value: workshop.value?.language.toUpperCase() || '—', icon: 'globe' },
-])
+// Dado, «Cuándo y dónde» y «Audiencia» se leen.
+const datosCuando = computed(() => {
+  const w = workshop.value
+  if (!w) return []
+  const pertenece = w.jornada
+    ? `${w.jornada.nombre} · ${rangoJornada(w.jornada, locale.value)}`
+    : w.programa ? w.programa.nombre : t('wizard.belongsSuelto')
+  return [
+    { label: t('wizard.belongs'), value: pertenece },
+    { label: t('wizard.fDate'), value: w.date ? fechaLarga(w.date) : '—' },
+    { label: t('workshops.time'), value: w.time.replace(' - ', ' – ') || '—' },
+    { label: t('places.field'), value: w.location },
+  ]
+})
+const datosAudiencia = computed(() => {
+  const w = workshop.value
+  if (!w) return []
+  return [
+    { label: t('audiences.field'), value: w.audiencia || '—' },
+    { label: t('wizard.fCapacity'), value: w.capacity ? String(w.capacity) : '—' },
+    { label: t('wizard.fLanguage'), value: t(`lang.${w.language}`) === `lang.${w.language}` ? w.language.toUpperCase() : t(`lang.${w.language}`) },
+    { label: t('wizard.modality'), value: t(`workshops.modality.${w.modalidad}`) },
+    ...(w.notes ? [{ label: t('wizard.fNotes'), value: w.notes, ancho: true }] : []),
+  ] as { label: string, value: string, ancho?: boolean }[]
+})
 
+// El cierre: los asignados que lo empezaron o lo cerraron.
+const cierres = computed(() => workshop.value?.asignados.filter(a => a.iniciadoEn || a.feedback) ?? [])
 const hora = (iso: string) => new Date(iso).toLocaleTimeString(locale.value === 'en' ? 'en-US' : 'es', { hour: '2-digit', minute: '2-digit' })
 function ejecucion(a: Workshop['asignados'][number]): string {
   if (!a.iniciadoEn) return t('workshops.execNone')
@@ -710,4 +487,13 @@ function ejecucion(a: Workshop['asignados'][number]): string {
     ? t('workshops.execFromTo', { desde: hora(a.iniciadoEn), hasta: hora(a.terminadoEn) })
     : t('workshops.execStarted', { hora: hora(a.iniciadoEn) })
 }
+
+// Los dispositivos: cuántos se unieron (lo anota el educador en el cierre, el mayor si son varios) y el tiempo
+// conectado de los aprobados, como en el reporte.
+const dispositivos = computed(() => Math.max(0, ...(workshop.value?.asignados.map(a => a.dispositivos ?? 0) ?? [])))
+const segundos = ref(0)
+watch(() => workshop.value?.estado, async () => {
+  if (workshop.value && !seDara.value) segundos.value = await segundosConectados(workshopId)
+}, { immediate: true })
+const minutosPorDispositivo = computed(() => (dispositivos.value ? Math.round(segundos.value / dispositivos.value / 60) : 0))
 </script>

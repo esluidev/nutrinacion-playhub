@@ -28,6 +28,7 @@ export interface StoryboardFila {
   estado_publicacion: EstadoPublicacion
   paises_disponibles: string[]
   organizacion_id: number | null
+  publicado_hogar: boolean       // sale en la app del hogar (tarea 022); se decide en Player
   organizaciones: { id: number, nombre: string } | null
 }
 
@@ -64,7 +65,7 @@ export interface StoryboardDetalle extends StoryboardFila {
 
 const SELECT_FILA = `
   id, clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
-  duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id,
+  duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id, publicado_hogar,
   organizaciones ( id, nombre )
 `
 
@@ -127,7 +128,7 @@ export function usePlatformStoryboards() {
     }
   }
 
-  // La URL de Player vive en `configuracion` (clave `player_url`): Admin arma los enlaces de
+  // La URL de Player vive en `configuraciones` (clave `player_url`): Admin arma los enlaces de
   // «Probar» con ella, sin acoplarse a un host (`urlDePlayer`, también en la vista previa).
   const getPlayerUrl = urlDePlayer
 

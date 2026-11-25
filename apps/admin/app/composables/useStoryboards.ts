@@ -5,19 +5,11 @@
 // ADAPTADOR: la UI consume títulos y textos ya resueltos al locale actual; la guía por escena se
 // sirve tal cual la escribió Player (texto enriquecido). En dev sin Supabase, filas demo.
 
-import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import { uiAreaOf, type UiArea } from '@playhub/ui/app/utils/ui-tones'
 import type { Localized } from '~/utils/types'
 
-// La URL de Player (`configuracion.player_url`), para ver un storyboard en su runner. En
-// desarrollo, si está vacía, la de este equipo en el puerto de Player; por Tailscale, el nombre de
-// este equipo (equipo-local). Como `urlDeEducators`.
-export async function urlDePlayer(): Promise<string | null> {
-  if (!isSupabaseConfigured()) return null
-  const { data } = await useSupabaseClient().from('configuracion').select('valor').eq('clave', 'player_url').maybeSingle()
-  const url = (data?.valor ?? '').trim() || (import.meta.dev ? 'http://localhost:3001' : '')
-  return url ? urlEnEsteEquipo(url.replace(/\/+$/, '')) : null
-}
+// La URL de Player (`configuraciones.player_url`), para ver un storyboard en su runner.
+export const urlDePlayer = () => urlDeApp('player')
 
 export interface StoryboardScene {
   id: number
@@ -92,6 +84,9 @@ const SELECT_STORYBOARD = `
   guia:guias ( descripcion, objetivo, publico )
 `
 
+// La última lectura de la lista, compartida por todas las piezas que la usan (utils/alDia.ts).
+const lectura = lecturaNueva()
+
 export function useStoryboards() {
   const demo = !isSupabaseConfigured()
   const { t, locale } = useT()
@@ -121,11 +116,12 @@ export function useStoryboards() {
     }
   }
 
-  async function refresh() {
+  async function leer() {
     if (demo) return
     const oid = orgActiva.value?.id
     if (!oid) return
-    state.value.loading = true
+    // Solo la primera lectura de una organización se ve cargando: volver a leer no tapa lo que ya se ve.
+    if (state.value.orgId !== oid) state.value.loading = true
 
     // Público (sin organización dueña) o personalizado de ESTA organización; la RLS ya filtró los
     // estándar por los países donde opera.
@@ -141,10 +137,9 @@ export function useStoryboards() {
     state.value.loading = false
   }
 
-  if (import.meta.client && !demo) {
-    const oid = orgActiva.value?.id ?? null
-    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
-  }
+  // Leer y anotar cuándo; al entrar a la página y al volver a la pestaña, otra vez si hace falta (utils/alDia.ts).
+  const refresh = () => leerAnotando(lectura, leer)
+  if (!demo) useAlDia(lectura, () => state.value.orgId, refresh)
 
   const storyboards = computed(() => state.value.storyboards)
   const loading = computed(() => state.value.loading)

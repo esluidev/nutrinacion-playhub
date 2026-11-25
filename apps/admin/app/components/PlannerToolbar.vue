@@ -14,6 +14,8 @@
       <UiButton variant="outline" @click="goToToday">{{ t('common.today') }}</UiButton>
       <!-- Qué talleres se ven: un filtro, no una navegación, así que va en el select de barra del kit -->
       <UiSelect v-model="statusModel" variant="toolbar" :prefix="t('planner.view')" :options="statusOptions" />
+      <!-- El programa: todos los de la organización, siempre (tarea 021) -->
+      <UiSelect v-model="programaModel" variant="toolbar" :prefix="t('programs.field')" :options="programaOptions" />
     </div>
 
     <div class="flex flex-wrap items-center gap-3">
@@ -28,7 +30,17 @@
 import type { PlannerFiltro } from '~/composables/usePlanner'
 
 const { t } = useT()
-const { rangeLabel, activeView, statusFilter, navigateRange, goToToday } = usePlanner()
+const { rangeLabel, activeView, statusFilter, programaFilter, navigateRange, goToToday } = usePlanner()
+const { programas } = useProgramas()
+const programaModel = computed({
+  get: () => programaFilter.value as string | number,
+  set: v => (programaFilter.value = v === 'todos' || v === 'ninguno' ? v : Number(v)),
+})
+const programaOptions = computed(() => [
+  { value: 'todos', label: t('planner.fAll') },
+  ...programas.value.map(p => ({ value: p.id, label: p.nombre })),
+  { value: 'ninguno', label: t('programs.none') },
+])
 
 // Puentes tipados: UiSelect y UiTabs hablan en string; filtro y vista son uniones cerradas.
 const statusModel = computed({

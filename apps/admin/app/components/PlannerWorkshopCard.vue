@@ -1,13 +1,17 @@
 <template>
-  <!-- La tarjeta lleva el tono de su sesión: hoy en sol, próxima en cielo, completada en lima… -->
+  <!-- La tarjeta lleva el tono de su sesión (hoy en sol, próxima en cielo, realizada en lima, sin realizar en coral; borrador
+       y en revisión, neutros) y dice su estado con la misma etiqueta que la lista de Talleres. Lo que todavía no está
+       publicado (borrador, en revisión) va con el borde discontinuo: el educador aún no lo ve. -->
   <article
     :draggable="!compact"
     :data-tone="workshop.tone"
+    :title="compact ? `${workshop.title} · ${workshop.statusLabel}` : undefined"
     :class="[
       'cursor-pointer',
       compact
         ? 'flex items-center gap-2 rounded-chip px-2 py-1.5 hover:bg-sunken'
         : 'ui-panel ui-panel-interactive relative overflow-hidden rounded-control py-3 pl-4 pr-3',
+      !compact && !workshop.publicado && 'border-dashed border-line-strong',
       isDragging && 'scale-95 opacity-50',
     ]"
     @dragstart="onDragStart"
@@ -36,6 +40,7 @@
         <UiAvatar :name="workshop.educator" size="sm" />
         <span class="truncate text-caption font-semibold text-muted">{{ workshop.location }}</span>
       </div>
+      <UiBadge :tone="workshop.tone" dot class="mt-2.5">{{ workshop.statusLabel }}</UiBadge>
     </template>
   </article>
 </template>

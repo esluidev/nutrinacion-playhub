@@ -1,16 +1,20 @@
 <template>
   <div class="min-h-screen bg-canvas">
-    <LayoutSidebar :is-open="sidebarOpen" :is-collapsed="isCollapsed" @close="sidebarOpen = false" />
+    <!-- Al imprimir (el reporte, tarea 021) solo queda el contenido: sin barra lateral ni cabecera. -->
+    <div class="print:hidden">
+      <LayoutSidebar :is-open="sidebarOpen" :is-collapsed="isCollapsed" @close="sidebarOpen = false" />
+    </div>
 
     <div :class="[
       'flex flex-col min-h-screen transition-all duration-200 ease-in-out',
       isCollapsed ? 'lg:pl-19' : 'lg:pl-64',
+      'print:pl-0!',
     ]">
-      <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
+      <LayoutHeader class="print:hidden" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
       <!-- max-w: el mock está diseñado a 1440; sin tope, en monitores anchos el
            contenido se desparrama y el diseño se ve chico y disperso. -->
-      <main class="flex-1 p-5 lg:p-8">
+      <main class="flex-1 p-5 lg:p-8 print:p-0!">
         <div class="max-w-[1440px] mx-auto w-full">
           <slot />
         </div>

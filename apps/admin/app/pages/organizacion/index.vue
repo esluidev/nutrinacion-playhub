@@ -1,8 +1,9 @@
 <template>
   <!-- El inicio de la organización, para quien la opera (administrador o colaborador): sus datos,
-       su contrato, los países donde opera, las cifras de la operación, los próximos talleres y los
-       accesos rápidos. Sin educadores ni talleres, los primeros pasos. Editar datos y licencia
-       siguen siendo del operador (Platform). -->
+       su contrato, los países donde opera, las cifras de la operación, los próximos talleres y el
+       equipo. Sin educadores ni talleres, los primeros pasos. «Nuevo Taller» va solo en la cabecera:
+       sin atajos que repitan los pasos o la barra lateral. Editar datos y licencia siguen siendo del
+       operador (Platform). -->
   <div>
     <UiPageHeader :title="greeting" :description="headerDesc">
       <template #actions>
@@ -125,27 +126,6 @@
 
       <!-- Columna lateral (1/3) -->
       <div class="space-y-6">
-        <!-- Accesos rápidos: cada acceso con el tono de lo que abre, no todos en lima -->
-        <section>
-          <h3 class="ui-title mb-3">{{ t('orgHome.quickActions') }}</h3>
-          <div class="space-y-3">
-            <button
-              v-for="action in quickActions"
-              :key="action.label"
-              type="button"
-              class="ui-panel ui-panel-interactive flex w-full items-center gap-3 p-4 text-left"
-              @click="navigateTo(action.to)"
-            >
-              <UiSymbol size="md" :icon="action.icon" :tone="action.tone" />
-              <span class="min-w-0 flex-1">
-                <span class="block text-body font-extrabold leading-tight text-ink">{{ action.label }}</span>
-                <span class="ui-caption mt-0.5 block">{{ action.sub }}</span>
-              </span>
-              <UiIcon name="chevron-right" class="size-4 text-subtle" />
-            </button>
-          </div>
-        </section>
-
         <!-- La organización: datos y, si administras, sus administradores -->
         <section class="ui-panel px-6 py-5">
           <div class="mb-4 flex items-center gap-3">
@@ -302,14 +282,6 @@ const stats = computed<Stat[]>(() => [
   { label: t('orgHome.upcoming'), value: proximos.value, sub: '', icon: 'calendar', tone: 'sky' },
   { label: t('orgHome.jornadasActive'), value: jornadasDeHoy.value, sub: tCount(t, 'orgHome.jornadasTotal', jornadas.value.length), icon: 'layers', tone: jornadasDeHoy.value ? 'sun' : 'neutral' },
   { label: t('orgHome.workshops'), value: vivos.value.length, sub: t('orgHome.total'), icon: 'clapperboard', tone: 'neutral' },
-])
-
-// Accesos rápidos: el tono dice qué abren. Nuevo taller → cielo (una sesión programada); agregar
-// educador → uva (alguien nuevo). La jornada se crea o se elige al programar un taller.
-interface QuickAction { label: string, sub: string, to: string, icon: UiIconName, tone: UiTone }
-const quickActions = computed<QuickAction[]>(() => [
-  { label: t('orgHome.newWorkshop'), sub: t('orgHome.newWorkshopSub'), to: '/organizacion/workshops/new', icon: 'plus', tone: 'sky' },
-  { label: t('orgHome.addEducator'), sub: t('orgHome.addEducatorSub'), to: '/organizacion/educators/nuevo', icon: 'user-plus', tone: 'grape' },
 ])
 
 async function cargar() {

@@ -36,6 +36,9 @@ interface ColaboradorRow {
   perfil: { id: number, nombre: string | null, apellido: string | null, email: string | null } | null
 }
 
+// La última lectura de la lista, compartida por todas las piezas que la usan (utils/alDia.ts).
+const lectura = lecturaNueva()
+
 export function useColaboradores() {
   const demo = !isSupabaseConfigured()
   const { orgActiva } = useContexto()
@@ -46,11 +49,12 @@ export function useColaboradores() {
     () => ({ orgId: null, colaboradores: demo ? DEMO_COLABORADORES : [], loading: false }),
   )
 
-  async function refresh() {
+  async function leer() {
     if (demo) return
     const oid = orgActiva.value?.id
     if (!oid) return
-    state.value.loading = true
+    // Solo la primera lectura de una organización se ve cargando: volver a leer no tapa lo que ya se ve.
+    if (state.value.orgId !== oid) state.value.loading = true
     const { data } = await useSupabaseClient()
       .from('organizacion_colaboradores')
       .select('id, activo, created_at, perfil:perfiles ( id, nombre, apellido, email )')
@@ -72,18 +76,25 @@ export function useColaboradores() {
     state.value.loading = false
   }
 
-  if (import.meta.client && !demo) {
-    const oid = orgActiva.value?.id ?? null
-    if (oid && state.value.orgId !== oid && !state.value.loading) refresh()
-  }
+  // Leer y anotar cuándo; al entrar a la página y al volver a la pestaña, otra vez si hace falta (utils/alDia.ts).
+  const refresh = () => leerAnotando(lectura, leer)
+  if (!demo) useAlDia(lectura, () => state.value.orgId, refresh)
 
   const colaboradores = computed(() => state.value.colaboradores)
   const loading = computed(() => state.value.loading)
 
-  // Desactivar corta el acceso sin borrar historial; se puede reactivar.
+  // Desactivar corta el acceso sin borrar historial; se puede reactivar (se cambia al editarlo).
   async function setActivo(id: number, activo: boolean) {
     if (demo) return { error: null }
     const { error } = await useSupabaseClient().from('organizacion_colaboradores').update({ activo }).eq('id', id)
+    if (!error) await refresh()
+    return { error: error?.message ?? null }
+  }
+
+  // Quitarlo de la organización: deja de operarla; se le puede invitar otra vez (lo gestionan sus administradores).
+  async function quitar(id: number) {
+    if (demo) return { error: null }
+    const { error } = await useSupabaseClient().from('organizacion_colaboradores').delete().eq('id', id)
     if (!error) await refresh()
     return { error: error?.message ?? null }
   }
@@ -124,5 +135,5 @@ export function useColaboradores() {
     return { error: error?.message ?? null }
   }
 
-  return { colaboradores, loading, refresh, setActivo, listInvitacionesPendientes, invitar, revocarInvitacion }
+  return { colaboradores, loading, refresh, setActivo, quitar, listInvitacionesPendientes, invitar, revocarInvitacion }
 }

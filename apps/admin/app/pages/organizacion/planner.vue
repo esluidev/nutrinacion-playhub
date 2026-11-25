@@ -1,7 +1,7 @@
 <template>
   <!-- El planificador: los talleres y sus jornadas (decisión 011). La semana con sus bandas y el
-       mes con sus marcas; al pulsar una se abre su panel, desde donde se edita o se borra. Una
-       jornada se crea o se elige al programar un taller, no aquí. `?jornada=<id>` abre su panel. -->
+       mes con sus marcas; al pulsar una se abre su panel, desde donde se edita o se borra. Las
+       jornadas se crean en su sección (tarea 023). `?jornada=<id>` abre su panel. -->
   <div>
     <PlannerToolbar />
     <PlannerKanban v-if="activeView === 'kanban'" @abrir-jornada="abierta = $event" />
@@ -33,8 +33,8 @@ function editar() {
   dialogo.value = true
 }
 
-// Las jornadas cambian fuera de aquí (se crean o se amplían al programar un taller, y la base
-// borra la que se queda sin talleres): al entrar se vuelven a pedir.
+// Las jornadas cambian fuera de aquí (en su sección o al ampliarlas al programar un taller): al
+// entrar se vuelven a pedir.
 onMounted(() => {
   refreshJornadas()
 })

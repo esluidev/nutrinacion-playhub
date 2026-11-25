@@ -1,8 +1,9 @@
 <template>
   <!-- El panel de una jornada, desde su banda en el planificador: su lugar, sus días, la descripción,
-       sus talleres (día, hora, detalle del lugar y educador) y las acciones. «Agregar taller» abre
-       el asistente con la jornada y su primer día puestos; «Eliminar jornada» deja sus talleres
-       sueltos y se confirma en coral. -->
+       sus talleres (día, hora, detalle del lugar y educador) y las acciones («Abrir Jornada» lleva a su
+       ficha, en su sección). «Agregar taller» abre
+       «Nuevo Taller» con la jornada y su primer día puestos; «Eliminar Jornada», en el menú ⋮ y en coral
+       como en su ficha, deja sus talleres sueltos y se confirma en coral. -->
   <UiDialog :open="!!jornada" :title="jornada?.nombre" size="lg" @update:open="(v) => { if (!v) emit('close') }">
     <template v-if="jornada">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -54,10 +55,13 @@
       </div>
     </template>
 
-    <!-- Eliminar va neutro: el coral queda para su confirmación (DESIGN.md, «Roles de color») -->
+    <!-- Eliminar, en el menú ⋮ (al final, en coral), como en su ficha -->
     <template #actions>
-      <UiButton variant="outline" icon="trash" @click="eliminando = true">{{ t('planner.jDelete') }}</UiButton>
-      <UiButton variant="outline" icon="pencil" @click="emit('editar')">{{ t('planner.jEditTitle') }}</UiButton>
+      <div class="flex items-center gap-3">
+        <UiButton variant="outline" icon="pencil" class="min-w-0 flex-1" @click="emit('editar')">{{ t('planner.jEditTitle') }}</UiButton>
+        <UiButton variant="outline" icon="layers" class="min-w-0 flex-1" :to="`/organizacion/jornadas/${jornada?.id}`" @click="emit('close')">{{ t('jornadas.open') }}</UiButton>
+        <MenuAcciones :acciones="[{ key: 'eliminar', label: t('planner.jDelete'), icon: 'trash', peligro: true }]" @select="eliminando = true" />
+      </div>
     </template>
   </UiDialog>
 
@@ -91,7 +95,7 @@ const idioma = computed(() => (locale.value === 'en' ? 'en-US' : 'es-ES'))
 const diaCorto = (f: string) => (f ? aFecha(f).toLocaleDateString(idioma.value, { weekday: 'short' }).replace('.', '').toUpperCase() : '—')
 const diaNumero = (f: string) => (f ? String(aFecha(f).getDate()) : '—')
 
-// Al asistente con la jornada puesta y, de fecha, su primer día o hoy si cae dentro.
+// A «Nuevo Taller» con la jornada puesta y, de fecha, su primer día o hoy si cae dentro.
 function agregarTaller() {
   const j = props.jornada
   if (!j) return

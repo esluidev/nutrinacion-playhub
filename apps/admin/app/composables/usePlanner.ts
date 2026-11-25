@@ -1,7 +1,7 @@
 import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
 import type { JornadaFila } from '~/composables/useJornadas'
 import type { JornadaResumen } from '~/utils/jornadas'
-import { bandasSemana, jornadasDelDia } from '~/utils/jornadas'
+import { bandasSemana, filasDeBandas, jornadasDelDia } from '~/utils/jornadas'
 
 // «borrador» agrupa lo que aún no ven los educadores (borrador y en revisión).
 export type PlannerStatus = 'programado' | 'completado' | 'sin_realizar' | 'borrador'
@@ -13,13 +13,16 @@ export interface PlannerWorkshop {
   title: string
   time: string
   educator: string
-  location: string // el lugar efectivo (el de su jornada con el detalle, o el suyo)
-  detalle: string  // con jornada, solo el detalle («Aula 3A»); suelto, su lugar
+  location: string // dónde: el lugar y su espacio («Sede central · Aula 3A»)
+  detalle: string  // solo el espacio («Aula 3A»): dentro de una jornada, el lugar ya es el de ella
   tone: UiTone // tono de la sesión (useWorkshops)
   fecha: string // 'YYYY-MM-DD'
   storyboard: string
   status?: PlannerStatus // sin status = programado
+  statusLabel: string     // lo que dice su estado («Programado», «Hoy», «En revisión», «Borrador», «Realizado»…)
+  publicado: boolean      // publicado (lo ve el educador); un borrador o uno en revisión, todavía no
   jornada: JornadaResumen | null
+  programaId: number | null
 }
 
 function getMondayOfWeek(date: Date): Date {
@@ -32,15 +35,18 @@ function getMondayOfWeek(date: Date): Date {
 }
 
 // El planificador: otra VISTA de los talleres reales y de sus jornadas (decisión 011): en la
-// semana, una banda por jornada sobre sus días; en el mes, una marca en cada día. Una jornada se
-// crea o se elige al programar un taller; desde su banda se abre su panel para editarla o borrarla.
+// semana, una banda por jornada sobre sus días; en el mes, una marca en cada día. Las jornadas se
+// crean en su sección (tarea 023); desde su banda se abre su panel para editarla o borrarla.
+
 export function usePlanner() {
   const { locale } = useT()
-  const { orgActiva } = useContexto()
 
   const weekOffset = useState('planner-weekOffset', () => 0)
   const activeView = useState<'kanban' | 'calendar'>('planner-activeView', () => 'kanban')
   const statusFilter = useState<PlannerFiltro>('planner-statusFilter', () => 'todos')
+  // El programa que se ve (tarea 021): todos, uno o los talleres sin programa. Es un filtro, no una
+  // banda: un programa dura meses y taparía el mes entero.
+  const programaFilter = useState<'todos' | 'ninguno' | number>('planner-programaFilter', () => 'todos')
 
   // Los cancelados y los archivados no se planifican.
   const { workshops: talleres, updateFecha, refresh: refreshWorkshops } = useWorkshops()
@@ -53,24 +59,24 @@ export function usePlanner() {
         time: w.time,
         educator: w.educator,
         location: w.location,
-        detalle: w.editable.ubicacion,
+        detalle: w.editable.espacio,
         tone: w.tone,
         fecha: w.date,
         storyboard: w.storyboard,
         status: w.status === 'programado' ? undefined : w.status === 'revision' ? 'borrador' : (w.status as PlannerStatus),
+        statusLabel: w.statusLabel,
+        publicado: w.status !== 'borrador' && w.status !== 'revision',
         jornada: w.jornada,
+        programaId: w.programa?.id ?? null,
       })))
 
-  // ── Jornadas de la organización ──────────────────────────────────────────────
-  const jornadasState = useState<{ orgId: number | null, lista: JornadaFila[] }>('planner-jornadas', () => ({ orgId: null, lista: [] }))
-  const jornadas = computed(() => jornadasState.value.lista)
-
-  async function refreshJornadas() {
-    const oid = orgActiva.value?.id
-    if (!oid) return
-    jornadasState.value = { orgId: oid, lista: await useJornadas().listar(oid) }
-  }
-  if (import.meta.client && orgActiva.value && jornadasState.value.orgId !== orgActiva.value.id) refreshJornadas()
+  // ── Jornadas de la organización: la lista compartida (useJornadas), al día como las demás ──
+  const { jornadas: todasLasJornadas, refresh: refreshJornadas, actualizar, eliminar } = useJornadas()
+  // Las jornadas del programa elegido (todas, sin filtro).
+  const jornadas = computed<JornadaFila[]>(() => todasLasJornadas.value.filter((j) => {
+    const p = programaFilter.value
+    return p === 'todos' || (p === 'ninguno' ? j.programa_id === null : j.programa_id === p)
+  }))
 
   function getJornada(id: number) {
     return jornadas.value.find(j => j.id === id) ?? null
@@ -91,6 +97,8 @@ export function usePlanner() {
   })
 
   function matchesFilter(ws: PlannerWorkshop) {
+    const p = programaFilter.value
+    if (p !== 'todos' && (p === 'ninguno' ? ws.programaId !== null : ws.programaId !== p)) return false
     if (statusFilter.value === 'todos') return true
     return (ws.status ?? 'programado') === statusFilter.value
   }
@@ -123,7 +131,7 @@ export function usePlanner() {
   })
 
   // Las bandas de la semana: por jornada, las columnas que abarca (utils/jornadas).
-  const weekBands = computed(() => bandasSemana(jornadas.value, isoLocal(currentMonday.value)))
+  const weekBands = computed(() => filasDeBandas(bandasSemana(jornadas.value, isoLocal(currentMonday.value))))
 
   // Las jornadas de un día, para marcarlo en la vista de mes.
   function jornadasDe(fecha: string) {
@@ -180,20 +188,19 @@ export function usePlanner() {
   }
 
   // ── Jornadas: edición y baja desde su panel (la lista y los talleres se refrescan) ───
-  async function actualizarJornada(id: number, datos: Parameters<ReturnType<typeof useJornadas>['actualizar']>[1]) {
-    const r = await useJornadas().actualizar(id, datos)
-    if (!r.error) await Promise.all([refreshJornadas(), refreshWorkshops()])
+  async function actualizarJornada(id: number, datos: Parameters<typeof actualizar>[1]) {
+    const r = await actualizar(id, datos)
+    if (!r.error) await refreshWorkshops()
     return r
   }
 
   async function eliminarJornada(id: number) {
-    const r = await useJornadas().eliminar(id)
-    if (!r.error) await Promise.all([refreshJornadas(), refreshWorkshops()])
+    const r = await eliminar(id)
+    if (!r.error) await refreshWorkshops()
     return r
   }
 
-  // Los talleres (vivos) de una jornada, por fecha y hora. Si se borran o salen todos, la base
-  // borra la jornada: el refresco de la lista la quita.
+  // Los talleres (vivos) de una jornada, por fecha y hora.
   function workshopsDeJornada(id: number) {
     return workshops.value.filter(w => w.jornada?.id === id).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.time.localeCompare(b.time))
   }
@@ -204,6 +211,7 @@ export function usePlanner() {
     workshops,
     visibleWorkshops,
     statusFilter,
+    programaFilter,
     today,
     todayStr,
     currentMonday,
