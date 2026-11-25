@@ -4,7 +4,7 @@
 -- transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(57);
+select plan(67);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -67,10 +67,19 @@ select set_config('t.grupo', (select id from educador_grupos where nombre = 'WS 
 select set_config('t.grupo_norte', (select id from educador_grupos where nombre = 'WS Equipo Norte')::text, true);
 insert into educador_grupo_miembros (educador_grupo_id, educador_id) values (current_setting('t.grupo')::bigint, current_setting('t.maria')::bigint);
 
+-- Lugar y grupos de audiencia de Centro (tarea 021).
+insert into lugares (nombre, organizacion_id) values ('WS Sede', current_setting('t.centro')::bigint);
+insert into grupos_audiencia (nombre, organizacion_id) values
+  ('WS 2.º B', current_setting('t.centro')::bigint), ('WS 2.º C', current_setting('t.centro')::bigint);
+select set_config('t.lugar', (select id from lugares where nombre = 'WS Sede')::text, true);
+select set_config('t.grupo_b', (select id from grupos_audiencia where nombre = 'WS 2.º B')::text, true);
+select set_config('t.grupo_c', (select id from grupos_audiencia where nombre = 'WS 2.º C')::text, true);
+
 -- Un workshop nuevo de Centro, en borrador (devuelve su id), y asignarle a María.
 create function pruebas.nuevo(p_titulo text, p_dias int) returns bigint language sql as $$
-  insert into workshops (titulo, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id)
-  values (p_titulo, current_date + p_dias, '09:00', 'es', current_setting('t.sb')::bigint, current_setting('t.centro')::bigint)
+  insert into workshops (titulo, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id, lugar_id, grupo_audiencia_id)
+  values (p_titulo, current_date + p_dias, '09:00', 'es', current_setting('t.sb')::bigint, current_setting('t.centro')::bigint,
+          current_setting('t.lugar')::bigint, current_setting('t.grupo_b')::bigint)
   returning id
 $$;
 create function pruebas.asignar(p_workshop bigint) returns void language sql as $$
@@ -101,8 +110,12 @@ select throws_ok(format($$ update workshops set estado = 'BORRADOR' where id = %
   'publicado no vuelve a borrador');
 select throws_ok(format($$ update workshops set hora_inicio = null where id = %s $$, current_setting('t.w')), 'P0001', null,
   'publicado, no se queda sin hora');
-select lives_ok(format($$ update workshops set ubicacion = 'Aula 4', grupo_asistente = '2.º C' where id = %s $$, current_setting('t.w')),
+select lives_ok(format($$ update workshops set espacio = 'Aula 4', grupo_audiencia_id = %s where id = %s $$, current_setting('t.grupo_c'), current_setting('t.w')),
   'sus datos se editan sin despublicarlo');
+select throws_ok(format($$ update workshops set grupo_audiencia_id = null where id = %s $$, current_setting('t.w')), 'P0001', null,
+  'publicado, no se queda sin grupo (tarea 021)');
+select throws_ok(format($$ update workshops set lugar_id = null where id = %s $$, current_setting('t.w')), 'P0001', null,
+  'ni sin lugar');
 
 -- ── Cambiar de educador en uno publicado ──────────────────────────────────────
 select throws_ok(format($$ delete from workshop_educadores where workshop_id = %s $$, current_setting('t.w')), 'P0001', null,
@@ -124,6 +137,18 @@ select lives_ok(format($$ update workshops set estado = 'PUBLICADO', fecha = cur
   'se reprograma a otra fecha');
 select is((select reprogramaciones || ' ' || coalesce(motivo_cancelacion, '-') from workshops where id = current_setting('t.w2')::bigint),
   '1 -', 'cuenta la reprogramación y limpia la cancelación');
+select is((select string_agg(tipo || ' ' || fecha_anterior || ' ' || coalesce(fecha_nueva::text, '-') || ' ' || coalesce(motivo, '-'), ' | ' order by id)
+             from workshop_historial where workshop_id = current_setting('t.w2')::bigint),
+  'CANCELADO ' || (current_date + 3) || ' - Lluvia | REPROGRAMADO ' || (current_date + 3) || ' ' || (current_date + 10) || ' -',
+  'el historial guarda la cancelación con su motivo y la reprogramación con las dos fechas');
+select is((select count(*)::int from workshop_historial where workshop_id = current_setting('t.w2')::bigint
+              and perfil_id = (select id from perfiles where email = 'a@ws.test')), 2,
+  'y quién lo hizo');
+select lives_ok(format($$ update workshops set fecha = current_date + 11 where id = %s $$, current_setting('t.w2')),
+  'mover un publicado a otra fecha');
+select is((select tipo::text || ' ' || fecha_anterior || ' ' || fecha_nueva from workshop_historial
+            where workshop_id = current_setting('t.w2')::bigint order by id desc limit 1),
+  'FECHA_CAMBIADA ' || (current_date + 10) || ' ' || (current_date + 11), 'también queda en el historial');
 
 -- ── Empezar, finalizar y archivar ─────────────────────────────────────────────
 reset role;
@@ -267,10 +292,22 @@ reset role;
 select throws_ok(format($$ delete from educadores where id = %s $$, current_setting('t.maria')), 'P0001', null,
   'no se borra a un educador que es el único de un workshop publicado (se aparta o se reasigna)');
 select lives_ok(format($$ delete from workshops where id = %s $$, current_setting('t.w4')),
-  'borrar el workshop publicado sí: se van sus asignaciones con él');
+  'borrar el workshop publicado que nadie empezó sí: se van sus asignaciones con él');
 update workshops set estado = 'CANCELADO', motivo_cancelacion = 'Se suspende' where id = current_setting('t.w2')::bigint;
 select lives_ok(format($$ delete from educadores where id = %s $$, current_setting('t.maria')),
   'y entonces María, sin workshops publicados (el otro suyo se canceló), se puede borrar');
+
+-- ── Eliminar un workshop (tarea 023): solo lo que no se ha dado ───────────────
+select pruebas.como('50000000-0000-4000-8000-000000000002');
+select set_config('t.wb', pruebas.nuevo('W para borrar', 8)::text, true);
+select is(pruebas.afectadas(format($$ delete from workshops where id = %s $$, current_setting('t.wb'))), 1,
+  'quien opera la organización elimina un borrador');
+select throws_ok(format($$ delete from workshops where id = %s $$, current_setting('t.w6')), 'P0001', null,
+  'no uno publicado que ya se empezó');
+select throws_ok(format($$ delete from workshops where id = %s $$, current_setting('t.w2')), 'P0001', null,
+  'ni uno cancelado: se archiva');
+select throws_ok(format($$ delete from workshops where id = %s $$, current_setting('t.w')), 'P0001', null,
+  'ni uno que ya se dio y se archivó: lo que pasó se queda para el reporte');
 
 select * from finish();
 rollback;

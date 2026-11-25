@@ -13,7 +13,7 @@
 //
 // Secretos: RESEND_API_KEY (obligatorio) y RESEND_FROM (opcional; por defecto hello@nutrinacion.com,
 // que exige el dominio verificado en Resend). En local, `supabase/.env`; en la nube,
-// `supabase secrets set`. El enlace usa `configuracion.admin_url` o, si está vacía, el origen de Admin.
+// `supabase secrets set`. El enlace usa `configuraciones.admin_url` o, si está vacía, el origen de Admin.
 //
 // Despliegue: nombre EXACTO `enviar-invitacion`, con Verify JWT.
 
@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
   const [perfilRes, orgRes, cfgRes] = await Promise.all([
     admin.from('perfiles').select('id').eq('email', emailNorm).limit(1),
     admin.from('organizaciones').select('nombre').eq('id', inv.organizacion_id).maybeSingle(),
-    admin.from('configuracion').select('valor').eq('clave', 'admin_url').maybeSingle(),
+    admin.from('configuraciones').select('valor').eq('clave', 'admin_url').maybeSingle(),
   ])
   const yaTieneCuenta = (perfilRes.data?.length ?? 0) > 0
 
@@ -148,9 +148,9 @@ Deno.serve(async (req: Request) => {
     .maybeSingle()
   if (!plantilla || plantilla.activo === false) return anotarError('Falta la plantilla de correo de esta invitación.')
 
-  // La URL de Admin: la de `configuracion` si está; si no, el origen desde el que se pidió el envío.
+  // La URL de Admin: la de `configuraciones` si está; si no, el origen desde el que se pidió el envío.
   const base = (String(cfgRes.data?.valor ?? '').trim() || req.headers.get('Origin') || '').replace(/\/+$/, '')
-  if (!/^https?:\/\//.test(base)) return anotarError('Falta la URL de Admin (configuracion.admin_url).')
+  if (!/^https?:\/\//.test(base)) return anotarError('Falta la URL de Admin (configuraciones.admin_url).')
   const link = yaTieneCuenta ? `${base}/invitaciones` : `${base}/invitacion/${inv.token}`
 
   const idioma = String(inv.idioma || 'es')

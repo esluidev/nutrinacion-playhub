@@ -47,8 +47,18 @@ select set_config('t.sb_soda', (select id from storyboards where slug = 'cat-sod
 insert into educadores (nombre, correo, organizacion_id) values ('María', 'maria@cat.test', current_setting('t.centro')::bigint);
 select set_config('t.maria', (select id from educadores where correo = 'maria@cat.test')::text, true);
 
-insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('Cat Jornada Norte', 'Colegio Norte', current_date, current_date + 2, current_setting('t.norte')::bigint);
+-- Lugares y un grupo de audiencia (tarea 021).
+insert into lugares (nombre, organizacion_id) values
+  ('Cat Escuela Las Flores', current_setting('t.centro')::bigint), ('Cat Sede', current_setting('t.centro')::bigint),
+  ('Cat Patio', current_setting('t.centro')::bigint), ('Cat Colegio Norte', current_setting('t.norte')::bigint);
+insert into grupos_audiencia (nombre, organizacion_id) values ('Cat 1.º A', current_setting('t.centro')::bigint);
+select set_config('t.flores', (select id from lugares where nombre = 'Cat Escuela Las Flores')::text, true);
+select set_config('t.sede', (select id from lugares where nombre = 'Cat Sede')::text, true);
+select set_config('t.patio', (select id from lugares where nombre = 'Cat Patio')::text, true);
+select set_config('t.colegio_norte', (select id from lugares where nombre = 'Cat Colegio Norte')::text, true);
+
+insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('Cat Jornada Norte', current_setting('t.colegio_norte')::bigint, current_date, current_date + 2, current_setting('t.norte')::bigint);
 select set_config('t.jornada_norte', (select id from jornadas where nombre = 'Cat Jornada Norte')::text, true);
 
 -- La metadata tal como la arma Player desde el JSON (sin estado ni países: eso se elige al publicar).
@@ -138,8 +148,9 @@ select is(disponible_para_organizacion(current_setting('t.sb_soda')::bigint, cur
 -- ── Países e idiomas en uso ───────────────────────────────────────────────────
 -- Centro programa el agua en inglés, con María, y lo publica.
 select pruebas.como('40000000-0000-4000-8000-000000000002');
-insert into workshops (titulo, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id)
-values ('Agua en inglés', current_date + 3, '09:00', 'en', current_setting('t.sb_agua')::bigint, current_setting('t.centro')::bigint);
+insert into workshops (titulo, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id, lugar_id, grupo_audiencia_id)
+values ('Agua en inglés', current_date + 3, '09:00', 'en', current_setting('t.sb_agua')::bigint, current_setting('t.centro')::bigint,
+        current_setting('t.sede')::bigint, (select id from grupos_audiencia where nombre = 'Cat 1.º A'));
 insert into workshop_educadores (workshop_id, educador_id)
 values ((select id from workshops where titulo = 'Agua en inglés'), current_setting('t.maria')::bigint);
 update workshops set estado = 'PUBLICADO' where titulo = 'Agua en inglés';
@@ -162,29 +173,29 @@ select throws_ok(
 select is((select estado::text from workshops where titulo = 'Agua en inglés'), 'PUBLICADO', 'lo ya programado se conserva');
 
 -- ── Jornadas: un lugar y sus días ─────────────────────────────────────────────
-select lives_ok(format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-                          values ('Cat Jornada', 'Escuela Las Flores', current_date + 10, current_date + 12, %s) $$,
-                       current_setting('t.centro')), 'el admin crea una jornada de su organización, con su lugar y sus días');
+select lives_ok(format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+                          values ('Cat Jornada', %s, current_date + 10, current_date + 12, %s) $$,
+                       current_setting('t.flores'), current_setting('t.centro')), 'el admin crea una jornada de su organización, con su lugar y sus días');
 select set_config('t.jornada', (select id from jornadas where nombre = 'Cat Jornada')::text, true);
-select throws_ok(format($$ insert into jornadas (nombre, ubicacion, organizacion_id) values ('Sin días', 'Sede', %s) $$, current_setting('t.centro')),
+select throws_ok(format($$ insert into jornadas (nombre, lugar_id, organizacion_id) values ('Sin días', %s, %s) $$, current_setting('t.sede'), current_setting('t.centro')),
   '23502', null, 'una jornada necesita sus fechas');
 select throws_ok(format($$ insert into jornadas (nombre, fecha_inicio, fecha_fin, organizacion_id) values ('Sin lugar', current_date, current_date, %s) $$,
                         current_setting('t.centro')), '23502', null, 'y su lugar');
-select throws_ok(format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('Al revés', 'Sede', current_date + 2, current_date, %s) $$,
-                        current_setting('t.centro')), '23514', null, 'y que el fin no sea antes del inicio');
-select lives_ok(format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('Cat Un día', 'Sede', current_date + 1, current_date + 1, %s) $$,
-                       current_setting('t.centro')), 'una jornada puede durar un solo día');
-select throws_ok(format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('Ajena', 'Sede', current_date, current_date, %s) $$,
-                        current_setting('t.norte')), '42501', null, 'pero no de otra organización');
+select throws_ok(format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id) values ('Al revés', %s, current_date + 2, current_date, %s) $$,
+                        current_setting('t.sede'), current_setting('t.centro')), '23514', null, 'y que el fin no sea antes del inicio');
+select lives_ok(format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id) values ('Cat Un día', %s, current_date + 1, current_date + 1, %s) $$,
+                       current_setting('t.sede'), current_setting('t.centro')), 'una jornada puede durar un solo día');
+select throws_ok(format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id) values ('Ajena', %s, current_date, current_date, %s) $$,
+                        current_setting('t.colegio_norte'), current_setting('t.norte')), '42501', null, 'pero no de otra organización');
 select throws_ok(
   format($$ insert into workshops (fecha, idioma_contenido, storyboard_id, organizacion_id, jornada_id) values (current_date, 'es', %s, %s, %s) $$,
          current_setting('t.sb_huevo'), current_setting('t.centro'), current_setting('t.jornada_norte')),
   'P0001', null, 'un workshop no puede ir en la jornada de otra organización');
 
 select pruebas.como('40000000-0000-4000-8000-000000000003');
-select lives_ok(format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('Cat Del colaborador', 'Sede', current_date, current_date, %s) $$,
-                       current_setting('t.centro')), 'un colaborador también crea jornadas');
-select lives_ok(format($$ update jornadas set ubicacion = 'Patio' where id = %s $$, current_setting('t.jornada')), 'y las edita');
+select lives_ok(format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id) values ('Cat Del colaborador', %s, current_date, current_date, %s) $$,
+                       current_setting('t.sede'), current_setting('t.centro')), 'un colaborador también crea jornadas');
+select lives_ok(format($$ update jornadas set lugar_id = %s where id = %s $$, current_setting('t.patio'), current_setting('t.jornada')), 'y las edita');
 
 -- Un workshop dentro de una jornada cae en sus días.
 select throws_ok(
@@ -210,8 +221,8 @@ select lives_ok(format($$ update jornadas set fecha_inicio = current_date + 12, 
   'un workshop archivado (descartado) ya no ata a la jornada');
 
 -- Una jornada existe mientras tiene workshops.
-insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('Cat Efímera', 'Patio', current_date + 30, current_date + 31, current_setting('t.centro')::bigint);
+insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('Cat Efímera', current_setting('t.patio')::bigint, current_date + 30, current_date + 31, current_setting('t.centro')::bigint);
 select set_config('t.efimera', (select id from jornadas where nombre = 'Cat Efímera')::text, true);
 insert into workshops (titulo, fecha, idioma_contenido, storyboard_id, organizacion_id, jornada_id)
 select t, current_date + 30, 'es', current_setting('t.sb_huevo')::bigint, current_setting('t.centro')::bigint, current_setting('t.efimera')::bigint
@@ -220,13 +231,13 @@ delete from workshops where titulo = 'Cat Efímera 1';
 select is((select count(*)::int from jornadas where id = current_setting('t.efimera')::bigint), 1,
   'si se borra uno de sus workshops, la jornada sigue');
 update workshops set jornada_id = null where titulo = 'Cat Efímera 2';
-select is((select count(*)::int from jornadas where id = current_setting('t.efimera')::bigint), 0,
-  'si su último workshop sale de ella, la jornada se borra sola');
-insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('Cat Efímera B', 'Patio', current_date + 30, current_date + 30, current_setting('t.centro')::bigint);
+select is((select count(*)::int from jornadas where id = current_setting('t.efimera')::bigint), 1,
+  'si su último workshop sale de ella, la jornada sigue (tarea 023: existe sin talleres)');
+insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('Cat Efímera B', current_setting('t.patio')::bigint, current_date + 30, current_date + 30, current_setting('t.centro')::bigint);
 update workshops set jornada_id = (select id from jornadas where nombre = 'Cat Efímera B') where titulo = 'Cat Efímera 2';
 delete from workshops where titulo = 'Cat Efímera 2';
-select is((select count(*)::int from jornadas where nombre = 'Cat Efímera B'), 0,
+select is((select count(*)::int from jornadas where nombre = 'Cat Efímera B'), 1,
   'y también si su último workshop se borra');
 select lives_ok(format($$ delete from jornadas where id = %s $$, current_setting('t.jornada')),
   'borrar una jornada a mano se puede');

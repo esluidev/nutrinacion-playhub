@@ -4,7 +4,7 @@
 -- la base sin seed (`supabase db reset --no-seed`).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(89);
+select plan(92);
 
 -- Actuar como un usuario de Auth (por su uuid) o como anon.
 -- Ayudas en un esquema propio (se deshace con el rollback), utilizables por anon y authenticated.
@@ -83,8 +83,15 @@ insert into educadores (nombre, correo, pin_hash, organizacion_id) values
 select set_config('t.maria', (select id from educadores where correo = 'maria@rls.test')::text, true);
 select set_config('t.pedro', (select id from educadores where correo = 'pedro@rls.test')::text, true);
 
-insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('RLS Jornada', 'Sede', current_date, current_date + 7, current_setting('t.centro')::bigint);
+-- Lugares y grupos de audiencia de cada organización (tarea 021).
+insert into lugares (nombre, organizacion_id) values
+  ('RLS Sede', current_setting('t.centro')::bigint), ('RLS Sede Norte', current_setting('t.norte')::bigint);
+insert into grupos_audiencia (nombre, organizacion_id) values
+  ('RLS 2.º B', current_setting('t.centro')::bigint), ('RLS 3.º A', current_setting('t.norte')::bigint);
+select set_config('t.lugar', (select id from lugares where nombre = 'RLS Sede')::text, true);
+
+insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('RLS Jornada', current_setting('t.lugar')::bigint, current_date, current_date + 7, current_setting('t.centro')::bigint);
 
 -- Workshops de Centro: uno publicado por venir (en la jornada), uno ya dado con su feedback y un
 -- borrador. Uno de Norte con su personalizado.
@@ -92,8 +99,11 @@ create function pruebas.workshop(p_notas text, p_dias int, p_sb bigint, p_org bi
 returns bigint language plpgsql as $$
 declare v_w bigint;
 begin
-  insert into workshops (notas, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id, jornada_id)
-  values (p_notas, current_date + p_dias, '09:00', 'es', p_sb, p_org, p_jornada) returning id into v_w;
+  insert into workshops (notas, fecha, hora_inicio, idioma_contenido, storyboard_id, organizacion_id, jornada_id,
+                         lugar_id, grupo_audiencia_id)
+  values (p_notas, current_date + p_dias, '09:00', 'es', p_sb, p_org, p_jornada,
+          (select id from lugares where organizacion_id = p_org), (select id from grupos_audiencia where organizacion_id = p_org and not abierto))
+  returning id into v_w;
   insert into workshop_educadores (workshop_id, educador_id) values (v_w, p_educador);
   update workshops set estado = 'PUBLICADO' where id = v_w;
   return v_w;
@@ -102,8 +112,9 @@ select set_config('t.w1', pruebas.workshop('RLS Centro próximo', 1, current_set
                                            current_setting('t.maria')::bigint, (select id from jornadas where nombre = 'RLS Jornada'))::text, true);
 select set_config('t.w2', pruebas.workshop('RLS Centro dado', -2, current_setting('t.sb_huevo')::bigint, current_setting('t.centro')::bigint,
                                            current_setting('t.maria')::bigint)::text, true);
-insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, participacion_grupo, claridad_contenido)
-select id, 4, 20, 'ALTA', 'CLARA' from workshop_educadores where workshop_id = current_setting('t.w2')::bigint;
+insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
+                               participacion_grupo, claridad_contenido)
+select id, 4, 20, 11, 9, 'ALTA', 'CLARA' from workshop_educadores where workshop_id = current_setting('t.w2')::bigint;
 select set_config('t.asignacion', (select id from workshop_educadores where workshop_id = current_setting('t.w1')::bigint)::text, true);
 insert into workshops (notas, fecha, idioma_contenido, storyboard_id, organizacion_id)
 values ('RLS Centro borrador', current_date + 20, 'es', current_setting('t.sb_huevo')::bigint, current_setting('t.centro')::bigint);
@@ -189,10 +200,11 @@ select throws_ok(
      values (current_date, 'es', current_setting('t.sb_pan')::bigint, current_setting('t.centro')::bigint) $$,
   'P0001', null, 'admin: no puede programar el personalizado de otra organización');
 select throws_ok(
-  $$ insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, participacion_grupo, claridad_contenido)
-     values (current_setting('t.asignacion')::bigint, 5, 10, 'ALTA', 'CLARA') $$,
+  $$ insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
+                                    participacion_grupo, claridad_contenido)
+     values (current_setting('t.asignacion')::bigint, 5, 10, 5, 5, 'ALTA', 'CLARA') $$,
   '42501', null, 'admin: el feedback solo lo escribe el educador');
-select lives_ok($$ update configuracion set valor = 'https://intruso.test' where clave = 'admin_url' $$,
+select lives_ok($$ update configuraciones set valor = 'https://intruso.test' where clave = 'admin_url' $$,
   'admin: actualizar la configuración no falla, pero no toca nada (ver abajo)');
 select is(pruebas.afectadas($$ update perfiles set telefono_movil = '+502 5555 0002' where usuario_id = auth.uid() $$), 1,
   'admin: edita sus teléfonos de contacto (0017)');
@@ -230,7 +242,8 @@ select throws_ok($$ update educadores set deleted_at = now() where correo = 'nue
 select throws_ok($$ delete from educadores where correo = 'nuevo@rls.test' $$, '42501', null,
   'colaborador: ni los borra');
 select lives_ok(
-  format($$ insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id) values ('RLS Jornada 2', 'Sede', current_date, current_date, %s) $$, current_setting('t.centro')),
+  format($$ insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id) values ('RLS Jornada 2', %s, current_date, current_date, %s) $$,
+         current_setting('t.lugar'), current_setting('t.centro')),
   'colaborador: crea jornadas');
 select lives_ok(
   format($$ insert into educador_grupos (nombre, organizacion_id) values ('RLS Grupo', %s) $$, current_setting('t.centro')),
@@ -281,10 +294,14 @@ select is((select count(*)::int from workshops), 0, 'anon: no ve workshops');
 select is((select count(*)::int from storyboards), 0, 'anon: no ve el catálogo');
 select is((select count(*)::int from perfiles), 0, 'anon: no ve perfiles');
 select is((select count(*)::int from organizaciones), 0, 'anon: no ve organizaciones');
+select is((select count(*)::int from configuraciones where clave in ('admin_url', 'player_url', 'educators_url')), 3,
+  'anon: lee las direcciones de las apps (las necesitan Educators, el runner y la app del hogar)');
+select is(pruebas.afectadas($$ update configuraciones set valor = 'https://intruso.test' where clave = 'player_url' $$), 0,
+  'anon: no cambia las configuraciones');
 
 -- ── Comprobaciones como postgres ──────────────────────────────────────────────
 reset role;
-select isnt((select valor from configuracion where clave = 'admin_url'), 'https://intruso.test',
+select isnt((select valor from configuraciones where clave = 'admin_url'), 'https://intruso.test',
   'la actualización del admin no cambió la configuración');
 
 -- Registro abierto con metadatos falsos: el trigger no enlaza nada (lee app_metadata).
@@ -337,6 +354,11 @@ select is((select count(*)::int from educadores where correo = 'pedro@rls.test')
 select pruebas.como('20000000-0000-4000-8000-000000000001');
 select throws_ok(format($$ select platform_eliminar_organizacion(%s) $$, current_setting('t.norte')), 'P0001', null,
   'baja: con storyboards personalizados no se da de baja (se resuelven en Player)');
+reset role;
+update workshops set estado = 'ARCHIVADO' where organizacion_id = current_setting('t.centro')::bigint and estado = 'BORRADOR';
+select cmp_ok((select count(*)::int from workshops where organizacion_id = current_setting('t.centro')::bigint and estado = 'ARCHIVADO'),
+  '>', 0, 'baja: tiene talleres archivados, que no se eliminan uno a uno');
+select pruebas.como('20000000-0000-4000-8000-000000000001');
 select lives_ok(format($$ select platform_eliminar_organizacion(%s) $$, current_setting('t.centro')),
   'baja: la organización se va entera, con sus educadores, talleres y jornadas');
 reset role;

@@ -5,7 +5,7 @@
 --   lucia@acc.test con su enlace de acceso pendiente, sin PIN todavía (Acceso Centro)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(67);
+select plan(75);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -57,8 +57,15 @@ insert into educadores (nombre, apellido, correo, pin_hash, acceso_token, acceso
 select set_config('t.maria', (select id from educadores where correo = 'maria@acc.test')::text, true);
 select set_config('t.pedro', (select id from educadores where correo = 'pedro@acc.test')::text, true);
 
-insert into jornadas (nombre, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('Acceso Jornada', 'Sede central', current_date - 3, current_date + 16, current_setting('t.centro')::bigint);
+-- Lugares y grupos de audiencia (tarea 021).
+insert into lugares (nombre, organizacion_id) values
+  ('Acceso Sede central', current_setting('t.centro')::bigint), ('Acceso Sede Norte', current_setting('t.norte')::bigint);
+insert into grupos_audiencia (nombre, organizacion_id) values
+  ('Acceso 2.º B', current_setting('t.centro')::bigint), ('Acceso 3.º A', current_setting('t.norte')::bigint);
+
+insert into jornadas (nombre, lugar_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('Acceso Jornada', (select id from lugares where nombre = 'Acceso Sede central'), current_date - 3, current_date + 16,
+        current_setting('t.centro')::bigint);
 select set_config('t.jornada', (select id from jornadas where nombre = 'Acceso Jornada')::text, true);
 
 -- Un workshop publicado (devuelve su id); con feedback, queda finalizado.
@@ -66,14 +73,18 @@ create function pruebas.workshop(p_dias int, p_org bigint, p_educador bigint, p_
 returns bigint language plpgsql as $$
 declare v_w bigint; v_a bigint;
 begin
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, idioma_contenido, storyboard_id, organizacion_id, jornada_id)
-  values (current_date + p_dias, '09:00', '09:30', 'Aula', '2.º B', 'es', current_setting('t.sb')::bigint, p_org, p_jornada) returning id into v_w;
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, idioma_contenido, storyboard_id, organizacion_id, jornada_id,
+                         lugar_id, grupo_audiencia_id)
+  values (current_date + p_dias, '09:00', '09:30', 'Aula', 'es', current_setting('t.sb')::bigint, p_org, p_jornada,
+          (select id from lugares where organizacion_id = p_org), (select id from grupos_audiencia where organizacion_id = p_org and not abierto))
+  returning id into v_w;
   insert into workshop_educadores (workshop_id, educador_id) values (v_w, p_educador) returning id into v_a;
   update workshops set estado = 'PUBLICADO' where id = v_w;
   if p_feedback then
     update workshop_educadores set iniciado_en = now() - interval '1 day', estado = 'EN_CURSO' where id = v_a;
-    insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, participacion_grupo, claridad_contenido)
-    values (v_a, 5, 20, 'ALTA', 'CLARA');
+    insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
+                                   participacion_grupo, claridad_contenido)
+    values (v_a, 5, 20, 11, 9, 'ALTA', 'CLARA');
   end if;
   return v_w;
 end $$;
@@ -146,6 +157,14 @@ select is(
     where t->>'id' = current_setting('t.hoy')),
   'El huevo en el desayuno', 'trae el título que le puso la organización');
 select is(
+  (select concat_ws(' | ', t->'jornada'->>'ubicacion', t->>'lugar', t->>'grupo', t->>'grupoAbierto')
+     from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t where t->>'id' = current_setting('t.hoy')),
+  'Acceso Sede central | Aula | Acceso 2.º B | false', 'dentro de una jornada: el lugar de la jornada, el espacio del taller y el grupo (tarea 021)');
+select is(
+  (select t->>'lugar' from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
+    where t->>'id' = current_setting('t.ayer')),
+  'Acceso Sede central · Aula', 'suelto: el lugar y su espacio');
+select is(
   (select count(*)::int from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t where t->'titulo' = 'null'),
   6, 'y null si no tiene: Educators usa el del storyboard');
 select is(
@@ -186,9 +205,9 @@ select is((select estado::text from workshop_educadores we where we.workshop_id 
 select pruebas.como_anon();
 select is(
   educador_guardar_feedback(current_setting('t.token'), current_setting('t.hoy')::bigint,
-    '{"calificacion": 4, "asistentes": 22, "participacion": "alta", "claridad": "clara", "costo": "", "faltoMaterial": "Láminas"}'),
-  '{"calificacion": 4, "asistentes": 22, "participacion": "alta", "claridad": "clara", "costo": "", "faltoMaterial": "Láminas"}'::jsonb,
-  'guarda el feedback del grupo');
+    '{"calificacion": 4, "asistentes": 22, "ninas": 12, "participacion": "alta", "claridad": "clara", "costo": "", "faltoMaterial": "Láminas"}'),
+  '{"calificacion": 4, "asistentes": 22, "ninas": 12, "ninos": 10, "participacion": "alta", "claridad": "clara", "costo": "", "faltoMaterial": "Láminas", "dispositivos": null}'::jsonb,
+  'guarda el feedback del grupo; con las niñas, los niños son el resto');
 reset role;
 select is((select estado::text from workshop_educadores we where we.workshop_id = current_setting('t.hoy')::bigint
               and we.educador_id = current_setting('t.maria')::bigint), 'COMPLETADO', 'con el feedback, la asignación queda completada');
@@ -197,8 +216,35 @@ select is((select estado::text from workshops where id = current_setting('t.hoy'
 select pruebas.como_anon();
 select throws_ok(
   format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
-         '{"calificacion": 9, "asistentes": 22, "participacion": "alta", "claridad": "clara"}'),
+         '{"calificacion": 9, "asistentes": 22, "ninas": 12, "participacion": "alta", "claridad": "clara"}'),
   '23514', null, 'puede corregir el feedback ya finalizado, pero con una calificación de 1 a 5');
+select throws_ok(
+  format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
+         '{"calificacion": 4, "asistentes": 22, "participacion": "alta", "claridad": "clara"}'),
+  'P0001', null, 'en un grupo cerrado, el cierre no se guarda sin niñas y niños');
+select throws_ok(
+  format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
+         '{"calificacion": 4, "asistentes": 22, "ninas": 12, "ninos": 9, "participacion": "alta", "claridad": "clara"}'),
+  '23514', null, 'ni con niñas y niños que no suman el total');
+reset role;
+update grupos_audiencia set abierto = true where nombre = 'Acceso 2.º B';
+select pruebas.como_anon();
+select is(
+  educador_guardar_feedback(current_setting('t.token'), current_setting('t.hoy')::bigint,
+    '{"calificacion": 4, "asistentes": 150, "participacion": "alta", "claridad": "clara", "dispositivos": 9}')->>'asistentes',
+  '150', 'en un grupo abierto basta el total');
+select is((select (t->'cierre'->>'dispositivos')::int from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
+            where t->>'id' = current_setting('t.hoy')), 9,
+  'el educador anota en el cierre cuántos dispositivos se unieron');
+select throws_ok(
+  format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
+         '{"calificacion": 4, "asistentes": 150, "participacion": "alta", "claridad": "clara", "dispositivos": -1}'),
+  '23514', null, 'nunca un número negativo');
+reset role;
+update grupos_audiencia set abierto = false where nombre = 'Acceso 2.º B';
+select is((select dispositivos_unidos from workshop_educadores where workshop_id = current_setting('t.hoy')::bigint), 9,
+  'y quedan con la ejecución');
+select pruebas.como_anon();
 
 -- ── La misma persona en otra organización ─────────────────────────────────────
 reset role;

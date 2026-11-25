@@ -60,9 +60,13 @@ create table storyboards (
   estado_publicacion  estado_publicacion not null default 'REGISTRADO',
   paises_disponibles  text[] not null default '{}',          -- códigos de `paises`; publicar exige al menos uno
   organizacion_id     bigint references organizaciones (id) on delete restrict,  -- null = estándar; con valor = personalizado de esa organización
+  -- si sale en la app del hogar (tarea 022): solo publicado y de Nutrinación; el país y la edad los
+  -- da el perfil del niño contra `paises_disponibles` y `edicion`
+  publicado_hogar     boolean not null default false,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
   unique (categoria, slug),                                  -- /play/<categoria>/<slug> en el runner
+  constraint storyboards_hogar_estandar check (not publicado_hogar or organizacion_id is null),
   constraint storyboards_subcategoria check (subcategoria_de_categoria(categoria, subcategoria)),
   constraint storyboards_enfoques check (enfoques_de_categoria(categoria, enfoques_salud)),
   constraint storyboards_idioma_principal check (idioma_principal = any (idiomas))
@@ -135,6 +139,36 @@ create table guia_escenas (
 create index on guia_escenas (guia_id);
 
 -- ═════════════════════════════════════════════════════════════════════════════
+-- APP DEL HOGAR: unidades de estudio (tarea 022)
+-- ═════════════════════════════════════════════════════════════════════════════
+-- Nutrinación agrupa storyboards del hogar en un recorrido («Ganando músculos», «Reduciendo la
+-- obesidad»): mezclan categorías y un storyboard puede estar en varias. Son opcionales: un
+-- storyboard del hogar sale también suelto. Las gestiona el superadmin en Player; la app las lee
+-- sin cuenta con `hogar_catalogo` (0007).
+create table unidades_estudio (
+  id          bigint generated always as identity primary key,
+  titulo      jsonb not null default '{}'::jsonb,   -- por idioma
+  descripcion jsonb,                                -- por idioma
+  publicada   boolean not null default false,       -- borrador o publicada
+  orden       int not null default 0,               -- su lugar en la app
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  constraint unidades_estudio_titulo check (not publicada or titulo <> '{}'::jsonb)
+);
+
+-- Qué storyboards lleva cada unidad y en qué orden. Solo entran los publicados para el hogar (trigger).
+create table unidad_estudio_storyboards (
+  id                bigint generated always as identity primary key,
+  orden             int not null check (orden > 0),
+  unidad_estudio_id bigint not null references unidades_estudio (id) on delete cascade,
+  storyboard_id     bigint not null references storyboards (id) on delete cascade,
+  unique (unidad_estudio_id, storyboard_id),
+  unique (unidad_estudio_id, orden)
+);
+
+create index on unidad_estudio_storyboards (storyboard_id);
+
+-- ═════════════════════════════════════════════════════════════════════════════
 -- TRIGGERS
 -- ═════════════════════════════════════════════════════════════════════════════
 create function toca_updated_at()
@@ -148,6 +182,25 @@ end;
 $$;
 
 create trigger storyboards_updated_at before update on storyboards for each row execute function toca_updated_at();
+create trigger unidades_estudio_updated_at before update on unidades_estudio for each row execute function toca_updated_at();
+
+-- A una unidad solo entra un storyboard que sale en el hogar (tarea 022).
+create function unidad_estudio_storyboards_valida()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not exists (select 1 from storyboards where id = new.storyboard_id and publicado_hogar) then
+    raise exception 'Solo entran a una unidad los storyboards publicados en el hogar' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger unidad_estudio_storyboards_hogar
+  before insert or update of storyboard_id on unidad_estudio_storyboards
+  for each row execute function unidad_estudio_storyboards_valida();
 create trigger guias_updated_at before update on guias for each row execute function toca_updated_at();
 
 -- Cada storyboard nace con su guía (vacía): Admin la escribe después.
@@ -170,7 +223,9 @@ create trigger storyboards_guia after insert on storyboards for each row execute
 --   · volver a registrado o a revisión, solo si nadie lo usa (si no, se archiva);
 --   · un personalizado no cambia de organización si ya tiene workshops;
 --   · no se le quita un país ni un idioma que deje sin él a una organización con workshops
---     publicados por venir.
+--     publicados por venir;
+--   · el hogar (tarea 022): solo sale si está publicado y es de Nutrinación; si deja de estar
+--     publicado o pasa a personalizado, sale del hogar.
 create function storyboards_valida_publicacion()
 returns trigger
 language plpgsql
@@ -189,6 +244,15 @@ begin
   end if;
   if new.estado_publicacion = 'PUBLICADO' and cardinality(new.paises_disponibles) = 0 then
     raise exception 'Para publicar «%» elige al menos un país', new.slug;
+  end if;
+  if new.publicado_hogar and (new.estado_publicacion <> 'PUBLICADO' or new.organizacion_id is not null) then
+    if tg_op = 'UPDATE' and old.publicado_hogar then
+      new.publicado_hogar := false;   -- se archivó, se despublicó o pasó a personalizado: sale del hogar
+    elsif new.organizacion_id is not null then
+      raise exception '«%» es personalizado: en el hogar solo sale el contenido de Nutrinación', new.slug;
+    else
+      raise exception 'Para que «%» salga en el hogar, primero publícalo', new.slug;
+    end if;
   end if;
   if tg_op = 'INSERT' then
     return new;
@@ -229,5 +293,5 @@ end;
 $$;
 
 create trigger storyboards_publicacion
-  before insert or update of estado_publicacion, paises_disponibles, organizacion_id, idiomas on storyboards
+  before insert or update of estado_publicacion, paises_disponibles, organizacion_id, idiomas, publicado_hogar on storyboards
   for each row execute function storyboards_valida_publicacion();

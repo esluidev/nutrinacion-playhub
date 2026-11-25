@@ -34,6 +34,12 @@ create type estado_publicacion as enum ('REGISTRADO', 'EN_REVISION', 'PUBLICADO'
 create type estado_workshop as enum ('BORRADOR', 'EN_REVISION', 'PUBLICADO', 'FINALIZADO', 'CANCELADO', 'ARCHIVADO');
 -- La constitución: presencial, remoto o híbrido.
 create type modalidad_workshop as enum ('PRESENCIAL', 'REMOTO', 'HIBRIDO');
+-- Lo que deja el historial de un workshop (workshop_historial): cancelarlo, reprogramarlo y mover
+-- la fecha de uno publicado.
+create type tipo_cambio_workshop as enum ('CANCELADO', 'REPROGRAMADO', 'FECHA_CAMBIADA');
+-- Quien se une a la conexión de un taller desde su dispositivo (workshop_conexion_participantes, tarea
+-- 013): espera a que el educador lo apruebe; entra o no; el educador lo puede quitar.
+create type estado_participante as enum ('ESPERANDO', 'APROBADO', 'RECHAZADO', 'QUITADO');
 -- La ejecución de cada educador asignado.
 create type estado_asignacion as enum ('PENDIENTE', 'EN_CURSO', 'COMPLETADO', 'CANCELADO');
 -- Feedback del workshop: observación del grupo, nunca de una persona.
@@ -59,8 +65,12 @@ create type idioma as enum ('es', 'en');
 -- ═════════════════════════════════════════════════════════════════════════════
 -- CONFIGURACIÓN
 -- ═════════════════════════════════════════════════════════════════════════════
--- Ajustes generales de la plataforma. `valor` es texto plano; lo pone cada entorno.
-create table configuracion (
+-- Ajustes generales de la plataforma. `valor` es texto plano; lo pone cada entorno. La leen todas las apps, también sin
+-- cuenta (0005): nunca guarda un secreto (esos van en los secretos de las Edge Functions).
+--
+-- Las direcciones de las apps (`*_url`) viven aquí para que cada app conozca la suya y las de las demás sin nada fijo en
+-- el código: vienen con las de desarrollo (este equipo) y en producción solo se cambian aquí.
+create table configuraciones (
   id          bigint generated always as identity primary key,
   clave       text not null unique,
   valor       text,
@@ -68,9 +78,11 @@ create table configuracion (
   updated_at  timestamptz not null default now()
 );
 
-insert into configuracion (clave, descripcion) values
-  ('admin_url',  'URL de Admin; la usa el correo de invitación para armar el enlace'),
-  ('player_url', 'URL de Player; Admin la usa para «Probar» el runner');
+insert into configuraciones (clave, valor, descripcion) values
+  ('admin_url',  'http://localhost:3000',
+   'URL de Admin: el enlace del correo de invitación, y Player deja que Admin incruste el runner'),
+  ('player_url', 'http://localhost:3001',
+   'URL de Player: Admin y Educators abren el runner con ella y es la del QR para unirse a un taller');
 
 create table paises (
   id        bigint generated always as identity primary key,

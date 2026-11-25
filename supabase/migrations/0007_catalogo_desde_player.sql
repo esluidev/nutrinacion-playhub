@@ -98,7 +98,109 @@ begin
 end;
 $$;
 
+-- Si un storyboard sale en la app del hogar (tarea 022). Las reglas (publicado y de Nutrinación) están en el trigger
+-- de 0003.
+create function publicar_storyboard_hogar(p_clave uuid, p_hogar boolean)
+returns void
+language plpgsql
+set search_path = public
+as $$
+begin
+  if not es_superadmin() then
+    raise exception 'Solo el superadmin publica storyboards' using errcode = '42501';
+  end if;
+  update storyboards set publicado_hogar = coalesce(p_hogar, false) where clave = p_clave;
+  if not found then
+    raise exception 'El storyboard % no está registrado', p_clave using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+-- Guarda una unidad de estudio con sus storyboards en orden (tarea 022): crea o actualiza su cabecera y
+-- reemplaza su lista. Devuelve su id.
+--   { id?, titulo: { es, en }, descripcion?: { es, en }, publicada, storyboards: [id, …] }
+create function guardar_unidad_estudio(p_unidad jsonb)
+returns bigint
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_id bigint := nullif(p_unidad->>'id', '')::bigint;
+begin
+  if not es_superadmin() then
+    raise exception 'Solo el superadmin gestiona las unidades de estudio' using errcode = '42501';
+  end if;
+
+  if v_id is null then
+    insert into unidades_estudio (titulo, descripcion, publicada, orden)
+    values (coalesce(p_unidad->'titulo', '{}'::jsonb), nullif(p_unidad->'descripcion', 'null'::jsonb),
+            coalesce((p_unidad->>'publicada')::boolean, false),
+            coalesce((select max(orden) + 1 from unidades_estudio), 1))
+    returning id into v_id;
+  else
+    update unidades_estudio
+       set titulo = coalesce(p_unidad->'titulo', '{}'::jsonb),
+           descripcion = nullif(p_unidad->'descripcion', 'null'::jsonb),
+           publicada = coalesce((p_unidad->>'publicada')::boolean, false)
+     where id = v_id;
+    if not found then
+      raise exception 'La unidad % no existe', v_id using errcode = 'P0002';
+    end if;
+  end if;
+
+  delete from unidad_estudio_storyboards where unidad_estudio_id = v_id;
+  insert into unidad_estudio_storyboards (unidad_estudio_id, storyboard_id, orden)
+  select v_id, s::bigint, n::int
+    from jsonb_array_elements_text(coalesce(p_unidad->'storyboards', '[]'::jsonb)) with ordinality as e(s, n);
+  return v_id;
+end;
+$$;
+
+-- El catálogo de la app del hogar para un país (tarea 022), sin cuenta: los storyboards de Nutrinación
+-- publicados para el hogar en ese país y las unidades publicadas con los suyos, en orden (por clave).
+-- Una unidad sin ningún storyboard en ese país no sale. La edad la filtra la app con el perfil.
+--   { storyboards: [{ clave, eje, slug, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
+--                     idioma_principal, duracion_min, numero_escenas }],
+--     unidades: [{ id, titulo, descripcion, storyboards: [clave, …] }] }
+create function hogar_catalogo(p_pais text)
+returns jsonb
+language sql stable security definer set search_path = public
+as $$
+  with del_hogar as (
+    select s.* from storyboards s
+     where s.publicado_hogar and s.estado_publicacion = 'PUBLICADO' and s.organizacion_id is null
+       and upper(coalesce(p_pais, '')) = any (s.paises_disponibles)
+  ), unidades as (
+    select u.id, u.titulo, u.descripcion, u.orden,
+           jsonb_agg(h.clave order by us.orden) as storyboards
+      from unidades_estudio u
+      join unidad_estudio_storyboards us on us.unidad_estudio_id = u.id
+      join del_hogar h on h.id = us.storyboard_id
+     where u.publicada
+     group by u.id
+  )
+  select jsonb_build_object(
+    'storyboards', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'clave', clave, 'eje', replace(lower(categoria::text), '_', '-'), 'slug', slug, 'titulo', titulo,
+               'categoria', categoria, 'subcategoria', subcategoria, 'edicion', edicion, 'enfoques_salud', enfoques_salud,
+               'idiomas', idiomas, 'idioma_principal', idioma_principal, 'duracion_min', duracion_min,
+               'numero_escenas', numero_escenas) order by slug)
+        from del_hogar), '[]'::jsonb),
+    'unidades', coalesce((
+      select jsonb_agg(jsonb_build_object('id', id, 'titulo', titulo, 'descripcion', descripcion, 'storyboards', storyboards)
+                       order by orden, id)
+        from unidades), '[]'::jsonb))
+$$;
+
 revoke all on function sincronizar_storyboard(jsonb) from public, anon;
 grant execute on function sincronizar_storyboard(jsonb) to authenticated;
 revoke all on function publicar_storyboard(uuid, estado_publicacion, text[], bigint) from public, anon;
 grant execute on function publicar_storyboard(uuid, estado_publicacion, text[], bigint) to authenticated;
+revoke all on function publicar_storyboard_hogar(uuid, boolean) from public, anon;
+grant execute on function publicar_storyboard_hogar(uuid, boolean) to authenticated;
+revoke all on function guardar_unidad_estudio(jsonb) from public, anon;
+grant execute on function guardar_unidad_estudio(jsonb) to authenticated;
+-- La app del hogar, sin cuenta.
+revoke all on function hogar_catalogo(text) from public;
+grant execute on function hogar_catalogo(text) to anon, authenticated;

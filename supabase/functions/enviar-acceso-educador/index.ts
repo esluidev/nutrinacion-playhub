@@ -12,7 +12,7 @@
 //    PIN, `acceso_educador_pin` si ya lo tiene. La envuelve en el shell HTML y la manda por Resend.
 // 3. Anota en el educador cuándo salió (`acceso_correo_enviado_en`) o por qué no (`acceso_correo_error`).
 //
-// El enlace usa `configuracion.educators_url`. Si está vacía (desarrollo), vale la `educators_url`
+// El enlace usa `configuraciones.educators_url`. Si está vacía (desarrollo), vale la `educators_url`
 // que manda Admin, solo si es del mismo equipo que Admin (mismo host que el origen de la petición).
 // Secretos: los de `enviar-invitacion` (RESEND_API_KEY, RESEND_FROM).
 //
@@ -142,17 +142,17 @@ Deno.serve(async (req: Request) => {
   const [plantillaRes, orgRes, cfgRes] = await Promise.all([
     admin.from('plantillas_correo').select('asunto, cuerpo, cta_label, activo').eq('clave', clave).maybeSingle(),
     admin.from('organizaciones').select('nombre').eq('id', edu.organizacion_id).maybeSingle(),
-    admin.from('configuracion').select('valor').eq('clave', 'educators_url').maybeSingle(),
+    admin.from('configuraciones').select('valor').eq('clave', 'educators_url').maybeSingle(),
   ])
   const plantilla = plantillaRes.data
   if (!plantilla || plantilla.activo === false) return anotarError('Falta la plantilla de correo del acceso.')
 
-  // La URL de Educators: la de `configuracion`; si está vacía, la que manda Admin si es de su mismo equipo.
+  // La URL de Educators: la de `configuraciones`; si está vacía, la que manda Admin si es de su mismo equipo.
   const configurada = String(cfgRes.data?.valor ?? '').trim()
   const propuesta = String(payload.educators_url ?? '').trim()
   const mismoEquipo = !!propuesta && hostDe(propuesta) !== null && hostDe(propuesta) === hostDe(req.headers.get('Origin'))
   const base = (configurada || (mismoEquipo ? propuesta : '')).replace(/\/+$/, '')
-  if (!/^https?:\/\//.test(base)) return anotarError('Falta la URL de Educators (configuracion.educators_url).')
+  if (!/^https?:\/\//.test(base)) return anotarError('Falta la URL de Educators (configuraciones.educators_url).')
   const link = `${base}/acceso/${edu.acceso_token}`
 
   const idioma = String(edu.idioma || 'es')

@@ -14,10 +14,6 @@
 --     pedro@ejemplo.test  135790   Colegio Norte
 --     lucia@ejemplo.test  enlace /acceso/lucia-enlace-de-prueba (aún no eligió su PIN)   Fundación Centro
 
-update configuracion set valor = 'http://localhost:3000' where clave = 'admin_url';
-update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';
-update configuracion set valor = 'http://localhost:3002' where clave = 'educators_url';
-
 -- ── Organizaciones y licencias ────────────────────────────────────────────────
 insert into organizaciones (nombre, correo, paises, tipo_id) values
   ('Fundación Centro', 'contacto@centro.test', '{GT,SV}', (select id from tipos_organizacion where codigo = 'FUNDACION')),
@@ -73,7 +69,7 @@ insert into storyboards (clave, slug, version_build, titulo, categoria, subcateg
                          idiomas, idioma_principal, duracion_min, numero_escenas, estado_publicacion, paises_disponibles)
 values ('6f375f8d-0467-4dd2-958a-91d6d6d1c060', 'el-huevo', '0.1.0', '{"es": "El huevo"}',
         'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{DESNUTRICION}',
-        '{es}', 'es', 30, 4, 'PUBLICADO', '{GT}');
+        '{es}', 'es', 30, 9, 'PUBLICADO', '{GT}');
 
 -- La guía nace con el storyboard (trigger): se completa su cabecera y sus escenas.
 update guias set
@@ -90,7 +86,17 @@ select g.id, 2, 'origen', '{"es": "Origen"}'::jsonb, '{"es": "Reconocer"}'::json
 union all
 select g.id, 3, 'descubrimiento', '{"es": "Descubrimiento"}'::jsonb, '{"es": "Descubrir"}'::jsonb, '{"es": "Huevos de aves que se parecen y se diferencian"}'::jsonb, '{"es": "Los niños descubren que no todos los huevos son iguales. Comparan huevos de gallina, codorniz y pato por rasgos sencillos, como el tamaño o el color."}'::jsonb, '{"es": "Haz que el grupo pueda nombrar al menos dos aves cuyos huevos se comen y notar una diferencia visible entre ellos."}'::jsonb, '{"es": "Retoma la curiosidad que dejó Origen: “¿Se parecerán todos los huevos?”. Escucha qué esperan encontrar. A medida que conocen cada ejemplo, invita a observarlo y relaciona su huevo con gallina, codorniz o pato, sin anunciar toda la lista al inicio. Deja que expresen las diferencias con palabras simples: “más pequeño”, “más grande”, “con manchitas” o “sin manchitas”. Explica que son huevos de aves diferentes; no digas que uno es mejor que otro ni que el color identifica siempre a un ave. Cierra recuperando dos de las aves y una diferencia que el grupo haya observado."}'::jsonb, '{"es": "Puedes preguntar: “¿Se parecerán todos los huevos?”, “¿Cuál han visto?”, “¿Cuál parece más pequeño?”, “¿Cuál tiene manchitas?”, “¿De qué ave será este?”. Invita a que digan los nombres de las aves conforme las conocen y a que usen una palabra de comparación."}'::jsonb, '{"es": "Aquí manda la curiosidad por las semejanzas y diferencias. Cada niño puede reconocer algo familiar o encontrar algo nuevo. El descubrimiento amplía lo que sabe el grupo sin necesitar que antes haya creído que todos los huevos eran de una sola ave."}'::jsonb, null::jsonb, '{"es": "No abre el huevo ni nombra sus partes. Eso corresponde a Propiedades."}'::jsonb, '{"es": "Evita dar una lista larga de aves: tres bastan para esta edad. Si alguien dice que un huevo de color distinto “es raro”, responde que los huevos pueden verse diferentes sin convertir el color en una regla sobre lo que trae dentro."}'::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
 union all
-select g.id, 4, 'preparacion', '{"es": "Preparación"}'::jsonb, '{"es": "Secuenciar"}'::jsonb, '{"es": "Pasos seguros antes de comer huevo"}'::jsonb, '{"es": "Los niños ordenan una idea de seguridad: el huevo se conserva frío y se cocina hasta que clara y yema estén firmes. Conocen que el huevo crudo no es la opción segura para comer."}'::jsonb, '{"es": "Haz que puedan decir dos cuidados: conservar el huevo refrigerado y comerlo cocido, con clara y yema firmes."}'::jsonb, '{"es": "Di que esta escena trata de dejar el huevo listo para comer, sin preparar nada en el taller. Presenta dos pasos: primero, mantenerlo refrigerado; después, cocinarlo hasta que la clara y la yema estén firmes. Usa “frío y bien cocido” como frase corta. Pregunta qué pasaría si falta uno de los pasos y escucha respuestas sencillas. No describas recetas ni métodos de cocina. Cierra pidiendo que ordenen verbalmente “frío” y “bien cocido”."}'::jsonb, '{"es": "Puedes preguntar: “¿Qué va primero: dejarlo frío o comerlo?”, “¿Cómo deben quedar la clara y la yema?”, “¿Está listo si queda líquido?”, “¿Qué dos palabras nos ayudan a recordarlo?”. Pide que digan “frío y bien cocido” en coro y que repitan la secuencia con sus palabras."}'::jsonb, '{"es": "Aquí importa el criterio: “yo sé el orden”. Si alguien responde con una receta, agradece la idea y vuelve a los dos cuidados que hacen seguro el huevo."}'::jsonb, '{"es": "Refrigerar: conservar frío en el refrigerador. Cocción completa: calentar el huevo hasta que tanto la clara como la yema queden firmes; “firme” significa que ya no están líquidas. Son dos cuidados distintos y se necesitan ambos en la secuencia que enseñamos."}'::jsonb, '{"es": "No propone cocinar ni comer huevo en el taller; tampoco explica para qué sirve la proteína. Eso corresponde a Beneficio."}'::jsonb, '{"es": "No pidas que cuenten cómo se cocina en su casa ni corrijas prácticas familiares delante del grupo. Si mencionan huevo crudo, responde con calma: “Para comerlo seguro, recordamos frío y bien cocido”."}'::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo';
+select g.id, 4, 'propiedades', '{"es": "Propiedades"}'::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
+union all
+select g.id, 5, 'hidratacion', '{"es": "Hidratación"}'::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
+union all
+select g.id, 6, 'preparacion', '{"es": "Preparación"}'::jsonb, '{"es": "Secuenciar"}'::jsonb, '{"es": "Pasos seguros antes de comer huevo"}'::jsonb, '{"es": "Los niños ordenan una idea de seguridad: el huevo se conserva frío y se cocina hasta que clara y yema estén firmes. Conocen que el huevo crudo no es la opción segura para comer."}'::jsonb, '{"es": "Haz que puedan decir dos cuidados: conservar el huevo refrigerado y comerlo cocido, con clara y yema firmes."}'::jsonb, '{"es": "Di que esta escena trata de dejar el huevo listo para comer, sin preparar nada en el taller. Presenta dos pasos: primero, mantenerlo refrigerado; después, cocinarlo hasta que la clara y la yema estén firmes. Usa “frío y bien cocido” como frase corta. Pregunta qué pasaría si falta uno de los pasos y escucha respuestas sencillas. No describas recetas ni métodos de cocina. Cierra pidiendo que ordenen verbalmente “frío” y “bien cocido”."}'::jsonb, '{"es": "Puedes preguntar: “¿Qué va primero: dejarlo frío o comerlo?”, “¿Cómo deben quedar la clara y la yema?”, “¿Está listo si queda líquido?”, “¿Qué dos palabras nos ayudan a recordarlo?”. Pide que digan “frío y bien cocido” en coro y que repitan la secuencia con sus palabras."}'::jsonb, '{"es": "Aquí importa el criterio: “yo sé el orden”. Si alguien responde con una receta, agradece la idea y vuelve a los dos cuidados que hacen seguro el huevo."}'::jsonb, '{"es": "Refrigerar: conservar frío en el refrigerador. Cocción completa: calentar el huevo hasta que tanto la clara como la yema queden firmes; “firme” significa que ya no están líquidas. Son dos cuidados distintos y se necesitan ambos en la secuencia que enseñamos."}'::jsonb, '{"es": "No propone cocinar ni comer huevo en el taller; tampoco explica para qué sirve la proteína. Eso corresponde a Beneficio."}'::jsonb, '{"es": "No pidas que cuenten cómo se cocina en su casa ni corrijas prácticas familiares delante del grupo. Si mencionan huevo crudo, responde con calma: “Para comerlo seguro, recordamos frío y bien cocido”."}'::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
+union all
+select g.id, 7, 'beneficio', '{"es": "Beneficio"}'::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
+union all
+select g.id, 8, 'retroalimentacion', '{"es": "Retroalimentación"}'::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo'
+union all
+select g.id, 9, 'despedida', '{"es": "Despedida"}'::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb, null::jsonb from guias g join storyboards s on s.id = g.storyboard_id where s.slug = 'el-huevo';
 
 -- Uno recién registrado, sin JSON en el build: no lo ve ninguna organización ni se programa.
 insert into storyboards (clave, slug, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas, duracion_min,
@@ -113,15 +119,37 @@ insert into educador_grupo_miembros (educador_grupo_id, educador_id)
 select g.id, e.id from educador_grupos g, educadores e
  where g.nombre = 'Equipo de la mañana' and e.correo in ('maria@ejemplo.test', 'lucia@ejemplo.test');
 
--- ── Jornada de Fundación Centro (la del fixture: su lugar y sus días relativos) ──
-insert into jornadas (nombre, descripcion, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ('Semana de la nutrición', 'Talleres de alimentación alrededor de la desnutrición.', 'Sede central',
+-- ── Programa, lugares y grupos de audiencia (tarea 021) ───────────────────────
+-- Fundación Centro: el programa «Crecer sano», que contiene la jornada; el lugar de la jornada y
+-- otro, agrupados en una comunidad; los grupos de los talleres del fixture y uno abierto.
+insert into programas (nombre, descripcion, fecha_inicio, fecha_fin, organizacion_id)
+values ('Crecer sano', 'Tres meses de alimentación en la zona centro.', current_date - 30, current_date + 60,
+        (select id from organizaciones where nombre = 'Fundación Centro'));
+insert into comunidades (nombre, organizacion_id)
+values ('Zona centro', (select id from organizaciones where nombre = 'Fundación Centro'));
+insert into lugares (nombre, comunidad_id, organizacion_id)
+select v.nombre, (select id from comunidades where nombre = 'Zona centro'), (select id from organizaciones where nombre = 'Fundación Centro')
+  from (values ('Sede central'), ('Escuela Las Flores')) as v (nombre);
+insert into lugares (nombre, organizacion_id)
+values ('Colegio Norte', (select id from organizaciones where nombre = 'Colegio Norte'));
+insert into grupos_audiencia (nombre, edicion, abierto, organizacion_id)
+select v.nombre, 'KIDS', false, (select id from organizaciones where nombre = 'Fundación Centro')
+  from (values ('1.º A'), ('1.º B'), ('1.º C'), ('2.º A'), ('2.º B'), ('2.º C'), ('3.º A'), ('3.º B'), ('4.º A'), ('Grupo de la mañana'), ('Grupo de la tarde')) as v (nombre);
+insert into grupos_audiencia (nombre, abierto, organizacion_id)
+values ('Público general', true, (select id from organizaciones where nombre = 'Fundación Centro')),
+       ('2.º A', false, (select id from organizaciones where nombre = 'Colegio Norte'));
+
+-- ── Jornada de Fundación Centro (la del fixture: su lugar y sus días relativos), en el programa ──
+insert into jornadas (nombre, descripcion, lugar_id, programa_id, fecha_inicio, fecha_fin, organizacion_id)
+values ('Semana de la nutrición', 'Talleres de alimentación alrededor de la desnutrición.',
+        (select id from lugares where nombre = 'Sede central'), (select id from programas where nombre = 'Crecer sano'),
         current_date + (-3), current_date + (16),
         (select id from organizaciones where nombre = 'Fundación Centro'));
 
 -- ── Workshops ─────────────────────────────────────────────────────────────────
--- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, lugar, grupo,
--- jornada y cierre); la referencia original va en `notas`. Las horas reales, en la zona de Guatemala.
+-- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, espacio, grupo,
+-- jornada y cierre); la referencia original va en `notas`. El lugar es el de la jornada; los sueltos
+-- van en el mismo lugar y en el programa. Las horas reales, en la zona de Guatemala.
 do $$
 declare
   v_org        bigint := (select id from organizaciones where nombre = 'Fundación Centro');
@@ -129,6 +157,8 @@ declare
   v_educador   bigint := (select id from educadores where correo = 'maria@ejemplo.test');
   v_grupo      bigint := (select id from educador_grupos where nombre = 'Equipo de la mañana');
   v_jornada    bigint := (select id from jornadas where organizacion_id = (select id from organizaciones where nombre = 'Fundación Centro'));
+  v_lugar      bigint := (select lugar_id from jornadas where id = v_jornada);
+  v_programa   bigint := (select id from programas where nombre = 'Crecer sano');
   v_workshop   bigint;
   v_asignacion bigint;
   t record;
@@ -149,10 +179,11 @@ begin
     ) as v (ref, dia, inicio, fin, lugar, grupo, asistentes, en_jornada, motivo, feedback)
   loop
     -- Nace en borrador; con su educadora asignada, se publica.
-    insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                           modalidad, notas, storyboard_id, jornada_id, organizacion_id)
-    values (current_date + t.dia, t.inicio, t.fin, t.lugar, t.grupo, t.asistentes, 'es',
-            'PRESENCIAL', 'Datos de prueba ' || t.ref, v_storyboard, case when t.en_jornada then v_jornada end, v_org)
+    insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, modalidad, notas,
+                           storyboard_id, jornada_id, lugar_id, grupo_audiencia_id, programa_id, organizacion_id)
+    values (current_date + t.dia, t.inicio, t.fin, t.lugar, t.asistentes, 'es', 'PRESENCIAL', 'Datos de prueba ' || t.ref,
+            v_storyboard, case when t.en_jornada then v_jornada end, v_lugar,
+            (select id from grupos_audiencia where nombre = t.grupo and organizacion_id = v_org), v_programa, v_org)
     returning id into v_workshop;
 
     insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador)
@@ -171,26 +202,30 @@ begin
              terminado_en = ((current_date + t.dia) + t.fin) at time zone 'America/Guatemala',
              estado = 'EN_CURSO'
        where id = v_asignacion;
-      insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, participacion_grupo,
-                                     claridad_contenido, dificultades_grupo, material_faltante)
+      -- Niñas y niños: los del cierre del fixture o, si no los trae, la mitad redondeada hacia arriba.
+      insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
+                                     participacion_grupo, claridad_contenido, dificultades_grupo, material_faltante)
       values (v_asignacion, (t.feedback->>'calificacion')::int, (t.feedback->>'asistentes')::int,
+              coalesce((t.feedback->>'ninas')::int, ceil((t.feedback->>'asistentes')::int / 2.0)::int),
+              (t.feedback->>'asistentes')::int - coalesce((t.feedback->>'ninas')::int, ceil((t.feedback->>'asistentes')::int / 2.0)::int),
               upper(t.feedback->>'participacion')::participacion_grupo, upper(t.feedback->>'claridad')::claridad_contenido,
               nullif(t.feedback->>'costo', ''), nullif(t.feedback->>'faltoMaterial', ''));
     end if;
   end loop;
 
   -- Un borrador: María no lo ve hasta que se publique.
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, idioma_contenido, notas,
-                         storyboard_id, organizacion_id)
-  values (current_date + 20, '09:00', '09:30', 'Aula 1B', '1.º B', 'es', 'Datos de prueba: borrador', v_storyboard, v_org)
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, idioma_contenido, notas, storyboard_id, lugar_id,
+                         grupo_audiencia_id, organizacion_id)
+  values (current_date + 20, '09:00', '09:30', 'Aula 1B', 'es', 'Datos de prueba: borrador', v_storyboard, v_lugar,
+          (select id from grupos_audiencia where nombre = '1.º B' and organizacion_id = v_org), v_org)
   returning id into v_workshop;
   insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador);
 
   -- Uno asignado al grupo entero (María y Lucía), dentro de la jornada.
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, jornada_id, organizacion_id)
-  values (current_date + 2, '14:00', '14:30', 'Salón principal', '3.º B', 20, 'es', 'Datos de prueba: equipo de la mañana',
-          v_storyboard, v_jornada, v_org)
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, notas,
+                         storyboard_id, jornada_id, grupo_audiencia_id, organizacion_id)
+  values (current_date + 2, '14:00', '14:30', 'Salón principal', 20, 'es', 'Datos de prueba: equipo de la mañana',
+          v_storyboard, v_jornada, (select id from grupos_audiencia where nombre = '3.º B' and organizacion_id = v_org), v_org)
   returning id into v_workshop;
   insert into workshop_educadores (workshop_id, educador_id, educador_grupo_id)
   select v_workshop, m.educador_id, v_grupo from educador_grupo_miembros m where m.educador_grupo_id = v_grupo;
@@ -199,10 +234,12 @@ end $$;
 
 -- Un workshop de Pedro en Colegio Norte, hoy, con el mismo estándar.
 with w as (
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, organizacion_id)
-  values (current_date, '08:00', '08:30', 'Aula Norte', '2.º A', 18, 'es', 'Datos de prueba: Norte',
-          (select id from storyboards where slug = 'el-huevo'), (select id from organizaciones where nombre = 'Colegio Norte'))
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, notas, storyboard_id,
+                         lugar_id, grupo_audiencia_id, organizacion_id)
+  values (current_date, '08:00', '08:30', 'Aula Norte', 18, 'es', 'Datos de prueba: Norte',
+          (select id from storyboards where slug = 'el-huevo'), (select id from lugares where nombre = 'Colegio Norte'),
+          (select g.id from grupos_audiencia g join organizaciones o on o.id = g.organizacion_id where g.nombre = '2.º A' and o.nombre = 'Colegio Norte'),
+          (select id from organizaciones where nombre = 'Colegio Norte'))
   returning id
 )
 insert into workshop_educadores (workshop_id, educador_id)

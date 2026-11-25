@@ -188,8 +188,9 @@ revoke all on function educador_usar_acceso(text, text) from public;
 grant execute on function educador_usar_acceso(text, text) to anon, authenticated;
 
 -- La URL de Educators, como la de Admin (0001): la usan el enlace que copia Admin y el correo.
-insert into configuracion (clave, descripcion) values
-  ('educators_url', 'URL de Educators; la usan el enlace de acceso del educador y su correo');
+insert into configuraciones (clave, valor, descripcion) values
+  ('educators_url', 'http://localhost:3002',
+   'URL de Educators: el enlace de acceso del educador y su correo, y Player deja que Educators incruste el runner');
 
 -- Los correos del enlace, en español e inglés (el idioma del educador), en `plantillas_correo`.
 insert into plantillas_correo (clave, nombre, asunto, cuerpo, cta_label) values

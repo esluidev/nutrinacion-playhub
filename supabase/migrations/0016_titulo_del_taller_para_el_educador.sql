@@ -27,12 +27,14 @@ begin
                  'duracion', s.duracion_min),
                'organizacion', jsonb_build_object('id', o.id, 'nombre', o.nombre),
                'jornada', case when j.id is null then null else jsonb_build_object(
-                 'id', j.id, 'nombre', j.nombre, 'ubicacion', j.ubicacion, 'fecha_inicio', j.fecha_inicio, 'fecha_fin', j.fecha_fin) end,
+                 'id', j.id, 'nombre', j.nombre, 'ubicacion', lj.nombre, 'fecha_inicio', j.fecha_inicio, 'fecha_fin', j.fecha_fin) end,
                'fecha', w.fecha,
                'horaInicio', to_char(w.hora_inicio, 'HH24:MI'),
                'horaFin', to_char(w.hora_fin, 'HH24:MI'),
-               'lugar', w.ubicacion,
-               'grupo', w.grupo_asistente,
+               'lugar', case when j.id is not null then nullif(btrim(w.espacio), '')
+                             else nullif(concat_ws(' · ', lw.nombre, nullif(btrim(w.espacio), '')), '') end,
+               'grupo', ga.nombre,
+               'grupoAbierto', coalesce(ga.abierto, false),
                'asistentesEstimados', w.asistentes_estimados,
                'idioma', w.idioma_contenido,
                'modalidad', lower(w.modalidad::text),
@@ -41,14 +43,18 @@ begin
                'estado', lower(we.estado::text),
                'iniciadoEn', we.iniciado_en,
                'terminadoEn', we.terminado_en,
+               'dispositivosUnidos', we.dispositivos_unidos,
                'cierre', (
                  select jsonb_build_object(
                           'calificacion', f.calificacion,
                           'asistentes', f.asistentes_reales,
+                          'ninas', f.asistentes_ninas,
+                          'ninos', f.asistentes_ninos,
                           'participacion', lower(f.participacion_grupo::text),
                           'claridad', lower(f.claridad_contenido::text),
                           'costo', coalesce(f.dificultades_grupo, ''),
-                          'faltoMaterial', coalesce(f.material_faltante, ''))
+                          'faltoMaterial', coalesce(f.material_faltante, ''),
+                          'dispositivos', we.dispositivos_unidos)
                    from workshop_feedback f
                   where f.workshop_educador_id = we.id))
              order by w.fecha, w.hora_inicio)
@@ -57,6 +63,9 @@ begin
       join organizaciones o on o.id = w.organizacion_id
       join storyboards s on s.id = w.storyboard_id
       left join jornadas j on j.id = w.jornada_id
+      left join lugares lj on lj.id = j.lugar_id
+      left join lugares lw on lw.id = w.lugar_id
+      left join grupos_audiencia ga on ga.id = w.grupo_audiencia_id
      where we.educador_id = any (v_ids)
        and we.estado <> 'CANCELADO'
        and w.publicado_en is not null

@@ -8,8 +8,8 @@
 --     solo si la administra o colabora en ella, como cualquiera;
 --   · admin de una organización (el titular y los demás): todo lo suyo: licencia, administradores,
 --     colaboradores, invitaciones y la operación;
---   · colaborador (activo): la operación de la organización: educadores, grupos, jornadas,
---     workshops y planificador. Lee la licencia, los administradores y los colaboradores; no los toca;
+--   · colaborador (activo): la operación de la organización: educadores, grupos, programas,
+--     lugares, grupos de audiencia, jornadas, workshops y planificador. Lee la licencia, los administradores y los colaboradores; no los toca;
 --   · nadie más, y `anon` nada: no hay ninguna política para `anon`.
 -- Los educadores no tienen sesión de Auth: usan las funciones de 0006.
 --
@@ -123,12 +123,14 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'configuracion', 'paises', 'tipos_organizacion', 'plantillas_correo',
+    'configuraciones', 'paises', 'tipos_organizacion', 'plantillas_correo',
     'organizaciones', 'organizacion_licencias', 'perfiles', 'organizacion_administradores',
     'organizacion_colaboradores', 'invitaciones',
-    'storyboards', 'guias', 'guia_escenas',
-    'educadores', 'educador_grupos', 'educador_grupo_miembros', 'jornadas', 'workshops',
-    'workshop_educadores', 'workshop_feedback'
+    'storyboards', 'guias', 'guia_escenas', 'unidades_estudio', 'unidad_estudio_storyboards',
+    'educadores', 'educador_grupos', 'educador_grupo_miembros',
+    'programas', 'comunidades', 'lugares', 'grupos_audiencia', 'jornadas', 'workshops',
+    'workshop_educadores', 'workshop_feedback', 'workshop_historial',
+    'workshop_conexiones', 'workshop_conexion_participantes'
   ] loop
     execute format('alter table %I enable row level security', t);
   end loop;
@@ -137,10 +139,16 @@ end $$;
 -- ═════════════════════════════════════════════════════════════════════════════
 -- CATÁLOGOS Y CONFIGURACIÓN: los leen las sesiones de Admin; los escribe el superadmin
 -- ═════════════════════════════════════════════════════════════════════════════
+-- Las configuraciones las lee cualquiera, también sin cuenta: ahí están las direcciones de las apps, que necesitan
+-- Educators (sin sesión de Auth), el runner de Player y la app del hogar. No guardan secretos (0001).
+create policy configuraciones_lectura on configuraciones for select to anon, authenticated using (true);
+create policy configuraciones_superadmin on configuraciones for all to authenticated
+  using ((select es_superadmin())) with check ((select es_superadmin()));
+
 do $$
 declare t text;
 begin
-  foreach t in array array['configuracion', 'paises', 'tipos_organizacion'] loop
+  foreach t in array array['paises', 'tipos_organizacion'] loop
     execute format('create policy %I on %I for select to authenticated using (true)', t || '_lectura', t);
     execute format(
       'create policy %I on %I for all to authenticated using ((select es_superadmin())) with check ((select es_superadmin()))',
@@ -242,13 +250,21 @@ create policy guia_escenas_lectura on guia_escenas for select to authenticated
 create policy guia_escenas_superadmin on guia_escenas for all to authenticated
   using ((select es_superadmin())) with check ((select es_superadmin()));
 
+-- Las unidades de estudio de la app del hogar (tarea 022): solo el superadmin, desde Player. La app
+-- las lee sin cuenta con `hogar_catalogo` (0007).
+create policy unidades_estudio_superadmin on unidades_estudio for all to authenticated
+  using ((select es_superadmin())) with check ((select es_superadmin()));
+create policy unidad_estudio_storyboards_superadmin on unidad_estudio_storyboards for all to authenticated
+  using ((select es_superadmin())) with check ((select es_superadmin()));
+
 -- ═════════════════════════════════════════════════════════════════════════════
 -- OPERACIÓN: de quienes operan la organización (administradores y colaboradores)
 -- ═════════════════════════════════════════════════════════════════════════════
 do $$
 declare t text;
 begin
-  foreach t in array array['educador_grupos', 'educador_grupo_miembros', 'jornadas', 'workshops', 'workshop_educadores'] loop
+  foreach t in array array['educador_grupos', 'educador_grupo_miembros', 'programas', 'comunidades', 'lugares',
+                           'grupos_audiencia', 'jornadas', 'workshops', 'workshop_educadores'] loop
     execute format(
       'create policy %I on %I for all to authenticated using (organizacion_id in (select organizaciones_opero())) with check (organizacion_id in (select organizaciones_opero()))',
       t || '_acceso', t);
@@ -283,6 +299,137 @@ grant update (nombre, apellido, correo, telefono, profesion, biografia, avatar, 
 -- las asignaciones: lo de las organizaciones que opero).
 create policy workshop_feedback_lectura on workshop_feedback for select to authenticated
   using (workshop_educador_id in (select id from workshop_educadores));
+
+-- El historial lo escribe el trigger de workshops (0004); quien opera la organización lo lee.
+create policy workshop_historial_lectura on workshop_historial for select to authenticated
+  using (workshop_id in (select id from workshops));
+
+-- La conexión del taller y sus participantes (tarea 013): solo se leen, para el reporte. Las escriben
+-- las funciones de 0006 (Educators, la pantalla del educador y el dispositivo).
+create policy workshop_conexiones_lectura on workshop_conexiones for select to authenticated
+  using (workshop_id in (select id from workshops));
+create policy workshop_conexion_participantes_lectura on workshop_conexion_participantes for select to authenticated
+  using (workshop_conexion_id in (select id from workshop_conexiones));
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- REPORTE (tarea 021)
+-- ═════════════════════════════════════════════════════════════════════════════
+-- El reporte de los workshops de una organización en un periodo, filtrado por programa, comunidad,
+-- lugar o grupo. Con los permisos de quien lo pide (SECURITY INVOKER): la RLS deja solo lo de las
+-- organizaciones que opera. Cuenta lo publicado alguna vez (no los borradores ni lo archivado).
+-- Reglas:
+--   · realizado = tiene al menos un cierre; con dos cierres (dos educadores) cuenta el de más
+--     asistentes;
+--   · alcance: por cada par grupo-lugar, el máximo de niñas y el de niños de sus workshops
+--     realizados; se suman los pares. Los grupos abiertos cuentan asistencias, no alcance;
+--   · dosis: por par, los workshops previstos y los realizados.
+-- Devuelve el resumen, el alcance, los pares, una fila por workshop (con ids: la app pone los
+-- nombres) y el historial. Nunca datos de una persona.
+create function reporte_talleres(p_organizacion_id bigint, p_desde date, p_hasta date,
+                                 p_programa_id bigint default null, p_comunidad_id bigint default null,
+                                 p_lugar_id bigint default null, p_grupo_audiencia_id bigint default null)
+returns jsonb
+language sql stable security invoker set search_path = public
+as $$
+  with t as (
+    select w.id, w.fecha, w.hora_inicio, w.estado, w.storyboard_id, w.lugar_id, w.grupo_audiencia_id, w.programa_id,
+           w.jornada_id, w.asistentes_estimados, w.motivo_cancelacion, l.comunidad_id, coalesce(g.abierto, false) as abierto
+      from workshops w
+      left join lugares l on l.id = w.lugar_id
+      left join grupos_audiencia g on g.id = w.grupo_audiencia_id
+     where w.organizacion_id = p_organizacion_id
+       and w.publicado_en is not null and w.estado <> 'ARCHIVADO'
+       and w.fecha between p_desde and p_hasta
+       and (p_programa_id is null or w.programa_id = p_programa_id)
+       and (p_comunidad_id is null or l.comunidad_id = p_comunidad_id)
+       and (p_lugar_id is null or w.lugar_id = p_lugar_id)
+       and (p_grupo_audiencia_id is null or w.grupo_audiencia_id = p_grupo_audiencia_id)
+  ), cierre as (
+    select distinct on (we.workshop_id) we.workshop_id, f.asistentes_reales, f.asistentes_ninas, f.asistentes_ninos,
+           f.calificacion, f.participacion_grupo, f.claridad_contenido
+      from workshop_feedback f
+      join workshop_educadores we on we.id = f.workshop_educador_id
+     where we.workshop_id in (select id from t)
+     order by we.workshop_id, f.asistentes_reales desc, f.id
+  ), ejecucion as (
+    select we.workshop_id, min(we.iniciado_en) as iniciado, max(we.terminado_en) as terminado,
+           max(we.dispositivos_unidos) as dispositivos,
+           coalesce(jsonb_agg(f.dificultades_grupo) filter (where nullif(btrim(f.dificultades_grupo), '') is not null), '[]') as dificultades,
+           coalesce(jsonb_agg(f.material_faltante) filter (where nullif(btrim(f.material_faltante), '') is not null), '[]') as material
+      from workshop_educadores we
+      left join workshop_feedback f on f.workshop_educador_id = we.id
+     where we.workshop_id in (select id from t)
+     group by we.workshop_id
+  ), conectados as (
+    -- El tiempo que estuvieron conectados los dispositivos aprobados (tarea 013), sumado por taller.
+    select c.workshop_id, sum(p.segundos_conectado) filter (where p.aprobado_en is not null) as segundos
+      from workshop_conexiones c
+      join workshop_conexion_participantes p on p.workshop_conexion_id = c.id
+     where c.workshop_id in (select id from t)
+     group by c.workshop_id
+  ), filas as (
+    select t.*, c.workshop_id is not null as realizado, c.asistentes_reales, c.asistentes_ninas, c.asistentes_ninos,
+           c.calificacion, c.participacion_grupo, c.claridad_contenido, e.dispositivos,
+           coalesce(k.segundos, 0)::int as segundos_dispositivos,
+           coalesce(e.dificultades, '[]') as dificultades, coalesce(e.material, '[]') as material,
+           case when c.workshop_id is not null and e.iniciado is not null and e.terminado is not null
+                then round(extract(epoch from e.terminado - e.iniciado) / 60)::int end as minutos
+      from t
+      left join cierre c on c.workshop_id = t.id
+      left join ejecucion e on e.workshop_id = t.id
+      left join conectados k on k.workshop_id = t.id
+  ), pares as (
+    select grupo_audiencia_id, lugar_id, count(*)::int as previstas, (count(*) filter (where realizado))::int as recibidas,
+           max(asistentes_ninas) filter (where realizado) as ninas, max(asistentes_ninos) filter (where realizado) as ninos
+      from filas
+     where not abierto and grupo_audiencia_id is not null and lugar_id is not null
+     group by grupo_audiencia_id, lugar_id
+  )
+  select jsonb_build_object(
+    'resumen', (
+      select jsonb_build_object(
+               'previstos', count(*),
+               'realizados', count(*) filter (where realizado),
+               'cancelados', count(*) filter (where estado = 'CANCELADO'),
+               'sin_realizar', count(*) filter (where estado = 'FINALIZADO' and not realizado),
+               'asistencias', coalesce(sum(asistentes_reales), 0),
+               'asistencias_abiertos', coalesce(sum(asistentes_reales) filter (where abierto), 0),
+               'minutos', coalesce(sum(minutos), 0),
+               'talleres_con_dispositivos', count(*) filter (where dispositivos > 0),
+               'dispositivos', coalesce(sum(dispositivos) filter (where dispositivos > 0), 0),
+               'segundos_dispositivos', coalesce(sum(segundos_dispositivos), 0))
+        from filas),
+    'alcance', (
+      select jsonb_build_object('total', coalesce(sum(ninas + ninos), 0), 'ninas', coalesce(sum(ninas), 0),
+                                'ninos', coalesce(sum(ninos), 0))
+        from pares),
+    'pares', coalesce((
+      select jsonb_agg(jsonb_build_object('grupo_audiencia_id', grupo_audiencia_id, 'lugar_id', lugar_id,
+                                          'previstas', previstas, 'recibidas', recibidas, 'ninas', ninas, 'ninos', ninos)
+                       order by grupo_audiencia_id, lugar_id)
+        from pares), '[]'),
+    'talleres', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'id', id, 'fecha', fecha, 'estado', estado, 'storyboard_id', storyboard_id, 'lugar_id', lugar_id,
+               'comunidad_id', comunidad_id, 'grupo_audiencia_id', grupo_audiencia_id, 'abierto', abierto,
+               'programa_id', programa_id, 'jornada_id', jornada_id, 'asistentes_estimados', asistentes_estimados,
+               'realizado', realizado, 'asistentes', asistentes_reales, 'ninas', asistentes_ninas, 'ninos', asistentes_ninos,
+               'calificacion', calificacion, 'participacion', participacion_grupo, 'claridad', claridad_contenido,
+               'minutos', minutos, 'dispositivos', dispositivos, 'segundos_dispositivos', segundos_dispositivos,
+               'dificultades', dificultades, 'material', material,
+               'motivo_cancelacion', motivo_cancelacion)
+               order by fecha, hora_inicio, id)
+        from filas), '[]'),
+    'historial', coalesce((
+      select jsonb_agg(jsonb_build_object('workshop_id', h.workshop_id, 'tipo', h.tipo, 'fecha_anterior', h.fecha_anterior,
+                                          'fecha_nueva', h.fecha_nueva, 'motivo', h.motivo, 'cuando', h.created_at)
+                       order by h.created_at, h.id)
+        from workshop_historial h
+       where h.workshop_id in (select id from t)), '[]'))
+$$;
+
+revoke all on function reporte_talleres(bigint, date, date, bigint, bigint, bigint, bigint) from public, anon;
+grant execute on function reporte_talleres(bigint, date, date, bigint, bigint, bigint, bigint) to authenticated;
 
 -- ═════════════════════════════════════════════════════════════════════════════
 -- PLATFORM: lo que ve el superadmin de la operación de cada organización
@@ -346,7 +493,8 @@ $$;
 -- Dar de baja una organización entera: la cascada se lleva sus educadores, licencias,
 -- administradores, colaboradores, invitaciones, jornadas y talleres. Los talleres van primero:
 -- así sus asignaciones caen con ellos y no con el educador (un publicado no se queda sin educador).
--- Sus storyboards personalizados lo impiden: el catálogo se resuelve antes desde Player.
+-- Sus storyboards personalizados lo impiden: el catálogo se resuelve antes desde Player. Los talleres ya dados, que no
+-- se eliminan uno a uno (workshops_valida_borrado), se van con ella: lo avisa en la transacción.
 create function platform_eliminar_organizacion(p_organizacion_id bigint)
 returns void
 language plpgsql security definer set search_path = public
@@ -358,6 +506,7 @@ begin
   if exists (select 1 from storyboards where organizacion_id = p_organizacion_id) then
     raise exception 'La organización tiene storyboards personalizados: pásalos a otra organización o a estándar desde Player';
   end if;
+  perform set_config('playhub.baja_de_organizacion', p_organizacion_id::text, true);
   delete from workshops where organizacion_id = p_organizacion_id;
   delete from organizaciones where id = p_organizacion_id;
 end;

@@ -50,7 +50,7 @@ supabase db push
 2. **Auth:**
    - *URL Configuration → Site URL* = la URL de Admin. La recuperación no necesita *Redirect URLs*: el enlace va directo a `/restablecer` de Admin.
    - *Email → Email OTP Expiration* = `86400`: lo que dura el enlace de recuperación (24 h), como en `config.toml`.
-3. **Configuración:** `update configuracion set valor = 'https://<player>' where clave = 'player_url';` («Probar» en Admin). `update configuracion set valor = 'https://<admin>' where clave = 'admin_url';`: el enlace de los correos de invitación (si está vacía, `enviar-invitacion` usa el origen desde el que se creó la invitación). `update configuracion set valor = 'https://<educators>' where clave = 'educators_url';`: el enlace de acceso de los educadores (obligatoria fuera de desarrollo).
+3. **Configuración:** las direcciones de las apps vienen con las de desarrollo (`localhost`); en producción se cambian aquí y nada más, sin recompilar ninguna app: `update configuraciones set valor = 'https://<admin>' where clave = 'admin_url';`, y lo mismo con `player_url` y `educators_url`. Con ellas, Admin y Educators abren el runner, el QR del taller lleva a Player, Player deja que Admin y Educators lo incrusten, y los correos de invitación y de acceso llevan sus enlaces. Se leen sin cuenta: nunca pongas un secreto en `configuraciones`.
 4. **El primer superadmin:**
    - Crea el usuario en *Authentication → Users*. Un trigger le crea su perfil.
    - Después: `update perfiles set superadmin = true where email = '<tu correo>';`.
@@ -74,7 +74,7 @@ Después, los pasos de [Después de las migraciones](#después-de-las-migracione
 1. **Edge Functions:** `supabase start` ya las sirve. Una función nueva o un cambio de `config.toml` se toman al reiniciar con `supabase stop && supabase start`, que conserva los datos.
    - **Correo de las invitaciones:** pega tu key de Resend en `supabase/.env` (`RESEND_API_KEY=`, fuera de Git; plantilla en `supabase/.env.example`) y reinicia. Sin dominio verificado, pon también `RESEND_FROM=onboarding@resend.dev`: Resend solo enviará al correo de tu cuenta. Sin key, la invitación se crea igual y Admin avisa de que el correo no salió; el enlace se copia.
 2. **Auth:** `config.toml` ya tiene la URL de Admin (`localhost:3000`) y el enlace de recuperación de 24 h.
-3. **Configuración**, en el editor SQL de Studio (`http://127.0.0.1:54323`): `update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';`.
+3. **Configuración:** las direcciones de las apps (`configuraciones`) ya vienen con las de este equipo (`localhost:3000`, `3001` y `3002`). No hay que tocar nada.
 4. **El primer superadmin:** en Studio, *Authentication → Add user* con correo, contraseña y *Auto Confirm User*; después, `update perfiles set superadmin = true where email = '<correo>';`.
 5. **pg_cron:** ya está activo en local.
 

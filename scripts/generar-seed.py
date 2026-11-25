@@ -54,10 +54,6 @@ w('''-- Datos de prueba deterministas para Supabase LOCAL (`supabase db reset`).
 --     pedro@ejemplo.test  135790   Colegio Norte
 --     lucia@ejemplo.test  enlace /acceso/lucia-enlace-de-prueba (aún no eligió su PIN)   Fundación Centro
 
-update configuracion set valor = 'http://localhost:3000' where clave = 'admin_url';
-update configuracion set valor = 'http://localhost:3001' where clave = 'player_url';
-update configuracion set valor = 'http://localhost:3002' where clave = 'educators_url';
-
 -- ── Organizaciones y licencias ────────────────────────────────────────────────
 insert into organizaciones (nombre, correo, paises, tipo_id) values
   ('Fundación Centro', 'contacto@centro.test', '{GT,SV}', (select id from tipos_organizacion where codigo = 'FUNDACION')),
@@ -160,17 +156,40 @@ select g.id, e.id from educador_grupos g, educadores e
 
 ''')
 
-w(f'''-- ── Jornada de Fundación Centro (la del fixture: su lugar y sus días relativos) ──
-insert into jornadas (nombre, descripcion, ubicacion, fecha_inicio, fecha_fin, organizacion_id)
-values ({lit(jornada['nombre'])}, 'Talleres de alimentación alrededor de la desnutrición.', {lit(jornada['ubicacion'])},
+grupos = sorted({t['grupo'] for t in talleres['talleres'] if t.get('grupo')} | {'1.º B', '3.º B'})
+w(f'''-- ── Programa, lugares y grupos de audiencia (tarea 021) ───────────────────────
+-- Fundación Centro: el programa «Crecer sano», que contiene la jornada; el lugar de la jornada y
+-- otro, agrupados en una comunidad; los grupos de los talleres del fixture y uno abierto.
+insert into programas (nombre, descripcion, fecha_inicio, fecha_fin, organizacion_id)
+values ('Crecer sano', 'Tres meses de alimentación en la zona centro.', current_date - 30, current_date + 60,
+        (select id from organizaciones where nombre = 'Fundación Centro'));
+insert into comunidades (nombre, organizacion_id)
+values ('Zona centro', (select id from organizaciones where nombre = 'Fundación Centro'));
+insert into lugares (nombre, comunidad_id, organizacion_id)
+select v.nombre, (select id from comunidades where nombre = 'Zona centro'), (select id from organizaciones where nombre = 'Fundación Centro')
+  from (values ({lit(jornada['ubicacion'])}), ('Escuela Las Flores')) as v (nombre);
+insert into lugares (nombre, organizacion_id)
+values ('Colegio Norte', (select id from organizaciones where nombre = 'Colegio Norte'));
+insert into grupos_audiencia (nombre, edicion, abierto, organizacion_id)
+select v.nombre, 'KIDS', false, (select id from organizaciones where nombre = 'Fundación Centro')
+  from (values {', '.join('(' + lit(g) + ')' for g in grupos)}) as v (nombre);
+insert into grupos_audiencia (nombre, abierto, organizacion_id)
+values ('Público general', true, (select id from organizaciones where nombre = 'Fundación Centro')),
+       ('2.º A', false, (select id from organizaciones where nombre = 'Colegio Norte'));
+
+-- ── Jornada de Fundación Centro (la del fixture: su lugar y sus días relativos), en el programa ──
+insert into jornadas (nombre, descripcion, lugar_id, programa_id, fecha_inicio, fecha_fin, organizacion_id)
+values ({lit(jornada['nombre'])}, 'Talleres de alimentación alrededor de la desnutrición.',
+        (select id from lugares where nombre = {lit(jornada['ubicacion'])}), (select id from programas where nombre = 'Crecer sano'),
         current_date + ({jornada['diaInicioRelativo']}), current_date + ({jornada['diaFinRelativo']}),
         (select id from organizaciones where nombre = 'Fundación Centro'));
 
 ''')
 
 w('''-- ── Workshops ─────────────────────────────────────────────────────────────────
--- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, lugar, grupo,
--- jornada y cierre); la referencia original va en `notas`. Las horas reales, en la zona de Guatemala.
+-- Los de María salen de los datos de prueba de Educators (mismo día relativo, hora, espacio, grupo,
+-- jornada y cierre); la referencia original va en `notas`. El lugar es el de la jornada; los sueltos
+-- van en el mismo lugar y en el programa. Las horas reales, en la zona de Guatemala.
 do $$
 declare
   v_org        bigint := (select id from organizaciones where nombre = 'Fundación Centro');
@@ -178,6 +197,8 @@ declare
   v_educador   bigint := (select id from educadores where correo = 'maria@ejemplo.test');
   v_grupo      bigint := (select id from educador_grupos where nombre = 'Equipo de la mañana');
   v_jornada    bigint := (select id from jornadas where organizacion_id = (select id from organizaciones where nombre = 'Fundación Centro'));
+  v_lugar      bigint := (select lugar_id from jornadas where id = v_jornada);
+  v_programa   bigint := (select id from programas where nombre = 'Crecer sano');
   v_workshop   bigint;
   v_asignacion bigint;
   t record;
@@ -199,10 +220,11 @@ w(',\n'.join(filas) + '\n')
 w('''    ) as v (ref, dia, inicio, fin, lugar, grupo, asistentes, en_jornada, motivo, feedback)
   loop
     -- Nace en borrador; con su educadora asignada, se publica.
-    insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                           modalidad, notas, storyboard_id, jornada_id, organizacion_id)
-    values (current_date + t.dia, t.inicio, t.fin, t.lugar, t.grupo, t.asistentes, 'es',
-            'PRESENCIAL', 'Datos de prueba ' || t.ref, v_storyboard, case when t.en_jornada then v_jornada end, v_org)
+    insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, modalidad, notas,
+                           storyboard_id, jornada_id, lugar_id, grupo_audiencia_id, programa_id, organizacion_id)
+    values (current_date + t.dia, t.inicio, t.fin, t.lugar, t.asistentes, 'es', 'PRESENCIAL', 'Datos de prueba ' || t.ref,
+            v_storyboard, case when t.en_jornada then v_jornada end, v_lugar,
+            (select id from grupos_audiencia where nombre = t.grupo and organizacion_id = v_org), v_programa, v_org)
     returning id into v_workshop;
 
     insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador)
@@ -221,26 +243,30 @@ w('''    ) as v (ref, dia, inicio, fin, lugar, grupo, asistentes, en_jornada, mo
              terminado_en = ((current_date + t.dia) + t.fin) at time zone 'America/Guatemala',
              estado = 'EN_CURSO'
        where id = v_asignacion;
-      insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, participacion_grupo,
-                                     claridad_contenido, dificultades_grupo, material_faltante)
+      -- Niñas y niños: los del cierre del fixture o, si no los trae, la mitad redondeada hacia arriba.
+      insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
+                                     participacion_grupo, claridad_contenido, dificultades_grupo, material_faltante)
       values (v_asignacion, (t.feedback->>'calificacion')::int, (t.feedback->>'asistentes')::int,
+              coalesce((t.feedback->>'ninas')::int, ceil((t.feedback->>'asistentes')::int / 2.0)::int),
+              (t.feedback->>'asistentes')::int - coalesce((t.feedback->>'ninas')::int, ceil((t.feedback->>'asistentes')::int / 2.0)::int),
               upper(t.feedback->>'participacion')::participacion_grupo, upper(t.feedback->>'claridad')::claridad_contenido,
               nullif(t.feedback->>'costo', ''), nullif(t.feedback->>'faltoMaterial', ''));
     end if;
   end loop;
 
   -- Un borrador: María no lo ve hasta que se publique.
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, idioma_contenido, notas,
-                         storyboard_id, organizacion_id)
-  values (current_date + 20, '09:00', '09:30', 'Aula 1B', '1.º B', 'es', 'Datos de prueba: borrador', v_storyboard, v_org)
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, idioma_contenido, notas, storyboard_id, lugar_id,
+                         grupo_audiencia_id, organizacion_id)
+  values (current_date + 20, '09:00', '09:30', 'Aula 1B', 'es', 'Datos de prueba: borrador', v_storyboard, v_lugar,
+          (select id from grupos_audiencia where nombre = '1.º B' and organizacion_id = v_org), v_org)
   returning id into v_workshop;
   insert into workshop_educadores (workshop_id, educador_id) values (v_workshop, v_educador);
 
   -- Uno asignado al grupo entero (María y Lucía), dentro de la jornada.
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, jornada_id, organizacion_id)
-  values (current_date + 2, '14:00', '14:30', 'Salón principal', '3.º B', 20, 'es', 'Datos de prueba: equipo de la mañana',
-          v_storyboard, v_jornada, v_org)
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, notas,
+                         storyboard_id, jornada_id, grupo_audiencia_id, organizacion_id)
+  values (current_date + 2, '14:00', '14:30', 'Salón principal', 20, 'es', 'Datos de prueba: equipo de la mañana',
+          v_storyboard, v_jornada, (select id from grupos_audiencia where nombre = '3.º B' and organizacion_id = v_org), v_org)
   returning id into v_workshop;
   insert into workshop_educadores (workshop_id, educador_id, educador_grupo_id)
   select v_workshop, m.educador_id, v_grupo from educador_grupo_miembros m where m.educador_grupo_id = v_grupo;
@@ -249,10 +275,12 @@ end $$;
 
 -- Un workshop de Pedro en Colegio Norte, hoy, con el mismo estándar.
 with w as (
-  insert into workshops (fecha, hora_inicio, hora_fin, ubicacion, grupo_asistente, asistentes_estimados, idioma_contenido,
-                         notas, storyboard_id, organizacion_id)
-  values (current_date, '08:00', '08:30', 'Aula Norte', '2.º A', 18, 'es', 'Datos de prueba: Norte',
-          (select id from storyboards where slug = 'el-huevo'), (select id from organizaciones where nombre = 'Colegio Norte'))
+  insert into workshops (fecha, hora_inicio, hora_fin, espacio, asistentes_estimados, idioma_contenido, notas, storyboard_id,
+                         lugar_id, grupo_audiencia_id, organizacion_id)
+  values (current_date, '08:00', '08:30', 'Aula Norte', 18, 'es', 'Datos de prueba: Norte',
+          (select id from storyboards where slug = 'el-huevo'), (select id from lugares where nombre = 'Colegio Norte'),
+          (select g.id from grupos_audiencia g join organizaciones o on o.id = g.organizacion_id where g.nombre = '2.º A' and o.nombre = 'Colegio Norte'),
+          (select id from organizaciones where nombre = 'Colegio Norte'))
   returning id
 )
 insert into workshop_educadores (workshop_id, educador_id)

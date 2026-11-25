@@ -6,7 +6,26 @@ export type Database = {
   
   "public": {
           Tables: {
-            "configuracion": {
+            "comunidades": {
+                  Row: {
+                    "created_at": string,"id": number,"nombre": string,"organizacion_id": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: never,"nombre": string,"organizacion_id": number
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: never,"nombre"?: string,"organizacion_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "comunidades_organizacion_id_fkey"
+      columns: ["organizacion_id"]
+isOneToOne: false
+      referencedRelation: "organizaciones"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"configuraciones": {
                   Row: {
                     "clave": string,"descripcion": string | null,"id": number,"updated_at": string,"valor": string | null
                   }
@@ -113,6 +132,25 @@ isOneToOne: false
       referencedColumns: ["codigo"]
     }
                   ]
+                },"grupos_audiencia": {
+                  Row: {
+                    "abierto": boolean,"activo": boolean,"created_at": string,"descripcion": string | null,"edad_desde": number | null,"edad_hasta": number | null,"id": number,"nombre": string,"organizacion_id": number,"publico_general": boolean
+                  }
+                  Insert: {
+                    "abierto"?: boolean,"activo"?: boolean,"created_at"?: string,"descripcion"?: string | null,"edad_desde"?: number | null,"edad_hasta"?: number | null,"id"?: never,"nombre": string,"organizacion_id": number,"publico_general"?: boolean
+                  }
+                  Update: {
+                    "abierto"?: boolean,"activo"?: boolean,"created_at"?: string,"descripcion"?: string | null,"edad_desde"?: number | null,"edad_hasta"?: number | null,"id"?: never,"nombre"?: string,"organizacion_id"?: number,"publico_general"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "grupos_audiencia_organizacion_id_fkey"
+      columns: ["organizacion_id"]
+isOneToOne: false
+      referencedRelation: "organizaciones"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"guia_escenas": {
                   Row: {
                     "carpeta": string,"cientifico": Json | null,"consejos": Json | null,"descripcion": Json | null,"guia_id": number,"id": number,"material": Json | null,"mecanica": Json | null,"no_hace": Json | null,"objetivo": Json | null,"orden": number,"pedagogia": Json | null,"preguntas": Json | null,"psicologia": Json | null,"subtitulo": Json | null,"titulo": NonNullable<Json>,"verbo": Json | null
@@ -178,17 +216,54 @@ isOneToOne: false
                   ]
                 },"jornadas": {
                   Row: {
-                    "created_at": string,"descripcion": string | null,"fecha_fin": string,"fecha_inicio": string,"id": number,"nombre": string,"organizacion_id": number,"ubicacion": string
+                    "created_at": string,"descripcion": string | null,"fecha_fin": string,"fecha_inicio": string,"id": number,"lugar_id": number,"nombre": string,"organizacion_id": number,"programa_id": number | null
                   }
                   Insert: {
-                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin": string,"fecha_inicio": string,"id"?: never,"nombre": string,"organizacion_id": number,"ubicacion": string
+                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin": string,"fecha_inicio": string,"id"?: never,"lugar_id": number,"nombre": string,"organizacion_id": number,"programa_id"?: number | null
                   }
                   Update: {
-                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin"?: string,"fecha_inicio"?: string,"id"?: never,"nombre"?: string,"organizacion_id"?: number,"ubicacion"?: string
+                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin"?: string,"fecha_inicio"?: string,"id"?: never,"lugar_id"?: number,"nombre"?: string,"organizacion_id"?: number,"programa_id"?: number | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "jornadas_lugar_id_organizacion_id_fkey"
+      columns: ["lugar_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "lugares"
+      referencedColumns: ["id","organizacion_id"]
+    },{
       foreignKeyName: "jornadas_organizacion_id_fkey"
+      columns: ["organizacion_id"]
+isOneToOne: false
+      referencedRelation: "organizaciones"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "jornadas_programa_id_organizacion_id_fkey"
+      columns: ["programa_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "programas"
+      referencedColumns: ["id","organizacion_id"]
+    }
+                  ]
+                },"lugares": {
+                  Row: {
+                    "activo": boolean,"comunidad_id": number | null,"created_at": string,"id": number,"nombre": string,"organizacion_id": number
+                  }
+                  Insert: {
+                    "activo"?: boolean,"comunidad_id"?: number | null,"created_at"?: string,"id"?: never,"nombre": string,"organizacion_id": number
+                  }
+                  Update: {
+                    "activo"?: boolean,"comunidad_id"?: number | null,"created_at"?: string,"id"?: never,"nombre"?: string,"organizacion_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lugares_comunidad_id_organizacion_id_fkey"
+      columns: ["comunidad_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "comunidades"
+      referencedColumns: ["id","organizacion_id"]
+    },{
+      foreignKeyName: "lugares_organizacion_id_fkey"
       columns: ["organizacion_id"]
 isOneToOne: false
       referencedRelation: "organizaciones"
@@ -322,15 +397,34 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"storyboards": {
+                },"programas": {
                   Row: {
-                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at": string,"duracion_min": number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud": (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion": Database["public"]['Enums']["estado_publicacion"],"id": number,"idioma_principal": Database["public"]['Enums']["idioma"],"idiomas": (Database["public"]['Enums']["idioma"])[],"numero_escenas": number,"organizacion_id": number | null,"paises_disponibles": (string)[],"slug": string,"subcategoria": Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo": NonNullable<Json>,"updated_at": string,"version_build": string | null
+                    "created_at": string,"descripcion": string | null,"fecha_fin": string,"fecha_inicio": string,"id": number,"nombre": string,"organizacion_id": number
                   }
                   Insert: {
-                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at"?: string,"duracion_min"?: number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"slug": string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
+                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin": string,"fecha_inicio": string,"id"?: never,"nombre": string,"organizacion_id": number
                   }
                   Update: {
-                    "categoria"?: Database["public"]['Enums']["categoria_storyboard"],"clave"?: string,"created_at"?: string,"duracion_min"?: number | null,"edicion"?: Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"slug"?: string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
+                    "created_at"?: string,"descripcion"?: string | null,"fecha_fin"?: string,"fecha_inicio"?: string,"id"?: never,"nombre"?: string,"organizacion_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "programas_organizacion_id_fkey"
+      columns: ["organizacion_id"]
+isOneToOne: false
+      referencedRelation: "organizaciones"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"storyboards": {
+                  Row: {
+                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at": string,"duracion_min": number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud": (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion": Database["public"]['Enums']["estado_publicacion"],"id": number,"idioma_principal": Database["public"]['Enums']["idioma"],"idiomas": (Database["public"]['Enums']["idioma"])[],"numero_escenas": number,"organizacion_id": number | null,"paises_disponibles": (string)[],"publicado_hogar": boolean,"slug": string,"subcategoria": Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo": NonNullable<Json>,"updated_at": string,"version_build": string | null
+                  }
+                  Insert: {
+                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at"?: string,"duracion_min"?: number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"publicado_hogar"?: boolean,"slug": string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
+                  }
+                  Update: {
+                    "categoria"?: Database["public"]['Enums']["categoria_storyboard"],"clave"?: string,"created_at"?: string,"duracion_min"?: number | null,"edicion"?: Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"publicado_hogar"?: boolean,"slug"?: string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
                   }
                   Relationships: [
                     {
@@ -354,15 +448,91 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"workshop_educadores": {
+                },"unidad_estudio_storyboards": {
                   Row: {
-                    "created_at": string,"educador_grupo_id": number | null,"educador_id": number,"estado": Database["public"]['Enums']["estado_asignacion"],"id": number,"iniciado_en": string | null,"organizacion_id": number,"terminado_en": string | null,"workshop_id": number
+                    "id": number,"orden": number,"storyboard_id": number,"unidad_estudio_id": number
                   }
                   Insert: {
-                    "created_at"?: string,"educador_grupo_id"?: number | null,"educador_id": number,"estado"?: Database["public"]['Enums']["estado_asignacion"],"id"?: never,"iniciado_en"?: string | null,"organizacion_id": number,"terminado_en"?: string | null,"workshop_id": number
+                    "id"?: never,"orden": number,"storyboard_id": number,"unidad_estudio_id": number
                   }
                   Update: {
-                    "created_at"?: string,"educador_grupo_id"?: number | null,"educador_id"?: number,"estado"?: Database["public"]['Enums']["estado_asignacion"],"id"?: never,"iniciado_en"?: string | null,"organizacion_id"?: number,"terminado_en"?: string | null,"workshop_id"?: number
+                    "id"?: never,"orden"?: number,"storyboard_id"?: number,"unidad_estudio_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "unidad_estudio_storyboards_storyboard_id_fkey"
+      columns: ["storyboard_id"]
+isOneToOne: false
+      referencedRelation: "storyboards"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "unidad_estudio_storyboards_unidad_estudio_id_fkey"
+      columns: ["unidad_estudio_id"]
+isOneToOne: false
+      referencedRelation: "unidades_estudio"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"unidades_estudio": {
+                  Row: {
+                    "created_at": string,"descripcion": Json | null,"id": number,"orden": number,"publicada": boolean,"titulo": NonNullable<Json>,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"descripcion"?: Json | null,"id"?: never,"orden"?: number,"publicada"?: boolean,"titulo"?: NonNullable<Json>,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"descripcion"?: Json | null,"id"?: never,"orden"?: number,"publicada"?: boolean,"titulo"?: NonNullable<Json>,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"workshop_conexion_participantes": {
+                  Row: {
+                    "apodo": string | null,"aprobado_en": string | null,"avatar": string,"conectado_desde": string | null,"dispositivo": string,"estado": Database["public"]['Enums']["estado_participante"],"id": number,"organizacion_id": number,"pidio_en": string,"segundos_conectado": number,"ultima_salida_en": string | null,"workshop_conexion_id": number
+                  }
+                  Insert: {
+                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar": string,"conectado_desde"?: string | null,"dispositivo": string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id": number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"workshop_conexion_id": number
+                  }
+                  Update: {
+                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar"?: string,"conectado_desde"?: string | null,"dispositivo"?: string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id"?: number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"workshop_conexion_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workshop_conexion_participant_workshop_conexion_id_organiz_fkey"
+      columns: ["workshop_conexion_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "workshop_conexiones"
+      referencedColumns: ["id","organizacion_id"]
+    }
+                  ]
+                },"workshop_conexiones": {
+                  Row: {
+                    "abierta_en": string,"cerrada_en": string | null,"codigo": string,"id": number,"llave_hash": string,"organizacion_id": number,"workshop_id": number
+                  }
+                  Insert: {
+                    "abierta_en"?: string,"cerrada_en"?: string | null,"codigo": string,"id"?: never,"llave_hash": string,"organizacion_id": number,"workshop_id": number
+                  }
+                  Update: {
+                    "abierta_en"?: string,"cerrada_en"?: string | null,"codigo"?: string,"id"?: never,"llave_hash"?: string,"organizacion_id"?: number,"workshop_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workshop_conexiones_workshop_id_organizacion_id_fkey"
+      columns: ["workshop_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "workshops"
+      referencedColumns: ["id","organizacion_id"]
+    }
+                  ]
+                },"workshop_educadores": {
+                  Row: {
+                    "created_at": string,"dispositivos_unidos": number | null,"educador_grupo_id": number | null,"educador_id": number,"estado": Database["public"]['Enums']["estado_asignacion"],"id": number,"iniciado_en": string | null,"organizacion_id": number,"terminado_en": string | null,"workshop_id": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"dispositivos_unidos"?: number | null,"educador_grupo_id"?: number | null,"educador_id": number,"estado"?: Database["public"]['Enums']["estado_asignacion"],"id"?: never,"iniciado_en"?: string | null,"organizacion_id": number,"terminado_en"?: string | null,"workshop_id": number
+                  }
+                  Update: {
+                    "created_at"?: string,"dispositivos_unidos"?: number | null,"educador_grupo_id"?: number | null,"educador_id"?: number,"estado"?: Database["public"]['Enums']["estado_asignacion"],"id"?: never,"iniciado_en"?: string | null,"organizacion_id"?: number,"terminado_en"?: string | null,"workshop_id"?: number
                   }
                   Relationships: [
                     {
@@ -393,13 +563,13 @@ isOneToOne: false
                   ]
                 },"workshop_feedback": {
                   Row: {
-                    "asistentes_reales": number,"calificacion": number,"claridad_contenido": Database["public"]['Enums']["claridad_contenido"],"created_at": string,"dificultades_grupo": string | null,"id": number,"material_faltante": string | null,"participacion_grupo": Database["public"]['Enums']["participacion_grupo"],"updated_at": string,"workshop_educador_id": number
+                    "asistentes_ninas": number | null,"asistentes_ninos": number | null,"asistentes_reales": number,"calificacion": number,"claridad_contenido": Database["public"]['Enums']["claridad_contenido"],"created_at": string,"dificultades_grupo": string | null,"id": number,"material_faltante": string | null,"participacion_grupo": Database["public"]['Enums']["participacion_grupo"],"updated_at": string,"workshop_educador_id": number
                   }
                   Insert: {
-                    "asistentes_reales": number,"calificacion": number,"claridad_contenido": Database["public"]['Enums']["claridad_contenido"],"created_at"?: string,"dificultades_grupo"?: string | null,"id"?: never,"material_faltante"?: string | null,"participacion_grupo": Database["public"]['Enums']["participacion_grupo"],"updated_at"?: string,"workshop_educador_id": number
+                    "asistentes_ninas"?: number | null,"asistentes_ninos"?: number | null,"asistentes_reales": number,"calificacion": number,"claridad_contenido": Database["public"]['Enums']["claridad_contenido"],"created_at"?: string,"dificultades_grupo"?: string | null,"id"?: never,"material_faltante"?: string | null,"participacion_grupo": Database["public"]['Enums']["participacion_grupo"],"updated_at"?: string,"workshop_educador_id": number
                   }
                   Update: {
-                    "asistentes_reales"?: number,"calificacion"?: number,"claridad_contenido"?: Database["public"]['Enums']["claridad_contenido"],"created_at"?: string,"dificultades_grupo"?: string | null,"id"?: never,"material_faltante"?: string | null,"participacion_grupo"?: Database["public"]['Enums']["participacion_grupo"],"updated_at"?: string,"workshop_educador_id"?: number
+                    "asistentes_ninas"?: number | null,"asistentes_ninos"?: number | null,"asistentes_reales"?: number,"calificacion"?: number,"claridad_contenido"?: Database["public"]['Enums']["claridad_contenido"],"created_at"?: string,"dificultades_grupo"?: string | null,"id"?: never,"material_faltante"?: string | null,"participacion_grupo"?: Database["public"]['Enums']["participacion_grupo"],"updated_at"?: string,"workshop_educador_id"?: number
                   }
                   Relationships: [
                     {
@@ -410,29 +580,72 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
-                },"workshops": {
+                },"workshop_historial": {
                   Row: {
-                    "asistentes_estimados": number | null,"cancelado_en": string | null,"created_at": string,"estado": Database["public"]['Enums']["estado_workshop"],"fecha": string | null,"finalizado_en": string | null,"grupo_asistente": string | null,"hora_fin": string | null,"hora_inicio": string | null,"id": number,"idioma_contenido": Database["public"]['Enums']["idioma"],"jornada_id": number | null,"modalidad": Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion": string | null,"notas": string | null,"organizacion_id": number,"publicado_en": string | null,"reprogramaciones": number,"storyboard_id": number,"titulo": string | null,"ubicacion": string | null
+                    "created_at": string,"fecha_anterior": string | null,"fecha_nueva": string | null,"id": number,"motivo": string | null,"perfil_id": number | null,"tipo": Database["public"]['Enums']["tipo_cambio_workshop"],"workshop_id": number
                   }
                   Insert: {
-                    "asistentes_estimados"?: number | null,"cancelado_en"?: string | null,"created_at"?: string,"estado"?: Database["public"]['Enums']["estado_workshop"],"fecha"?: string | null,"finalizado_en"?: string | null,"grupo_asistente"?: string | null,"hora_fin"?: string | null,"hora_inicio"?: string | null,"id"?: never,"idioma_contenido"?: Database["public"]['Enums']["idioma"],"jornada_id"?: number | null,"modalidad"?: Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion"?: string | null,"notas"?: string | null,"organizacion_id": number,"publicado_en"?: string | null,"reprogramaciones"?: number,"storyboard_id": number,"titulo"?: string | null,"ubicacion"?: string | null
+                    "created_at"?: string,"fecha_anterior"?: string | null,"fecha_nueva"?: string | null,"id"?: never,"motivo"?: string | null,"perfil_id"?: number | null,"tipo": Database["public"]['Enums']["tipo_cambio_workshop"],"workshop_id": number
                   }
                   Update: {
-                    "asistentes_estimados"?: number | null,"cancelado_en"?: string | null,"created_at"?: string,"estado"?: Database["public"]['Enums']["estado_workshop"],"fecha"?: string | null,"finalizado_en"?: string | null,"grupo_asistente"?: string | null,"hora_fin"?: string | null,"hora_inicio"?: string | null,"id"?: never,"idioma_contenido"?: Database["public"]['Enums']["idioma"],"jornada_id"?: number | null,"modalidad"?: Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion"?: string | null,"notas"?: string | null,"organizacion_id"?: number,"publicado_en"?: string | null,"reprogramaciones"?: number,"storyboard_id"?: number,"titulo"?: string | null,"ubicacion"?: string | null
+                    "created_at"?: string,"fecha_anterior"?: string | null,"fecha_nueva"?: string | null,"id"?: never,"motivo"?: string | null,"perfil_id"?: number | null,"tipo"?: Database["public"]['Enums']["tipo_cambio_workshop"],"workshop_id"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "workshop_historial_perfil_id_fkey"
+      columns: ["perfil_id"]
+isOneToOne: false
+      referencedRelation: "perfiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workshop_historial_workshop_id_fkey"
+      columns: ["workshop_id"]
+isOneToOne: false
+      referencedRelation: "workshops"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workshops": {
+                  Row: {
+                    "asistentes_estimados": number | null,"cancelado_en": string | null,"created_at": string,"espacio": string | null,"estado": Database["public"]['Enums']["estado_workshop"],"fecha": string | null,"finalizado_en": string | null,"grupo_audiencia_id": number | null,"hora_fin": string | null,"hora_inicio": string | null,"id": number,"idioma_contenido": Database["public"]['Enums']["idioma"],"jornada_id": number | null,"lugar_id": number | null,"modalidad": Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion": string | null,"notas": string | null,"organizacion_id": number,"programa_id": number | null,"publicado_en": string | null,"reprogramaciones": number,"storyboard_id": number,"titulo": string | null
+                  }
+                  Insert: {
+                    "asistentes_estimados"?: number | null,"cancelado_en"?: string | null,"created_at"?: string,"espacio"?: string | null,"estado"?: Database["public"]['Enums']["estado_workshop"],"fecha"?: string | null,"finalizado_en"?: string | null,"grupo_audiencia_id"?: number | null,"hora_fin"?: string | null,"hora_inicio"?: string | null,"id"?: never,"idioma_contenido"?: Database["public"]['Enums']["idioma"],"jornada_id"?: number | null,"lugar_id"?: number | null,"modalidad"?: Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion"?: string | null,"notas"?: string | null,"organizacion_id": number,"programa_id"?: number | null,"publicado_en"?: string | null,"reprogramaciones"?: number,"storyboard_id": number,"titulo"?: string | null
+                  }
+                  Update: {
+                    "asistentes_estimados"?: number | null,"cancelado_en"?: string | null,"created_at"?: string,"espacio"?: string | null,"estado"?: Database["public"]['Enums']["estado_workshop"],"fecha"?: string | null,"finalizado_en"?: string | null,"grupo_audiencia_id"?: number | null,"hora_fin"?: string | null,"hora_inicio"?: string | null,"id"?: never,"idioma_contenido"?: Database["public"]['Enums']["idioma"],"jornada_id"?: number | null,"lugar_id"?: number | null,"modalidad"?: Database["public"]['Enums']["modalidad_workshop"],"motivo_cancelacion"?: string | null,"notas"?: string | null,"organizacion_id"?: number,"programa_id"?: number | null,"publicado_en"?: string | null,"reprogramaciones"?: number,"storyboard_id"?: number,"titulo"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workshops_grupo_audiencia_id_organizacion_id_fkey"
+      columns: ["grupo_audiencia_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "grupos_audiencia"
+      referencedColumns: ["id","organizacion_id"]
+    },{
       foreignKeyName: "workshops_jornada_id_fkey"
       columns: ["jornada_id"]
 isOneToOne: false
       referencedRelation: "jornadas"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "workshops_lugar_id_organizacion_id_fkey"
+      columns: ["lugar_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "lugares"
+      referencedColumns: ["id","organizacion_id"]
+    },{
       foreignKeyName: "workshops_organizacion_id_fkey"
       columns: ["organizacion_id"]
 isOneToOne: false
       referencedRelation: "organizaciones"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workshops_programa_id_organizacion_id_fkey"
+      columns: ["programa_id","organizacion_id"]
+isOneToOne: false
+      referencedRelation: "programas"
+      referencedColumns: ["id","organizacion_id"]
     },{
       foreignKeyName: "workshops_storyboard_id_fkey"
       columns: ["storyboard_id"]
@@ -447,7 +660,38 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "disponible_para_organizacion":
+            "conexion_aprobar":
+{ Args: { "p_codigo": string,"p_dispositivos"?: (string)[],"p_llave": string }; Returns: Json
+                           },
+"conexion_codigo_nuevo":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"conexion_con_llave":
+{ Args: { "p_codigo": string,"p_llave": string }; Returns: {
+              "abierta_en": string,
+"cerrada_en": string | null,
+"codigo": string,
+"id": number,
+"llave_hash": string,
+"organizacion_id": number,
+"workshop_id": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workshop_conexiones"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"conexion_participantes":
+{ Args: { "p_codigo": string,"p_llave": string }; Returns: Json
+                           },
+"conexion_presencia":
+{ Args: { "p_codigo": string,"p_entran": (string)[],"p_llave": string,"p_salen": (string)[] }; Returns: undefined
+                           },
+"conexion_rechazar":
+{ Args: { "p_codigo": string,"p_dispositivo": string,"p_llave": string }; Returns: boolean
+                           },
+"disponible_para_organizacion":
 { Args: { "p_organizacion_id": number,"p_storyboard_id": number }; Returns: boolean
                            },
 "educador_abrir_sesion":
@@ -459,6 +703,7 @@ isOneToOne: false
 "educador_asignacion":
 { Args: { "p_ids": (number)[],"p_para": string,"p_workshop_id": number }; Returns: {
               "created_at": string,
+"dispositivos_unidos": number | null,
 "educador_grupo_id": number | null,
 "educador_id": number,
 "estado": Database["public"]['Enums']["estado_asignacion"],
@@ -499,7 +744,7 @@ isOneToOne: false
 { Args: { "p_token": string,"p_workshop_id": number }; Returns: Json
                            },
 "educador_iniciar":
-{ Args: { "p_token": string,"p_workshop_id": number }; Returns: undefined
+{ Args: { "p_token": string,"p_workshop_id": number }; Returns: Json
                            },
 "educador_revocar_acceso":
 { Args: { "p_educador_id": number }; Returns: undefined
@@ -537,6 +782,12 @@ isOneToOne: false
 "finalizar_workshops_vencidos":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"guardar_unidad_estudio":
+{ Args: { "p_unidad": Json }; Returns: number
+                           },
+"hogar_catalogo":
+{ Args: { "p_pais": string }; Returns: Json
+                           },
 "localizado":
 { Args: { "p_idioma": Database["public"]['Enums']["idioma"],"p_respaldo"?: Database["public"]['Enums']["idioma"],"p_texto": Json }; Returns: string
                            },
@@ -561,6 +812,15 @@ isOneToOne: false
 "paises_opero":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
+"participante_buscar":
+{ Args: { "p_codigo": string }; Returns: Json
+                           },
+"participante_entrar":
+{ Args: { "p_apodo"?: string,"p_avatar": string,"p_codigo": string,"p_dispositivo": string }; Returns: Json
+                           },
+"participante_estado":
+{ Args: { "p_codigo": string,"p_dispositivo": string }; Returns: Json
+                           },
 "perfiles_editables":
 { Args: Record<PropertyKey, never>; Returns: number[]
                            },
@@ -583,8 +843,14 @@ isOneToOne: false
 "publicar_storyboard":
 { Args: { "p_clave": string,"p_estado": Database["public"]['Enums']["estado_publicacion"],"p_organizacion"?: number,"p_paises": (string)[] }; Returns: undefined
                            },
+"publicar_storyboard_hogar":
+{ Args: { "p_clave": string,"p_hogar": boolean }; Returns: undefined
+                           },
 "recuperacion_autorizar":
 { Args: { "p_email": string }; Returns: string
+                           },
+"reporte_talleres":
+{ Args: { "p_comunidad_id"?: number,"p_desde": string,"p_grupo_audiencia_id"?: number,"p_hasta": string,"p_lugar_id"?: number,"p_organizacion_id": number,"p_programa_id"?: number }; Returns: Json
                            },
 "sincronizar_storyboard":
 { Args: { "p_metadata": Json }; Returns: Json
@@ -592,12 +858,15 @@ isOneToOne: false
 "subcategoria_de_categoria":
 { Args: { "p_categoria": Database["public"]['Enums']["categoria_storyboard"],"p_subcategoria": Database["public"]['Enums']["subcategoria_storyboard"] }; Returns: boolean
                            },
+"workshop_cierra_conexion":
+{ Args: { "p_workshop_id": number }; Returns: undefined
+                           },
 "workshop_empezado":
 { Args: { "p_workshop_id": number }; Returns: boolean
                            }
           }
           Enums: {
-            "categoria_storyboard": "ALIMENTACION"|"ACTIVIDAD_FISICA"|"CUIDADO_PERSONAL"|"SALUD_EMOCIONAL","claridad_contenido": "POCO_CLARA"|"CLARA"|"MUY_CLARA","edicion_storyboard": "KIDS"|"PREADOLESCENTES"|"ADOLESCENTES","enfoque_salud": "DIABETES"|"OBESIDAD"|"DESNUTRICION"|"ANEMIA"|"CELIAQUIA"|"ALERGIAS"|"HIPERTENSION"|"CARIES"|"SEDENTARISMO"|"ASMA"|"PIE_DIABETICO"|"INFECCIONES"|"AUTOESTIMA","estado_asignacion": "PENDIENTE"|"EN_CURSO"|"COMPLETADO"|"CANCELADO","estado_invitacion": "PENDIENTE"|"USADA"|"EXPIRADA"|"REVOCADA"|"RECHAZADA","estado_licencia": "ACTIVA"|"VENCIDA"|"SUSPENDIDA"|"TRIAL","estado_publicacion": "REGISTRADO"|"EN_REVISION"|"PUBLICADO"|"ARCHIVADO","estado_workshop": "BORRADOR"|"EN_REVISION"|"PUBLICADO"|"FINALIZADO"|"CANCELADO"|"ARCHIVADO","idioma": "es"|"en","modalidad_workshop": "PRESENCIAL"|"REMOTO"|"HIBRIDO","participacion_grupo": "BAJA"|"MEDIA"|"ALTA","rol_invitacion": "ADMIN"|"COLABORADOR","subcategoria_storyboard": "NUTRIENTES"|"HIDRATACION"|"CRECIMIENTO"|"ENERGIA"|"DIGESTION"|"PREVENCION"|"PROCESADOS"|"TEMPORADA"|"FUERZA"|"COORDINACION"|"HIGIENE"|"RUTINAS"|"PIEL"|"DESCANSO"|"ACEPTACION"|"CREENCIAS"|"MEDICINA"|"HABITOS"
+            "categoria_storyboard": "ALIMENTACION"|"ACTIVIDAD_FISICA"|"CUIDADO_PERSONAL"|"SALUD_EMOCIONAL","claridad_contenido": "POCO_CLARA"|"CLARA"|"MUY_CLARA","edicion_storyboard": "KIDS"|"PREADOLESCENTES"|"ADOLESCENTES","enfoque_salud": "DIABETES"|"OBESIDAD"|"DESNUTRICION"|"ANEMIA"|"CELIAQUIA"|"ALERGIAS"|"HIPERTENSION"|"CARIES"|"SEDENTARISMO"|"ASMA"|"PIE_DIABETICO"|"INFECCIONES"|"AUTOESTIMA","estado_asignacion": "PENDIENTE"|"EN_CURSO"|"COMPLETADO"|"CANCELADO","estado_invitacion": "PENDIENTE"|"USADA"|"EXPIRADA"|"REVOCADA"|"RECHAZADA","estado_licencia": "ACTIVA"|"VENCIDA"|"SUSPENDIDA"|"TRIAL","estado_participante": "ESPERANDO"|"APROBADO"|"RECHAZADO"|"QUITADO","estado_publicacion": "REGISTRADO"|"EN_REVISION"|"PUBLICADO"|"ARCHIVADO","estado_workshop": "BORRADOR"|"EN_REVISION"|"PUBLICADO"|"FINALIZADO"|"CANCELADO"|"ARCHIVADO","idioma": "es"|"en","modalidad_workshop": "PRESENCIAL"|"REMOTO"|"HIBRIDO","participacion_grupo": "BAJA"|"MEDIA"|"ALTA","rol_invitacion": "ADMIN"|"COLABORADOR","subcategoria_storyboard": "NUTRIENTES"|"HIDRATACION"|"CRECIMIENTO"|"ENERGIA"|"DIGESTION"|"PREVENCION"|"PROCESADOS"|"TEMPORADA"|"FUERZA"|"COORDINACION"|"HIGIENE"|"RUTINAS"|"PIEL"|"DESCANSO"|"ACEPTACION"|"CREENCIAS"|"MEDICINA"|"HABITOS","tipo_cambio_workshop": "CANCELADO"|"REPROGRAMADO"|"FECHA_CAMBIADA"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -713,7 +982,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "categoria_storyboard": ["ALIMENTACION", "ACTIVIDAD_FISICA", "CUIDADO_PERSONAL", "SALUD_EMOCIONAL"],"claridad_contenido": ["POCO_CLARA", "CLARA", "MUY_CLARA"],"edicion_storyboard": ["KIDS", "PREADOLESCENTES", "ADOLESCENTES"],"enfoque_salud": ["DIABETES", "OBESIDAD", "DESNUTRICION", "ANEMIA", "CELIAQUIA", "ALERGIAS", "HIPERTENSION", "CARIES", "SEDENTARISMO", "ASMA", "PIE_DIABETICO", "INFECCIONES", "AUTOESTIMA"],"estado_asignacion": ["PENDIENTE", "EN_CURSO", "COMPLETADO", "CANCELADO"],"estado_invitacion": ["PENDIENTE", "USADA", "EXPIRADA", "REVOCADA", "RECHAZADA"],"estado_licencia": ["ACTIVA", "VENCIDA", "SUSPENDIDA", "TRIAL"],"estado_publicacion": ["REGISTRADO", "EN_REVISION", "PUBLICADO", "ARCHIVADO"],"estado_workshop": ["BORRADOR", "EN_REVISION", "PUBLICADO", "FINALIZADO", "CANCELADO", "ARCHIVADO"],"idioma": ["es", "en"],"modalidad_workshop": ["PRESENCIAL", "REMOTO", "HIBRIDO"],"participacion_grupo": ["BAJA", "MEDIA", "ALTA"],"rol_invitacion": ["ADMIN", "COLABORADOR"],"subcategoria_storyboard": ["NUTRIENTES", "HIDRATACION", "CRECIMIENTO", "ENERGIA", "DIGESTION", "PREVENCION", "PROCESADOS", "TEMPORADA", "FUERZA", "COORDINACION", "HIGIENE", "RUTINAS", "PIEL", "DESCANSO", "ACEPTACION", "CREENCIAS", "MEDICINA", "HABITOS"]
+            "categoria_storyboard": ["ALIMENTACION", "ACTIVIDAD_FISICA", "CUIDADO_PERSONAL", "SALUD_EMOCIONAL"],"claridad_contenido": ["POCO_CLARA", "CLARA", "MUY_CLARA"],"edicion_storyboard": ["KIDS", "PREADOLESCENTES", "ADOLESCENTES"],"enfoque_salud": ["DIABETES", "OBESIDAD", "DESNUTRICION", "ANEMIA", "CELIAQUIA", "ALERGIAS", "HIPERTENSION", "CARIES", "SEDENTARISMO", "ASMA", "PIE_DIABETICO", "INFECCIONES", "AUTOESTIMA"],"estado_asignacion": ["PENDIENTE", "EN_CURSO", "COMPLETADO", "CANCELADO"],"estado_invitacion": ["PENDIENTE", "USADA", "EXPIRADA", "REVOCADA", "RECHAZADA"],"estado_licencia": ["ACTIVA", "VENCIDA", "SUSPENDIDA", "TRIAL"],"estado_participante": ["ESPERANDO", "APROBADO", "RECHAZADO", "QUITADO"],"estado_publicacion": ["REGISTRADO", "EN_REVISION", "PUBLICADO", "ARCHIVADO"],"estado_workshop": ["BORRADOR", "EN_REVISION", "PUBLICADO", "FINALIZADO", "CANCELADO", "ARCHIVADO"],"idioma": ["es", "en"],"modalidad_workshop": ["PRESENCIAL", "REMOTO", "HIBRIDO"],"participacion_grupo": ["BAJA", "MEDIA", "ALTA"],"rol_invitacion": ["ADMIN", "COLABORADOR"],"subcategoria_storyboard": ["NUTRIENTES", "HIDRATACION", "CRECIMIENTO", "ENERGIA", "DIGESTION", "PREVENCION", "PROCESADOS", "TEMPORADA", "FUERZA", "COORDINACION", "HIGIENE", "RUTINAS", "PIEL", "DESCANSO", "ACEPTACION", "CREENCIAS", "MEDICINA", "HABITOS"],"tipo_cambio_workshop": ["CANCELADO", "REPROGRAMADO", "FECHA_CAMBIADA"]
           }
         }
 } as const
