@@ -8,6 +8,7 @@
     :start="start"
     :guide="host.guide.value"
     :embedded="host.embedded"
+    :conexion="conexion"
     @ready="host.send({ tipo: 'listo', storyboard: `${category}/${id}`, modo: mode, idioma: locale, escenas: storyboard.scenes.length })"
     @scene="(indice, carpeta) => host.send({ tipo: 'escena', indice, carpeta })"
     @finish="host.send({ tipo: 'terminado' })"
@@ -20,23 +21,24 @@
 
 <script setup lang="ts">
 import '~/runner/runner.css'
-import { runnerOrigins } from '@playhub/ui/app/utils/runner-contract'
-import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import type { RunnerMode } from '@playhub/ui/app/utils/runner-contract'
 import nunito from '@playhub/ui/fonts/nunito-latin.woff2?url'
 import { loadStoryboard } from '~/runner/content'
+import { codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
 import { useRunnerText } from '~/runner/i18n'
 import RunnerFrame from '~/runner/RunnerFrame.vue'
 import { useRunnerHost } from '~/runner/useHost'
+import { origenesPermitidos, urlsDelRunner } from '~/runner/urlsDeLasApps'
 
 // Runner público (`/play/**`; Player no tiene sesión). El contrato está en docs/runner.md.
 //   ?mode=educator|device|home|preview  fija el marco (un modo desconocido vuelve a educator).
 //                               preview: solo el escenario; la app que lo incrusta conduce.
 //   ?lang=es                    idioma del contenido, entre los que declara el storyboard.
 //   ?escena=<carpeta>           escena con la que abre.
+//   ?conexion=<código>          en un dispositivo, la conexión del taller a la que se unió (/unirse, tarea 013).
 //   ?medir=1                    el medidor del motor, para probar en un dispositivo (cuadros y toque).
 //   ?sonidos=1                  el panel de sonidos: oír cada uno suelto y ver cuál sonó.
-// Dentro de un iframe de una app permitida (NUXT_PUBLIC_RUNNER_HOSTS), la app le da la guía y
+// Dentro de un iframe de una app permitida (Admin o Educators, con su dirección en la base), la app le da la guía y
 // el runner le cuenta la escena, si terminó o si salió; abierto directamente, va solo y sin guía.
 definePageMeta({ layout: false })
 
@@ -56,15 +58,23 @@ const storyboard = loadStoryboard(category, id, locale)
 const txt = useRunnerText(() => locale)
 const start = route.query.escena ? String(route.query.escena) : undefined
 
-// Los orígenes permitidos y, si este equipo se abrió por Tailscale, los mismos con su nombre:
-// en desarrollo Admin y Educators corren en el mismo equipo (equipo-local).
-const origenes = runnerOrigins(useRuntimeConfig().public.runnerHosts as string)
+// Los orígenes permitidos: Admin y Educators con su dirección en la base (`configuraciones`) y, si este equipo se abrió
+// por Tailscale, los mismos con su nombre (equipo-local). Solo hacen falta dentro de un iframe.
+const origenes = shallowRef<string[] | null>(null)
+if (import.meta.client && window.parent !== window) {
+  void urlsDelRunner().then((urls) => { origenes.value = origenesPermitidos(urls) })
+}
 // En la vista previa, la app conduce: a qué escena ir y cuándo reiniciar la actual.
 const marco = ref<InstanceType<typeof RunnerFrame> | null>(null)
 const host = useRunnerHost(
-  [...new Set([...origenes, ...origenes.map(o => urlEnEsteEquipo(o))])],
+  origenes,
   mode === 'preview' ? { ir: escena => marco.value?.ir(escena), reiniciar: () => marco.value?.reiniciar() } : undefined,
 )
+
+// La conexión del taller (tarea 013): en un dispositivo, el código con que se unió; en la pantalla del educador, la
+// que le da la app (código y llave). Sin ella, la sesión es la de demostración.
+const codigoDispositivo = mode === 'device' ? normalizarCodigo(String(route.query.conexion ?? '')) : ''
+const conexion = computed(() => (codigoValido(codigoDispositivo) ? { codigo: codigoDispositivo } : mode === 'educator' ? host.conexion.value : null))
 
 // El medidor y el panel de sonidos del motor (`engine/meter.ts`) solo se descargan si se piden.
 const stopTools: (() => void)[] = []

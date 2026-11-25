@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { idiomasEscritos, pasaFiltroEstado, resumenGuia, siguientePaso, textoPorIdioma, tonoGuia } from '~/utils/catalogoResumen'
+import { idiomasEscritos, pasaFiltroEstado, pasaFiltroHogar, resumenGuia, siguientePaso, textoPorIdioma, tonoGuia } from '~/utils/catalogoResumen'
 import type { EscenaGuia } from '~/utils/catalogoResumen'
 
 // Lo que la gestión resume de la base: la guía escrita (se escribe en Player) y qué toca hacer ahora.
@@ -95,5 +95,16 @@ describe('pasaFiltroEstado — el filtro «Estado» de la lista', () => {
     expect(pasaFiltroEstado('PUBLICADO', 'desactualizado', 'PUBLICADO')).toBe(true)
     expect(pasaFiltroEstado('PUBLICADO', 'al_dia', 'REGISTRADO')).toBe(false)
     expect(pasaFiltroEstado('REGISTRADO', null, null)).toBe(false)
+  })
+})
+
+describe('filtro «Hogar»', () => {
+  it('en el hogar, fuera o todos; uno sin registrar está fuera', () => {
+    expect(pasaFiltroHogar('todos', null)).toBe(true)
+    expect(pasaFiltroHogar('si', true)).toBe(true)
+    expect(pasaFiltroHogar('si', false)).toBe(false)
+    expect(pasaFiltroHogar('no', false)).toBe(true)
+    expect(pasaFiltroHogar('no', null)).toBe(true)
+    expect(pasaFiltroHogar('no', true)).toBe(false)
   })
 })

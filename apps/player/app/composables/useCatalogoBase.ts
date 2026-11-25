@@ -8,7 +8,8 @@ import type { Diferencia, EstadoCatalogo, FilaCatalogo, StoryboardMetadata } fro
 
 // El catálogo de la base frente al build (decisiones 006, 007 y 013). Player es el único que lo
 // cambia: registra o actualiza cada storyboard con `sincronizar_storyboard` (solo la metadata del
-// JSON), lo publica con `publicar_storyboard` (estado, países y organización), escribe su guía
+// JSON), lo publica con `publicar_storyboard` (estado, países y organización) y, si sale en la app
+// del hogar, con `publicar_storyboard_hogar` (tarea 022), escribe su guía
 // (`guias` y `guia_escenas`, la cabecera y cada escena) y lo elimina. Solo el superadmin; Admin solo
 // lo muestra. Se leen TODOS los storyboards de la base: los que no tienen JSON en este build se
 // enseñan aparte, para archivarlos o eliminarlos.
@@ -29,6 +30,7 @@ export interface FilaBase extends FilaCatalogo {
   estado_publicacion: EstadoPublicacion
   paises_disponibles: string[]
   organizacion_id: number | null
+  publicado_hogar: boolean
   updated_at: string
   guia: CabeceraGuardada | null
   escenas: EscenaGuia[]
@@ -64,6 +66,8 @@ export interface Publicacion {
   estado: EstadoPublicacion
   paises: string[]
   organizacionId: number | null
+  /** Si sale en la app del hogar (tarea 022): solo publicado y estándar. */
+  hogar: boolean
   actualizado: string
   guiaPorIdioma: GuiaIdioma[]
   /** Por carpeta de escena, en qué idiomas hay algo escrito. */
@@ -87,6 +91,7 @@ interface FilaLeida {
   estado_publicacion: EstadoPublicacion
   paises_disponibles: string[]
   organizacion_id: number | null
+  publicado_hogar: boolean
   updated_at: string
   guias: GuiaLeida | GuiaLeida[] | null
 }
@@ -113,7 +118,7 @@ export function useCatalogoBase() {
         .from('storyboards')
         .select(`id, clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
                  idioma_principal, duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id,
-                 updated_at, guias ( id, version, descripcion, objetivo, publico, adaptado_a,
+                 publicado_hogar, updated_at, guias ( id, version, descripcion, objetivo, publico, adaptado_a,
                  guia_escenas ( id, orden, carpeta, titulo, ${SECCIONES_GUIA.join(', ')} ) )`)
         .order('slug'),
       supabase.from('paises').select('codigo, nombre, bandera').eq('activo', true).order('codigo'),
@@ -180,6 +185,7 @@ export function useCatalogoBase() {
       estado: fila.estado_publicacion,
       paises: fila.paises_disponibles,
       organizacionId: fila.organizacion_id,
+      hogar: fila.publicado_hogar,
       actualizado: fila.updated_at,
       guiaPorIdioma: resumenGuia(fila.escenas, fila.idiomas),
       guiaPorEscena: Object.fromEntries(fila.escenas.map(e => [e.carpeta, idiomasEscritos(e, fila.idiomas)])),
@@ -218,7 +224,7 @@ export function useCatalogoBase() {
   }
 
   /** Cambia el estado, los países y la organización (null = estándar). Devuelve el error, o null. */
-  async function publicar(slug: string, datos: { estado: EstadoPublicacion, paises: string[], organizacionId: number | null }): Promise<string | null> {
+  async function publicar(slug: string, datos: { estado: EstadoPublicacion, paises: string[], organizacionId: number | null, hogar?: boolean }): Promise<string | null> {
     const meta = metadataDe(slug)
     if (!meta) return 'Ese storyboard no está en el build.'
     return cambiarPublicacion(meta.clave, datos)
@@ -260,20 +266,41 @@ export function useCatalogoBase() {
     return null
   }
 
-  async function cambiarPublicacion(clave: string, datos: { estado: EstadoPublicacion, paises: string[], organizacionId: number | null }): Promise<string | null> {
-    const { error: e } = await useSupabaseClient().rpc('publicar_storyboard', {
+  // Primero el estado, los países y la organización; después, si se pide, el hogar (la base solo lo deja
+  // en un publicado estándar y lo quita sola si deja de serlo).
+  async function cambiarPublicacion(clave: string, datos: { estado: EstadoPublicacion, paises: string[], organizacionId: number | null, hogar?: boolean }): Promise<string | null> {
+    const supabase = useSupabaseClient()
+    const { error: e } = await supabase.rpc('publicar_storyboard', {
       p_clave: clave,
       p_estado: datos.estado,
       p_paises: datos.paises,
       ...(datos.organizacionId ? { p_organizacion: datos.organizacionId } : {}),
     })
     if (e) return mensajeDeLaBase(e.message)
+    if (datos.hogar !== undefined) {
+      const enHogar = datos.hogar && datos.estado === 'PUBLICADO' && !datos.organizacionId
+      const { error: eh } = await supabase.rpc('publicar_storyboard_hogar', { p_clave: clave, p_hogar: enHogar })
+      if (eh) {
+        await cargar()
+        return mensajeDeLaBase(eh.message)
+      }
+    }
     await cargar()
     return null
   }
 
+  /** Los storyboards de la base que salen en la app del hogar (tarea 022): publicados, estándar y marcados. */
+  const delHogar = computed(() => Object.values(filas.value)
+    .filter(f => f.publicado_hogar && f.estado_publicacion === 'PUBLICADO' && f.organizacion_id === null)
+    .sort((a, b) => a.slug.localeCompare(b.slug)))
+
+  /** Una fila de la base por su id (las unidades guardan ids). */
+  function filaPorId(id: number): FilaBase | undefined {
+    return Object.values(filas.value).find(f => f.id === id)
+  }
+
   return {
-    cargado, cargando, error, paises, organizaciones, fueraDelBuild,
+    cargado, cargando, error, paises, organizaciones, fueraDelBuild, delHogar, filaPorId,
     estadoDe, publicacionDe, guiaDe, paisDe, organizacionDe,
     sincronizar, publicar, archivar, eliminar, guardarCabecera, guardarEscena, cargar,
   }

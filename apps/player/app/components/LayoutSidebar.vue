@@ -49,6 +49,8 @@ const route = useRoute()
 
 const navigation = [
   { path: '/storyboards', label: 'Storyboards', icon: 'book' as const },
+  // Lo que sale en la app del hogar: las unidades de estudio y los storyboards sueltos (tarea 022).
+  { path: '/hogar', label: 'App del hogar', icon: 'home' as const },
 ]
 
 const isActive = (path: string) => route.path.startsWith(path)

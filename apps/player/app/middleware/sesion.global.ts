@@ -1,7 +1,8 @@
 // La gestión de Player es solo para el superadmin. El runner (`/play/**`) queda público: lo
-// incrustan Educators y la app del hogar, y lo abren los dispositivos (docs/runner.md).
+// incrustan Educators y la app del hogar, y lo abren los dispositivos (docs/runner.md). También
+// `/unirse`, por donde un dispositivo entra a un taller con el QR o el código (tarea 013).
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path.startsWith('/play/')) return
+  if (to.path.startsWith('/play/') || to.path === '/unirse' || to.path.startsWith('/unirse/')) return
 
   // La sesión (y con ella el cliente de Supabase) se carga solo aquí, fuera del runner: importada arriba, viajaría
   // en el arranque de toda la app y el runner la descargaría sin usarla.

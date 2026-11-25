@@ -1,11 +1,12 @@
 <template>
   <div>
-    <!-- Buscar y dos filtros de barra; cada uno dice, al abrirse, qué filtra. Todo lo que se hace con un
+    <!-- Buscar y tres filtros de barra; cada uno dice, al abrirse, qué filtra. Todo lo que se hace con un
          storyboard (registrar, actualizar, probar, publicar, escribir su guía) está en su detalle. -->
     <div class="mb-6 flex flex-wrap items-center gap-2.5">
       <UiSearchInput v-model="search" placeholder="Buscar por título o slug…" max-width="xs" />
       <UiSelect v-model="filtroCategoria" variant="toolbar" prefix="Categoría" :options="opcionesCategoria" />
       <UiSelect v-model="filtroEstado" variant="toolbar" prefix="Estado" :options="OPCIONES_FILTRO_ESTADO" />
+      <UiSelect v-model="filtroHogar" variant="toolbar" prefix="Hogar" :options="OPCIONES_FILTRO_HOGAR" />
     </div>
 
     <UiAlert v-if="error" tone="danger" class="mb-6">
@@ -55,6 +56,12 @@
       </template>
       <template #cell-paises="{ row }">
         <PaisesStoryboard v-if="row.publicacion" :paises="row.publicacion.paises" />
+        <span v-else class="ui-caption">—</span>
+      </template>
+      <template #cell-hogar="{ row }">
+        <span v-if="row.publicacion?.hogar" class="inline-flex items-center gap-1.5 text-body font-bold text-ink" title="Sale en la app del hogar">
+          <UiIcon name="home" class="size-4 text-muted" />Sí
+        </span>
         <span v-else class="ui-caption">—</span>
       </template>
       <template #cell-guia="{ row }">
@@ -146,8 +153,8 @@ import { TIPO_LABELS } from '~/composables/useStoryboards'
 import { tipoDeType } from '~/runner/content'
 import { tr } from '~/types/i18n'
 import type { StoryboardBuild, TipoStoryboard } from '~/types/storyboard'
-import { OPCIONES_FILTRO_ESTADO, nombreIdioma, pasaFiltroEstado, tonoGuia } from '~/utils/catalogoResumen'
-import type { FiltroEstado } from '~/utils/catalogoResumen'
+import { OPCIONES_FILTRO_ESTADO, OPCIONES_FILTRO_HOGAR, nombreIdioma, pasaFiltroEstado, pasaFiltroHogar, tonoGuia } from '~/utils/catalogoResumen'
+import type { FiltroEstado, FiltroHogar } from '~/utils/catalogoResumen'
 
 interface FilaLista extends StoryboardBuild {
   base: EstadoBase | null
@@ -163,6 +170,7 @@ onMounted(cargar)
 const search = ref('')
 const filtroCategoria = ref<string | number | null>('todas')
 const filtroEstado = ref<string | number | null>('todos')
+const filtroHogar = ref<string | number | null>('todos')
 
 const TIPOS: TipoStoryboard[] = ['alimentacion', 'actividad-fisica', 'cuidado-personal', 'salud-emocional']
 const opcionesCategoria = [{ value: 'todas', label: 'Todas' }, ...TIPOS.map(t => ({ value: t, label: TIPO_LABELS[t] }))]
@@ -174,6 +182,7 @@ const filas = computed(() => {
   if (filtroCategoria.value !== 'todas') lista = lista.filter(f => f.tipo === filtroCategoria.value)
   const estado = filtroEstado.value as FiltroEstado
   lista = lista.filter(f => pasaFiltroEstado(estado, f.base?.estado ?? null, f.publicacion?.estado ?? null))
+  lista = lista.filter(f => pasaFiltroHogar(filtroHogar.value as FiltroHogar, f.publicacion?.hogar ?? null))
   const q = search.value.trim().toLowerCase()
   if (q) lista = lista.filter(f => f.title.toLowerCase().includes(q) || f.id.includes(q))
   return lista
@@ -188,6 +197,7 @@ const columnas = [
   { key: 'edicion', label: 'Edición', width: 'w-36' },
   { key: 'estado', label: 'Estado', width: 'w-44' },
   { key: 'paises', label: 'Países', width: 'w-36' },
+  { key: 'hogar', label: 'Hogar', width: 'w-24' },
   { key: 'guia', label: 'Guía', width: 'w-24' },
 ]
 

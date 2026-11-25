@@ -197,7 +197,19 @@
   /* Dispositivos */
   .join-box { @apply mt-4 rounded-control bg-canvas px-4 py-3; }
   .join-code { @apply my-1 font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
-  .device-list { @apply m-0 mt-2 grid list-none grid-cols-7 content-start gap-1.5 p-1.5; max-height: 120px; }
+  .device-list { @apply m-0 mt-2 grid list-none grid-cols-7 content-start gap-1.5 p-1.5; }
+  /* Con la conexión del taller (tarea 013): el QR a la izquierda del código, quién pide entrar y entrar sin aprobar.
+     Todo lo de arriba de la tarjeta del dispositivo se desplaza si no cabe. */
+  .devices-body { @apply flex min-h-0 flex-1 flex-col; }
+  .join-live { @apply flex items-center gap-4; }
+  .join-live .runner-qr { @apply shrink-0; }
+  .join-live .join-code { @apply whitespace-nowrap; }
+  .request-list { @apply m-0 mt-2 flex list-none flex-col gap-2 p-0; }
+  .request { @apply flex items-center gap-3 rounded-control bg-canvas py-2 pl-2 pr-3; }
+  .request-avatar { @apply m-0 overflow-hidden rounded-full; }
+  .request-avatar > img { @apply block size-full; }
+  .request-name { @apply min-w-0 flex-1 truncate font-black; font-size: var(--text-body); }
+  .open-entry { @apply mt-4 flex flex-col gap-1; }
   .device-avatar { @apply relative block rounded-control; }
   .device-avatar .ui-symbol { width: var(--ph-control); height: var(--ph-control); border-radius: var(--radius-control); }
   .device-avatar .ui-symbol > .icon { width: var(--ph-icon); height: var(--ph-icon); }

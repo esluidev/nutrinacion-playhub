@@ -224,11 +224,13 @@
           icon-only
           class="rail-button-count"
           :aria-expanded="devicesOpen"
-          :label="txt('devicesCount', { n: deviceViews.length })"
+          :label="solicitudes.length ? txt('requestsCount', { n: solicitudes.length }) : txt('devicesCount', { n: deviceViews.length })"
           :title="txt('devices')"
           @click="setDevices(!devicesOpen)"
         >
-          <span v-if="deviceViews.length" class="ui-dot" data-tone="sky">{{ deviceViews.length }}</span>
+          <!-- Quien pide entrar se ve aquí aunque el panel esté cerrado: en sol, ahora. -->
+          <span v-if="solicitudes.length" class="ui-dot" data-tone="sun">{{ solicitudes.length }}</span>
+          <span v-else-if="deviceViews.length" class="ui-dot" data-tone="sky">{{ deviceViews.length }}</span>
         </UiButton>
       </div>
 
@@ -237,11 +239,17 @@
         :devices="deviceViews"
         :selected="selectedDevice"
         :locale="locale"
+        :conexion="conexionVista"
+        :solicitudes="solicitudes"
+        :sin-aprobar="sinAprobar"
         @close="setDevices(false)"
         @select="(id) => selectedDevice = id"
         @pause="pauseDevice"
         @restart="restartDevice"
         @remove="askRemoveDevice"
+        @aprobar="aprobar"
+        @rechazar="rechazar"
+        @sin-aprobar="setSinAprobar"
       />
     </div>
 
@@ -387,6 +395,13 @@ import type { MemoryStore } from './memory'
 import { fontsReady, isPreloaded, mark, preloadScene, preloadSvg, within } from './preload'
 import { profileOf } from './profiles'
 import PerfilPieza from './PerfilPieza.vue'
+import { AVATARES, nombreVisible, nombresSinRepetir, tonoDe } from './avatares'
+import type { Avatar, TonoAvatar } from './avatares'
+import { canalDemostracion } from './conexion/demo'
+import { RITMO, leerMensaje } from './conexion/mensajes'
+import type { CanalSesion, MensajeSesion } from './conexion/mensajes'
+import { origenParaUnirse, participanteGuardado } from './conexion/participante'
+import { urlsDelRunner } from './urlsDeLasApps'
 import RunnerDevices from './RunnerDevices.vue'
 import type { DeviceView } from './RunnerDevices.vue'
 import RunnerGuide from './RunnerGuide.vue'
@@ -407,6 +422,9 @@ const props = defineProps<{
   guide?: StoryboardGuide | null
   /** Dentro de otra app: terminar y salir se le cuentan a ella en vez de navegar aquí. */
   embedded?: boolean
+  /** La conexión del taller (tarea 013): el código y, en la pantalla del educador, la llave. Sin ella, la sesión es
+   *  la de demostración, entre pestañas del mismo navegador. */
+  conexion?: { codigo: string, llave?: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -434,10 +452,8 @@ const narrates = props.mode === 'home'
 // En casa, el niño: su apodo y su avatar, un animal de la librería (`avatar-<animal>`) en un círculo. Cada animal lleva
 // el tono de fondo que mejor lo separa de su pelaje, entre los tonos del kit para las personas (cielo, uva o rosa).
 // El runner no conoce al niño: mientras la app que lo abre no se los dé, es este de demostración.
-const AVATAR_TONES = { oso: 'sky', zorro: 'sky', conejo: 'grape', gato: 'rose', rana: 'rose', leon: 'grape' } as const satisfies Record<string, DeviceView['tono']>
-type Avatar = keyof typeof AVATAR_TONES
-// El nombre de cada animal, para un dispositivo que entra sin perfil (y los de prueba del educador).
-const AVATAR_NAMES: [Avatar, string][] = [['zorro', 'Zorro'], ['oso', 'Oso'], ['conejo', 'Conejo'], ['gato', 'Gato'], ['rana', 'Rana'], ['leon', 'León']]
+// El tono y el nombre propio de cada animal están en avatares.ts: los mismos al unirse a un taller.
+const AVATAR_TONES = Object.fromEntries(AVATARES.map(a => [a.clave, a.tono])) as Record<Avatar, TonoAvatar>
 const player: { apodo: string, avatar: Avatar } = { apodo: 'Jeffrey', avatar: 'zorro' }
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
@@ -629,7 +645,7 @@ const overlay = computed<OverlayLook | null>(() => {
     return { icon: 'check', tone: 'lime', title: txt('closedTitle'), caption: workshopCaption(), text: txt('closedText') }
   }
   if (props.mode === 'device') {
-    if (session.removed) return { icon: 'devices', tone: 'sky', title: txt('removedTitle'), caption: workshopCaption(), text: txt('removedText') }
+    if (session.removed) return { icon: 'devices', tone: 'sky', title: txt('removedTitle'), caption: workshopCaption(), text: txt(props.conexion ? 'removedTextLive' : 'removedText') }
     if (session.left) {
       return { icon: 'exit', tone: 'sky', title: txt('leftTitle'), caption: workshopCaption(), text: txt('leftText'), cta: { label: txt('rejoin'), icon: 'play', run: rejoin } }
     }
@@ -645,7 +661,7 @@ const overlay = computed<OverlayLook | null>(() => {
         ...(canFullscreen.value ? { cta: { label: txt('playFullscreen'), icon: 'expand' as const, run: () => void toggleFullscreen() } } : {}),
       }
     }
-    if (!session.open) return { icon: 'devices', tone: 'sky', title: txt('waitingTitle'), caption: workshopCaption(), text: txt('waitingText') }
+    if (!session.open) return { icon: 'devices', tone: 'sky', title: txt('waitingTitle'), caption: workshopCaption(), text: txt(props.conexion ? 'waitingTextLive' : 'waitingText') }
     if (session.paused || session.held) return { icon: 'pause', tone: 'sky', title: txt('pausedTitle'), caption: sceneCaption(), text: txt('pausedDevice') }
     return null
   }
@@ -1030,16 +1046,13 @@ function listen(voz: Voz) {
 // Las escenas narran por aquí (la Bienvenida, al tocar a sus protagonistas), con la voz del storyboard.
 provide(NARRATOR_KEY, (voz, onState) => narrate(narrationContext, voz, onState))
 
-// ── Sesión entre pestañas (demostración del servicio de taller) ──────────────
-type SessionMessage =
-  | { tipo: 'estado', escena: string, pausa: boolean, reinicios: Record<string, number> }
-  | { tipo: 'orden', id: string, accion: 'pausa' | 'libera' | 'reinicio' | 'quitar' }
-  | { tipo: 'presencia', id: string, nombre: string, tono: DeviceView['tono'], avatar?: string, escena: string | null, pausado: boolean }
-  | { tipo: 'hola' }
-  | { tipo: 'adios', id: string }
-  | { tipo: 'cierre' }
+// ── Sesión del taller ─────────────────────────────────────────────────────────
+// Con la conexión del taller (tarea 013), por Realtime de Supabase (conexion/realtime.ts): los dispositivos entran
+// con el QR o el código y el educador los aprueba. Sin ella, la demostración entre pestañas del mismo navegador, con
+// seis dispositivos de prueba. Los mensajes (conexion/mensajes.ts) son los mismos en los dos casos.
+type SessionMessage = MensajeSesion
 
-let channel: BroadcastChannel | null = null
+let channel: CanalSesion | null = null
 const post = (msg: SessionMessage) => channel?.postMessage(msg)
 
 // Educador → dispositivos: escena, pausa y reinicios. Nada más.
@@ -1056,9 +1069,10 @@ function publish() {
 interface Device { id: string, nombre: string, tono: DeviceView['tono'], avatar?: string, prueba?: boolean, pausado: boolean, escena?: string | null, seen?: number, note?: string }
 
 // Seis dispositivos de prueba, uno por avatar: siguen la sesión y obedecen aquí mismo, para probar el panel sin
-// abrir pestañas. Una pestaña con ?mode=device se suma de verdad y va primero en la lista.
-const devices = reactive(new Map<string, Device>(props.mode === 'educator'
-  ? AVATAR_NAMES.map(([avatar, nombre], i) => [`prueba-${i + 1}`, { id: `prueba-${i + 1}`, nombre, tono: AVATAR_TONES[avatar], avatar, prueba: true, pausado: false }])
+// abrir pestañas. Una pestaña con ?mode=device se suma de verdad y va primero en la lista. Con la conexión del taller
+// no hay dispositivos de prueba: solo los que entraron.
+const devices = reactive(new Map<string, Device>(props.mode === 'educator' && !props.conexion
+  ? AVATARES.map((a, i) => [`prueba-${i + 1}`, { id: `prueba-${i + 1}`, nombre: a.nombre, tono: a.tono, avatar: a.clave, prueba: true, pausado: false }])
   : []))
 const selectedDevice = ref<string | null>(null)
 
@@ -1072,7 +1086,7 @@ const deviceViews = computed<DeviceView[]>(() => [...devices.values()]
     const status = device.note || (device.pausado
       ? txt('devicePaused')
       : where ? txt('deviceAt', { n: at + 1, name: where.title }) : txt('deviceWaiting'))
-    return { id: device.id, nombre: device.nombre, tono: device.tono, avatar: device.avatar, pausado: device.pausado, status }
+    return { id: device.id, nombre: nombres.value.get(device.id) ?? device.nombre, tono: device.tono, avatar: device.avatar, pausado: device.pausado, status }
   }))
 
 let noteTimer: ReturnType<typeof setTimeout> | undefined
@@ -1116,20 +1130,26 @@ function askRemoveDevice() {
       order(device, 'quitar')
       devices.delete(device.id)
       selectedDevice.value = null
+      if (conexionApi) void conexionApi.rechazar(device.id).then(refrescarSolicitudes).catch(() => {})
     },
   })
 }
 
-// Dispositivo: su identidad para esta pestaña es uno de los animales de los avatares, con su nombre y su tono.
-type Identity = { id: string, nombre: string, tono: DeviceView['tono'], avatar: Avatar }
-function deviceIdentity(): Identity {
+// Dispositivo: quién es. Con la conexión del taller, el avatar y el apodo que eligió al unirse (/unirse), con el
+// identificador de ese dispositivo para esa conexión. En la demostración, uno de los animales al azar para esta pestaña.
+type Identity = { id: string, nombre: string, tono: TonoAvatar, avatar: Avatar }
+function deviceIdentity(): Identity | null {
+  if (props.conexion) {
+    const p = participanteGuardado(props.conexion.codigo)
+    return p ? { id: p.dispositivo, nombre: nombreVisible(p.apodo, p.avatar), tono: tonoDe(p.avatar), avatar: p.avatar } : null
+  }
   try {
     const saved = JSON.parse(sessionStorage.getItem('playhub-dispositivo') ?? 'null')
     if (saved?.id && saved.avatar in AVATAR_TONES) return saved
   }
   catch { /* sin almacenamiento */ }
-  const [avatar, nombre] = AVATAR_NAMES[Math.floor(Math.random() * AVATAR_NAMES.length)]!
-  const identity: Identity = { id: Math.random().toString(36).slice(2, 10), nombre, tono: AVATAR_TONES[avatar], avatar }
+  const a = AVATARES[Math.floor(Math.random() * AVATARES.length)]!
+  const identity: Identity = { id: Math.random().toString(36).slice(2, 10), nombre: a.nombre, tono: a.tono, avatar: a.clave }
   try { sessionStorage.setItem('playhub-dispositivo', JSON.stringify(identity)) }
   catch { /* sin almacenamiento */ }
   return identity
@@ -1186,7 +1206,7 @@ function rejoin() {
   session.left = false
   post({ tipo: 'hola' })
   presence()
-  presenceTimer = setInterval(presence, 2000)
+  presenceTimer = setInterval(presence, ritmo.value.senal)
 }
 // Al irse, el dispositivo se despide. Se quita al desmontar: con el canal ya cerrado, despedirse falla.
 const sayGoodbye = () => { if (!session.removed && me.value) post({ tipo: 'adios', id: me.value.id }) }
@@ -1203,12 +1223,24 @@ function obey(accion: Extract<SessionMessage, { tipo: 'orden' }>['accion']) {
   presence()
 }
 
-function onSessionMessage({ data }: MessageEvent<SessionMessage>) {
+function onSessionMessage({ data: recibido }: { data: unknown }) {
+  // Lo que llega por la conexión lo puede mandar cualquiera que tenga el código: solo lo que tiene la forma esperada.
+  const data = leerMensaje(recibido)
+  if (!data) return
   if (props.mode === 'educator') {
     if (data.tipo === 'hola') publish()
-    else if (data.tipo === 'presencia') devices.set(data.id, { ...devices.get(data.id), ...data, seen: Date.now() })
+    else if (data.tipo === 'solicitud') pedirSolicitudes()
+    else if (data.tipo === 'presencia') {
+      // Con la conexión del taller, solo cuenta quien el educador aprobó; si no lo conoce, lo pregunta a la base.
+      if (conexionApi && !aprobados.has(data.id)) {
+        pedirSolicitudes()
+        return
+      }
+      if (!devices.has(data.id)) anotarPresencia(data.id, true)
+      devices.set(data.id, { ...devices.get(data.id), ...data, seen: Date.now() })
+    }
     else if (data.tipo === 'adios') {
-      devices.delete(data.id)
+      if (devices.delete(data.id)) anotarPresencia(data.id, false)
       if (selectedDevice.value === data.id) selectedDevice.value = null
     }
   }
@@ -1225,6 +1257,151 @@ function onSessionMessage({ data }: MessageEvent<SessionMessage>) {
 }
 
 let sweeper: ReturnType<typeof setInterval> | undefined
+
+// Cada cuánto da señales un dispositivo y cuándo se le da por ido: más espaciado por la conexión del taller.
+const ritmo = computed(() => (props.conexion ? RITMO.conexion : RITMO.demostracion))
+
+// ── Conexión del taller en la pantalla del educador (tarea 013) ───────────────
+// Con la llave, ve quién pide entrar, lo aprueba o lo rechaza y anota quién entra y sale (su tiempo conectado). La
+// base manda: un dispositivo que no aprobó no aparece aunque dé señales.
+type ConexionEducador = ReturnType<typeof import('./conexion/realtime')['conexionDelEducador']>
+let conexionApi: ConexionEducador | null = null
+const solicitudes = ref<{ id: string, nombre: string, avatar: Avatar, tono: TonoAvatar }[]>([])
+const aprobados = new Set<string>()
+// Cómo se llama cada uno en la lista: su apodo o el nombre del avatar, con un número si se repite (por orden de llegada).
+const nombres = shallowRef(new Map<string, string>())
+const sinAprobar = ref(false)
+
+async function refrescarSolicitudes() {
+  if (!conexionApi) return
+  try {
+    const lista = await conexionApi.participantes()
+    const avatar = (a: string) => (AVATARES.some(x => x.clave === a) ? a as Avatar : 'zorro')
+    nombres.value = nombresSinRepetir(lista.map(p => ({ id: p.dispositivo, nombre: nombreVisible(p.apodo, avatar(p.avatar)) })))
+    aprobados.clear()
+    lista.filter(p => p.estado === 'aprobado').forEach(p => aprobados.add(p.dispositivo))
+    solicitudes.value = lista.filter(p => p.estado === 'esperando').map(p => ({
+      id: p.dispositivo,
+      nombre: nombres.value.get(p.dispositivo) ?? nombreVisible(p.apodo, avatar(p.avatar)),
+      avatar: avatar(p.avatar),
+      tono: tonoDe(p.avatar),
+    }))
+    // Quien ya no está aprobado (quitado desde otra pantalla) sale de la lista.
+    devices.forEach((_, id) => { if (!aprobados.has(id)) devices.delete(id) })
+    if (sinAprobar.value && solicitudes.value.length) await aprobar(null)
+  }
+  catch { /* sin red: se vuelve a pedir con la próxima señal */ }
+}
+
+// Muchas solicitudes seguidas (una por dispositivo cada pocos segundos) piden la lista una sola vez.
+let pedidoSolicitudes: ReturnType<typeof setTimeout> | undefined
+function pedirSolicitudes() {
+  if (!conexionApi || pedidoSolicitudes) return
+  pedidoSolicitudes = setTimeout(() => {
+    pedidoSolicitudes = undefined
+    void refrescarSolicitudes()
+  }, 800)
+}
+
+/** Aprueba a uno o, sin id, a todos los que esperan, y les avisa para que entren. */
+async function aprobar(id: string | null) {
+  if (!conexionApi) return
+  try {
+    const ids = await conexionApi.aprobar(id ? [id] : null)
+    if (ids.length) post({ tipo: 'aprobado', ids })
+    await refrescarSolicitudes()
+  }
+  catch { announce(txt('connectionLost')) }
+}
+
+async function rechazar(id: string) {
+  if (!conexionApi) return
+  try {
+    await conexionApi.rechazar(id)
+    post({ tipo: 'rechazado', id })
+    await refrescarSolicitudes()
+  }
+  catch { announce(txt('connectionLost')) }
+}
+
+function setSinAprobar(valor: boolean) {
+  sinAprobar.value = valor
+  if (valor && solicitudes.value.length) void aprobar(null)
+}
+
+// Quién entra y quién sale, para el tiempo conectado: se juntan y se anotan cada pocos segundos.
+const entran = new Set<string>()
+const salen = new Set<string>()
+let anotador: ReturnType<typeof setInterval> | undefined
+function anotarPresencia(id: string, entra: boolean) {
+  if (!conexionApi || id.startsWith('prueba-')) return
+  if (entra) { entran.add(id); salen.delete(id) }
+  else { salen.add(id); entran.delete(id) }
+}
+function enviarPresencia() {
+  if (!conexionApi || (!entran.size && !salen.size)) return
+  const e = [...entran]
+  const s = [...salen]
+  entran.clear()
+  salen.clear()
+  void conexionApi.presencia(e, s).catch(() => {
+    e.forEach(id => entran.add(id))
+    s.forEach(id => salen.add(id))
+  })
+}
+
+// El código para unirse, su enlace (el del QR) y la dirección corta para escribirlo. La dirección es la de Player en la
+// base (`configuraciones.player_url`). En desarrollo, si es localhost, la IP de este equipo en la red: localhost, en un
+// teléfono, es el propio teléfono.
+const ipEnLaRed = useRuntimeConfig().public.ipEnLaRed as string | undefined
+const urlPlayer = ref<string | null>(null)
+watch(() => props.conexion, async (c) => {
+  if (c && import.meta.client && !urlPlayer.value) urlPlayer.value = (await urlsDelRunner()).player ?? null
+}, { immediate: true })
+const conexionVista = computed(() => {
+  if (!props.conexion || !import.meta.client) return null
+  const base = origenParaUnirse(urlPlayer.value, window.location, ipEnLaRed)
+  return { codigo: props.conexion.codigo, enlace: `${base}/unirse/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/unirse` }
+})
+
+// Abre la sesión: la conexión del taller si la hay (la del educador llega de la app después de «listo»), o la
+// demostración. Volver a abrirla (otra llave al recargar la app) cierra la anterior.
+async function abrirSesion() {
+  channel?.close()
+  channel = null
+  conexionApi = null
+  clearInterval(anotador)
+  if (props.mode === 'preview') return
+  if (props.conexion) {
+    const realtime = await import('./conexion/realtime')
+    if (unmounted) return
+    channel = realtime.abrirCanal(props.conexion.codigo, props.mode === 'educator' ? 'educador' : 'dispositivo')
+    if (props.mode === 'educator' && props.conexion.llave) {
+      conexionApi = realtime.conexionDelEducador(props.conexion.codigo, props.conexion.llave)
+      devices.forEach((device, id) => { if (device.prueba) devices.delete(id) })
+      anotador = setInterval(enviarPresencia, 5000)
+      void refrescarSolicitudes()
+    }
+    if (props.mode === 'device') {
+      // Solo entra quien el educador aprobó: si no (o se recargó tras quitarlo), vuelve a la página para unirse.
+      const estado = me.value ? await realtime.conexionDelDispositivo(props.conexion.codigo).estado(me.value.id).catch(() => 'aprobado') : null
+      if (estado === null) Object.assign(session, { closed: true, open: false })
+      else if (estado !== 'aprobado') {
+        void navigateTo(`/unirse/${props.conexion.codigo}`, { replace: true })
+        return
+      }
+    }
+  }
+  else channel = canalDemostracion()
+  if (!channel) return
+  channel.onmessage = onSessionMessage
+  if (props.mode === 'educator') publish()
+  if (props.mode === 'device' && me.value) {
+    post({ tipo: 'hola' })
+    presence()
+  }
+}
+watch(() => `${props.conexion?.codigo ?? ''}|${props.conexion?.llave ?? ''}`, () => void abrirSesion())
 
 // ── Teclado: los presentadores inalámbricos mandan Av Pág / Re Pág. Un dispositivo no tiene teclas.
 function onKey(event: KeyboardEvent) {
@@ -1351,17 +1528,14 @@ onMounted(() => {
   canFullscreen.value = Boolean(document.fullscreenEnabled)
   void keepAwake()
 
-  // La vista previa no es un taller: no abre la sesión con los dispositivos.
-  channel = props.mode !== 'preview' && 'BroadcastChannel' in window ? new BroadcastChannel('playhub-taller-demo') : null
-  if (channel) channel.onmessage = onSessionMessage
-
   if (props.mode === 'educator') {
     // Un dispositivo real que deja de dar señales sale de la lista.
     sweeper = setInterval(() => {
       const now = Date.now()
       devices.forEach((device, id) => {
-        if (!device.prueba && now - (device.seen ?? now) > 6000) {
+        if (!device.prueba && now - (device.seen ?? now) > ritmo.value.ido) {
           devices.delete(id)
+          anotarPresencia(id, false)
           if (selectedDevice.value === id) selectedDevice.value = null
         }
       })
@@ -1370,11 +1544,16 @@ onMounted(() => {
 
   if (props.mode === 'device') {
     me.value = deviceIdentity()
-    presenceTimer = setInterval(presence, 2000)
+    // Con la conexión del taller y sin haber elegido avatar en este dispositivo: a la página para unirse.
+    if (!me.value && props.conexion) {
+      void navigateTo(`/unirse/${props.conexion.codigo}`, { replace: true })
+      return
+    }
+    presenceTimer = setInterval(presence, ritmo.value.senal)
     window.addEventListener('pagehide', sayGoodbye)
-    post({ tipo: 'hola' })
-    presence()
   }
+  // La vista previa no es un taller: no abre la sesión con los dispositivos.
+  void abrirSesion()
   void start()
 })
 
@@ -1394,6 +1573,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('pagehide', sayGoodbye)
   clearInterval(sweeper)
   clearInterval(presenceTimer)
+  clearInterval(anotador)
+  clearTimeout(pedidoSolicitudes)
+  enviarPresencia()
   clearTimeout(noteTimer)
   clearTimeout(burstTimer)
   channel?.close()

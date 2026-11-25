@@ -189,6 +189,16 @@
               <p class="field-help">Estándar: lo ven todas las organizaciones de sus países. Una organización: personalizado, solo lo ve ella.</p>
             </div>
 
+            <!-- La app del hogar (tarea 022): solo Nutrinación publica para casa. -->
+            <div>
+              <UiCheckbox v-model="form.hogar" label="También en la app del hogar" :disabled="!puedeHogar" />
+              <p class="field-help">
+                {{ puedeHogar
+                  ? 'Lo ven las familias de sus países, según la edad de cada perfil. En casa no hay educador: la narración la ponen sus audios.'
+                  : 'Solo un storyboard publicado y estándar sale en la app del hogar.' }}
+              </p>
+            </div>
+
             <!-- Lima solo si la cabecera no tiene ya la acción principal (registrar/actualizar). -->
             <UiButton
               block
@@ -333,15 +343,20 @@ async function registrar() {
 }
 
 // ── Publicación ───────────────────────────────────────────────────────────────
-const form = reactive<{ estado: EstadoPublicacion, paises: string[], organizacionId: number | null }>({
-  estado: 'REGISTRADO', paises: [], organizacionId: null,
+const form = reactive<{ estado: EstadoPublicacion, paises: string[], organizacionId: number | null, hogar: boolean }>({
+  estado: 'REGISTRADO', paises: [], organizacionId: null, hogar: false,
 })
 watch(publicacion, (p) => {
   if (!p) return
   form.estado = p.estado
   form.paises = [...p.paises]
   form.organizacionId = p.organizacionId
+  form.hogar = p.hogar
 }, { immediate: true })
+
+// El hogar, solo con un publicado estándar: si deja de serlo, la casilla se apaga (la base lo quitaría igual).
+const puedeHogar = computed(() => form.estado === 'PUBLICADO' && form.organizacionId === null)
+watch(puedeHogar, (puede) => { if (!puede) form.hogar = false })
 
 const estadoOpciones = ORDEN_PUBLICACION.map(value => ({ value, label: ESTADO_PUBLICACION[value].label }))
 const orgOpciones = computed(() => [
@@ -352,6 +367,7 @@ const orgOpciones = computed(() => [
 const cambiosPublicacion = computed(() => !!publicacion.value && (
   form.estado !== publicacion.value.estado
   || form.organizacionId !== publicacion.value.organizacionId
+  || form.hogar !== publicacion.value.hogar
   || [...form.paises].sort().join() !== [...publicacion.value.paises].sort().join()))
 
 function togglePais(codigo: string) {
@@ -364,10 +380,13 @@ const publicando = ref(false)
 // usa, no quitar un país con workshops por venir…): su mensaje, traducido, dice por qué.
 async function guardarPublicacion() {
   publicando.value = true
-  const error = await publicar(id, { estado: form.estado, paises: form.paises, organizacionId: form.organizacionId })
+  const error = await publicar(id, { estado: form.estado, paises: form.paises, organizacionId: form.organizacionId, hogar: form.hogar })
   publicando.value = false
   if (error) toast.error(error)
-  else toast.success(form.estado === 'PUBLICADO' ? 'Publicado: las organizaciones de sus países ya lo pueden programar.' : 'Publicación guardada.')
+  else if (form.estado !== 'PUBLICADO') toast.success('Publicación guardada.')
+  else toast.success(form.hogar
+    ? 'Publicado: las organizaciones de sus países ya lo pueden programar y sale en la app del hogar.'
+    : 'Publicado: las organizaciones de sus países ya lo pueden programar.')
 }
 
 const fecha = (iso: string) => new Date(iso).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })

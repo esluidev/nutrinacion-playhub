@@ -35,6 +35,11 @@ describe('órdenes de la app al runner', () => {
   it('la vista previa conduce: ir a una escena por número o por carpeta, y reiniciar', () => {
     expect(parseRunnerCommand(runnerMessage({ tipo: 'ir', indice: 2 }))).toEqual({ tipo: 'ir', indice: 2 })
     expect(parseRunnerCommand(runnerMessage({ tipo: 'ir', escena: 'origen' }))).toEqual({ tipo: 'ir', escena: 'origen' })
+    // La conexión del taller (tarea 013): un código del alfabeto y una llave hexadecimal; lo demás se ignora.
+    const llave = 'a'.repeat(48)
+    expect(parseRunnerCommand(runnerMessage({ tipo: 'conexion', codigo: 'K7M2QX', llave }))).toEqual({ tipo: 'conexion', codigo: 'K7M2QX', llave })
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'conexion', codigo: 'k7m2qx', llave })).toBeNull()
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'conexion', codigo: 'K7M2QX', llave: '<script>' })).toBeNull()
     expect(parseRunnerCommand(runnerMessage({ tipo: 'reiniciar' }))).toEqual({ tipo: 'reiniciar' })
     expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'ir', indice: -1 })).toBeNull()
     expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'ir' })).toBeNull()

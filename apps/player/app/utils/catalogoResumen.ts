@@ -41,6 +41,21 @@ export const OPCIONES_FILTRO_ESTADO: { value: FiltroEstado, label: string }[] = 
   ...ORDEN_PUBLICACION.map(value => ({ value, label: ESTADO_PUBLICACION[value].label })),
 ]
 
+/** El filtro «Hogar» de la lista (tarea 022): si sale en la app del hogar. */
+export type FiltroHogar = 'todos' | 'si' | 'no'
+
+export const OPCIONES_FILTRO_HOGAR: { value: FiltroHogar, label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'si', label: 'En el hogar' },
+  { value: 'no', label: 'Fuera del hogar' },
+]
+
+/** Si un storyboard pasa el filtro «Hogar»; uno sin registrar no está en el hogar. */
+export function pasaFiltroHogar(filtro: FiltroHogar, hogar: boolean | null): boolean {
+  if (filtro === 'todos') return true
+  return filtro === 'si' ? hogar === true : hogar !== true
+}
+
 /** Si un storyboard pasa el filtro «Estado», con su estado frente a la base y el de publicación. */
 export function pasaFiltroEstado(filtro: FiltroEstado, base: EstadoCatalogo | null, publicacion: EstadoPublicacion | null): boolean {
   if (filtro === 'todos') return true

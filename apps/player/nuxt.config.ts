@@ -1,17 +1,24 @@
 import { networkInterfaces } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-// Apps que pueden incrustar el runner (docs/runner.md): Educators y Admin. Separadas por comas.
-// La misma lista vale para los mensajes (runtimeConfig) y para la cabecera frame-ancestors, que
-// se fija al compilar: cambiarla en producción pide recompilar.
-const runnerHosts = process.env.NUXT_PUBLIC_RUNNER_HOSTS || 'http://localhost:3002,http://localhost:3000,http://localhost:3100'
-// En desarrollo, también las apps abiertas desde la tailnet: con el nombre de Tailscale (*.ts.net)
-// o con una IP de este equipo (la de Tailscale o la de la red local). Una CSP no admite comodines
-// en una IP: se listan las de ahora; si cambian, reinicia Player.
+// Las apps que pueden incrustar el runner (docs/runner.md), Admin y Educators, salen de la base (`configuraciones`): el
+// runner las lee para hablarles y el servidor, para la cabecera frame-ancestors (server/middleware/marco-del-runner.ts).
+// En desarrollo, además, las apps abiertas desde la tailnet: con el nombre de Tailscale (*.ts.net) o con una IP de este
+// equipo (la de Tailscale o la de la red local). Una CSP no admite comodines en una IP: se listan las de ahora; si
+// cambian, reinicia Player.
 const ipsDeEsteEquipo = Object.values(networkInterfaces()).flatMap(lista => lista ?? [])
   .filter(i => !i.internal && i.family === 'IPv4')
-  .map(i => ` http://${i.address}:*`)
-const ancestrosDev = process.env.NODE_ENV === 'production' ? '' : ` http://*.ts.net:* https://*.ts.net:*${ipsDeEsteEquipo.join('')}`
+  .map(i => `http://${i.address}:*`)
+const ancestrosDev = process.env.NODE_ENV === 'production' ? '' : ['http://*.ts.net:*', 'https://*.ts.net:*', ...ipsDeEsteEquipo].join(' ')
+// En desarrollo, la IP de este equipo en la red local (el Wi‑Fi, una interfaz `en*`): el QR para unirse a un taller
+// (tarea 013) la usa cuando la pantalla del educador está en localhost, que en un teléfono sería el propio teléfono.
+// En producción el QR lleva la dirección pública de Player y esto queda vacío.
+const ipEnLaRed = process.env.NODE_ENV === 'production'
+  ? ''
+  : Object.entries(networkInterfaces())
+      .filter(([nombre]) => /^en\d/.test(nombre))
+      .flatMap(([, lista]) => lista ?? [])
+      .find(i => !i.internal && i.family === 'IPv4' && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(i.address))?.address ?? ''
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
@@ -46,19 +53,14 @@ export default defineNuxtConfig({
     }],
   },
 
-  // Supabase solo para la entrada de la gestión (superadmin, decisión 005). El runner no lo usa.
+  // Supabase para la gestión (superadmin, decisión 005), las direcciones de las apps (`configuraciones`) y la conexión
+  // del taller. `ancestrosDev` solo lo usa el servidor.
   runtimeConfig: {
+    ancestrosDev,
     public: {
-      runnerHosts,
+      ipEnLaRed,
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-    },
-  },
-
-  // Solo esas apps (y Player) pueden poner el runner en un iframe.
-  routeRules: {
-    '/play/**': {
-      headers: { 'Content-Security-Policy': `frame-ancestors 'self' ${runnerHosts.split(/[\s,]+/).filter(Boolean).join(' ')}${ancestrosDev}` },
     },
   },
 
