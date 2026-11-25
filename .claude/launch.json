@@ -52,6 +52,17 @@
         "packages/ui/lab/server.mjs"
       ],
       "port": 4178
+    },
+    {
+      "name": "nutrinacion-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../../website/app",
+        "run",
+        "dev"
+      ],
+      "port": 4321
     }
   ]
 }

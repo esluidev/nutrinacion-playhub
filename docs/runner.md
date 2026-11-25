@@ -24,6 +24,7 @@ educator.nutrinacion.com                         player.nutrinacion.com
 | `mode` | `educator`, `device`, `home` o `preview` | `educator` |
 | `lang` | Un idioma que declare el storyboard | El idioma por defecto del storyboard |
 | `escena` | Carpeta de una escena | La escena que el aparato recuerda (abajo) o, si no recuerda ninguna, la primera |
+| `conexion` | El código de la conexión del taller (6 letras y números) | Solo en `device`: sin él, el dispositivo sigue la sesión de demostración entre pestañas. Lo pone `/unirse` al aprobarse el dispositivo (abajo) |
 | `sonidos` | `1` | Sin panel. Con él, un botón por cada sonido del motor para oírlo suelto y el nombre del último que sonó. No es parte del contrato |
 | `medir` | `1` | Sin medidor. Con él, sobre el runner salen los números del motor (cuadros por segundo, cuadros perdidos y lo que tarda un toque en verse) para probar en un dispositivo. No es parte del contrato: la app no lo manda |
 
@@ -56,6 +57,7 @@ Nunca viajan puntos, respuestas ni datos de los participantes (constitución, «
 | `iniciar` | `guia?`: la guía del educador por carpeta de escena (`{ [carpeta]: { verb, objective, … } }`) | Al recibir `listo`, y de nuevo si la guía cambia |
 | `ir` | `indice` (desde 0) o `escena` (carpeta) | Solo en `preview`: la app pasa de escena. El runner responde con `escena` |
 | `reiniciar` | — | Solo en `preview`: la app reinicia la escena actual |
+| `conexion` | `codigo` (6, sin letras que se confundan), `llave` (hexadecimal) | En `educator`, cuando la app abre la conexión del taller (`educador_iniciar`, después de `listo`) y de nuevo si el runner se recarga. Con ella el runner muestra el QR y aprueba a los dispositivos |
 
 ## 3. El saludo
 
@@ -75,16 +77,28 @@ Si nadie contiene el runner (abierto directamente), no manda mensajes y funciona
 
 En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 
+## 4 bis. La conexión del taller: los dispositivos que se unen (tarea 013)
+
+Un dispositivo se une al taller sin instalar nada ni tener cuenta:
+
+1. En la pantalla del educador, el panel Dispositivos muestra un **QR** (abre `<PLAYER>/unirse/<código>`), el **código** y la dirección corta (`<PLAYER>/unirse`) para escribirlo. Solo hay QR en un taller real: la conexión la abre Educators al iniciar un taller publicado; abierto directamente o en la vista previa no hay conexión. En desarrollo, si la pantalla está en `localhost`, el QR lleva la IP de este equipo en el Wi‑Fi (`ipEnLaRed`, de `nuxt.config.ts`), porque en un teléfono `localhost` es el propio teléfono; abierta por Tailscale o Funnel, lleva esa dirección.
+2. En `/unirse/<código>` elige un **avatar** y escribe un **apodo** (opcional; sin él, el nombre del avatar: Rufo, Bruno, Lila, Michi, Rita, Leo) y pide entrar (`participante_entrar`). Espera.
+3. El educador lo **aprueba** (a uno, o «Aprobar a Todos» los que esperan) o lo rechaza. «Entrar sin aprobar», un interruptor de su pantalla, aprueba solo a quien llega (una feria).
+4. Aprobado, el dispositivo abre `/play/<eje>/<slug>?mode=device&lang=<idioma>&conexion=<código>` y sigue la escena y la pausa del educador. Al recargar vuelve como el mismo: recuerda su identificador, su avatar y su apodo para ese código.
+
+Los mensajes van por **Realtime de Supabase, solo Broadcast**, en dos canales por conexión: `workshop-<código>` (educador → dispositivos: estado, órdenes, aprobado, rechazado, cierre) y `workshop-<código>-educador` (dispositivos → educador: solicitud, presencia cada 10 segundos, hola, adiós), que solo escucha el educador. Lo que manda y queda registrado va por las funciones de la base: el educador con el código y la llave (`conexion_*`), el dispositivo con el código (`participante_*`); ver [backend](backend.md). El código vale mientras el taller está en curso; `educador_terminar` cierra la conexión y deja en el cierre cuántos dispositivos se unieron. Sin conexión (abierto directamente, o una app sin Supabase), la sesión es la de demostración entre pestañas del mismo navegador, con seis dispositivos de prueba. Todo lo que depende del servicio está en `app/runner/conexion/realtime.ts`.
+
 ## 5. Seguridad
 
-- **El runner solo habla con orígenes permitidos:** la lista `NUXT_PUBLIC_RUNNER_HOSTS` de Player.
+- **El runner solo habla con orígenes permitidos:** los de Admin y Educators, con su dirección en la base (`configuraciones`, `admin_url` y `educators_url`). Los lee al abrirse dentro de un iframe, sin sesión, y los guarda en el aparato por si la base no responde (`runner/urlsDeLasApps.ts`); hasta tenerlos, lo que tiene que contar espera.
   - Acepta mensajes de la ventana que lo contiene y de esos orígenes.
   - Hasta saber cuál es, manda cada evento a cada origen permitido; el navegador solo lo entrega al que coincide.
   - Después, solo a ese. Nunca a `*`.
 - **La app solo escucha a su iframe:** mismo origen que la URL del runner y `event.source` igual a ese iframe.
-- **Player limita quién lo incrusta:** `Content-Security-Policy: frame-ancestors 'self' <orígenes>` en `/play/**`, con la misma lista.
+- **Player limita quién lo incrusta:** `Content-Security-Policy: frame-ancestors 'self' <orígenes>` en `/play/**`, con los mismos orígenes. La pone el servidor de Player leyendo la base, con un minuto de memoria (`server/middleware/marco-del-runner.ts`): cambiar una dirección no pide recompilar. Servido como archivos estáticos, la tendría que poner el proveedor.
 - **La guía se sanea al llegar:** solo pasan los campos de texto conocidos de cada escena y se muestra como texto, nunca como HTML.
 - **Permisos del iframe:** `allow="autoplay; fullscreen; screen-wake-lock"`.
+- **La conexión del taller:** lo que llega por Realtime lo puede mandar cualquiera que tenga el código, así que se lee con su forma (`conexion/mensajes.ts`) y el educador solo cuenta a quien aprobó en la base. Aprobar, rechazar y anotar presencia piden la llave, que solo tiene la pantalla del educador (la base guarda su huella). Un dispositivo no recibe las señales de los demás.
 
 ## 6. Versiones
 
@@ -98,22 +112,24 @@ En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 |---|---|---|
 | Educators | `/workshops/<id>/jugar`: pantalla completa con `UiRunner` en modo educador y la guía. `terminado` lleva al feedback del taller; `salir`, a donde estaba | Hecho, con Supabase (`educador_iniciar` con `listo`, `educador_terminar` con `terminado`) |
 | Admin | En el detalle de un storyboard de la organización, «Vista previa» con `UiRunner` en modo `preview`: Admin conduce con `ir` y `reiniciar` (anterior, siguiente, la escena de la lista) y lleva la cuenta con `listo` y `escena`. «Probar» de Platform sigue abriendo el modo educador en otra pestaña | Hecho |
-| App del hogar | `UiRunner` en modo casa | Fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
-| Dispositivos de participantes | Abren Player directamente (`?mode=device`), sin iframe | Sesión simulada entre pestañas |
+| App del hogar | `UiRunner` en modo casa y, con «Unirme», en modo dispositivo dentro de un taller: escanea el QR o escribe el código y entra con el perfil del niño (diseño en la [tarea 013](../tasks/013-runner-en-el-aula.md)) | Por construir ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
+| Dispositivos de participantes | Se unen con el QR o el código en `/unirse` y abren Player directamente (`?mode=device&conexion=`), sin iframe | Hecho, por Realtime de Supabase (tarea 013; falta la prueba en teléfonos reales) |
 
 ## 8. Configuración
 
+Las direcciones de las apps no son variables: viven en la base, en `configuraciones` (`admin_url`, `player_url`, `educators_url`), y en producción solo se cambian ahí ([backend](backend.md)). Con ellas, Admin y Educators abren el runner, Player sabe quién puede incrustarlo y el QR del taller lleva a Player. Cada app solo necesita saber dónde está la base:
+
 | App | Variable | Para qué |
 |---|---|---|
-| Player | `NUXT_PUBLIC_RUNNER_HOSTS` | Orígenes que pueden incrustar el runner, separados por comas. Se usa para los mensajes y para `frame-ancestors`, que se fija al compilar |
-| Educators | `NUXT_PUBLIC_PLAYER_URL` | Dónde está Player. Admin lo lee de `configuracion.player_url` en la base |
+| Player | `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_ANON_KEY` | La gestión y la conexión del taller (Realtime y las funciones `conexion_*` y `participante_*`). El QR lleva `configuraciones.player_url`: en producción, la dirección pública de Player |
+| Educators y Admin | `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_ANON_KEY` | Todo lo demás, también dónde está Player (`configuraciones.player_url`) |
 
 En local, `localhost:3001` dentro de `localhost:3002` también es el mismo sitio, así que se comporta como en producción. En desarrollo, Player también se deja incrustar desde la tailnet (nombres `*.ts.net` y las IP de este equipo); ver «Compartir en desarrollo por Tailscale» en el [README](../README.md).
 
 ## 9. Pendiente
 
 En la [tarea 013](../tasks/013-runner-en-el-aula.md):
-- sin dispositivos de demostración dentro de un taller real;
+- la prueba de la conexión del taller en teléfonos reales;
 - `preparar` para usar sin conexión;
 - voces desde el bucket;
 - prueba en iPad y Android;
