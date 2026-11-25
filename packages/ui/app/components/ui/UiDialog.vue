@@ -1,7 +1,7 @@
 <template>
   <dialog
     ref="el"
-    :class="['dialog', size === 'lg' ? 'max-w-[640px]' : size === 'sm' ? 'max-w-[380px]' : '']"
+    :class="['dialog', size === 'xl' ? 'dialog-xl' : size === 'lg' ? 'max-w-[640px]' : size === 'sm' ? 'max-w-[380px]' : '']"
     :aria-labelledby="title ? `${uid}-title` : undefined"
     @close="onClose"
     @cancel.prevent="close"
@@ -17,9 +17,9 @@
       :label="labels.close"
       @click="close"
     />
-    <div :class="center && 'dialog-center'">
+    <div :class="['dialog-main', center && 'dialog-center']">
       <UiSymbol v-if="symbol" :icon="symbol" :tone="tone" />
-      <h2 v-if="title" :id="`${uid}-title`" class="ui-title pr-10">{{ title }}</h2>
+      <h2 v-if="title" :id="`${uid}-title`" class="dialog-title ui-title pr-10">{{ title }}</h2>
       <div class="dialog-body ui-text">
         <slot />
       </div>
@@ -41,7 +41,9 @@ const props = withDefaults(defineProps<{
   title?: string
   symbol?: UiIconName
   tone?: UiTone
-  size?: UiSize
+  // `xl`: elegir entre muchos (tarjetas en 3 columnas, filtros y páginas); mide hasta el alto de la ventana y, si no
+  // cabe, se desplaza por dentro.
+  size?: UiSize | 'xl'
   center?: boolean
   split?: boolean
   closable?: boolean

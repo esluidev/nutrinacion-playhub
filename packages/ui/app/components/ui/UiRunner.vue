@@ -36,11 +36,14 @@ const props = withDefaults(defineProps<{
   src: string
   /** Guía del educador por carpeta de escena; solo la usa el modo educador. */
   guide?: StoryboardGuide | null
+  /** La conexión del taller (tarea 013): el código y la llave para que se unan otros dispositivos. */
+  conexion?: { codigo: string, llave: string } | null
   title?: string
   /** Milisegundos para que el runner diga «listo» antes de mostrar el error. */
   timeout?: number
 }>(), {
   guide: null,
+  conexion: null,
   timeout: 20_000,
 })
 
@@ -98,6 +101,7 @@ function onMessage(message: MessageEvent) {
       clearTimeout(timer)
       state.value = 'ready'
       start()
+      sendConexion()
       emit('ready', event)
       break
     case 'escena':
@@ -118,6 +122,12 @@ function onMessage(message: MessageEvent) {
 }
 
 watch(() => props.guide, () => { if (state.value === 'ready') start() }, { deep: true })
+
+// La conexión llega cuando la app la abre (después de «listo»); si el runner se recarga, se le vuelve a dar.
+function sendConexion() {
+  if (props.conexion) send({ tipo: 'conexion', codigo: props.conexion.codigo, llave: props.conexion.llave })
+}
+watch(() => props.conexion, () => { if (state.value === 'ready') sendConexion() })
 watch(() => props.src, retry)
 
 onMounted(() => {

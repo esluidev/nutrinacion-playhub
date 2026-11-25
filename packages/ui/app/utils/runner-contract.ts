@@ -4,6 +4,8 @@
 // - La URL dice qué cargar: storyboard, modo, idioma y escena.
 // - La app manda `iniciar` con lo que solo ella tiene (la guía del educador). En la vista previa
 //   (`preview`), además conduce: `ir` a una escena y `reiniciar` la actual.
+// - En el taller, la app manda `conexion` con el código y la llave de la conexión del taller (tarea
+//   013): con ellos el runner muestra el QR y aprueba a los dispositivos que se unen.
 // - El runner cuenta lo que pasa: listo, escena, terminado, salir y error.
 //
 // Los mensajes llevan canal y versión. Los cambios son aditivos: un campo nuevo es opcional y
@@ -49,6 +51,8 @@ export type RunnerCommand =
   | { tipo: 'ir', escena: string }
   /** Vista previa: reiniciar la escena actual. */
   | { tipo: 'reiniciar' }
+  /** Taller: la conexión para que otros dispositivos se unan (el código del QR y la llave del educador). */
+  | { tipo: 'conexion', codigo: string, llave: string }
 
 export type RunnerEnvelope<T> = T & { canal: typeof RUNNER_CHANNEL, v: number }
 
@@ -121,6 +125,11 @@ export function parseRunnerCommand(data: unknown): RunnerCommand | null {
     return isText(m.escena) ? { tipo: 'ir', escena: m.escena } : null
   }
   if (m.tipo === 'reiniciar') return { tipo: 'reiniciar' }
+  if (m.tipo === 'conexion') {
+    return typeof m.codigo === 'string' && /^[A-HJKMNP-Z2-9]{6}$/.test(m.codigo) && typeof m.llave === 'string' && /^[0-9a-f]{16,128}$/.test(m.llave)
+      ? { tipo: 'conexion', codigo: m.codigo, llave: m.llave }
+      : null
+  }
   return null
 }
 

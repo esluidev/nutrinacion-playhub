@@ -196,6 +196,16 @@
   /* Dialog anatomy: header (title + close) · symbol · body · actions. */
   .dialog-header { @apply flex items-start justify-between gap-4; }
   .dialog-close { position: absolute; top: 16px; right: 16px; }
+  /* The wide dialog, to choose among many (cards in 3 columns, filters and pages), built like a panel: a header (the
+     title and the close button) and a footer (what is chosen and the actions, as wide as their label, to the right), each
+     apart from the body by the panel's line; the body between them scrolls if the window is not tall enough. */
+  .dialog-xl { max-width: 960px; max-height: calc(100dvh - 2rem); padding: 0; overflow: hidden; }
+  .dialog-xl[open] { display: flex; flex-direction: column; }
+  .dialog-xl .dialog-main { @apply flex min-h-0 flex-1 flex-col; }
+  .dialog-xl .dialog-title { @apply px-6 py-4 pr-16; border-bottom: 1px solid var(--color-line); }
+  .dialog-xl .dialog-close { top: 12px; right: 14px; }
+  .dialog-xl .dialog-body { @apply mt-0 min-h-0 flex-1 overflow-y-auto p-6; }
+  .dialog-xl .dialog-actions { @apply mt-0 flex flex-wrap items-center justify-end gap-3 px-6 py-4; border-top: 1px solid var(--color-line); }
   .dialog-center { @apply text-center; }
   .dialog-center .ui-symbol { @apply mx-auto mb-5; }
   .dialog-body { @apply mt-3; }
@@ -284,11 +294,19 @@
   .ui-listbox { @apply absolute z-40 mt-1.5 max-h-72 overflow-y-auto border border-line bg-surface p-1.5; max-width: calc(100vw - 16px); border-radius: var(--radius-control); box-shadow: var(--shadow-float); }
   /* Inside a positioned popover (Reka, a portal): the popover places it, so it stays in flow. */
   .ui-listbox-floating { @apply relative z-50 mt-0; }
-  .ui-listbox-legend { @apply px-3 pb-1.5 pt-1; }   /* what a toolbar filter filters, above its options */
+  .ui-listbox-legend { @apply px-3 pb-1.5 pt-1; }   /* what a toolbar filter filters, above its options; or a group's name */
+  .ui-option + .ui-listbox-legend { @apply mt-2; }  /* a new group, apart from the one above */
+  .ui-listbox-search { @apply sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 bg-surface p-1.5; }  /* many options: a search box that stays on top while the list scrolls */
   .ui-option { @apply flex w-full items-center justify-between gap-2 px-3 text-left font-bold text-ink transition-colors; min-height: var(--ph-control-sm); border-radius: var(--radius-control-sm); font-size: var(--text-body); }
   .ui-option[data-active=true] { background: var(--color-sunken); }
   @media (hover: hover) { .ui-option:hover { background: var(--color-sunken); } }
   .ui-option[aria-selected=true] { background: var(--tone-wash); color: var(--tone-strong); }
+  /* In a menu (Reka): the option the keyboard is on, one that does not fit today, and the coral one that deletes. */
+  .ui-option[data-highlighted] { background: var(--color-sunken); outline: none; }
+  .ui-option[data-tone][data-highlighted] { background: var(--tone-wash); }
+  @media (hover: hover) { .ui-option[data-tone]:not([data-disabled]):hover { background: var(--tone-wash); } }
+  .ui-option[data-disabled] { @apply cursor-not-allowed opacity-50; }
+  @media (hover: hover) { .ui-option[data-disabled]:hover { background: transparent; } }
   /* Picker: a selector that shows a symbol and two lines (context, organisation). One step taller
      than a field (--ph-control-lg). 10 px on the left puts the symbol in the column of the
      ui-nav-item icons below it (12 px from the edge, border included) and leaves it the same space
@@ -320,7 +338,7 @@
 
   /* ---- Page header ------------------------------------------------------ */
   .ui-page-header { @apply mb-7 flex flex-wrap items-end justify-between gap-4; }
-  .ui-page-header-actions { @apply flex shrink-0 items-center; gap: calc(var(--ph-gap) * .75); }
+  .ui-page-header-actions { @apply flex max-w-full shrink-0 flex-wrap items-center; gap: calc(var(--ph-gap) * .75); }   /* on a phone, buttons that do not fit go to the next line instead of pushing the page sideways */
 
   /* ---- Auth (UiAuthShell: the sign-in page of every app) --------------- */
   /* Centered card on the canvas; away from the notch and rounded corners on phones. */
@@ -365,6 +383,9 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone-tint-edge) 40%, var(--color-sunken));
   }
   .ui-tray.is-target { box-shadow: inset 0 0 0 2px var(--color-line-strong); }
+  /* A tray in parts (the planner week: the day's tray runs behind its date, its campaigns and its cards): the cards'
+     stack, with the tray's padding and gap but no background of its own. */
+  .ui-tray-stack { @apply flex flex-col p-2.5; gap: calc(var(--ph-gap) * .75); }
   /* Slot: an empty place to add something. Dashed, grey, one step darker than its tray. */
   .ui-slot { @apply flex w-full items-center justify-center gap-1.5 border-2 border-dashed px-3 font-extrabold text-muted transition-colors; min-height: var(--ph-control); font-size: var(--text-caption); border-radius: var(--radius-control-sm); border-color: var(--color-night-300); }
   @media (hover: hover) { .ui-slot:hover { border-color: var(--color-night-500); background: var(--color-surface); color: var(--color-ink); } }
