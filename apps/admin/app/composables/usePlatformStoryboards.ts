@@ -69,13 +69,13 @@ const SELECT_FILA = `
   organizaciones ( id, nombre )
 `
 
-/** La carpeta de la categoría en el runner de Player: ALIMENTACION → alimentacion. */
-export const carpetaDeCategoria = (categoria: string) => categoria.toLowerCase().replace(/_/g, '-')
-
-/** Donde se cambia un storyboard: su detalle en la gestión de Player, o la guía de una escena. */
-export function urlGestionEnPlayer(playerUrl: string, categoria: string, slug: string, escena?: string): string {
-  const detalle = `${playerUrl.replace(/\/+$/, '')}/storyboards/${carpetaDeCategoria(categoria)}/${slug}`
-  return escena ? `${detalle}/guia/${escena}` : detalle
+/**
+ * Donde se cambia un storyboard: su detalle en la gestión de Player (`/storyboards/<clave>`), o la guía de una escena
+ * (`/guia/<carpeta>`). Por su clave, como en todas las URL de un storyboard: nunca su categoría ni su slug.
+ */
+export function urlGestionEnPlayer(playerUrl: string, clave: string, escena?: string): string {
+  const detalle = `${playerUrl.replace(/\/+$/, '')}/storyboards/${encodeURIComponent(clave)}`
+  return escena ? `${detalle}/guia/${encodeURIComponent(escena)}` : detalle
 }
 
 export function usePlatformStoryboards() {
@@ -105,7 +105,7 @@ export function usePlatformStoryboards() {
     return { data: ((data as unknown) as StoryboardFila[] | null) ?? [], total: count ?? 0 }
   }
 
-  async function getStoryboard(id: number): Promise<StoryboardDetalle | null> {
+  async function getStoryboard(clave: string): Promise<StoryboardDetalle | null> {
     if (!isSupabaseConfigured()) return null
     const { data } = await supabase()
       .from('storyboards')
@@ -114,7 +114,7 @@ export function usePlatformStoryboards() {
         guia:guias ( id, version, descripcion, objetivo, publico, adaptado_a,
           escenas:guia_escenas ( id, orden, carpeta, titulo, ${SECCIONES_GUIA.join(', ')} ) )
       `)
-      .eq('id', id)
+      .eq('clave', clave)
       .maybeSingle()
 
     if (!data) return null

@@ -68,7 +68,7 @@
             <div class="min-w-0">
               <p class="text-body font-extrabold text-ink">{{ selectedStoryboard.title }}</p>
               <p class="ui-caption mt-0.5">{{ [selectedStoryboard.category, selectedStoryboard.targetAge, selectedStoryboard.duration, tCount(t, 'storyboards.scenes', selectedStoryboard.scenesCount)].join(' · ') }}</p>
-              <NuxtLink :to="`/organizacion/storyboards/${selectedStoryboard.id}`" class="ui-link mt-1.5 gap-1.5 text-caption" data-tone="sky">
+              <NuxtLink :to="`/organizacion/storyboards/${selectedStoryboard.clave}`" class="ui-link mt-1.5 gap-1.5 text-caption" data-tone="sky">
                 <UiIcon name="external" class="size-3.5" />
                 {{ t('workshops.viewStoryboard') }}
               </NuxtLink>

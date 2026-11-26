@@ -75,7 +75,7 @@
           v-for="escena in sb.escenas"
           :key="escena.id"
           class="flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3.5 transition-colors hover:bg-canvas"
-          @click="navigateTo(`/platform/storyboards/${sb!.id}/escenas/${escena.id}`)"
+          @click="navigateTo(`/platform/storyboards/${sb!.clave}/escenas/${escena.carpeta}`)"
         >
           <!-- El número lleva el tono del área del storyboard, como su portada en el catálogo. -->
           <span class="ui-symbol ui-symbol-sm" v-bind="tinte" aria-hidden="true">{{ escena.orden }}</span>
@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import type { EscenaFila, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
-import { carpetaDeCategoria, seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
+import { seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.title', descKey: 'platform.sbs.desc' })
@@ -137,24 +137,23 @@ function loc(valor: Localized | null | undefined): string {
 }
 
 onMounted(async () => {
-  const id = Number(route.params.id)
   ;[sb.value, playerUrl.value] = await Promise.all([
-    Number.isFinite(id) ? getStoryboard(id) : Promise.resolve(null),
+    getStoryboard(String(route.params.clave)),
     getPlayerUrl(),
   ])
   cargando.value = false
 })
 
-// El runner de Player en modo educador, con la carpeta de la categoría (docs/runner.md).
+// El runner de Player en modo educador, por la clave del storyboard (docs/runner.md).
 const urlRunner = computed(() => urlEscena())
 // Donde se cambia: su detalle en la gestión de Player.
 const urlEnPlayer = computed(() => (playerUrl.value && sb.value
-  ? urlGestionEnPlayer(playerUrl.value, sb.value.categoria, sb.value.slug)
+  ? urlGestionEnPlayer(playerUrl.value, sb.value.clave)
   : null))
 function urlEscena(escena?: string): string | null {
   if (!playerUrl.value || !sb.value) return null
   return runnerUrl(playerUrl.value, {
-    eje: carpetaDeCategoria(sb.value.categoria), slug: sb.value.slug, modo: 'educator', idioma: sb.value.idiomas[0], escena,
+    clave: sb.value.clave, modo: 'educator', idioma: sb.value.idiomas[0], escena,
   })
 }
 

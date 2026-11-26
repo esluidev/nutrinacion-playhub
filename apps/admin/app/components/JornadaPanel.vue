@@ -105,7 +105,7 @@ function agregarTaller() {
   navigateTo(`/organizacion/workshops/new?jornada=${j.id}&fecha=${fecha}`)
 }
 
-// «Sus 3 talleres quedan sueltos» (o «Su taller queda suelto»), con el lugar de la jornada.
+// «Sus 3 talleres quedan independientes» (o «Su taller queda independiente»), con el lugar de la jornada.
 const avisoEliminar = computed(() => {
   const vars = { nombre: props.jornada?.nombre ?? '', n: talleres.value.length }
   return talleres.value.length === 1 ? t('planner.jDeleteWarnOne', vars) : t('planner.jDeleteWarn', vars)

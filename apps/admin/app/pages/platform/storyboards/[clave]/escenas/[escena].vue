@@ -22,7 +22,7 @@
         <div class="ui-group">
           <NuxtLink
             v-if="escenaAnterior"
-            :to="`/platform/storyboards/${sb.id}/escenas/${escenaAnterior.id}`"
+            :to="`/platform/storyboards/${sb.clave}/escenas/${escenaAnterior.carpeta}`"
             class="ui-group-item"
             :title="loc(escenaAnterior.titulo)"
             :aria-label="loc(escenaAnterior.titulo)"
@@ -32,7 +32,7 @@
           <span class="ui-group-label">{{ escena.orden }}/{{ sb.escenas.length }}</span>
           <NuxtLink
             v-if="escenaSiguiente"
-            :to="`/platform/storyboards/${sb.id}/escenas/${escenaSiguiente.id}`"
+            :to="`/platform/storyboards/${sb.clave}/escenas/${escenaSiguiente.carpeta}`"
             class="ui-group-item"
             :title="loc(escenaSiguiente.titulo)"
             :aria-label="loc(escenaSiguiente.titulo)"
@@ -77,7 +77,7 @@
 // escribe en Player (decisión 013); «Editar en Player» lleva a esa misma escena allí.
 import type { EscenaFila, StoryboardDetalle } from '~/composables/usePlatformStoryboards'
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
-import { carpetaDeCategoria, seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
+import { seccionesGuia, urlGestionEnPlayer } from '~/composables/usePlatformStoryboards'
 import type { Localized } from '~/utils/types'
 
 definePageMeta({ layout: 'dashboard', titleKey: 'platform.sbs.guideTitle', descKey: 'platform.sbs.desc' })
@@ -96,8 +96,8 @@ function loc(valor: Localized | null | undefined): string {
 }
 
 const escena = computed<EscenaFila | null>(() => {
-  const escenaId = Number(route.params.escena)
-  return sb.value?.escenas.find(e => e.id === escenaId) ?? null
+  // La escena por su carpeta, la misma en Player y en el runner (`?escena=`)
+  return sb.value?.escenas.find(e => e.carpeta === String(route.params.escena)) ?? null
 })
 
 const idiomas = computed(() => (sb.value?.idiomas?.length ? sb.value.idiomas : ['es']))
@@ -105,9 +105,8 @@ const idiomaActivo = ref('es')
 const pestanasIdioma = computed(() => idiomas.value.map(l => ({ value: l, label: l.toUpperCase() })))
 
 onMounted(async () => {
-  const id = Number(route.params.id)
   ;[sb.value, playerUrl.value] = await Promise.all([
-    Number.isFinite(id) ? getStoryboard(id) : Promise.resolve(null),
+    getStoryboard(String(route.params.clave)),
     getPlayerUrl(),
   ])
   cargando.value = false
@@ -123,11 +122,11 @@ const escenaSiguiente = computed(() =>
 const urlRunner = computed(() => {
   if (!playerUrl.value || !sb.value || !escena.value) return null
   return runnerUrl(playerUrl.value, {
-    eje: carpetaDeCategoria(sb.value.categoria), slug: sb.value.slug, modo: 'educator', idioma: sb.value.idiomas[0], escena: escena.value.carpeta,
+    clave: sb.value.clave, modo: 'educator', idioma: sb.value.idiomas[0], escena: escena.value.carpeta,
   })
 })
 const urlEnPlayer = computed(() => (playerUrl.value && sb.value && escena.value
-  ? urlGestionEnPlayer(playerUrl.value, sb.value.categoria, sb.value.slug, escena.value.carpeta)
+  ? urlGestionEnPlayer(playerUrl.value, sb.value.clave, escena.value.carpeta)
   : null))
 
 // Las 12 secciones de la plantilla de la guía, con lo escrito en el idioma elegido.

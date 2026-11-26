@@ -201,7 +201,7 @@ const loading = ref(true)
 const playerUrl = ref<string | null>(null)
 
 onMounted(async () => {
-  ;[storyboard.value, playerUrl.value] = await Promise.all([fetchDetalle(Number(route.params.id)), urlDePlayer()])
+  ;[storyboard.value, playerUrl.value] = await Promise.all([fetchDetalle(String(route.params.clave)), urlDePlayer()])
   loading.value = false
 })
 
@@ -214,9 +214,9 @@ const total = ref(0)
 const actual = ref(0)
 const urlVista = computed(() => {
   const sb = storyboard.value
-  if (!playerUrl.value || !sb?.area) return null
+  if (!playerUrl.value || !sb) return null
   const idioma = sb.languages.includes(locale.value) ? locale.value : sb.languages[0]
-  return runnerUrl(playerUrl.value, { eje: sb.area, slug: sb.slug, modo: 'preview', idioma })
+  return runnerUrl(playerUrl.value, { clave: sb.clave, modo: 'preview', idioma })
 })
 const tituloActual = computed(() => storyboard.value?.scenes[actual.value]?.title ?? '')
 

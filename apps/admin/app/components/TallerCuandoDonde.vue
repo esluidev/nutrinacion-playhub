@@ -78,7 +78,7 @@
          taller; no, se vuelve a la fecha anterior. -->
     <UiConfirmDialog
       :open="!!ampliarPendiente"
-      :title="ampliarTitulo"
+      :title="t('wizard.extendTitle')"
       tone="lime"
       symbol="calendar"
       :confirm-label="t('wizard.extendConfirm')"
@@ -87,8 +87,9 @@
       @confirm="confirmarAmpliar"
     >
       <p v-if="selectedJornada && ampliarPendiente">
-        {{ t('wizard.extendText', {
+        {{ t(ampliarAntes ? 'wizard.extendTextFrom' : 'wizard.extendText', {
           nombre: selectedJornada.nombre,
+          dia: fechaCorta(ampliarPendiente.fecha, locale),
           dias: rangoJornada(selectedJornada, locale),
           nuevos: rangoJornada(ampliarPendiente, locale),
         }) }}
@@ -162,13 +163,12 @@ function alSalirDeFecha() {
   document.addEventListener('pointerup', () => setTimeout(comprobarFecha), { once: true, capture: true })
 }
 
-// «¿Ampliar la jornada hasta el 16 nov 2026?» (o «desde el …» si la fecha va antes de su inicio).
-const ampliarTitulo = computed(() => {
+// El título, el verbo; la pregunta, en el texto (Luis, 2026-11-26): «¿Ampliar «…» hasta el 16 nov 2026?» (o «desde
+// el …» si la fecha va antes de su inicio).
+const ampliarAntes = computed(() => {
   const p = ampliarPendiente.value
   const j = selectedJornada.value
-  if (!p || !j) return ''
-  const dia = fechaCorta(p.fecha, locale.value)
-  return p.fecha < j.fecha_inicio ? t('wizard.extendTitleFrom', { dia }) : t('wizard.extendTitle', { dia })
+  return Boolean(p && j && p.fecha < j.fecha_inicio)
 })
 
 const duracionHint = computed(() =>

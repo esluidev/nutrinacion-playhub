@@ -20,7 +20,7 @@
       :page-size="PAGE_SIZE"
       :empty-text="hayFiltros ? t('platform.sbs.emptyFiltered') : t('platform.sbs.empty')"
       clickable
-      @row-click="(s) => navigateTo(`/platform/storyboards/${s.id}`)"
+      @row-click="(s) => navigateTo(`/platform/storyboards/${s.clave}`)"
       @update:page="page = $event"
     >
       <template #cell-storyboard="{ row }">

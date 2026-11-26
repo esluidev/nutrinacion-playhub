@@ -32,7 +32,8 @@ export interface StoryboardScene {
 
 export interface Storyboard {
   id: number
-  slug: string                // la carpeta del storyboard en Player (con `area`, la URL del runner)
+  clave: string               // su identidad (`key` de su storyboard.json): la de su URL aquí, en Player y en el runner
+  slug: string                // la carpeta del storyboard en Player
   title: string
   description: string
   category: string           // su área educativa (alimentación, actividad física, …), traducida
@@ -51,9 +52,9 @@ export interface Storyboard {
 }
 
 const DEMO_STORYBOARDS: Storyboard[] = [
-  { id: 1, slug: 'los-frijoles-magicos', title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'alimentacion', scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', publico: '', languages: ['es'], scenes: [] },
-  { id: 2, slug: 'piernas-fuertes', title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '25 min', area: 'actividad-fisica', scenesCount: 6, objective: 'Fomentar el movimiento diario.', publico: '', languages: ['es'], scenes: [] },
-  { id: 3, slug: 'la-sopa-de-verduras', title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', pertenencia: 'personalizado', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'salud-emocional', scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', publico: '', languages: ['es'], scenes: [] },
+  { id: 1, clave: '00000000-0000-4000-8000-000000000001', slug: 'los-frijoles-magicos', title: 'Los Frijoles Mágicos', description: 'Descubre el poder de los frijoles y cómo nos ayudan a crecer fuertes.', category: 'Alimentación', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'alimentacion', scenesCount: 7, objective: 'Conocer las leguminosas y su valor nutricional.', publico: '', languages: ['es'], scenes: [] },
+  { id: 2, clave: '00000000-0000-4000-8000-000000000002', slug: 'piernas-fuertes', title: 'Piernas Fuertes', description: 'Actividad física divertida para fortalecer el cuerpo.', category: 'Actividad física', pertenencia: 'publico', targetAge: 'Infantil · 4–8', duration: '25 min', area: 'actividad-fisica', scenesCount: 6, objective: 'Fomentar el movimiento diario.', publico: '', languages: ['es'], scenes: [] },
+  { id: 3, clave: '00000000-0000-4000-8000-000000000003', slug: 'la-sopa-de-verduras', title: 'La Sopa de Verduras', description: 'Reconocer y calmar emociones con una historia cálida.', category: 'Salud emocional', pertenencia: 'personalizado', targetAge: 'Infantil · 4–8', duration: '30 min', area: 'salud-emocional', scenesCount: 6, objective: 'Reconocer, calmar y expresar emociones.', publico: '', languages: ['es'], scenes: [] },
 ]
 
 // El contenido viene como jsonb Localized: se resuelve al locale actual con fallback a es.
@@ -64,6 +65,7 @@ function loc(valor: Localized | null | undefined, locale: string): string {
 
 interface StoryboardRow {
   id: number
+  clave: string
   slug: string
   titulo: Localized
   categoria: string
@@ -80,7 +82,7 @@ type CampoGuia = 'verbo' | 'subtitulo' | 'descripcion' | 'objetivo' | 'pedagogia
 type EscenaRow = { id: number, orden: number, carpeta: string, titulo: Localized } & Record<CampoGuia, Localized | null>
 
 const SELECT_STORYBOARD = `
-  id, slug, titulo, categoria, edicion, duracion_min, numero_escenas, idiomas, organizacion_id,
+  id, clave, slug, titulo, categoria, edicion, duracion_min, numero_escenas, idiomas, organizacion_id,
   guia:guias ( descripcion, objetivo, publico )
 `
 
@@ -100,6 +102,7 @@ export function useStoryboards() {
   function mapRow(row: StoryboardRow): Storyboard {
     return {
       id: row.id,
+      clave: row.clave,
       slug: row.slug,
       title: loc(row.titulo, locale.value),
       description: loc(row.guia?.descripcion, locale.value),
@@ -148,13 +151,13 @@ export function useStoryboards() {
     return storyboards.value.find(sb => sb.id === id)
   }
 
-  // Detalle con escenas y guía pedagógica completa.
-  async function fetchDetalle(id: number): Promise<Storyboard | null> {
-    if (demo) return getStoryboard(id) ?? null
+  // Detalle con escenas y guía pedagógica completa, por su clave (la de su URL).
+  async function fetchDetalle(clave: string): Promise<Storyboard | null> {
+    if (demo) return storyboards.value.find(sb => sb.clave === clave) ?? null
     const { data } = await useSupabaseClient()
       .from('storyboards')
       .select(`${SELECT_STORYBOARD}, guia_completa:guias ( escenas:guia_escenas ( id, orden, carpeta, titulo, verbo, subtitulo, descripcion, objetivo, pedagogia, preguntas, psicologia, cientifico, no_hace, consejos, mecanica, material ) )`)
-      .eq('id', id)
+      .eq('clave', clave)
       .maybeSingle()
     if (!data) return null
 
