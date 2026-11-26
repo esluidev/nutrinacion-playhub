@@ -80,10 +80,17 @@ describe('orígenes permitidos', () => {
 })
 
 describe('URL del runner', () => {
-  it('lleva storyboard, modo, idioma y escena', () => {
-    expect(runnerUrl('https://player.nutrinacion.com/', { eje: 'alimentacion', slug: 'el-huevo', modo: 'educator', idioma: 'es', escena: 'origen' }))
-      .toBe('https://player.nutrinacion.com/play/alimentacion/el-huevo?mode=educator&lang=es&escena=origen')
-    expect(runnerUrl('http://localhost:3001', { eje: 'alimentacion', slug: 'el-huevo', modo: 'home' }))
-      .toBe('http://localhost:3001/play/alimentacion/el-huevo?mode=home')
+  it('lleva el storyboard por su clave, el modo, el idioma y la escena', () => {
+    expect(runnerUrl('https://player.nutrinacion.com/', { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'educator', idioma: 'es', escena: 'origen' }))
+      .toBe('https://player.nutrinacion.com/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=educator&lang=es&escena=origen')
+    expect(runnerUrl('http://localhost:3001', { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'home' }))
+      .toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=home')
+  })
+
+  it('el ensayo del educador es un modo, como el dispositivo: ?mode=rehearsal', () => {
+    expect(runnerUrl('http://localhost:3001', { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'rehearsal', idioma: 'es' }))
+      .toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=rehearsal&lang=es')
+    expect(parseRunnerEvent(runnerMessage({ tipo: 'listo', storyboard: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'rehearsal', idioma: 'es', escenas: 9 })))
+      .toMatchObject({ tipo: 'listo', modo: 'rehearsal' })
   })
 })

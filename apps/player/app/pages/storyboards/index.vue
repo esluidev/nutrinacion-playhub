@@ -26,7 +26,7 @@
       :page-size="0"
       empty-text="Ningún storyboard coincide con la búsqueda o los filtros."
       clickable
-      @row-click="(r) => navigateTo(`/storyboards/${r.tipo}/${r.id}`)"
+      @row-click="(r) => navigateTo(`/storyboards/${r.clave}`)"
     >
       <template #cell-storyboard="{ row }">
         <div class="flex items-center gap-3">

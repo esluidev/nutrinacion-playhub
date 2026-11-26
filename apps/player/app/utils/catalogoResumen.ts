@@ -138,6 +138,25 @@ export function tonoGuia(escritas: number, total: number): 'lime' | 'sun' | 'neu
   return escritas > 0 ? 'sun' : 'neutral'
 }
 
+/** La subcategoría y los enfoques de salud de un storyboard, en palabras (los mismos que en Admin). */
+const NOMBRES_SUBCATEGORIA: Record<string, string> = {
+  NUTRIENTES: 'Nutrientes', HIDRATACION: 'Hidratación', CRECIMIENTO: 'Crecimiento', ENERGIA: 'Energía', DIGESTION: 'Digestión',
+  PREVENCION: 'Prevención', PROCESADOS: 'Procesados', TEMPORADA: 'Temporada', FUERZA: 'Fuerza', COORDINACION: 'Coordinación',
+  HIGIENE: 'Higiene', RUTINAS: 'Rutinas', PIEL: 'Piel', DESCANSO: 'Descanso', ACEPTACION: 'Aceptación', CREENCIAS: 'Creencias',
+  MEDICINA: 'Medicina', HABITOS: 'Hábitos',
+}
+const NOMBRES_ENFOQUE: Record<string, string> = {
+  DIABETES: 'Diabetes', OBESIDAD: 'Obesidad', DESNUTRICION: 'Desnutrición', ANEMIA: 'Anemia', CELIAQUIA: 'Celiaquía',
+  ALERGIAS: 'Alergias', HIPERTENSION: 'Hipertensión', CARIES: 'Caries', SEDENTARISMO: 'Sedentarismo', ASMA: 'Asma',
+  PIE_DIABETICO: 'Pie diabético', INFECCIONES: 'Infecciones', AUTOESTIMA: 'Autoestima',
+}
+export const nombreSubcategoria = (codigo: string) => NOMBRES_SUBCATEGORIA[codigo] ?? codigo
+export const nombreEnfoque = (codigo: string) => NOMBRES_ENFOQUE[codigo] ?? codigo
+
+/** El nombre de una plantilla del runner como se lee en la gestión: «historia» → «Historia», «senalar» → «Señalar». */
+const NOMBRES_PLANTILLA: Record<string, string> = { senalar: 'Señalar' }
+export const nombrePlantilla = (plantilla: string) => NOMBRES_PLANTILLA[plantilla] ?? plantilla.charAt(0).toUpperCase() + plantilla.slice(1)
+
 const NOMBRES_IDIOMA: Record<string, string> = { es: 'Español', en: 'English' }
 export const nombreIdioma = (codigo: string) => NOMBRES_IDIOMA[codigo] ?? codigo.toUpperCase()
 

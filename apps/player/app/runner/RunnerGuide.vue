@@ -1,7 +1,7 @@
 <template>
   <!-- La guía de la escena actual (modo educador), en cuatro pestañas. Los campos vacíos o
        «no requiere» no se muestran; Mecánica dice «Pendiente» hasta que la guía la llene. -->
-  <aside class="side-panel guide" data-side="end" :data-area="category" :aria-labelledby="`${uid}-title`">
+  <aside class="side-panel guide" :data-area="category" :aria-labelledby="`${uid}-title`">
     <div class="panel-head">
       <div>
         <p class="guide-meta">

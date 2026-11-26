@@ -41,11 +41,8 @@
     <header v-if="mode !== 'preview'" class="player-bar" :aria-label="txt('workshopBar')" :inert="Boolean(overlay)">
       <div class="bar-start">
         <!-- En un dispositivo, quién es: un animal que no sobrevive a la sesión (o, desde la app del hogar, el perfil
-             del niño) y su «Listo». -->
-        <template v-if="mode === 'device'">
-          <PerfilPieza v-if="me" :avatar="me.avatar" :nombre="me.nombre" :tono="me.tono" />
-          <span v-if="activeState.ready" class="badge ready-badge" data-tone="lime"><UiIcon name="check" />{{ txt('ready') }}</span>
-        </template>
+             del niño). Sin «Listo» al completar la escena (Luis, 2026-11-26). -->
+        <PerfilPieza v-if="mode === 'device' && me" :avatar="me.avatar" :nombre="me.nombre" :tono="me.tono" />
         <!-- En casa, dónde va el storyboard y quién juega: la pieza del avance del educador, sin desplegable (el niño va
              escena a escena con Anterior y Siguiente), con el avatar del niño en el sitio de la claqueta, sin apodo
              (Luis, 2026-11-20: «el avatar da contexto del niño y siempre se mantiene el progreso»). El avatar, con la
@@ -82,6 +79,8 @@
           <UiIcon name="chevron-down" class="scene-card-chevron" aria-hidden="true" />
         </button>
       </div>
+      <!-- En un dispositivo no hay consigna: la dice el educador y está en su pantalla principal (Luis, 2026-11-26); ni nada
+           narrado. El pie queda en su suelo y el tablero gana el alto. -->
       <div class="bar-end">
         <!-- En un dispositivo, lo suyo en el mismo bloque: Pantalla completa (donde el navegador la permite) y Salir,
              que lo saca solo a él del taller. -->
@@ -96,9 +95,12 @@
             :title="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
             @click="toggleFullscreen"
           />
-          <UiButton tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" :disabled="session.left || session.removed" @click="askLeave" />
+          <!-- Sin pantalla completa (iPhone), Salir va solo, con su nombre y del ancho de los dos, como la pieza del perfil -->
+          <UiButton tone="neutral" icon="exit" :icon-only="canFullscreen" class="exit-button" :label="txt('exit')" :title="txt('exit')" :disabled="session.left || session.removed" @click="askLeave">{{ canFullscreen ? undefined : txt('exitShort') }}</UiButton>
         </div>
-        <!-- Lo del taller en un solo bloque: Ajustes, Reiniciar la escena y Salir (su icono en coral). -->
+        <!-- Lo del taller en un solo bloque: Ajustes, Reiniciar la escena y Salir (su icono en coral). En el taller en vivo,
+             Dispositivos en el sitio de Salir, que pasa a Ajustes (Luis, 2026-11-26: el panel quedaba escondido en Ajustes y
+             costaba llegar a él). En el ensayo y en casa no hay dispositivos: Salir se queda. -->
         <div v-if="mode !== 'device'" class="hud-group hud-tools" role="group" :aria-label="txt('tools')">
           <UiButton
             tone="neutral"
@@ -110,8 +112,74 @@
             :title="txt('settings')"
             @click="setRail(!railOpen)"
           />
-          <UiButton tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="askRestart" />
-          <UiButton tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" @click="askExit" />
+          <!-- Reiniciar la escena; en el taller en vivo, en Ajustes (Luis, 2026-11-26), y aquí pausar o liberar los dispositivos -->
+          <UiButton v-if="!withDevices" tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="askRestart" />
+          <!-- Pausar o liberar los dispositivos de una vez, junto a Dispositivos (Luis, 2026-11-26): cada escena que no es
+               la primera ni la última empieza con ellos en pausa, y aquí se liberan cuando el educador ya explicó. Un
+               candado, cerrado con ellos en pausa y abierto sin ella; sin color (Luis, 2026-11-26: ni el botón ni el
+               icono cambian de color). -->
+          <UiButton
+            v-if="withDevices"
+            tone="neutral"
+            :icon="dispositivosEnPausa ? 'lock' : 'lock-open'"
+            icon-only
+            class="devices-pause"
+            :aria-pressed="dispositivosEnPausa"
+            :label="dispositivosEnPausa ? txt('freeDevices') : txt('pauseDevices')"
+            :title="dispositivosEnPausa ? txt('freeDevices') : txt('pauseDevices')"
+            @click="pauseAllDevices"
+          />
+          <UiButton
+            v-if="withDevices"
+            tone="neutral"
+            icon="devices"
+            icon-only
+            class="devices-button"
+            :aria-expanded="devicesOpen"
+            :label="solicitudes.length ? txt('requestsCount', { n: solicitudes.length }) : txt('devicesCount', { n: deviceViews.length })"
+            :title="txt('devices')"
+            @click="setDevices(!devicesOpen)"
+          />
+          <UiButton v-else tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" @click="askExit" />
+        </div>
+        <!-- El número de Dispositivos (Luis, 2026-11-26): en cielo, con las esquinas redondeadas, con su origen arriba a la
+             derecha de su icono y creciendo a la derecha, así que cabe un 100. Quienes piden entrar, si los hay (lo que
+             hay que atender, aunque el panel esté cerrado); si no, los conectados. Hasta 99; más, «99+» (el número exacto,
+             en el nombre del botón y en el panel). Fuera del bloque, que recorta lo de dentro. -->
+        <span
+          v-if="withDevices && (solicitudes.length || deviceViews.length)"
+          class="devices-count"
+          data-tone="sky"
+          aria-hidden="true"
+        >{{ cifraCorta(solicitudes.length || deviceViews.length) }}</span>
+        <!-- Riel de ajustes: cuelga del engranaje, dentro de la barra para quedar siempre bajo él aunque el bloque crezca
+             (el número de Dispositivos con muchas solicitudes). En el educador, la pausa, el sonido y la pantalla y, en el taller en vivo,
+             Reiniciar la escena junto a la pausa y Salir al final (sus sitios en la barra son del candado y de
+             Dispositivos); en casa, lo que usa el niño: el sonido y la pantalla. -->
+        <div v-if="railOpen" class="quick-rail" role="toolbar" aria-orientation="vertical" :aria-label="txt('settings')">
+          <UiButton v-if="mode === 'educator'" tone="neutral" icon="pause" icon-only :label="txt('pause')" :title="txt('pauseKey')" @click="fromRail(() => setPause('manual', true))" />
+          <!-- En el taller en vivo, Reiniciar la escena va aquí, junto a la pausa (su sitio en la barra es del candado) -->
+          <UiButton v-if="withDevices" tone="neutral" icon="retry" icon-only :label="txt('restartScene')" :title="txt('restartScene')" @click="fromRail(askRestart)" />
+          <UiButton
+            tone="neutral"
+            :icon="muted ? 'muted' : 'sound'"
+            icon-only
+            :aria-pressed="muted"
+            :label="muted ? txt('unmute') : txt('mute')"
+            :title="muted ? txt('unmute') : txt('mute')"
+            @click="toggleMute"
+          />
+          <UiButton
+            v-if="canFullscreen"
+            tone="neutral"
+            :icon="fullscreen ? 'compress' : 'expand'"
+            icon-only
+            :aria-pressed="fullscreen"
+            :label="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
+            :title="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
+            @click="toggleFullscreen"
+          />
+          <UiButton v-if="withDevices" tone="neutral" icon="exit" icon-only class="exit-button" :label="txt('exit')" :title="txt('exit')" @click="fromRail(askExit)" />
         </div>
       </div>
     </header>
@@ -194,45 +262,6 @@
         </div>
       </div>
 
-      <!-- Riel de ajustes: cuelga del engranaje. En el educador, la pausa, el sonido, la pantalla y los dispositivos;
-           en casa, lo que usa el niño: el sonido y la pantalla. -->
-      <div v-if="railOpen" class="quick-rail" role="toolbar" aria-orientation="vertical" :aria-label="txt('settings')">
-        <UiButton v-if="mode === 'educator'" tone="neutral" icon="pause" icon-only :label="txt('pause')" :title="txt('pauseKey')" @click="fromRail(() => setPause('manual', true))" />
-        <UiButton
-          tone="neutral"
-          :icon="muted ? 'muted' : 'sound'"
-          icon-only
-          :aria-pressed="muted"
-          :label="muted ? txt('unmute') : txt('mute')"
-          :title="muted ? txt('unmute') : txt('mute')"
-          @click="toggleMute"
-        />
-        <UiButton
-          v-if="canFullscreen"
-          tone="neutral"
-          :icon="fullscreen ? 'compress' : 'expand'"
-          icon-only
-          :aria-pressed="fullscreen"
-          :label="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
-          :title="fullscreen ? txt('exitFullscreen') : txt('fullscreen')"
-          @click="toggleFullscreen"
-        />
-        <UiButton
-          v-if="mode === 'educator'"
-          tone="neutral"
-          icon="devices"
-          icon-only
-          class="rail-button-count"
-          :aria-expanded="devicesOpen"
-          :label="solicitudes.length ? txt('requestsCount', { n: solicitudes.length }) : txt('devicesCount', { n: deviceViews.length })"
-          :title="txt('devices')"
-          @click="setDevices(!devicesOpen)"
-        >
-          <!-- Quien pide entrar se ve aquí aunque el panel esté cerrado: en sol, ahora. -->
-          <span v-if="solicitudes.length" class="ui-dot" data-tone="sun">{{ solicitudes.length }}</span>
-          <span v-else-if="deviceViews.length" class="ui-dot" data-tone="sky">{{ deviceViews.length }}</span>
-        </UiButton>
-      </div>
 
       <RunnerDevices
         v-if="devicesOpen"
@@ -242,9 +271,12 @@
         :conexion="conexionVista"
         :solicitudes="solicitudes"
         :sin-aprobar="sinAprobar"
+        :todos-en-pausa="dispositivosEnPausa"
         @close="setDevices(false)"
         @select="(id) => selectedDevice = id"
         @pause="pauseDevice"
+        @pause-all="pauseAllDevices"
+        @restart-all="askRestartAllDevices"
         @restart="restartDevice"
         @remove="askRemoveDevice"
         @aprobar="aprobar"
@@ -260,14 +292,14 @@
       <div class="footer-start">
         <!-- Al cerrar la última escena, su cierre (la invitación de la Despedida) ocupa el lugar de la consigna: su título y,
              debajo, su texto, con su voz; no sube hoja. -->
-        <div v-if="mode !== 'preview' && closing" class="consigna is-closing">
+        <div v-if="mode !== 'preview' && mode !== 'device' && closing" class="consigna is-closing">
           <UiButton tone="sky" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen(closing.voice)" />
           <p class="consigna-text consigna-cierre" aria-live="polite">
             <strong>{{ closing.title }}</strong>
             <span v-if="closing.body">{{ closing.body }}</span>
           </p>
         </div>
-        <div v-else-if="mode !== 'preview' && hasInstruction" class="consigna">
+        <div v-else-if="mode !== 'preview' && mode !== 'device' && hasInstruction" class="consigna">
           <UiButton tone="sky" class="listen-button" icon="sound" icon-only :label="txt('listenInstruction')" :title="txt('listen')" @click="listen(introOf(active))" />
           <p class="consigna-text" aria-live="polite">{{ text(active.json.meta.instruction) }}</p>
         </div>
@@ -290,7 +322,8 @@
             <p v-if="message?.body" class="sheet-text">{{ message.body }}</p>
           </div>
           <div class="feedback-actions">
-            <UiButton :tone="look.tone" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen(message?.voice ?? [])" />
+            <!-- Escuchar, en todos los modos menos el dispositivo: ahí no suena nada narrado -->
+            <UiButton v-if="mode !== 'device'" :tone="look.tone" class="listen-button" icon="sound" icon-only :label="txt('listen')" :title="txt('listen')" @click="listen(message?.voice ?? [])" />
             <UiButton :tone="look.tone" icon="close" icon-only :label="txt('closeEsc')" :title="txt('closeEsc')" @click="closeFeedback()" />
           </div>
         </div>
@@ -332,17 +365,17 @@
     </footer>
 
     <!-- Ventana sobre todo el marco: la pausa del educador y, en un dispositivo, los estados de la sesión. -->
-    <div v-if="overlay" class="scene-overlay">
+    <div v-if="overlay && !overlay.rotate" class="scene-overlay">
       <section class="panel-window" :aria-labelledby="`${uid}-overlay`">
         <div class="panel-head">
           <span class="ui-symbol window-symbol" :data-tone="overlay.tone" aria-hidden="true"><UiIcon :name="overlay.icon" /></span>
           <div class="window-titles">
-            <p class="panel-caption">{{ overlay.caption }}</p>
+            <p v-if="overlay.caption" class="panel-caption">{{ overlay.caption }}</p>
             <h2 :id="`${uid}-overlay`" class="ui-heading">{{ overlay.title }}</h2>
           </div>
           <UiButton v-if="overlay.action" tone="neutral" size="sm" icon="close" icon-only :label="txt('continue')" @click="resume" />
         </div>
-        <p class="window-text">{{ overlay.text }}</p>
+        <p v-if="overlay.text" class="window-text">{{ overlay.text }}</p>
         <div v-if="overlay.action" class="window-actions">
           <UiButton ref="overlayAction" icon="play" @click="resume">{{ txt('continue') }}</UiButton>
         </div>
@@ -351,6 +384,15 @@
         </div>
       </section>
     </div>
+
+    <!-- Teléfono en vertical: una pantalla entera, fuera del marco (a la medida del teléfono, sin su zoom) -->
+    <Teleport to="body">
+      <div v-if="overlay?.rotate" class="rotate-screen" data-density="touch" :data-area="storyboard.category" role="dialog" aria-modal="true" :aria-label="overlay.title">
+        <span class="rotate-phone" data-tone="sky" aria-hidden="true"><UiIcon name="smartphone" /></span>
+        <h2 class="rotate-title">{{ overlay.title }}</h2>
+        <UiButton v-if="overlay.cta" :icon="overlay.cta.icon" @click="overlay.cta.run">{{ overlay.cta.label }}</UiButton>
+      </div>
+    </Teleport>
 
     <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
 
@@ -400,7 +442,7 @@ import type { Avatar, TonoAvatar } from './avatares'
 import { canalDemostracion } from './conexion/demo'
 import { RITMO, leerMensaje } from './conexion/mensajes'
 import type { CanalSesion, MensajeSesion } from './conexion/mensajes'
-import { origenParaUnirse, participanteGuardado } from './conexion/participante'
+import { estanAhora, olvidarParticipante, origenParaUnirse, participanteGuardado } from './conexion/participante'
 import { urlsDelRunner } from './urlsDeLasApps'
 import RunnerDevices from './RunnerDevices.vue'
 import type { DeviceView } from './RunnerDevices.vue'
@@ -425,6 +467,9 @@ const props = defineProps<{
   /** La conexión del taller (tarea 013): el código y, en la pantalla del educador, la llave. Sin ella, la sesión es
    *  la de demostración, entre pestañas del mismo navegador. */
   conexion?: { codigo: string, llave?: string } | null
+  /** `?mode=rehearsal`, el ensayo del educador (Educators, «Ensayar»): la consola del educador y la guía, sin
+   *  dispositivos ni sesión, y con su propia memoria, que no se mezcla con la del taller de verdad. */
+  rehearsal?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -470,12 +515,11 @@ interface SceneState {
   celebrated: boolean
   /** Su cierre, si la plantilla lo dio (`closing`): sustituye a la consigna en el pie. */
   closing: { title: string, body?: string, voice: Voz } | null
-  ready: boolean
   message: Message | null
 }
 
 const states = reactive<SceneState[]>(scenes.map(() => ({
-  visited: false, warm: false, generation: 0, fraction: 0, completed: false, celebrated: false, closing: null, ready: false, message: null,
+  visited: false, warm: false, generation: 0, fraction: 0, completed: false, celebrated: false, closing: null, message: null,
 })))
 
 // ── Lo que recuerda el aparato (memory.ts): recargar la página no devuelve el taller al principio. Guarda en qué
@@ -492,7 +536,7 @@ function storeFor(mode: RunnerMode): MemoryStore | null {
   return null
 }
 const memoryStore = storeFor(props.mode)
-const memory = memoryKey(props.storyboard.json.key, props.mode, props.mode === 'home' ? `${player.avatar}-${player.apodo}` : undefined)
+const memory = memoryKey(props.storyboard.json.key, props.rehearsal ? 'rehearsal' : props.mode, props.mode === 'home' ? `${player.avatar}-${player.apodo}` : undefined)
 const remembered = readMemory(memoryStore, memory)
 for (const folder of remembered?.done ?? []) {
   const i = scenes.findIndex(scene => scene.folder === folder)
@@ -594,6 +638,12 @@ const confirmOpen = ref(false)
 
 // Lo que sabe el dispositivo del taller: solo las órdenes de la sesión.
 const session = reactive({ open: false, closed: false, removed: false, left: false, scene: null as string | null, paused: false, held: false })
+// Un número en poco sitio (el botón de Dispositivos): hasta 99; más, «99+».
+const cifraCorta = (n: number) => (n > 99 ? '99+' : String(n))
+// El taller en vivo tiene dispositivos (su panel, en la barra); el ensayo y casa, no.
+const withDevices = computed(() => props.mode === 'educator' && !props.rehearsal)
+// Educador: los dispositivos en pausa desde su panel, sin detener su pantalla (`pauseAllDevices`).
+const dispositivosEnPausa = ref(false)
 const finished = ref(false)
 
 const blocked = computed(() => {
@@ -619,8 +669,11 @@ interface OverlayLook {
   icon: UiIconName
   tone: UiTone
   title: string
-  caption: string
-  text: string
+  /** De qué escena o taller se trata; en el dispositivo, nada: lo usa un niño (Luis, 2026-11-26). */
+  caption?: string
+  text?: string
+  /** El teléfono en vertical: una pantalla entera para girarlo, no una ventana (`rotate-screen`). */
+  rotate?: boolean
   /** La pausa del educador: cerrar y «Continuar». */
   action?: boolean
   /** Otra acción de la ventana (entrar en pantalla completa, volver a entrar al taller). */
@@ -642,27 +695,34 @@ onUnmounted(() => portraitQuery?.removeEventListener('change', onPortrait))
 
 const overlay = computed<OverlayLook | null>(() => {
   if (finished.value || (props.mode === 'device' && session.closed && !session.removed)) {
-    return { icon: 'check', tone: 'lime', title: txt('closedTitle'), caption: workshopCaption(), text: txt('closedText') }
+    // En un dispositivo, las ventanas son un icono y un título: sin texto, que un niño que no lee no necesita (Luis,
+    // 2026-11-26), ni siquiera en la demostración.
+    return props.mode === 'device'
+      ? { icon: 'check', tone: 'lime', title: txt('closedTitle') }
+      : { icon: 'check', tone: 'lime', title: txt('closedTitle'), caption: workshopCaption(), text: txt('closedText') }
   }
   if (props.mode === 'device') {
-    if (session.removed) return { icon: 'devices', tone: 'sky', title: txt('removedTitle'), caption: workshopCaption(), text: txt(props.conexion ? 'removedTextLive' : 'removedText') }
+    // Quitado o fuera del taller. Con la conexión del taller no hay ventana: va a la página inicial (`cerrarDelTodo`) y,
+    // mientras llega, el tablero se queda quieto. En la demostración, la ventana.
+    if (session.removed) return props.conexion ? null : { icon: 'devices', tone: 'sky', title: txt('removedTitle') }
     if (session.left) {
-      return { icon: 'exit', tone: 'sky', title: txt('leftTitle'), caption: workshopCaption(), text: txt('leftText'), cta: { label: txt('rejoin'), icon: 'play', run: rejoin } }
+      return props.conexion ? null : { icon: 'exit', tone: 'sky', title: txt('leftTitle'), cta: { label: txt('rejoin'), icon: 'play', run: rejoin } }
     }
-    // El tablero es horizontal (una sola composición): en un teléfono en vertical se pide girarlo. Donde el navegador
-    // permite pantalla completa, la ventana ofrece entrar en ella, que además lo deja en horizontal.
+    // El tablero es horizontal (una sola composición): en un teléfono en vertical se pide girarlo, con una pantalla
+    // entera pensada para un niño: el teléfono que gira, «Gira el teléfono» y, donde el navegador permite pantalla
+    // completa, «Jugar», que entra en ella y la deja en horizontal (Luis, 2026-11-26: la ventana con su texto y su botón
+    // enorme no servía para niños).
     if (phonePortrait.value) {
       return {
+        rotate: true,
         icon: 'smartphone',
         tone: 'sky',
         title: txt('rotateTitle'),
-        caption: workshopCaption(),
-        text: txt('rotateText'),
-        ...(canFullscreen.value ? { cta: { label: txt('playFullscreen'), icon: 'expand' as const, run: () => void toggleFullscreen() } } : {}),
+        ...(canFullscreen.value ? { cta: { label: txt('playFullscreen'), icon: 'play' as const, run: () => void toggleFullscreen() } } : {}),
       }
     }
-    if (!session.open) return { icon: 'devices', tone: 'sky', title: txt('waitingTitle'), caption: workshopCaption(), text: txt(props.conexion ? 'waitingTextLive' : 'waitingText') }
-    if (session.paused || session.held) return { icon: 'pause', tone: 'sky', title: txt('pausedTitle'), caption: sceneCaption(), text: txt('pausedDevice') }
+    if (!session.open) return { icon: 'devices', tone: 'sky', title: txt('waitingTitle') }
+    if (session.paused || session.held) return { icon: 'pause', tone: 'sky', title: txt('pausedTitle') }
     return null
   }
   if (manualPause.value && !guideOpen.value && !devicesOpen.value && !confirmOpen.value) {
@@ -692,7 +752,10 @@ const LOOKS: Record<FeedbackType, { tone: UiTone, icon: UiIconName }> = {
 const typeOf = (kind: FeedbackPayload['kind']): FeedbackType =>
   kind === 'success' || kind === 'complete' ? 'success' : kind === 'retry' ? 'retry' : 'info'
 
-const message = computed(() => (props.mode === 'device' && !session.open ? null : activeState.value.message))
+// En un dispositivo no sube hoja (Luis, 2026-11-26): el educador ya mostró el juego con su feedback en la pantalla
+// principal, sin voz un texto no le sirve a quien no sabe leer y en un teléfono tapa el tablero. Ahí la respuesta es la del
+// juego: su sonido (el acierto con su racha, el «otra vez»), las piezas, el personaje y las chispas al completarlo.
+const message = computed(() => (props.mode === 'device' ? null : activeState.value.message))
 // Al cerrarse, la hoja baja con el tono que tenía.
 const lastType = ref<FeedbackType>('success')
 watch(() => message.value?.type, (type) => { if (type) lastType.value = type })
@@ -760,7 +823,6 @@ function onComplete(i: number) {
   }
   state.completed = true
   state.fraction = 1
-  if (props.mode === 'device') state.ready = true // local: nadie se entera
   publish()
   remember()
 }
@@ -815,7 +877,14 @@ function narrateIntro(index: number) {
   })
 }
 
+// En el taller en vivo, cada escena que no es la primera ni la última empieza con los dispositivos en pausa (Luis,
+// 2026-11-26: si no, los niños juegan sin esperar la explicación): primero explica el educador y después los libera,
+// con el botón junto a Dispositivos o con «Liberar a Todos». La Bienvenida y la Despedida, libres. Solo al cambiar de
+// escena (también al abrir el taller en una del medio): volver a mostrar la misma no vuelve a pausarlos.
+let shownScene = -1
 function show(index: number, focus: boolean) {
+  if (withDevices.value && index !== shownScene) dispositivosEnPausa.value = index !== 0 && index !== scenes.length - 1
+  shownScene = index
   cancelNarration()
   // Pasar a otra escena no suena. La racha de aciertos empieza de nuevo.
   streak = 0
@@ -855,8 +924,9 @@ function next() {
   }
   if (props.mode === 'preview') return // en la vista previa no hay taller que terminar
   confirm({
+    // El título, el verbo; la pregunta, en el texto (Luis, 2026-11-26).
     title: txt('finishTitle'),
-    text: props.mode === 'home' ? txt('finishHome') : txt('closesEverywhere'),
+    text: props.rehearsal ? txt('finishRehearsalText') : props.mode === 'home' ? txt('finishHome') : txt('finishText'),
     label: txt('finish'),
     symbol: 'check',
     tone: 'lime',
@@ -870,7 +940,7 @@ function restartScene(i: number) {
   streak = 0 // la racha de aciertos empieza de nuevo
   // Su hoja se va con ella y, si se estaba oyendo, deja de sonar.
   if (i === current.value) cancelNarration()
-  Object.assign(states[i]!, { message: null, closing: null, completed: false, celebrated: false, ready: false, fraction: 0 })
+  Object.assign(states[i]!, { message: null, closing: null, completed: false, celebrated: false, fraction: 0 })
   states[i]!.generation += 1
   remember()
   // Se monta de nuevo: vuelve a mostrarse cuando está completa.
@@ -904,7 +974,7 @@ function terminar() {
 function askExit() {
   confirm({
     title: txt('exitTitle'),
-    text: props.mode === 'educator' ? txt('closesEverywhere') : txt('exitHome'),
+    text: props.rehearsal ? txt('exitRehearsalText') : props.mode === 'educator' ? txt('exitText') : txt('exitHome'),
     label: txt('exitAction'),
     symbol: 'exit',
     tone: 'coral',
@@ -1021,16 +1091,26 @@ function toggleMute() {
 
 // Pantalla completa solo donde el navegador la permite (no en iPhone) y siempre tras un toque: ningún navegador deja
 // entrar sola a una página. Al entrar, el aparato se queda en horizontal donde se puede fijar (Android); al salir de
-// pantalla completa, se suelta solo.
+// pantalla completa, se suelta solo. El estado se lee al montar, no solo al cambiar: si el marco se monta con la página ya
+// en pantalla completa (llega desde otra página, o se vuelve a montar), el botón lo sabe (Luis, 2026-11-26). Con los
+// nombres con prefijo de algunos navegadores de móvil. Una app instalada que ya abre a pantalla completa no lo ofrece: se
+// reconoce porque está en `display-mode: fullscreen` sin estar en la pantalla completa de la página (Chrome en Android
+// también marca ese modo cuando la página entra en pantalla completa: por sí solo escondía el botón).
+type DocumentoConPrefijo = Document & { webkitFullscreenElement?: Element | null, webkitFullscreenEnabled?: boolean, webkitExitFullscreen?: () => Promise<void> }
+type RaizConPrefijo = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }
+const doc = () => document as DocumentoConPrefijo
+const elementoEnPantallaCompleta = () => document.fullscreenElement ?? doc().webkitFullscreenElement ?? null
+const appEnPantallaCompleta = () => matchMedia('(display-mode: fullscreen)').matches && !elementoEnPantallaCompleta()
 const canFullscreen = ref(false)
 const fullscreen = ref(false)
 async function toggleFullscreen() {
   try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen()
+    if (elementoEnPantallaCompleta()) {
+      await (document.exitFullscreen ? document.exitFullscreen() : doc().webkitExitFullscreen?.())
       return
     }
-    await document.documentElement.requestFullscreen()
+    const raiz = document.documentElement as RaizConPrefijo
+    await (raiz.requestFullscreen ? raiz.requestFullscreen() : raiz.webkitRequestFullscreen?.())
     const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> }
     await orientation.lock?.('landscape').catch(() => {})
   }
@@ -1038,7 +1118,7 @@ async function toggleFullscreen() {
     announce(txt('fullscreenUnsupported'))
   }
 }
-const onFullscreen = () => { fullscreen.value = Boolean(document.fullscreenElement) }
+const onFullscreen = () => { fullscreen.value = Boolean(elementoEnPantallaCompleta()) }
 
 function listen(voz: Voz) {
   void narrate(narrationContext, voz)
@@ -1062,6 +1142,7 @@ function publish() {
     tipo: 'estado',
     escena: active.value.folder,
     pausa: manualPause.value,
+    pausaDispositivos: dispositivosEnPausa.value,
     reinicios: Object.fromEntries(scenes.map((s, i) => [s.folder, states[i]!.generation])),
   })
 }
@@ -1071,7 +1152,7 @@ interface Device { id: string, nombre: string, tono: DeviceView['tono'], avatar?
 // Seis dispositivos de prueba, uno por avatar: siguen la sesión y obedecen aquí mismo, para probar el panel sin
 // abrir pestañas. Una pestaña con ?mode=device se suma de verdad y va primero en la lista. Con la conexión del taller
 // no hay dispositivos de prueba: solo los que entraron.
-const devices = reactive(new Map<string, Device>(props.mode === 'educator' && !props.conexion
+const devices = reactive(new Map<string, Device>(props.mode === 'educator' && !props.conexion && !props.rehearsal
   ? AVATARES.map((a, i) => [`prueba-${i + 1}`, { id: `prueba-${i + 1}`, nombre: a.nombre, tono: a.tono, avatar: a.clave, prueba: true, pausado: false }])
   : []))
 const selectedDevice = ref<string | null>(null)
@@ -1083,10 +1164,11 @@ const deviceViews = computed<DeviceView[]>(() => [...devices.values()]
   .map((device) => {
     const at = sceneOfDevice(device)
     const where = scenes[at]
-    const status = device.note || (device.pausado
+    const pausado = device.pausado || dispositivosEnPausa.value
+    const status = device.note || (pausado
       ? txt('devicePaused')
       : where ? txt('deviceAt', { n: at + 1, name: where.title }) : txt('deviceWaiting'))
-    return { id: device.id, nombre: nombres.value.get(device.id) ?? device.nombre, tono: device.tono, avatar: device.avatar, pausado: device.pausado, status }
+    return { id: device.id, nombre: nombres.value.get(device.id) ?? device.nombre, tono: device.tono, avatar: device.avatar, pausado, status }
   }))
 
 let noteTimer: ReturnType<typeof setTimeout> | undefined
@@ -1100,9 +1182,39 @@ const order = (device: Device, accion: 'pausa' | 'libera' | 'reinicio' | 'quitar
   if (!device.prueba) post({ tipo: 'orden', id: device.id, accion })
 }
 
+// Pausar solo los dispositivos, desde su panel (Luis, 2026-11-26): la pausa de Ajustes detiene el taller entero, también
+// la pantalla del educador; esta, solo los teléfonos, para que miren y escuchen mientras el educador sigue. Va en el
+// estado que reciben todos (`dispositivosEnPausa`, junto a la sesión), así que también queda en pausa quien entra
+// después. Liberar a todos libera también a los pausados uno por uno.
+function pauseAllDevices() {
+  dispositivosEnPausa.value = !dispositivosEnPausa.value
+  if (!dispositivosEnPausa.value) {
+    devices.forEach((device) => {
+      if (!device.pausado) return
+      device.pausado = false
+      order(device, 'libera')
+    })
+  }
+  publish()
+}
+
+// Reiniciar la escena solo en los dispositivos, desde su panel (Luis, 2026-11-26), como «Pausar a Todos»: el Reiniciar
+// de la barra la reinicia también en la pantalla del educador. A cada conectado, la misma orden que a uno; pide
+// confirmación, como aquel.
+function askRestartAllDevices() {
+  confirm({
+    title: txt('restartAllTitle'),
+    text: txt('restartAllText'),
+    label: txt('restart'),
+    symbol: 'retry',
+    tone: 'sun',
+    action: () => devices.forEach(device => order(device, 'reinicio')),
+  })
+}
+
 function pauseDevice() {
   const device = selectedDevice.value ? devices.get(selectedDevice.value) : undefined
-  if (!device) return
+  if (!device || dispositivosEnPausa.value) return
   device.pausado = !device.pausado
   order(device, device.pausado ? 'pausa' : 'libera')
   noteDevice(device, device.pausado ? txt('devicePaused') : txt('deviceFreed'))
@@ -1120,22 +1232,25 @@ function askRemoveDevice() {
   const device = selectedDevice.value ? devices.get(selectedDevice.value) : undefined
   if (!device) return
   confirm({
-    title: txt('removeTitle', { name: device.nombre }),
-    text: txt('removeText'),
+    title: txt('removeTitle'),
+    text: txt('removeText', { name: device.nombre }),
     label: txt('remove'),
     symbol: 'close',
     tone: 'coral',
-    caption: txt('devices'),
     action: () => {
-      order(device, 'quitar')
       devices.delete(device.id)
       selectedDevice.value = null
-      if (conexionApi) void conexionApi.rechazar(device.id).then(refrescarSolicitudes).catch(() => {})
+      // Primero en la base y después la orden: el dispositivo va a su página para unirse y lee ahí que lo quitaron.
+      if (!conexionApi) return order(device, 'quitar')
+      void conexionApi.rechazar(device.id).catch(() => {}).finally(() => {
+        order(device, 'quitar')
+        void refrescarSolicitudes()
+      })
     },
   })
 }
 
-// Dispositivo: quién es. Con la conexión del taller, el avatar y el apodo que eligió al unirse (/unirse), con el
+// Dispositivo: quién es. Con la conexión del taller, el avatar y el apodo que eligió al unirse (/workshop/join), con el
 // identificador de ese dispositivo para esa conexión. En la demostración, uno de los animales al azar para esta pestaña.
 type Identity = { id: string, nombre: string, tono: TonoAvatar, avatar: Avatar }
 function deviceIdentity(): Identity | null {
@@ -1160,18 +1275,28 @@ function presence() {
   if (!me.value) return
   post({ tipo: 'presencia', ...me.value, escena: session.open ? active.value.folder : null, pausado: session.held })
 }
+// La señal de cada pocos segundos. Mientras no le haya llegado la escena, también vuelve a saludar: si algo se perdió,
+// el educador la manda otra vez y nadie se queda esperando.
+function latido() {
+  if (!session.open && !session.closed && !session.removed && !session.left) post({ tipo: 'hola' })
+  presence()
+}
 
+// Los reinicios del educador que este dispositivo ya vio, por escena. Aparte de su propio contador (`generation`, que
+// también sube cuando lo reinicia una orden): antes se comparaban los dos, y tras reiniciar a uno (o a todos, desde el
+// panel) el siguiente estado lo volvía a reiniciar y le borraba lo jugado; y un reinicio del educador que coincidiera con
+// ese contador no llegaba (2026-11-26). El primer estado solo anota: la escena acaba de montarse.
+const restartsSeen = new Map<string, number>()
 function applyState(state: Extract<SessionMessage, { tipo: 'estado' }>) {
   if (session.removed) return
   session.closed = false
   session.open = true
-  session.paused = state.pausa
+  session.paused = state.pausa || Boolean(state.pausaDispositivos)
   scenes.forEach((scene, i) => {
     const generation = state.reinicios?.[scene.folder] ?? 0
-    if (generation !== states[i]!.generation) {
-      restartScene(i)
-      states[i]!.generation = generation
-    }
+    const seen = restartsSeen.get(scene.folder)
+    restartsSeen.set(scene.folder, generation)
+    if (seen !== undefined && generation !== seen) restartScene(i)
   })
   const index = scenes.findIndex(s => s.folder === state.escena)
   if (index >= 0 && (index !== current.value || !session.scene)) {
@@ -1183,11 +1308,14 @@ function applyState(state: Extract<SessionMessage, { tipo: 'estado' }>) {
 let presenceTimer: ReturnType<typeof setInterval> | undefined
 
 // Salir, en un dispositivo: lo saca solo a él (se despide y deja de dar señales); el taller sigue. Dentro de una app (la
-// del hogar), la app sabe adónde volver (`salir`); abierto por el enlace, queda la ventana para volver a entrar.
+// del hogar), la app sabe adónde volver (`salir`); con la conexión del taller, a la página del código; en la
+// demostración, queda la ventana para volver a entrar.
 function askLeave() {
   confirm({
     title: txt('leaveTitle'),
+    // Al niño, el verbo y la pregunta, sin de qué taller se trata.
     text: txt('leaveText'),
+    caption: '',
     label: txt('exitAction'),
     symbol: 'exit',
     tone: 'coral',
@@ -1199,14 +1327,24 @@ function leaveWorkshop() {
   clearInterval(presenceTimer)
   if (me.value) post({ tipo: 'adios', id: me.value.id })
   Object.assign(session, { left: true, open: false, held: false })
-  if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
+  if (elementoEnPantallaCompleta()) void (document.exitFullscreen ? document.exitFullscreen() : doc().webkitExitFullscreen?.())?.catch(() => {})
   if (props.embedded) emit('exit', current.value, active.value.folder)
+  else cerrarDelTodo()
+}
+// Con la conexión del taller, salir o ser quitado cierra la sesión del todo (Luis, 2026-11-26): el dispositivo lo olvida
+// y va a la página inicial, `/workshop/join`, sin una ventana ni una página para volver a entrar. Si escribe el código
+// otra vez, elige avatar y nombre y lo solicita como la primera vez.
+function cerrarDelTodo() {
+  if (!props.conexion) return
+  olvidarParticipante(props.conexion.codigo)
+  if (elementoEnPantallaCompleta()) void (document.exitFullscreen ? document.exitFullscreen() : doc().webkitExitFullscreen?.())?.catch(() => {})
+  void navigateTo('/workshop/join', { replace: true })
 }
 function rejoin() {
   session.left = false
   post({ tipo: 'hola' })
   presence()
-  presenceTimer = setInterval(presence, ritmo.value.senal)
+  presenceTimer = setInterval(latido, ritmo.value.senal)
 }
 // Al irse, el dispositivo se despide. Se quita al desmontar: con el canal ya cerrado, despedirse falla.
 const sayGoodbye = () => { if (!session.removed && me.value) post({ tipo: 'adios', id: me.value.id }) }
@@ -1218,6 +1356,7 @@ function obey(accion: Extract<SessionMessage, { tipo: 'orden' }>['accion']) {
     Object.assign(session, { removed: true, open: false, held: false })
     clearInterval(presenceTimer)
     if (me.value) post({ tipo: 'adios', id: me.value.id })
+    cerrarDelTodo()
     return
   }
   presence()
@@ -1242,6 +1381,8 @@ function onSessionMessage({ data: recibido }: { data: unknown }) {
     else if (data.tipo === 'adios') {
       if (devices.delete(data.id)) anotarPresencia(data.id, false)
       if (selectedDevice.value === data.id) selectedDevice.value = null
+      // Quien esperaba y se fue de su página retiró su solicitud: la lista, al día.
+      if (solicitudes.value.some(s => s.id === data.id)) pedirSolicitudes()
     }
   }
   else if (props.mode === 'device') {
@@ -1249,9 +1390,11 @@ function onSessionMessage({ data: recibido }: { data: unknown }) {
     if (session.left) return
     if (data.tipo === 'estado') applyState(data)
     else if (data.tipo === 'orden' && data.id === me.value?.id) obey(data.accion)
+    // El taller terminó. Con la conexión del taller, la sesión se cierra del todo y va a la página inicial (Luis,
+    // 2026-11-26: las pantallas se quedaban congeladas en «El taller terminó»); en la demostración, la ventana.
     else if (data.tipo === 'cierre' && !session.removed) {
-      session.open = false
-      session.closed = true
+      if (props.conexion) cerrarDelTodo()
+      else Object.assign(session, { open: false, closed: true })
     }
   }
 }
@@ -1277,7 +1420,7 @@ async function refrescarSolicitudes() {
   try {
     const lista = await conexionApi.participantes()
     const avatar = (a: string) => (AVATARES.some(x => x.clave === a) ? a as Avatar : 'zorro')
-    nombres.value = nombresSinRepetir(lista.map(p => ({ id: p.dispositivo, nombre: nombreVisible(p.apodo, avatar(p.avatar)) })))
+    nombres.value = nombresSinRepetir(estanAhora(lista, devices).map(p => ({ id: p.dispositivo, nombre: nombreVisible(p.apodo, avatar(p.avatar)) })))
     aprobados.clear()
     lista.filter(p => p.estado === 'aprobado').forEach(p => aprobados.add(p.dispositivo))
     solicitudes.value = lista.filter(p => p.estado === 'esperando').map(p => ({
@@ -1292,6 +1435,15 @@ async function refrescarSolicitudes() {
   }
   catch { /* sin red: se vuelve a pedir con la próxima señal */ }
 }
+
+// Mientras alguien espera, la lista se vuelve a pedir cada 15 s: así sale la solicitud de un dispositivo que se fue sin
+// avisar (la base deja de contarla a los 45 s sin señal), aunque nadie más mande nada.
+let relecturaSolicitudes: ReturnType<typeof setInterval> | undefined
+watch(() => solicitudes.value.length > 0, (hay) => {
+  clearInterval(relecturaSolicitudes)
+  if (hay) relecturaSolicitudes = setInterval(() => void refrescarSolicitudes(), 15_000)
+})
+onBeforeUnmount(() => clearInterval(relecturaSolicitudes))
 
 // Muchas solicitudes seguidas (una por dispositivo cada pocos segundos) piden la lista una sola vez.
 let pedidoSolicitudes: ReturnType<typeof setTimeout> | undefined
@@ -1361,17 +1513,20 @@ watch(() => props.conexion, async (c) => {
 const conexionVista = computed(() => {
   if (!props.conexion || !import.meta.client) return null
   const base = origenParaUnirse(urlPlayer.value, window.location, ipEnLaRed)
-  return { codigo: props.conexion.codigo, enlace: `${base}/unirse/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/unirse` }
+  return { codigo: props.conexion.codigo, enlace: `${base}/workshop/join/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/workshop/join` }
 })
 
+// Dispositivo con la conexión del taller: si sigue aprobado y el taller abierto (abrirSesion).
+let comprobarSesion: (() => Promise<boolean>) | null = null
+
 // Abre la sesión: la conexión del taller si la hay (la del educador llega de la app después de «listo»), o la
-// demostración. Volver a abrirla (otra llave al recargar la app) cierra la anterior.
+// demostración. Volver a abrirla (otra llave al recargar la app) cierra la anterior. Un ensayo (`rehearsal`) no tiene sesión.
 async function abrirSesion() {
   channel?.close()
   channel = null
   conexionApi = null
   clearInterval(anotador)
-  if (props.mode === 'preview') return
+  if (props.mode === 'preview' || props.rehearsal) return
   if (props.conexion) {
     const realtime = await import('./conexion/realtime')
     if (unmounted) return
@@ -1383,13 +1538,21 @@ async function abrirSesion() {
       void refrescarSolicitudes()
     }
     if (props.mode === 'device') {
-      // Solo entra quien el educador aprobó: si no (o se recargó tras quitarlo), vuelve a la página para unirse.
-      const estado = me.value ? await realtime.conexionDelDispositivo(props.conexion.codigo).estado(me.value.id).catch(() => 'aprobado') : null
-      if (estado === null) Object.assign(session, { closed: true, open: false })
-      else if (estado !== 'aprobado') {
-        void navigateTo(`/unirse/${props.conexion.codigo}`, { replace: true })
-        return
+      // Solo sigue quien el educador aprobó: si todavía espera, a la página para unirse; si el taller terminó, o lo
+      // quitaron o lo rechazaron sin que se enterara (sin red), la sesión se cierra del todo, como al recibir el aviso.
+      // Se pregunta al abrir y cada vez que vuelve a escuchar tras perder la red (`alConectar`): un cierre perdido no
+      // deja la pantalla congelada. Sin respuesta de la base, sigue.
+      const api = realtime.conexionDelDispositivo(props.conexion.codigo)
+      const codigo = props.conexion.codigo
+      comprobarSesion = async () => {
+        if (!me.value || session.left || session.removed) return false
+        const estado = await api.estado(me.value.id).catch(() => 'aprobado' as const)
+        if (unmounted || estado === 'aprobado') return !unmounted
+        if (estado === 'esperando') void navigateTo(`/workshop/join/${codigo}`, { replace: true })
+        else cerrarDelTodo()
+        return false
       }
+      if (!(await comprobarSesion())) return
     }
   }
   else channel = canalDemostracion()
@@ -1399,6 +1562,17 @@ async function abrirSesion() {
   if (props.mode === 'device' && me.value) {
     post({ tipo: 'hola' })
     presence()
+  }
+  // Por la conexión del taller, el «hola» de arriba sale antes de que el dispositivo escuche: la respuesta del educador
+  // (la escena) se perdía y se quedaba en «Esperando al educador» aunque estaba aprobado (Luis, 2026-11-26). Lo repite
+  // cuando ya escucha, y cada vez que vuelve a escuchar tras perder la red. El educador, al volver, manda la escena.
+  channel.alConectar = () => {
+    if (props.mode === 'educator') publish()
+    else if (props.mode === 'device' && me.value && !session.left && !session.removed) {
+      post({ tipo: 'hola' })
+      presence()
+      void comprobarSesion?.()
+    }
   }
 }
 watch(() => `${props.conexion?.codigo ?? ''}|${props.conexion?.llave ?? ''}`, () => void abrirSesion())
@@ -1453,6 +1627,7 @@ const probe = ref<HTMLElement | null>(null)
 const { compact } = useFrameFit(frame, probe, () => instances.get(current.value)?.fit?.(), {
   sinBarra: props.mode === 'preview',
   sinPie: props.mode === 'preview',
+  pieSinControles: props.mode === 'device',
 })
 
 // En iOS un botón solo muestra su estado pulsado si la página escucha los toques: con esto responde al instante.
@@ -1522,10 +1697,12 @@ onMounted(() => {
   document.addEventListener('keydown', onKey)
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('fullscreenchange', onFullscreen)
+  document.addEventListener('webkitfullscreenchange', onFullscreen)
   document.addEventListener('visibilitychange', onVisibility)
   document.addEventListener('visibilitychange', onWake)
   document.addEventListener('touchstart', onTouchStart, { passive: true })
-  canFullscreen.value = Boolean(document.fullscreenEnabled)
+  canFullscreen.value = Boolean(document.fullscreenEnabled || doc().webkitFullscreenEnabled) && !appEnPantallaCompleta()
+  onFullscreen()
   void keepAwake()
 
   if (props.mode === 'educator') {
@@ -1546,10 +1723,10 @@ onMounted(() => {
     me.value = deviceIdentity()
     // Con la conexión del taller y sin haber elegido avatar en este dispositivo: a la página para unirse.
     if (!me.value && props.conexion) {
-      void navigateTo(`/unirse/${props.conexion.codigo}`, { replace: true })
+      void navigateTo(`/workshop/join/${props.conexion.codigo}`, { replace: true })
       return
     }
-    presenceTimer = setInterval(presence, ritmo.value.senal)
+    presenceTimer = setInterval(latido, ritmo.value.senal)
     window.addEventListener('pagehide', sayGoodbye)
   }
   // La vista previa no es un taller: no abre la sesión con los dispositivos.
@@ -1569,6 +1746,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('click', onPress, true)
   document.removeEventListener('fullscreenchange', onFullscreen)
+  document.removeEventListener('webkitfullscreenchange', onFullscreen)
   document.removeEventListener('visibilitychange', onVisibility)
   window.removeEventListener('pagehide', sayGoodbye)
   clearInterval(sweeper)

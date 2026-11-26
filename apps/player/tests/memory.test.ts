@@ -64,7 +64,7 @@ describe('memoria del taller', () => {
   })
 
   it('la dirección lleva la escena actual y conserva lo demás', () => {
-    const url = urlWithScene('http://localhost:3001/play/alimentacion/el-huevo?mode=home&escena=origen', 'despedida')
+    const url = urlWithScene('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=home&escena=origen', 'despedida')
     expect(new URL(url).searchParams.get('escena')).toBe('despedida')
     expect(new URL(url).searchParams.get('mode')).toBe('home')
   })

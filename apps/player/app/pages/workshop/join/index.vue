@@ -1,6 +1,6 @@
 <template>
   <!-- Unirse a un taller escribiendo el código (tarea 013): para quien no puede leer el QR. Sin
-       cuenta ni nada que instalar. Con un código válido, sigue en /unirse/<código>. -->
+       cuenta ni nada que instalar. Con un código válido, sigue en /workshop/join/<código>. -->
   <main class="unirse" data-density="touch">
     <form class="ui-panel ui-panel-body unirse-caja space-y-6" novalidate @submit.prevent="buscar">
       <header>
@@ -9,22 +9,21 @@
       </header>
       <UiInput
         id="codigo"
-        v-model="texto"
+        v-model="escrito"
         :label="txt('joinCodeLabel')"
-        :hint="txt('joinCodeHint')"
         :error="error"
         size="lg"
-        placeholder="K7M 2QX"
+        placeholder="K7M-2QX"
         autocomplete="off"
         class="unirse-codigo"
       />
-      <UiButton type="submit" size="lg" block icon="arrow-right">{{ txt('joinSearch') }}</UiButton>
+      <UiButton type="submit" size="lg" block>{{ txt('joinSearch') }}</UiButton>
     </form>
   </main>
 </template>
 
 <script setup lang="ts">
-import { codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
+import { codigoAlEscribir, codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
 import { useRunnerText } from '~/runner/i18n'
 
 definePageMeta({ layout: false })
@@ -34,6 +33,11 @@ const idioma = import.meta.client && navigator.language?.toLowerCase().startsWit
 const txt = useRunnerText(() => idioma)
 const texto = ref('')
 const error = ref('')
+// Mientras se escribe: mayúsculas y el guion en su sitio («K7M-2QX»), como se ve en la pantalla del educador.
+const escrito = computed({
+  get: () => texto.value,
+  set: (v: string) => { texto.value = codigoAlEscribir(v) },
+})
 
 function buscar() {
   const codigo = normalizarCodigo(texto.value)
@@ -41,7 +45,7 @@ function buscar() {
     error.value = txt('joinBadCode')
     return
   }
-  navigateTo(`/unirse/${codigo}`)
+  navigateTo(`/workshop/join/${codigo}`)
 }
 
 useHead({ title: computed(() => `${txt('joinTitle')} · PlayHub`) })

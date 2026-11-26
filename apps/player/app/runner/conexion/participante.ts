@@ -1,6 +1,9 @@
 // Quien se une a un taller desde su dispositivo (tarea 013): el código que escribe o trae el QR, y lo
 // que el dispositivo recuerda de esa conexión para volver como el mismo al recargar (su identificador
-// al azar, su avatar y su apodo). Se guarda por código: en otro taller es otro participante.
+// al azar, su avatar y su apodo). Se guarda por código (en otro taller es otro participante) y por pestaña
+// (`sessionStorage`): recargar, o que el navegador descarte la pestaña y la reabra, lo deja donde estaba;
+// cerrarla y volver a escanear el QR, o salir del taller, empieza de cero (Luis, 2026-11-26: al volver a
+// escanear entraba directo, con el mismo avatar y nombre).
 
 import { esLocal, urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import { esAvatar, limpiarApodo } from '../avatares'
@@ -18,9 +21,18 @@ export function codigoValido(codigo: string): boolean {
   return CODIGO.test(codigo)
 }
 
-/** El código para leerlo en voz alta o en la pantalla: «K7M 2QX». */
+/**
+ * El código para leerlo en voz alta o en la pantalla: «K7M-2QX». Con guion y no con espacio (Luis, 2026-11-26): un
+ * espacio hace dudar si hay que escribirlo. Al escribirlo da igual: `normalizarCodigo` quita guiones y espacios.
+ */
 export function codigoLegible(codigo: string): string {
-  return codigo.length === 6 ? `${codigo.slice(0, 3)} ${codigo.slice(3)}` : codigo
+  return codigo.length === 6 ? `${codigo.slice(0, 3)}-${codigo.slice(3)}` : codigo
+}
+
+/** Lo que se ve mientras se escribe el código: en mayúsculas, solo letras y números, y el guion tras los tres primeros. */
+export function codigoAlEscribir(texto: string): string {
+  const codigo = normalizarCodigo(texto).slice(0, 6)
+  return codigo.length > 3 ? `${codigo.slice(0, 3)}-${codigo.slice(3)}` : codigo
 }
 
 /** La dirección de Player para el QR: la de la base (`configuraciones.player_url`) o, si todavía no se leyó, la de la
@@ -58,12 +70,36 @@ export function guardarParticipante(codigo: string, p: Participante, almacen: Pi
   catch { /* sin almacenamiento: no podrá volver como el mismo */ }
 }
 
-/** Un identificador nuevo al azar para este dispositivo en esta conexión. */
-export function dispositivoNuevo(): string {
-  return crypto.randomUUID()
+/**
+ * Un identificador nuevo al azar para este dispositivo en esta conexión (un UUID v4, como pide la base).
+ * `crypto.randomUUID` solo existe en una página segura (https o localhost): en la red local el teléfono abre
+ * http://192.168…, y ahí se arma con `crypto.getRandomValues`, que sí existe.
+ */
+export function dispositivoNuevo(azar: Pick<Crypto, 'getRandomValues'> & Partial<Pick<Crypto, 'randomUUID'>> = crypto): string {
+  if (typeof azar.randomUUID === 'function') return azar.randomUUID()
+  const b = azar.getRandomValues(new Uint8Array(16))
+  b[6] = (b[6]! & 0x0F) | 0x40 // versión 4
+  b[8] = (b[8]! & 0x3F) | 0x80 // variante RFC 4122
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
+
+/**
+ * Para numerar los nombres repetidos («Lila 2»), solo cuentan los que están ahora: los que esperan (la base ya no da las
+ * solicitudes sin señal) y los aprobados conectados. Un quitado, un rechazado o un aprobado que se fue no ocupa un nombre
+ * (Luis, 2026-11-26: tras quitar a Lila y volver a pedirlo, salía «Lila 3» con una sola Lila).
+ */
+export function estanAhora<T extends { dispositivo: string, estado: string, conectado: boolean }>(lista: T[], presentes: { has: (id: string) => boolean }): T[] {
+  return lista.filter(p => p.estado === 'esperando' || (p.estado === 'aprobado' && (p.conectado || presentes.has(p.dispositivo))))
+}
+
+/** Sale del taller: el dispositivo lo olvida y, si vuelve, elige avatar y nombre y lo solicita de nuevo. */
+export function olvidarParticipante(codigo: string, almacen: Pick<Storage, 'removeItem'> | null = guardado()) {
+  try { almacen?.removeItem(clave(codigo)) }
+  catch { /* sin almacenamiento */ }
 }
 
 function guardado(): Storage | null {
-  try { return typeof window === 'undefined' ? null : window.localStorage }
+  try { return typeof window === 'undefined' ? null : window.sessionStorage }
   catch { return null }
 }

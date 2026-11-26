@@ -1,15 +1,18 @@
 <template>
   <!-- Unirse a un taller (tarea 013): el QR de la pantalla del educador abre esta página con su
-       código. Sin cuenta ni nada que instalar: se elige un avatar, se escribe un apodo (opcional; sin
-       él, el nombre del avatar) y se pide entrar. Se espera a que el educador lo apruebe y, aprobado,
-       se abre el taller en modo dispositivo. El dispositivo recuerda su avatar, su apodo y su
-       identificador para esta conexión: al recargar vuelve como el mismo. -->
+       código. Sin cuenta ni nada que instalar: se elige un avatar, se escribe un nombre (opcional; sin
+       él, el del avatar; en pantalla siempre «nombre», nunca «apodo») y se solicita el acceso. Se espera a que el educador lo apruebe y, aprobado,
+       se abre el taller en modo dispositivo. La pestaña recuerda su avatar, su apodo y su
+       identificador para esta conexión: al recargar vuelve como el mismo; en otra pestaña (cerrar y volver a
+       escanear) o tras salir del taller, empieza de cero. Si el educador lo rechaza (o lo quita) o el taller
+       termina, la sesión se cierra del todo: el dispositivo lo olvida y vuelve a la página inicial, /workshop/join (Luis,
+       2026-11-26: nada de una página para volver a entrar). -->
   <main class="unirse" data-density="touch">
     <div v-if="fase === 'cargando'" class="grid place-items-center"><UiSpinner /></div>
 
     <div v-else-if="fase === 'sin-taller'" class="ui-panel ui-panel-body unirse-caja">
       <UiEmptyState icon="search" :title="txt('joinNotFoundTitle')" :text="aviso || txt('joinNotFound')">
-        <UiButton to="/unirse" icon="pencil">{{ txt('joinOtherCode') }}</UiButton>
+        <UiButton to="/workshop/join" icon="pencil">{{ txt('joinOtherCode') }}</UiButton>
       </UiEmptyState>
     </div>
 
@@ -41,36 +44,28 @@
         id="apodo"
         v-model="apodo"
         :label="txt('joinNickname')"
-        :hint="txt('joinNicknameHint', { name: nombreVisible(null, avatar) })"
         :placeholder="nombreVisible(null, avatar)"
         autocomplete="off"
       />
       <UiAlert v-if="aviso" tone="coral">{{ aviso }}</UiAlert>
-      <UiButton type="submit" size="lg" block icon="arrow-right" :loading="enviando">{{ txt('joinAsk') }}</UiButton>
+      <!-- Con la solicitud ya hecha (volvió para cambiar su avatar o su nombre), guardar los cambios: sigue esperando -->
+      <UiButton type="submit" size="lg" block :loading="enviando">{{ enEspera ? txt('joinSave') : txt('joinAsk') }}</UiButton>
     </form>
 
     <div v-else class="ui-panel ui-panel-body unirse-caja space-y-6 text-center">
-      <span class="ui-symbol ui-symbol-lg unirse-circulo mx-auto" :data-tone="tonoDe(avatar)">
-        <img :src="dibujoDe(avatar)" alt="" decoding="sync">
-      </span>
+      <!-- Su avatar con su nombre debajo: así se reconoce si el educador pregunta quién es quién -->
+      <div class="flex flex-col items-center gap-2">
+        <span class="ui-symbol ui-symbol-lg unirse-circulo" :data-tone="tonoDe(avatar)">
+          <img :src="dibujoDe(avatar)" alt="" decoding="sync">
+        </span>
+        <p class="ui-title">{{ nombreVisible(apodo, avatar) }}</p>
+      </div>
       <template v-if="fase === 'esperando'">
         <div>
           <h1 class="ui-heading">{{ txt('joinWaitingTitle') }}</h1>
-          <p class="ui-text mt-2">{{ txt('joinWaitingText', { name: nombreVisible(apodo, avatar) }) }}</p>
         </div>
         <div class="flex justify-center"><UiSpinner /></div>
         <UiButton variant="outline" block icon="pencil" @click="fase = 'eligiendo'">{{ txt('joinChange') }}</UiButton>
-      </template>
-      <template v-else-if="fase === 'rechazado'">
-        <div>
-          <h1 class="ui-heading">{{ txt('joinRejectedTitle') }}</h1>
-          <p class="ui-text mt-2">{{ txt('joinRejectedText') }}</p>
-        </div>
-        <UiButton block icon="retry" @click="pedirDeNuevo">{{ txt('joinAskAgain') }}</UiButton>
-      </template>
-      <template v-else-if="fase === 'terminado'">
-        <h1 class="ui-heading">{{ txt('joinEnded') }}</h1>
-        <UiButton to="/unirse" variant="outline" block icon="pencil">{{ txt('joinOtherCode') }}</UiButton>
       </template>
     </div>
   </main>
@@ -81,13 +76,13 @@ import { AVATARES, dibujoDe, limpiarApodo, nombreVisible, tonoDe } from '~/runne
 import type { Avatar } from '~/runner/avatares'
 import { leerMensaje } from '~/runner/conexion/mensajes'
 import type { CanalSesion } from '~/runner/conexion/mensajes'
-import { codigoLegible, codigoValido, dispositivoNuevo, guardarParticipante, normalizarCodigo, participanteGuardado } from '~/runner/conexion/participante'
+import { codigoLegible, codigoValido, dispositivoNuevo, guardarParticipante, normalizarCodigo, olvidarParticipante, participanteGuardado } from '~/runner/conexion/participante'
 import type { TallerDeLaConexion } from '~/runner/conexion/realtime'
 import { useRunnerText } from '~/runner/i18n'
 
 definePageMeta({ layout: false })
 
-type Fase = 'cargando' | 'sin-taller' | 'eligiendo' | 'esperando' | 'rechazado' | 'terminado'
+type Fase = 'cargando' | 'sin-taller' | 'eligiendo' | 'esperando'
 
 const route = useRoute()
 const codigo = normalizarCodigo(String(route.params.codigo ?? ''))
@@ -111,8 +106,18 @@ let reintento: ReturnType<typeof setInterval> | undefined
 // Aprobado: al taller, en modo dispositivo, sin dejar esta página en el historial.
 function alTaller() {
   const t = taller.value!
+  alTallerYa = true
   detener()
-  navigateTo(`/play/${t.storyboard.eje}/${t.storyboard.slug}?mode=device&lang=${t.idioma}&conexion=${codigo}`, { replace: true })
+  navigateTo(`/play/${t.storyboard.clave}?mode=device&lang=${t.idioma}&conexion=${codigo}`, { replace: true })
+}
+
+// Rechazado (o quitado), o el taller terminó mientras esperaba: la sesión se cierra del todo. El dispositivo lo olvida y va a la página inicial; si escribe el
+// código otra vez, empieza de cero, como cualquiera.
+function cerrar() {
+  detener()
+  enEspera.value = false
+  olvidarParticipante(codigo)
+  navigateTo('/workshop/join', { replace: true })
 }
 
 function detener() {
@@ -121,18 +126,32 @@ function detener() {
   canal = null
 }
 
+// Si sale de la página mientras espera (vuelve atrás, «Escribir otro código»), retira su solicitud y se despide: el
+// educador no debe seguir viendo a alguien que ya no está. Si cierra el navegador, la base deja de contarla a los 45 s
+// sin señal. Recargar no la retira: vuelve y sigue esperando. Ir al taller ya aprobado no es irse.
+let alTallerYa = false
+// Tiene una solicitud en espera en la base: también mientras vuelve a elegir avatar o nombre.
+const enEspera = ref(false)
+function retirarse() {
+  if (alTallerYa || !enEspera.value || !dispositivo.value) return
+  enEspera.value = false
+  canal?.postMessage({ tipo: 'adios', id: dispositivo.value })
+  void api?.retirar(dispositivo.value).catch(() => {})
+}
+
 // Mientras espera: le avisa al educador cada poco (por si su pantalla se recargó), escucha si lo
-// aprueba o lo rechaza y, por si se perdió el aviso, pregunta a la base.
+// aprueba o lo rechaza y, por si se perdió el aviso, pregunta a la base (que es también su señal: sigue esperando).
 async function esperar() {
   fase.value = 'esperando'
+  enEspera.value = true
   const { abrirCanal } = await import('~/runner/conexion/realtime')
   canal ??= abrirCanal(codigo, 'dispositivo')
   canal.onmessage = ({ data }) => {
     const m = leerMensaje(data)
     if (!m) return
     if (m.tipo === 'aprobado' && m.ids.includes(dispositivo.value)) alTaller()
-    else if (m.tipo === 'rechazado' && m.id === dispositivo.value) { detener(); fase.value = 'rechazado' }
-    else if (m.tipo === 'cierre') { detener(); fase.value = 'terminado' }
+    else if (m.tipo === 'rechazado' && m.id === dispositivo.value) cerrar()
+    else if (m.tipo === 'cierre') cerrar()
   }
   const avisar = () => canal?.postMessage({ tipo: 'solicitud', id: dispositivo.value })
   avisar()
@@ -141,8 +160,8 @@ async function esperar() {
     avisar()
     const estado = await api!.estado(dispositivo.value).catch(() => undefined)
     if (estado === 'aprobado') alTaller()
-    else if (estado === 'rechazado' || estado === 'quitado') { detener(); fase.value = 'rechazado' }
-    else if (estado === null) { detener(); fase.value = 'terminado' }
+    else if (estado === 'rechazado' || estado === 'quitado') cerrar()
+    else if (estado === null) cerrar()
   }, 15_000)
 }
 
@@ -158,22 +177,16 @@ async function pedirEntrar() {
     const estado = await api.entrar(dispositivo.value, avatar.value, limpio)
     if (estado === 'aprobado') alTaller()
     else if (estado === 'esperando') await esperar()
-    else fase.value = 'rechazado'
+    else cerrar()
   }
   catch (e) {
     const codigoError = (e as { code?: string }).code
-    if (codigoError === 'P0002') fase.value = 'terminado'
+    if (codigoError === 'P0002') cerrar()
     else aviso.value = codigoError === '54000' ? txt('joinFull') : txt('joinError')
   }
   finally {
     enviando.value = false
   }
-}
-
-// Rechazado o quitado: vuelve a pedirlo como un dispositivo nuevo (el educador decide otra vez).
-async function pedirDeNuevo() {
-  dispositivo.value = dispositivoNuevo()
-  await pedirEntrar()
 }
 
 onMounted(async () => {
@@ -193,7 +206,13 @@ onMounted(async () => {
     const estado = dispositivo.value ? await api.estado(dispositivo.value) : null
     if (estado === 'aprobado') alTaller()
     else if (estado === 'esperando') await esperar()
-    else if (estado === 'rechazado' || estado === 'quitado') fase.value = 'rechazado'
+    // Lo rechazaron o lo quitaron sin que se enterara (sin red): olvidado, empieza de cero, como si escaneara por primera vez.
+    else if (estado === 'rechazado' || estado === 'quitado') {
+      olvidarParticipante(codigo)
+      dispositivo.value = ''
+      apodo.value = ''
+      fase.value = 'eligiendo'
+    }
     else fase.value = 'eligiendo'
   }
   catch {
@@ -202,7 +221,10 @@ onMounted(async () => {
   }
 })
 
-onBeforeUnmount(detener)
+onBeforeUnmount(() => {
+  retirarse()
+  detener()
+})
 
 useHead({ title: computed(() => `${taller.value?.titulo ?? txt('joinTitle')} · PlayHub`) })
 </script>

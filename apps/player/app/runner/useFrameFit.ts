@@ -8,22 +8,27 @@ import type { Ref } from 'vue'
 // del pie (--footer-h, con el aire --footer-gap sobre sus botones, donde va su borde de nubes). `sinBarra` y `sinPie` no
 // reservan su alto (la vista previa no tiene ninguno de los dos): la escena se encaja en lo que queda y el pie conserva
 // su alto para la hoja de feedback. Los demás modos tienen los dos, también el dispositivo, aunque no lleve nada abajo:
-// el pie es el suelo del escenario en todos (Luis, 2026-11-18).
+// el pie es el suelo del escenario en todos (Luis, 2026-11-18). `pieSinControles` (el dispositivo, que no lleva nada
+// abajo: su consigna va en la barra) deja el pie en su suelo de nubes, sin el alto de los controles (Luis, 2026-11-26:
+// en el teléfono el pie se llevaba el tablero). Ahí no sube la hoja del feedback (RunnerFrame, `message`).
 
 const FRAME = { width: 1280, height: 800 }
 const SCENE = { width: 1280, height: 600 }
 const UI_FLOOR = { tablet: 1, phone: 44 / 48, mouse: 40 / 48 }
 const UI_MIN_WIDTH = 720
-const EDGE = { phone: 12, large: 20 }
+const EDGE = { phone: 8, large: 20 }
 const PHONE_MAX = 600
 const GUTTER = 32
-// Controles del HUD (44, el mínimo táctil; 48 en teléfonos) más su base de 4.
+// Controles del HUD (44, el mínimo táctil) más su base de 4. En el teléfono, 40 (unos 37 reales): con 48 (44 reales) la
+// barra y el pie se llevaban más de un tercio del alto y el tablero quedaba pequeño (Luis, 2026-11-26).
 const DEPTH = 4
-const CONTROL = { large: 44, phone: 48 }
+const CONTROL = { large: 44, phone: 40 }
 // El aire del pie sobre sus botones: ahí va el borde de nubes de la banda y de la hoja del feedback.
-const GAP = { large: 28, phone: 20 }
+const GAP = { large: 28, phone: 16 }
+// En el teléfono, la hoja del feedback sube un poco más que el pie, sobre el borde del tablero: cabe su texto.
+const SHEET_EXTRA = { large: 0, phone: 14 }
 
-export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, { sinBarra = false, sinPie = false } = {}) {
+export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLElement | null>, onFit: () => void, { sinBarra = false, sinPie = false, pieSinControles = false } = {}) {
   const compact = ref(false)
   const phone = ref(false)
   let observer: ResizeObserver | null = null
@@ -55,7 +60,9 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     // Sin barra o sin pie, no ocupan nada; el pie conserva su alto para la hoja de feedback.
     const band = bands(edge, control, usePhone ? GAP.phone : GAP.large)
     const bar = sinBarra ? 0 : band.bar
-    const footer = sinPie ? 0 : band.footer
+    // El pie sin controles (el dispositivo): su suelo de nubes; en el teléfono, con medio control más, para que se
+    // parezca al de casa (Luis, 2026-11-26: «un poquito más grande»).
+    const footer = sinPie ? 0 : pieSinControles ? band.footer - (usePhone ? (control + DEPTH) / 2 : control + DEPTH) : band.footer
     const pad = (inset: number, margin: number) => Math.max(inset / scale - margin, 0)
     const padTop = pad(top, edge)
     const padBottom = pad(bottom, edge)
@@ -80,7 +87,8 @@ export function useFrameFit(frame: Ref<HTMLElement | null>, probe: Ref<HTMLEleme
     el.style.setProperty('--scene-top', px(spare))
     el.style.setProperty('--edge', px(edge))
     el.style.setProperty('--bar-h', px(bar))
-    el.style.setProperty('--footer-h', px(band.footer))
+    el.style.setProperty('--footer-h', px(pieSinControles ? footer : band.footer))
+    el.style.setProperty('--sheet-h', px(band.footer + (usePhone ? SHEET_EXTRA.phone : SHEET_EXTRA.large)))
     el.style.setProperty('--footer-gap', px(usePhone ? GAP.phone : GAP.large))
     compact.value = isCompact
     phone.value = usePhone

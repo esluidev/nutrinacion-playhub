@@ -1,5 +1,5 @@
 <template>
-  <!-- El QR para unirse al taller (tarea 013): lo escanea la cámara del teléfono y abre /unirse/<código>
+  <!-- El QR para unirse al taller (tarea 013): lo escanea la cámara del teléfono y abre /workshop/join/<código>
        en el navegador, sin instalar nada. Se dibuja en un lienzo con el color de la tinta sobre la
        superficie, para que se lea igual en claro y en oscuro. -->
   <canvas ref="lienzo" class="runner-qr" role="img" :aria-label="label" :style="{ width: `${size}px`, height: `${size}px` }" />

@@ -5,7 +5,7 @@
     <UiPageHeader :eyebrow="sb.title" :title="`${escena.orden} · ${tr(escena.titulo, 'es') || escena.carpeta}`" :description="`scenes/${escena.carpeta}/`">
       <template #actions>
         <UiButton variant="outline" icon="chevron-left" :to="rutaDetalle">Volver al storyboard</UiButton>
-        <UiButton variant="outline" icon="play" :to="`/play/${category}/${id}?mode=educator&escena=${escena.carpeta}`">Probar esta escena</UiButton>
+        <UiButton variant="outline" icon="play" :to="`/play/${clave}?mode=educator&escena=${escena.carpeta}`">Probar esta escena</UiButton>
       </template>
     </UiPageHeader>
 
@@ -73,15 +73,19 @@
 </template>
 
 <script setup lang="ts">
+import { storyboardPorClave } from '~/runner/content'
 import { tr } from '~/types/i18n'
 import { ETIQUETAS_GUIA, SECCIONES_GUIA, textoPorIdioma } from '~/utils/catalogoResumen'
 import type { SeccionGuia } from '~/utils/catalogoResumen'
 import type { Localized } from '~/types/i18n'
 
 const route = useRoute()
-const category = String(route.params.category)
-const id = String(route.params.id)
-const rutaDetalle = `/storyboards/${category}/${id}`
+const clave = String(route.params.clave)
+// La clave es la identidad del storyboard en la URL; la carpeta (eje y slug) solo localiza sus archivos.
+const entrada = storyboardPorClave(clave)
+const category = entrada?.folderCategory ?? ''
+const id = entrada?.json.slug ?? ''
+const rutaDetalle = `/storyboards/${clave}`
 const rutaGuia = `${rutaDetalle}/guia`
 
 const { getStoryboard } = useStoryboards()

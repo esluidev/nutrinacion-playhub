@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { limpiarApodo, nombreVisible, nombresSinRepetir, tonoDe } from '../app/runner/avatares'
 import { leerMensaje } from '../app/runner/conexion/mensajes'
-import { codigoLegible, codigoValido, guardarParticipante, normalizarCodigo, origenParaUnirse, participanteGuardado } from '../app/runner/conexion/participante'
+import { codigoAlEscribir, codigoLegible, codigoValido, dispositivoNuevo, estanAhora, guardarParticipante, normalizarCodigo, olvidarParticipante, origenParaUnirse, participanteGuardado } from '../app/runner/conexion/participante'
 
 describe('avatares', () => {
   it('sin apodo, se le llama por el nombre del avatar', () => {
@@ -28,7 +28,8 @@ describe('código para unirse', () => {
   it('se escribe como sea y se lee en su forma', () => {
     expect(normalizarCodigo('k7m 2qx')).toBe('K7M2QX')
     expect(normalizarCodigo('K7M·2QX')).toBe('K7M2QX')
-    expect(codigoLegible('K7M2QX')).toBe('K7M 2QX')
+    expect(codigoLegible('K7M2QX')).toBe('K7M-2QX')
+    expect(normalizarCodigo('k7m-2qx')).toBe('K7M2QX')
   })
   it('el QR lleva la dirección de Player de la base, que el teléfono puede abrir', () => {
     const local = { protocol: 'http:', hostname: 'localhost', origin: 'http://localhost:3001' }
@@ -51,16 +52,59 @@ describe('código para unirse', () => {
   })
 })
 
+describe('el código mientras se escribe', () => {
+  it('en mayúsculas, sin lo que no es letra o número, con el guion tras los tres primeros y no más de seis', () => {
+    expect(codigoAlEscribir('k7')).toBe('K7')
+    expect(codigoAlEscribir('k7m')).toBe('K7M')
+    expect(codigoAlEscribir('k7m2')).toBe('K7M-2')
+    expect(codigoAlEscribir('K7M 2QX')).toBe('K7M-2QX')
+    expect(codigoAlEscribir('K7M-2QXZ')).toBe('K7M-2QX')
+    // Al borrar el guion con lo que sigue, vuelve a los tres primeros
+    expect(codigoAlEscribir('K7M-')).toBe('K7M')
+  })
+})
+
+describe('el identificador del dispositivo', () => {
+  const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+
+  it('en la red local (http, sin randomUUID) también es un UUID v4, y cada vez otro', () => {
+    const sinRandomUUID = { getRandomValues: crypto.getRandomValues.bind(crypto) } as Pick<Crypto, 'getRandomValues'>
+    const a = dispositivoNuevo(sinRandomUUID)
+    expect(a).toMatch(UUID_V4)
+    expect(dispositivoNuevo(sinRandomUUID)).not.toBe(a)
+  })
+
+  it('en una página segura usa randomUUID', () => {
+    expect(dispositivoNuevo()).toMatch(UUID_V4)
+  })
+})
+
+describe('quiénes están ahora (para numerar los nombres)', () => {
+  const p = (dispositivo: string, estado: string, conectado = false) => ({ dispositivo, estado, conectado })
+  it('los que esperan y los aprobados conectados; no los quitados, rechazados ni los que se fueron', () => {
+    const lista = [p('a', 'quitado'), p('b', 'aprobado'), p('c', 'rechazado'), p('d', 'aprobado', true), p('e', 'esperando'), p('f', 'aprobado')]
+    expect(estanAhora(lista, new Set(['f'])).map(x => x.dispositivo)).toEqual(['d', 'e', 'f'])
+  })
+})
+
 describe('el participante que recuerda el dispositivo', () => {
   const almacen = () => {
     const m = new Map<string, string>()
-    return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
+    return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) }
   }
   it('por código: en otro taller es otro', () => {
     const a = almacen()
     guardarParticipante('K7M2QX', { dispositivo: 'd1', avatar: 'oso', apodo: 'Pedrito' }, a)
     expect(participanteGuardado('K7M2QX', a)).toEqual({ dispositivo: 'd1', avatar: 'oso', apodo: 'Pedrito' })
     expect(participanteGuardado('ABCDEF', a)).toBeNull()
+  })
+  it('al salir lo olvida: si vuelve, empieza de cero', () => {
+    const a = almacen()
+    guardarParticipante('K7M2QX', { dispositivo: 'd1', avatar: 'oso', apodo: 'Pedrito' }, a)
+    guardarParticipante('ABCDEF', { dispositivo: 'd2', avatar: 'gato', apodo: null }, a)
+    olvidarParticipante('K7M2QX', a)
+    expect(participanteGuardado('K7M2QX', a)).toBeNull()
+    expect(participanteGuardado('ABCDEF', a)).not.toBeNull()
   })
   it('lo dañado no cuenta', () => {
     const a = almacen()
@@ -75,6 +119,11 @@ describe('mensajes de la sesión', () => {
   it('lee los que tienen la forma esperada', () => {
     expect(leerMensaje({ tipo: 'estado', escena: 'origen', pausa: false, reinicios: { origen: 2, malo: -1 } }))
       .toEqual({ tipo: 'estado', escena: 'origen', pausa: false, reinicios: { origen: 2 } })
+    // La pausa solo de los dispositivos: si viene y es sí; cualquier otra cosa no pausa.
+    expect(leerMensaje({ tipo: 'estado', escena: 'origen', pausa: false, pausaDispositivos: true, reinicios: {} }))
+      .toEqual({ tipo: 'estado', escena: 'origen', pausa: false, pausaDispositivos: true, reinicios: {} })
+    expect(leerMensaje({ tipo: 'estado', escena: 'origen', pausa: false, pausaDispositivos: 'sí', reinicios: {} }))
+      .toEqual({ tipo: 'estado', escena: 'origen', pausa: false, reinicios: {} })
     expect(leerMensaje({ tipo: 'aprobado', ids: ['d1', 'd2'] })).toEqual({ tipo: 'aprobado', ids: ['d1', 'd2'] })
     expect(leerMensaje({ tipo: 'presencia', id: 'd1', nombre: 'Bruno', tono: 'sky', avatar: 'oso', escena: null, pausado: false }))
       .toMatchObject({ tipo: 'presencia', id: 'd1', avatar: 'oso' })

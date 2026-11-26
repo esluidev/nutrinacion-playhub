@@ -1,10 +1,15 @@
 <template>
   <!-- Quién está conectado y en qué escena, y qué puede hacer el educador con uno: pausarlo o
        liberarlo, reiniciar su escena o quitarlo. Nunca qué respondió ni si terminó. Con la conexión
-       del taller (tarea 013), arriba el QR y el código para unirse, y quién pide entrar para
-       aprobarlo o rechazarlo (o a todos; o dejar entrar sin aprobar, en una feria). Sin ella, la
-       demostración entre pestañas. -->
-  <aside class="side-panel" data-side="right" :aria-labelledby="`${uid}-title`">
+       del taller (tarea 013), el QR y el código para unirse, y quién pide entrar para aprobarlo o
+       rechazarlo (o a todos; o dejar entrar sin aprobar, en una feria). Sin ella, la demostración
+       entre pestañas. Ancho y en dos columnas (Luis, 2026-11-26: en 480 todo quedaba apretado): a la
+       izquierda, cómo unirse (el QR grande, para mostrarlo o proyectarlo, el código y la dirección) y
+       entrar sin aprobar; a la derecha, las personas: quién pide entrar, los conectados (cada avatar
+       con su nombre debajo), que se desplazan solas. En el pie del panel, los botones (Luis, 2026-11-26: un
+       enlace no parece un botón): sin elegido, los de todos, «Pausar a Todos», «Reiniciar a Todos» y «Aprobar a Todos»; con uno
+       elegido, quién es y los suyos (se vuelve a los de todos tocándolo otra vez). Estrecho, una columna. -->
+  <aside class="side-panel devices-panel" :aria-labelledby="`${uid}-title`">
     <div class="panel-head">
       <div>
         <p class="panel-caption">{{ txt(conexion ? 'devicesLive' : 'devicesCaption') }}</p>
@@ -13,86 +18,111 @@
       <UiButton tone="neutral" size="sm" icon="close" icon-only :label="txt('closeDevices')" @click="emit('close')" />
     </div>
 
-    <div class="panel-scroll devices-body">
-      <div v-if="conexion" class="join-box join-live">
-        <RunnerQr :value="conexion.enlace" :label="txt('joinQr')" :size="148" />
-        <div class="min-w-0">
+    <div class="devices-layout">
+      <!-- ── Cómo unirse ─────────────────────────────────────────────────── -->
+      <section class="devices-join" :aria-label="txt('joinCode')">
+        <div v-if="conexion" class="join-box join-live">
+          <RunnerQr :value="conexion.enlace" :label="txt('joinQr')" :size="176" />
           <p class="panel-label">{{ txt('joinCode') }}</p>
           <p class="join-code">{{ codigoLegible(conexion.codigo) }}</p>
           <p class="ui-caption">{{ txt('joinScan', { url: conexion.direccion }) }}</p>
         </div>
-      </div>
-      <div v-else class="join-box">
-        <p class="panel-label">{{ txt('joinCode') }}</p>
-        <p class="join-code">PH · 4821</p>
-        <p class="ui-caption">{{ txt('joinHint') }}</p>
-      </div>
-
-      <template v-if="conexion">
-        <!-- Quien pide entrar: se aprueba o se rechaza; en sol, porque espera ahora. -->
-        <div v-if="solicitudes.length" class="panel-row">
-          <p class="panel-label">{{ txt('requests') }} <span class="badge" data-tone="sun">{{ solicitudes.length }}</span></p>
-          <UiButton size="sm" icon="check" @click="emit('aprobar', null)">{{ txt('approveAll') }}</UiButton>
+        <div v-else class="join-box">
+          <p class="panel-label">{{ txt('joinCode') }}</p>
+          <p class="join-code">PH-4821</p>
+          <p class="ui-caption">{{ txt('joinHint') }}</p>
         </div>
-        <ul v-if="solicitudes.length" class="request-list" :aria-label="txt('requests')">
-          <li v-for="s in solicitudes" :key="s.id" class="request">
-            <span class="ui-symbol ui-symbol-sm request-avatar" :data-tone="s.tono">
-              <img :src="dibujoDe(s.avatar)" alt="" decoding="sync">
-            </span>
-            <p class="request-name">{{ s.nombre }}</p>
-            <UiButton tone="neutral" size="sm" icon="close" icon-only :label="`${txt('reject')} · ${s.nombre}`" @click="emit('rechazar', s.id)" />
-            <UiButton size="sm" icon="check" @click="emit('aprobar', s.id)">{{ txt('approve') }}</UiButton>
-          </li>
-        </ul>
-        <div class="open-entry">
+        <div v-if="conexion" class="open-entry">
           <UiSwitch :model-value="sinAprobar" :label="txt('openEntry')" @update:model-value="(v: boolean) => emit('sin-aprobar', v)" />
           <p class="ui-caption">{{ txt('openEntryHint') }}</p>
         </div>
-      </template>
+        <p class="device-hint ui-caption"><UiIcon name="info" />{{ txt('privacy') }}</p>
+      </section>
 
-      <div class="panel-row">
-        <p class="panel-label">{{ txt('connected') }}</p>
-        <span class="badge" data-tone="sky">{{ devices.length }}</span>
-      </div>
-      <ul class="device-list" :aria-label="txt('connectedDevices')">
-        <li v-for="device in devices" :key="device.id">
-          <button
-            type="button"
-            class="device-avatar"
-            :aria-pressed="device.id === selected"
-            :aria-label="device.pausado ? `${device.nombre}, ${txt('devicePaused').toLowerCase()}` : device.nombre"
-            :title="device.nombre"
-            @click="emit('select', device.id === selected ? null : device.id)"
-          >
-            <span class="ui-symbol" :data-tone="device.tono">
-              <img v-if="device.avatar" :src="librarySvg(`avatar-${device.avatar}`)" alt="" decoding="sync">
-              <UiIcon v-else name="user" />
-            </span>
-            <span v-if="device.pausado" class="ui-dot" data-tone="night"><UiIcon name="pause" /></span>
-          </button>
-        </li>
-      </ul>
-    </div>
-    <div class="device-card" :data-selected="Boolean(current)">
-      <div class="device-card-head">
-        <span class="ui-symbol ui-symbol-sm" :data-tone="current?.tono ?? 'neutral'">
-          <img v-if="current?.avatar" :src="librarySvg(`avatar-${current.avatar}`)" alt="" decoding="sync">
-          <UiIcon v-else name="user" />
-        </span>
-        <div>
-          <p class="device-card-name">{{ current?.nombre ?? txt('noDevice') }}</p>
-          <p class="ui-caption" aria-live="polite">{{ status }}</p>
+      <!-- ── Las personas ────────────────────────────────────────────────── -->
+      <section class="panel-scroll devices-people">
+        <!-- Quien pide entrar: se aprueba o se rechaza; en sol, porque espera ahora. -->
+        <template v-if="conexion && solicitudes.length">
+          <div class="panel-row">
+            <p class="panel-label">{{ txt('requests') }} <span class="badge" data-tone="sun">{{ solicitudes.length }}</span></p>
+          </div>
+          <ul class="request-list" :aria-label="txt('requests')">
+            <li v-for="s in solicitudes" :key="s.id" class="request">
+              <span class="ui-symbol request-avatar" :data-tone="s.tono">
+                <img :src="dibujoDe(s.avatar)" alt="" decoding="sync">
+              </span>
+              <p class="request-name">{{ s.nombre }}</p>
+              <UiButton tone="neutral" size="sm" icon="close" icon-only :label="`${txt('reject')} · ${s.nombre}`" :title="txt('reject')" @click="emit('rechazar', s.id)" />
+              <UiButton tone="neutral" size="sm" icon="check" icon-only :label="`${txt('approve')} · ${s.nombre}`" :title="txt('approve')" @click="emit('aprobar', s.id)" />
+            </li>
+          </ul>
+        </template>
+
+        <div class="panel-row">
+          <p class="panel-label">{{ txt('connected') }} <span class="badge" data-tone="sky">{{ devices.length }}</span></p>
         </div>
-      </div>
-      <div class="device-actions">
-        <UiButton tone="neutral" size="sm" :icon="current?.pausado ? 'play' : 'pause'" :disabled="!current" @click="emit('pause')">
-          {{ current?.pausado ? txt('freeDevice') : txt('pauseDevice') }}
-        </UiButton>
-        <UiButton tone="neutral" size="sm" icon="retry" :disabled="!current" @click="emit('restart')">{{ txt('restart') }}</UiButton>
-        <UiButton tone="coral" size="sm" icon="close" :disabled="!current" @click="emit('remove')">{{ txt('remove') }}</UiButton>
-      </div>
+        <ul v-if="devices.length" class="device-grid" :aria-label="txt('connectedDevices')">
+          <li v-for="device in devices" :key="device.id">
+            <button
+              type="button"
+              class="device-tile"
+              :aria-pressed="device.id === selected"
+              :aria-label="device.pausado ? `${device.nombre}, ${txt('devicePaused').toLowerCase()}` : device.nombre"
+              @click="emit('select', device.id === selected ? null : device.id)"
+            >
+              <span class="device-tile-avatar">
+                <span class="ui-symbol" :data-tone="device.tono">
+                  <img v-if="device.avatar" :src="librarySvg(`avatar-${device.avatar}`)" alt="" decoding="sync">
+                  <UiIcon v-else name="user" />
+                </span>
+                <!-- En pausa, el candado cerrado: el mismo de la barra y de los botones (Luis, 2026-11-26) -->
+                <span v-if="device.pausado" class="ui-dot" data-tone="night"><UiIcon name="lock" /></span>
+              </span>
+              <span class="device-tile-name">{{ device.nombre }}</span>
+            </button>
+          </li>
+        </ul>
+        <p v-else class="ui-caption mt-2">{{ txt('nobody') }}</p>
+
+      </section>
     </div>
-    <p class="device-hint ui-caption"><UiIcon name="info" />{{ txt('privacy') }}</p>
+
+    <!-- El pie del panel, con los botones (Luis, 2026-11-26). Con uno elegido, quién es, en qué escena va y lo que se hace
+         con él. Sin elegido, lo de todos: pausar o reiniciar la escena solo en los dispositivos (la pausa de Ajustes y el
+         Reiniciar de la barra alcanzan también la pantalla del educador) y aprobar a los que esperan, la acción
+         principal, en lima. -->
+    <div v-if="devices.length || (conexion && solicitudes.length)" class="devices-footer">
+      <template v-if="current">
+        <div class="device-card-head">
+          <span class="ui-symbol" :data-tone="current.tono">
+            <img v-if="current.avatar" :src="librarySvg(`avatar-${current.avatar}`)" alt="" decoding="sync">
+            <UiIcon v-else name="user" />
+          </span>
+          <div class="min-w-0">
+            <p class="device-card-name">{{ current.nombre }}</p>
+            <p class="ui-caption" aria-live="polite">{{ current.status }}</p>
+          </div>
+        </div>
+        <div class="device-actions">
+          <UiButton tone="neutral" size="sm" :icon="current.pausado ? 'lock' : 'lock-open'" :disabled="todosEnPausa" @click="emit('pause')">
+            {{ current.pausado ? txt('freeDevice') : txt('pauseDevice') }}
+          </UiButton>
+          <UiButton tone="neutral" size="sm" icon="retry" @click="emit('restart')">{{ txt('restart') }}</UiButton>
+          <UiButton tone="coral" size="sm" icon="close" @click="emit('remove')">{{ txt('remove') }}</UiButton>
+        </div>
+      </template>
+      <template v-else>
+        <p v-if="devices.length" class="ui-caption">{{ txt('tapOne') }}</p>
+        <div class="device-actions ml-auto">
+          <!-- El candado como en la barra: cerrado con ellos en pausa, abierto sin ella -->
+          <UiButton v-if="devices.length" tone="neutral" size="sm" :icon="todosEnPausa ? 'lock' : 'lock-open'" @click="emit('pause-all')">
+            {{ todosEnPausa ? txt('freeAll') : txt('pauseAll') }}
+          </UiButton>
+          <UiButton v-if="devices.length" tone="neutral" size="sm" icon="retry" @click="emit('restart-all')">{{ txt('restartAll') }}</UiButton>
+          <UiButton v-if="conexion && solicitudes.length" size="sm" icon="check" @click="emit('aprobar', null)">{{ txt('approveAll') }}</UiButton>
+        </div>
+      </template>
+    </div>
   </aside>
 </template>
 
@@ -122,16 +152,21 @@ const props = withDefaults(defineProps<{
   conexion?: { codigo: string, enlace: string, direccion: string } | null
   solicitudes?: { id: string, nombre: string, avatar: Avatar, tono: TonoAvatar }[]
   sinAprobar?: boolean
+  /** Todos los dispositivos en pausa, desde este panel: el de cada uno no se puede liberar solo. */
+  todosEnPausa?: boolean
 }>(), {
   conexion: null,
   solicitudes: () => [],
   sinAprobar: false,
+  todosEnPausa: false,
 })
 
 const emit = defineEmits<{
   'close': []
   'select': [id: string | null]
   'pause': []
+  'pause-all': []
+  'restart-all': []
   'restart': []
   'remove': []
   'aprobar': [id: string | null]
@@ -142,5 +177,4 @@ const emit = defineEmits<{
 const txt = useRunnerText(() => props.locale)
 const uid = useId()
 const current = computed(() => props.devices.find(d => d.id === props.selected) ?? null)
-const status = computed(() => current.value?.status ?? (props.devices.length ? txt('tapOne') : txt('nobody')))
 </script>

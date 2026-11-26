@@ -9,8 +9,10 @@ import type { TonoAvatar } from '../avatares'
 export type OrdenDispositivo = 'pausa' | 'libera' | 'reinicio' | 'quitar'
 
 export type MensajeSesion =
-  // Educador → dispositivos: la escena, la pausa y los reinicios de cada escena.
-  | { tipo: 'estado', escena: string, pausa: boolean, reinicios: Record<string, number> }
+  // Educador → dispositivos: la escena, la pausa y los reinicios de cada escena. `pausa` es la del taller (la pantalla
+  // del educador también se detiene); `pausaDispositivos`, solo la de los dispositivos, desde su panel (opcional: añadida
+  // el 2026-11-26).
+  | { tipo: 'estado', escena: string, pausa: boolean, pausaDispositivos?: boolean, reinicios: Record<string, number> }
   // Educador → un dispositivo.
   | { tipo: 'orden', id: string, accion: OrdenDispositivo }
   // Educador → los que esperaban: ya pueden entrar, o no.
@@ -41,7 +43,7 @@ export function leerMensaje(data: unknown): MensajeSesion | null {
       for (const [carpeta, n] of Object.entries(data.reinicios)) {
         if (esTexto(carpeta) && Number.isInteger(n) && (n as number) >= 0) reinicios[carpeta] = n as number
       }
-      return { tipo: 'estado', escena: data.escena, pausa: data.pausa, reinicios }
+      return { tipo: 'estado', escena: data.escena, pausa: data.pausa, ...(data.pausaDispositivos === true ? { pausaDispositivos: true } : {}), reinicios }
     }
     case 'orden':
       return esId(data.id) && ORDENES.includes(data.accion as OrdenDispositivo)
@@ -81,6 +83,11 @@ export interface CanalSesion {
   postMessage: (mensaje: MensajeSesion) => void
   onmessage: ((evento: { data: unknown }) => void) | null
   close: () => void
+  /**
+   * Ya escucha (y cada vez que vuelve a escuchar tras perder la red). Por la conexión del taller, suscribirse tarda: lo
+   * que llega antes se pierde. Entre pestañas escucha desde el principio y no se llama.
+   */
+  alConectar?: (() => void) | null
 }
 
 // Cada cuánto da señales un dispositivo y cuándo se le da por ido. Por la conexión del taller se

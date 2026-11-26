@@ -88,6 +88,9 @@
   .bar-start, .bar-end { @apply flex items-center gap-3; }
   .bar-start { @apply relative; }
   .bar-end { grid-column: 3; }
+  /* Dispositivo: sin consigna (la dice el educador) ni nada narrado; el pie queda en su suelo de nubes (useFrameFit,
+     pieSinControles). */
+  .player-frame[data-mode=device] .player-footer { padding: 0 var(--gutter); }
 
   /* La pieza blanca del HUD (el avance y, en un dispositivo, el participante): blanca y con su base (DESIGN.md,
      «Profundidad»), construida como el botón neutro del kit (el fondo es el borde y la cara blanca va dentro), así la
@@ -113,10 +116,21 @@
   /* Juego completado: la pieza da un salto corto mientras su barra crece (la barra anima su propio ancho). */
   .scene-card.is-advancing { animation: scene-advance 520ms var(--ease-playful); }
 
-  /* Ajustes · Reiniciar · Salir: el grupo de botones del kit (un bloque con su base y segmentos iguales), tres
-     segmentos del largo del avance. Salir lleva su icono en coral. */
+  /* Ajustes · Reiniciar · Salir (en el taller en vivo, Ajustes · Pausar los dispositivos · Dispositivos; Reiniciar y
+     Salir, en Ajustes): el grupo
+     de botones del kit (un bloque con su base y segmentos iguales), tres segmentos del largo del avance. Salir lleva su
+     icono en coral, también en el riel. */
   .player-frame .hud-tools > .ui-button { flex: none; width: calc((var(--hud-long) - 2px) / 3); min-width: 0; }
-  .player-frame .hud-tools > .exit-button { --tone-on: var(--color-coral-600); }
+  .player-frame :is(.hud-tools, .quick-rail) > .exit-button { --tone-on: var(--color-coral-600); }
+  /* El número de Dispositivos en la barra (taller en vivo; Luis, 2026-11-26): en cielo y con las esquinas redondeadas, con
+     su origen arriba a la derecha del icono (el último segmento: su icono, de 20, centrado en él) y creciendo a la
+     derecha, así que cabe un «99+» sin tapar el icono. */
+  .player-frame .bar-end > .devices-count { position: absolute; z-index: 2; top: 4px; left: calc(100% - (var(--hud-long) - 2px) / 6 + 10px - 3px); height: 18px; min-width: 18px; padding: 0 5px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: var(--tone-fill); color: var(--tone-on); font-weight: 900; font-size: var(--text-micro); font-variant-numeric: tabular-nums; line-height: 1; pointer-events: none; }
+  /* Dispositivo: la pieza del perfil mide lo mismo que su bloque de dos botones (Pantalla completa y Salir), uno en cada
+     esquina (Luis, 2026-11-26); sin pantalla completa, Salir va solo y ocupa los dos. El nombre se corta si no cabe. */
+  .player-frame[data-mode=device] { --device-piece: calc((var(--hud-long) - 2px) / 3 * 2 + 1px); }
+  .player-frame[data-mode=device] .profile-piece { width: var(--device-piece); }
+  .player-frame[data-mode=device] .hud-tools > .ui-button:only-child { width: var(--device-piece); }
 
   /* Quién juega (PerfilPieza.vue), en casa y en un dispositivo del taller: una pieza blanca del HUD, como el avance
      y del mismo largo que las piezas de arriba. Dentro, el avatar en un cuadro con el tinte de su tono, la forma del
@@ -135,7 +149,6 @@
      del perfil (8; con 6 se veía «demasiado a la izquierda»). */
   .home-card { padding-left: 8px; }
   .profile-name { @apply min-w-0 truncate font-black; font-size: var(--text-counter); line-height: 1.2; color: var(--color-ink); }
-  .ready-badge { @apply px-3 py-1.5; font-size: var(--text-caption); }
 
   /* ---- Escenario: el tono más suave del área del storyboard (data-area: alimentación → sol), como el suelo de un
      juego. Llega hasta arriba, por detrás de la consola, y hasta abajo, por detrás del pie, pasando bajo las áreas
@@ -160,16 +173,13 @@
   /* ---- Consigna: la cabecera del tablero. Qué hacer en esta escena, fija: no cambia con cada acción (eso lo hace el
      feedback). Texto con la acción pequeña de escuchar del kit, nunca un botón del HUD. La escena empieza debajo. ---- */
 
-  /* ---- Paneles laterales: la guía y los dispositivos, los dos a la derecha, junto al botón que los abre. Sin velo: los
-     paneles flotan sobre la escena con la sombra flotante del kit; la escena se pausa. ---- */
-  .side-panel { @apply absolute z-30 flex flex-col overflow-hidden bg-surface; top: 16px; bottom: 16px; width: 480px; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
-  /* La guía, a la derecha, sobre su botón, que va abajo a la derecha, en el pie, junto a Siguiente (Luis, 2026-11-20;
-     antes iba a la izquierda, cuando su botón estaba ahí). Baja hasta 12 sobre el botón, entrando en el aire del pie
-     (--footer-gap), con el mismo alto que los demás paneles: a 16 del escenario se veía «bastante separado». */
-  .side-panel[data-side=end] { right: var(--gutter); top: calc(var(--footer-gap) + 20px); bottom: calc(12px - var(--footer-gap)); }
-  /* Dispositivos se abre desde el riel de Ajustes: a su izquierda, a 12, y alineado arriba con él (el riel, de un
-     control más 16, va centrado bajo el engranaje). */
-  .side-panel[data-side=right] { top: 8px; right: calc(var(--gutter) + var(--hud-long) - (var(--hud-long) - 2px) / 6 + (var(--hud-control) + 16px) / 2 + 12px); }
+  /* ---- Paneles: la guía y los dispositivos, centrados en el escenario (Luis, 2026-11-26; antes, a la derecha, junto al
+     botón que los abría). Sin velo: flotan sobre la escena con la sombra flotante del kit; la escena se pausa. ---- */
+  /* Centrados en la pantalla, a lo alto y a lo ancho, con el mismo margen arriba y abajo (Luis, 2026-11-26: «los espacios
+     verticales no son consistentes»): el alto de la barra (--bar-h). Arriba empiezan bajo ella y abajo terminan a esa misma
+     distancia del borde (a la altura de los botones del HUD, «casi llegan al borde de la pantalla»). La guía, 560 (antes
+     480: «un poquito más ancho»); Dispositivos, 800. */
+  .side-panel { @apply absolute z-30 flex flex-col overflow-hidden bg-surface; top: 0; bottom: calc(var(--bar-h) - var(--footer-h)); left: 0; right: 0; width: 560px; max-width: calc(100% - 2 * var(--gutter)); margin-inline: auto; padding: 24px 28px 28px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 180ms ease-out; }
   .panel-head { @apply flex items-start justify-between gap-4; }
   .panel-caption { @apply font-extrabold text-muted; font-size: var(--text-caption); }
   .panel-head .ui-heading { @apply mt-0.5; }
@@ -194,44 +204,63 @@
   .guide-questions { @apply m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0; }
   .guide-questions li { @apply rounded-control px-3 py-1.5 font-bold; font-size: var(--text-body); background: var(--tone-tint); color: var(--color-ink); }
 
-  /* Dispositivos */
-  .join-box { @apply mt-4 rounded-control bg-canvas px-4 py-3; }
-  .join-code { @apply my-1 font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
-  .device-list { @apply m-0 mt-2 grid list-none grid-cols-7 content-start gap-1.5 p-1.5; }
-  /* Con la conexión del taller (tarea 013): el QR a la izquierda del código, quién pide entrar y entrar sin aprobar.
-     Todo lo de arriba de la tarjeta del dispositivo se desplaza si no cabe. */
-  .devices-body { @apply flex min-h-0 flex-1 flex-col; }
-  .join-live { @apply flex items-center gap-4; }
-  .join-live .runner-qr { @apply shrink-0; }
-  .join-live .join-code { @apply whitespace-nowrap; }
-  .request-list { @apply m-0 mt-2 flex list-none flex-col gap-2 p-0; }
-  .request { @apply flex items-center gap-3 rounded-control bg-canvas py-2 pl-2 pr-3; }
-  .request-avatar { @apply m-0 overflow-hidden rounded-full; }
+  /* Dispositivos: ancho y en dos columnas (Luis, 2026-11-26: en 480 todo quedaba apretado). A la izquierda, cómo
+     unirse (el QR grande para mostrarlo o proyectarlo, el código y la dirección), entrar sin aprobar y la nota; a la
+     derecha, las personas, que se desplazan solas. Si el panel no cabe ancho (un teléfono), una sola columna que se
+     desplaza entera. */
+  .devices-panel { width: 800px; container-type: inline-size; }
+  .devices-layout { @apply mt-5 grid min-h-0 flex-1 gap-7; grid-template-columns: 252px minmax(0, 1fr); }
+  .devices-join { @apply flex min-h-0 flex-col gap-4 overflow-y-auto; scrollbar-width: none; }
+  .devices-join::-webkit-scrollbar { display: none; }
+  .devices-people { @apply min-h-0 pb-2; }
+  .devices-people > .panel-row:first-child { @apply mt-0; }
+  .join-box { @apply rounded-control bg-canvas px-4 py-3; }
+  .join-code { @apply my-1 whitespace-nowrap font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
+  .join-live .runner-qr { @apply mx-auto mb-3 block; }
+  @container (max-width: 640px) {
+    .devices-layout { grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; overflow-y: auto; scrollbar-width: none; }
+    .devices-join, .devices-people { min-height: auto; overflow: visible; }
+    .join-live { @apply grid items-center gap-x-4; grid-template-columns: auto minmax(0, 1fr); }
+    .join-live .runner-qr { @apply m-0; grid-row: span 3; }
+  }
+  /* Quien pide entrar: el avatar del alto de sus botones (rechazar y aprobar, solo con su icono). */
+  .request-list { @apply m-0 mt-2 flex list-none flex-col gap-1.5 p-0; }
+  .request { @apply flex items-center gap-3 rounded-control bg-canvas py-1.5 pl-1.5 pr-1.5; }
+  .request-avatar { @apply m-0 shrink-0 overflow-hidden rounded-full; width: var(--ph-control-sm); height: var(--ph-control-sm); }
   .request-avatar > img { @apply block size-full; }
   .request-name { @apply min-w-0 flex-1 truncate font-black; font-size: var(--text-body); }
-  .open-entry { @apply mt-4 flex flex-col gap-1; }
-  .device-avatar { @apply relative block rounded-control; }
-  .device-avatar .ui-symbol { width: var(--ph-control); height: var(--ph-control); border-radius: var(--radius-control); }
-  .device-avatar .ui-symbol > .icon { width: var(--ph-icon); height: var(--ph-icon); }
-  .device-avatar .ui-symbol, .device-card-head .ui-symbol { @apply overflow-hidden; }
-  :is(.device-avatar, .device-card-head) .ui-symbol > img { @apply block size-full; }
-  .device-avatar[aria-pressed=true] .ui-symbol { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--tone-icon); }
-  .device-avatar > .ui-dot { @apply absolute; right: -4px; top: -4px; }
-  .device-avatar > .ui-dot .icon { @apply size-3; }
-  .device-hint { @apply mt-auto flex items-center gap-2; }
-  .device-hint .icon { width: 16px; height: 16px; }
-  .device-card { @apply mt-3 rounded-control bg-canvas p-3; }
-  .device-card[data-selected=false] .device-card-name { color: var(--color-muted); }
-  .device-card-head { @apply flex items-center gap-3; }
-  .device-card-head .ui-symbol { @apply m-0; width: 40px; height: 40px; }
-  .device-card-name { @apply font-black; font-size: var(--text-body); }
-  .device-actions { @apply mt-3 grid grid-cols-3 gap-2; }
+  .open-entry { @apply flex flex-col gap-1; }
+  /* Los conectados: cada avatar con su nombre debajo, para reconocerlo si alguien pregunta. */
+  .device-grid { @apply m-0 mt-2 grid list-none gap-x-2 gap-y-3 p-0; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .device-tile { @apply flex w-full min-w-0 flex-col items-center gap-1.5 rounded-control px-1 py-1.5 transition-colors; }
+  @media (hover: hover) { .device-tile:hover { @apply bg-canvas; } }
+  .device-tile-avatar { @apply relative block; }
+  .device-tile-avatar .ui-symbol { @apply m-0 overflow-hidden rounded-full; width: 48px; height: 48px; }
+  .device-tile-avatar .ui-symbol > img { @apply block size-full; }
+  .device-tile-avatar .ui-symbol > .icon { width: var(--ph-icon); height: var(--ph-icon); }
+  .device-tile[aria-pressed=true] .device-tile-avatar .ui-symbol { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--tone-icon); }
+  .device-tile-avatar > .ui-dot { @apply absolute; right: -4px; top: -4px; }
+  .device-tile-avatar > .ui-dot .icon { @apply size-3; }
+  .device-tile-name { @apply block w-full truncate text-center font-extrabold text-ink; font-size: var(--text-caption); }
+  /* El pie del panel: el elegido (quién es y en qué escena va) a la izquierda y sus acciones a la derecha, del tamaño
+     de los demás botones del panel; sin elegido, cómo elegir uno. Separado por la línea del panel. */
+  .devices-footer { @apply -mx-7 -mb-7 mt-5 flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 px-7 py-4; border-top: 1px solid var(--color-line); }
+  .device-card-head { @apply flex min-w-0 items-center gap-3; }
+  .device-card-head .ui-symbol { @apply m-0 shrink-0 overflow-hidden rounded-full; width: var(--ph-control-sm); height: var(--ph-control-sm); }
+  .device-card-head .ui-symbol > img { @apply block size-full; }
+  .device-card-name { @apply truncate font-black; font-size: var(--text-body); }
+  .device-actions { @apply flex flex-wrap gap-2; }
+  .device-hint { @apply mt-auto flex shrink-0 items-start gap-2; }
+  .device-hint .icon { @apply mt-0.5 shrink-0; width: 16px; height: 16px; }
 
   /* ---- Riel de ajustes: cuelga del engranaje (el primer segmento del bloque), 12 bajo su base, con la sombra
      flotante (es temporal) y el radio de las superficies (16). 8 de aire entre los botones (12 menos su base de 4) y los
      mismos 8 alrededor, 12 abajo por la base. En teléfonos, si no cabe, se desplaza. ---- */
-  .quick-rail { @apply absolute z-40 flex flex-col bg-surface; gap: 12px; padding: 8px 8px 12px; top: 8px; right: calc(var(--gutter) + var(--hud-long) - (var(--hud-long) - 2px) / 6 - (var(--hud-control) + 16px) / 2); border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 160ms ease-out; }
-  .player-page[data-phone] .quick-rail { max-height: calc(100% - 16px); overflow-y: auto; scrollbar-width: none; }
+  .quick-rail { @apply absolute z-40 flex flex-col bg-surface; gap: 12px; padding: 8px 8px 12px; top: calc(100% + 12px); left: calc((var(--hud-long) - 2px) / 6 - (var(--hud-control) + 16px) / 2); border-radius: var(--radius-panel); box-shadow: var(--shadow-float); animation: arrive 160ms ease-out; }
+  .player-page[data-phone] .quick-rail { max-height: calc(var(--frame-h) - var(--bar-h) - 16px); overflow-y: auto; scrollbar-width: none; }
+  /* El riel vive en la barra, junto al bloque: su sitio sale del borde izquierdo del bloque (el engranaje), aunque el
+     bloque crezca a la izquierda con una cifra larga en Dispositivos. */
+  .player-frame .bar-end { position: relative; }
 
   /* ---- Escenas (educador): el menú de los desplegables del kit (ui-listbox, ui-option) bajo el avance. Arriba, la
      cabecera de tarjeta del kit (ui-panel-header, con su línea) con el taller: la etiqueta y su nombre, que baja a una
@@ -253,7 +282,6 @@
   .player-frame .scene-option-num > .icon { width: 16px; height: 16px; stroke-width: 3; }
   .scene-option[data-state=current] .scene-option-num { background: var(--tone-fill); color: var(--tone-on); }
   .scene-option[data-state=pending] .scene-option-num { color: var(--color-muted); }
-  .rail-button-count > .ui-dot { position: absolute; top: -6px; right: -6px; }
 
   /* ---- Ventanas: lo que interrumpe el taller (la pausa, las confirmaciones) toma la anatomía de los paneles
      laterales: panel-head (un símbolo teñido, contexto y título, cerrar), un texto corto, cajas en canvas con una
@@ -261,6 +289,16 @@
      los paneles, centradas sobre un velo. Ventanas y paneles van a la escala de la consola: sus controles miden lo que
      los del HUD (44; 48 en teléfonos) y la ventana es estrecha y compacta, así sus dos botones partidos miden lo que
      Siguiente. ---- */
+  /* Teléfono en vertical (dispositivo): una pantalla entera para girarlo, pensada para un niño y a la medida del
+     teléfono (va fuera del marco y de su zoom): el teléfono que gira en su círculo de cielo, «Gira el teléfono» y, donde
+     se puede, «Jugar», que entra en pantalla completa y lo deja en horizontal. Sobre el suelo del escenario, sin velo
+     ni ventana. */
+  .rotate-screen { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: var(--tone-wash); text-align: center; }
+  .rotate-phone { @apply grid place-items-center rounded-full; width: 132px; height: 132px; background: var(--tone-tint); color: var(--tone-icon); }
+  .rotate-phone .icon { width: 68px; height: 68px; animation: rotate-phone 2.6s var(--ease-playful, ease-in-out) infinite; }
+  .rotate-title { @apply m-0 font-black text-ink; font-size: var(--text-heading); line-height: 1.15; }
+  @keyframes rotate-phone { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+  @media (prefers-reduced-motion: reduce) { .rotate-phone .icon { animation: none; transform: rotate(-90deg); } }
   .player-frame :is(.panel-window, .side-panel) { --ph-control: var(--hud-control); }
   .panel-window { @apply relative flex flex-col bg-surface text-left text-ink; width: calc(100% - 32px); max-width: 400px; padding: 20px 24px 24px; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
   .panel-window .ui-heading { font-size: var(--text-title); }
@@ -327,11 +365,15 @@
      lado. Sin línea ni sombra, con el mismo borde de nubes que la banda del pie. Al subir ocupa su sitio con un rebote
      corto: se alarga 24 por debajo de la pantalla para que el rebote no deje ver el escenario. Al cerrarse baja con
      su tono. */
-  .feedback-sheet { position: absolute; inset: 0 calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px) - 24px) calc(-1 * var(--safe-l, 0px)); background: var(--tone-tint-edge); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); pointer-events: none; }
+  .feedback-sheet { position: absolute; inset: auto calc(-1 * var(--safe-r, 0px)) calc(-1 * var(--safe-b, 0px) - 24px) calc(-1 * var(--safe-l, 0px)); height: calc(var(--sheet-h, var(--footer-h)) + var(--safe-b, 0px) + 24px); background: var(--tone-tint-edge); transform: translateY(110%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1); pointer-events: none; }
   .player-frame:not([data-feedback=none]) .feedback-sheet { transform: none; transition: transform 380ms cubic-bezier(.34, 1.4, .64, 1) 140ms; }
   .footer-start, .footer-end { @apply relative; transition: transform 300ms var(--ease-playful) 180ms, opacity 200ms ease 180ms, visibility 0s linear 180ms; }
   .player-frame:not([data-feedback=none]) :is(.footer-start, .footer-end) { transform: translateY(120%); opacity: 0; visibility: hidden; transition: transform 180ms cubic-bezier(.4, 0, 1, 1), opacity 160ms ease, visibility 0s linear 180ms; }
-  .feedback-slot { @apply pointer-events-none absolute inset-0 z-10 flex items-center; padding: 0 var(--gutter); }
+  /* La hoja y lo que dice, anclados abajo y con su alto (--sheet-h, useFrameFit): el del pie; en el pie delgado del
+     dispositivo, el de siempre, y en el teléfono, un poco más, sobre el borde del tablero. */
+  /* Lo que dice va arriba, justo bajo las nubes (el aire del pie, --footer-gap), y no centrado en todo el alto: así nunca
+     queda pegado al borde de abajo, también en un teléfono con su barra de gestos (Luis, 2026-11-26). */
+  .feedback-slot { @apply pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-start; height: var(--sheet-h, var(--footer-h)); padding: var(--footer-gap) var(--gutter) 0; }
   .feedback-slot .ui-feedback { @apply w-full; gap: 20px; pointer-events: auto; transition: transform 380ms cubic-bezier(.34, 1.4, .64, 1) 140ms, visibility 0s linear 0s; }
   .feedback-slot .ui-feedback[data-visible=false] { opacity: 1; visibility: hidden; transform: translateY(130%); transition: transform 220ms cubic-bezier(.4, 0, 1, 1), visibility 0s linear 220ms; }
   /* El símbolo, del alto de un control y con su radio, como cerrar al otro lado: con las medidas del feedback del kit
@@ -374,7 +416,14 @@
 
   /* ---- Compacto (pantallas táctiles y ventanas pequeñas): las mismas piezas y medidas, con menos aire ---- */
   /* Teléfonos: el HUD se dibuja a 48 para seguir midiendo 44 reales (useFrameFit), y el pie guarda menos aire encima. */
-  .player-page[data-phone] .player-frame { --hud-control: var(--ph-control); --footer-gap: 20px; }
+  /* Teléfono: el HUD más compacto para que el tablero gane alto (Luis, 2026-11-26: «el área de los juegos queda
+     demasiado pequeña y el resto de elementos enormes»): controles de 40 (unos 37 reales), 16 de aire en el pie con
+     nubes de 10 y 8 al borde (useFrameFit). La hoja del feedback, con letra un paso menor. */
+  .player-page[data-phone] .player-frame { --hud-control: 40px; --footer-gap: 16px; --cloud: 10px; }
+  .player-page[data-phone] .feedback-slot .ui-feedback { gap: 14px; }
+  .player-page[data-phone] .feedback-slot .ui-feedback strong { font-size: var(--text-subtitle); }
+  .player-page[data-phone] .feedback-slot .ui-feedback .sheet-text { font-size: var(--text-caption); line-height: 1.35; }
+  .player-page[data-phone] .feedback-slot .ui-feedback-symbol > .icon { width: 22px; height: 22px; }
   /* Pantallas táctiles: nada que se toque por debajo de 44 reales (el mínimo táctil). Los botones pequeños toman la
      medida estándar, las pestañas la altura de un control y los mini-botones conservan su cara pequeña con un área de
      toque de 44 reales, sea cual sea el zoom. */
@@ -384,10 +433,6 @@
     .player-page .ui-tab { min-height: var(--ph-control); }
     .player-page .mini-action::before { inset: min(-6px, calc(50% - 22px / var(--player-scale, 1))); }
   }
-  .player-frame[data-compact] .side-panel { top: 8px; bottom: 8px; }
-  /* La guía, cerca de su botón: baja hasta 12 sobre él, entrando en el aire del pie, con el mismo alto que los demás paneles
-     (Luis, 2026-11-20: «se ve bastante separado»). */
-  .player-frame[data-compact] .side-panel[data-side=end] { top: calc(var(--footer-gap) + 4px); bottom: calc(12px - var(--footer-gap)); }
 
   /* ---- Chispas al completar un juego: salen del centro del tablero y caen, en los tonos de las piezas y el lima ---- */
   .spark-burst { position: absolute; z-index: 25; left: 50%; top: calc(var(--scene-top, 0px) + var(--scene-h, 600px) / 2); width: 0; height: 0; pointer-events: none; }

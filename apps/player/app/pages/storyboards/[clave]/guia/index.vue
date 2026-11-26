@@ -57,12 +57,16 @@
 </template>
 
 <script setup lang="ts">
+import { storyboardPorClave } from '~/runner/content'
 import { textoPorIdioma } from '~/utils/catalogoResumen'
 
 const route = useRoute()
-const category = String(route.params.category)
-const id = String(route.params.id)
-const rutaDetalle = `/storyboards/${category}/${id}`
+const clave = String(route.params.clave)
+// La clave es la identidad del storyboard en la URL; la carpeta (eje y slug) solo localiza sus archivos.
+const entrada = storyboardPorClave(clave)
+const category = entrada?.folderCategory ?? ''
+const id = entrada?.json.slug ?? ''
+const rutaDetalle = `/storyboards/${clave}`
 
 const { getStoryboard } = useStoryboards()
 const sb = computed(() => {

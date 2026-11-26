@@ -3,13 +3,14 @@
     v-if="storyboard"
     ref="marco"
     :storyboard="storyboard"
-    :mode="mode"
+    :mode="rehearsal ? 'educator' : mode"
     :locale="locale"
     :start="start"
     :guide="host.guide.value"
     :embedded="host.embedded"
     :conexion="conexion"
-    @ready="host.send({ tipo: 'listo', storyboard: `${category}/${id}`, modo: mode, idioma: locale, escenas: storyboard.scenes.length })"
+    :rehearsal="rehearsal"
+    @ready="host.send({ tipo: 'listo', storyboard: clave, modo: mode, idioma: locale, escenas: storyboard.scenes.length })"
     @scene="(indice, carpeta) => host.send({ tipo: 'escena', indice, carpeta })"
     @finish="host.send({ tipo: 'terminado' })"
     @exit="(indice, carpeta) => host.send({ tipo: 'salir', indice, carpeta })"
@@ -23,19 +24,22 @@
 import '~/runner/runner.css'
 import type { RunnerMode } from '@playhub/ui/app/utils/runner-contract'
 import nunito from '@playhub/ui/fonts/nunito-latin.woff2?url'
-import { loadStoryboard } from '~/runner/content'
+import { loadStoryboard, storyboardPorClave } from '~/runner/content'
 import { codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
 import { useRunnerText } from '~/runner/i18n'
 import RunnerFrame from '~/runner/RunnerFrame.vue'
 import { useRunnerHost } from '~/runner/useHost'
 import { origenesPermitidos, urlsDelRunner } from '~/runner/urlsDeLasApps'
 
-// Runner público (`/play/**`; Player no tiene sesión). El contrato está en docs/runner.md.
-//   ?mode=educator|device|home|preview  fija el marco (un modo desconocido vuelve a educator).
+// Runner público (`/play/<clave>`; Player no tiene sesión). El contrato está en docs/runner.md. El storyboard va por su
+// clave (`key` de su storyboard.json, la misma en la base), nunca por su carpeta: no cambia si se renombra o se mueve.
+//   ?mode=educator|device|home|preview|rehearsal  fija el marco (un modo desconocido vuelve a educator).
 //                               preview: solo el escenario; la app que lo incrusta conduce.
+//                               rehearsal: el ensayo del educador (Educators, «Ensayar»): la consola del educador sin
+//                               dispositivos ni conexión, y sin recordar la escena del taller de verdad.
 //   ?lang=es                    idioma del contenido, entre los que declara el storyboard.
 //   ?escena=<carpeta>           escena con la que abre.
-//   ?conexion=<código>          en un dispositivo, la conexión del taller a la que se unió (/unirse, tarea 013).
+//   ?conexion=<código>          en un dispositivo, la conexión del taller a la que se unió (/workshop/join, tarea 013).
 //   ?medir=1                    el medidor del motor, para probar en un dispositivo (cuadros y toque).
 //   ?sonidos=1                  el panel de sonidos: oír cada uno suelto y ver cuál sonó.
 // Dentro de un iframe de una app permitida (Admin o Educators, con su dirección en la base), la app le da la guía y
@@ -43,20 +47,23 @@ import { origenesPermitidos, urlsDelRunner } from '~/runner/urlsDeLasApps'
 definePageMeta({ layout: false })
 
 const route = useRoute()
-const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview']
+const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview', 'rehearsal']
 const requestedMode = String(route.query.mode ?? '')
 const mode: RunnerMode = MODES.includes(requestedMode as RunnerMode) ? requestedMode as RunnerMode : 'educator'
 if (requestedMode && requestedMode !== mode) console.warn(`Modo «${requestedMode}» no existe; se usa «${mode}».`)
 
-const category = String(route.params.category)
-const id = String(route.params.id)
-const peek = loadStoryboard(category, id)
+const clave = String(route.params.clave)
+const entrada = storyboardPorClave(clave)
+const category = entrada?.folderCategory ?? ''
+const id = entrada?.json.slug ?? ''
+const peek = entrada ? loadStoryboard(category, id) : null
 const languages = peek?.json.languages?.length ? peek.json.languages : [peek?.json.defaultLanguage ?? 'es']
 const requestedLang = String(route.query.lang ?? '')
 const locale = languages.includes(requestedLang) ? requestedLang : (peek?.json.defaultLanguage ?? languages[0] ?? 'es')
-const storyboard = loadStoryboard(category, id, locale)
+const storyboard = entrada ? loadStoryboard(category, id, locale) : null
 const txt = useRunnerText(() => locale)
 const start = route.query.escena ? String(route.query.escena) : undefined
+const rehearsal = mode === 'rehearsal'
 
 // Los orígenes permitidos: Admin y Educators con su dirección en la base (`configuraciones`) y, si este equipo se abrió
 // por Tailscale, los mismos con su nombre (equipo-local). Solo hacen falta dentro de un iframe.

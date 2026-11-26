@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { idiomasEscritos, pasaFiltroEstado, pasaFiltroHogar, resumenGuia, siguientePaso, textoPorIdioma, tonoGuia } from '~/utils/catalogoResumen'
+import { idiomasEscritos, nombrePlantilla, pasaFiltroEstado, pasaFiltroHogar, resumenGuia, siguientePaso, textoPorIdioma, tonoGuia } from '~/utils/catalogoResumen'
 import type { EscenaGuia } from '~/utils/catalogoResumen'
 
 // Lo que la gestión resume de la base: la guía escrita (se escribe en Player) y qué toca hacer ahora.
@@ -108,3 +108,11 @@ describe('filtro «Hogar»', () => {
     expect(pasaFiltroHogar('no', true)).toBe(false)
   })
 })
+
+describe('nombrePlantilla — la plantilla como se lee', () => {
+  it('con mayúscula y con su tilde', () => {
+    expect(nombrePlantilla('historia')).toBe('Historia')
+    expect(nombrePlantilla('senalar')).toBe('Señalar')
+  })
+})
+

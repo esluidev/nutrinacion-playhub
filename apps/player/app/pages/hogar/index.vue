@@ -54,7 +54,7 @@
         :row-key="(r) => r.id"
         :page-size="0"
         clickable
-        @row-click="(r) => navigateTo(`/storyboards/${r.eje}/${r.slug}`)"
+        @row-click="(r) => navigateTo(`/storyboards/${r.clave}`)"
       >
         <template #cell-storyboard="{ row }">
           <p class="truncate font-extrabold text-ink">{{ row.titulo }}</p>
@@ -109,8 +109,8 @@ const columnas = [
 // En cuántas unidades está cada uno (con sus títulos, al pasar el puntero); sin ninguna, va suelto.
 const filas = computed(() => delHogar.value.map(f => ({
   id: f.id,
+  clave: f.clave,
   slug: f.slug,
-  eje: f.categoria.toLowerCase().replace(/_/g, '-'),
   titulo: textoLocal(f.titulo) || f.slug,
   edicion: f.edicion,
   paises: f.paises_disponibles,

@@ -52,6 +52,15 @@ export const STORYBOARDS = Object.entries(storyboardModules).map(([path, json]) 
   json,
 }))
 
+/**
+ * Un storyboard del build por su clave (`key` de su storyboard.json, un UUID): su identidad en todas las URL (el runner
+ * `/play/<clave>`, la gestión `/storyboards/<clave>`, Admin y Educators). Es la misma en el JSON y en la base
+ * (`storyboards.clave`) y no cambia si se renombra la carpeta o la categoría; el eje y el slug solo localizan sus archivos.
+ */
+export function storyboardPorClave(clave: string) {
+  return STORYBOARDS.find(s => s.json.key === clave) ?? null
+}
+
 export function loadStoryboard(category: string, slug: string, locale = 'es'): LoadedStoryboard | null {
   const entry = STORYBOARDS.find(s => s.folderCategory === category && s.json.slug === slug)
   if (!entry) return null
