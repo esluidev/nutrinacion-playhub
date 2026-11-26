@@ -1,6 +1,6 @@
-// Calendario del educador (lógica pura, sin Nuxt; tests en tests/calendario.test.ts): el día,
-// semanas de lunes a domingo, la cuadrícula del mes y el texto del rango, como en la app original.
-import { fechaLarga } from './fechas'
+// Calendario del educador, las vistas Semana y Mes de «Mis talleres» (lógica pura, sin Nuxt; tests en
+// tests/calendario.test.ts): semanas de lunes a domingo, la cuadrícula del mes, moverse y el texto del rango.
+import { diaCorto, fechaLarga } from './fechas'
 import { isoDia } from './talleres'
 
 export type VistaCalendario = 'dia' | 'semana' | 'mes'
@@ -39,7 +39,7 @@ export function cuadriculaDelMes(iso: string): { iso: string, delMes: boolean }[
   return semanas
 }
 
-/** Avanza o retrocede un día, una semana o un mes (anterior/siguiente de la barra). */
+/** Avanza o retrocede un día, una semana o un mes (anterior y siguiente de la semana y del mes). */
 export function moverRango(iso: string, vista: VistaCalendario, dir: 1 | -1): string {
   const d = aFecha(iso)
   if (vista === 'mes') return isoDia(new Date(d.getFullYear(), d.getMonth() + dir, 1))
@@ -61,12 +61,15 @@ export function textoDelRango(iso: string, vista: VistaCalendario, locale: strin
   return `${ini.getDate()} ${fmt(ini, { month: 'short' })} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`
 }
 
-/** Nombre corto del día («lun») y del mes en el idioma de la interfaz. */
-export function diaCorto(iso: string, locale: string): string {
-  return aFecha(iso).toLocaleDateString(intl(locale), { weekday: 'short' }).replace('.', '')
-}
-
 /** Iniciales de lunes a domingo para la cabecera de la cuadrícula. */
 export function cabeceraSemana(locale: string): string[] {
   return diasDeSemana('2026-10-12').map(d => diaCorto(d, locale))
+}
+
+/** El día que se ve debajo del mes: hoy si es de ese mes; si no, el primero con talleres; si no, el día 1. */
+export function diaDelMes(iso: string, conTalleres: Set<string>, hoy: string): string {
+  const mes = iso.slice(0, 7)
+  if (hoy.startsWith(mes)) return hoy
+  const dias = cuadriculaDelMes(iso).flat().filter(d => d.delMes).map(d => d.iso)
+  return dias.find(d => conTalleres.has(d)) ?? dias[0]!
 }

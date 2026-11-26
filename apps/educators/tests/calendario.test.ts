@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cuadriculaDelMes, diasDeSemana, inicioDeSemana, moverRango, textoDelRango } from '~/utils/calendario'
+import { cuadriculaDelMes, diaDelMes, diasDeSemana, inicioDeSemana, moverRango, textoDelRango } from '~/utils/calendario'
 
 describe('semana', () => {
   it('empieza en lunes, también desde un domingo', () => {
@@ -21,9 +21,16 @@ describe('mes', () => {
     expect(semanas[4]![6]).toEqual({ iso: '2026-11-01', delMes: false })
     expect(semanas.flat().filter(d => d.delMes)).toHaveLength(31)
   })
+
+  it('debajo del mes, hoy si es de ese mes; si no, el primer día con talleres o el día 1', () => {
+    const con = new Set(['2026-12-09', '2026-12-15'])
+    expect(diaDelMes('2026-11-01', con, '2026-11-25')).toBe('2026-11-25')
+    expect(diaDelMes('2026-12-01', con, '2026-11-25')).toBe('2026-12-09')
+    expect(diaDelMes('2027-01-01', con, '2026-11-25')).toBe('2027-01-01')
+  })
 })
 
-describe('barra de fechas', () => {
+describe('anterior y siguiente', () => {
   it('mueve un día, una semana o un mes', () => {
     expect(moverRango('2026-10-31', 'dia', 1)).toBe('2026-11-01')
     expect(moverRango('2026-10-14', 'dia', -1)).toBe('2026-10-13')

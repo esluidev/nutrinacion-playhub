@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import datos from '~/fixtures/talleres.json'
-import { agenda, cierreCompleto, conLosDeHoy, ninosDe, escenasDeLaGuia, escenasYDuracion, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, puedeIniciarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, talleresPorDia, urlDelTaller } from '~/utils/talleres'
+import { accionesDe, cierreCompleto, conLosDeHoy, desgloseDe, escenasDeLaGuia, escenasYDuracion, codigoValido, correoValido, diaRelativo, estadoDe, grupoYAsistentes, horario, portada, puedeEjecutarse, puedeEnsayarse, puedeReportarse, tallerDesdeBase, tallerDesdeFixture, lugarDelTaller, obvioDelDia, talleresPorDia, urlDelTaller } from '~/utils/talleres'
 import type { Cierre, Taller, WorkshopBase, WorkshopFixture } from '~/utils/talleres'
 
 const HOY = new Date(2026, 9, 14, 9, 30) // 14 de octubre de 2026
@@ -11,7 +11,7 @@ function taller(parcial: Partial<Taller>): Taller {
   return {
     id: 't',
     titulo: 'El huevo',
-    storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
+    storyboard: { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
     organizacion: { id: 1, nombre: 'Fundación Centro' },
     jornada: null,
     fecha: '2026-10-14',
@@ -44,7 +44,7 @@ const FINALIZADO: WorkshopBase = {
   iniciadoEn: '2026-10-13T16:00:00+00:00',
   organizacion: { id: 1, nombre: 'Fundación Centro' },
   titulo: 'El huevo en el desayuno',
-  storyboard: { eje: 'alimentacion', slug: 'el-huevo', titulo: 'El huevo', edicion: 'KIDS', escenas: 4, duracion: 30, categoria: 'ALIMENTACION' },
+  storyboard: { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', eje: 'alimentacion', slug: 'el-huevo', titulo: 'El huevo', edicion: 'KIDS', escenas: 4, duracion: 30, categoria: 'ALIMENTACION' },
   terminadoEn: '2026-10-13T16:30:00+00:00',
   estadoWorkshop: 'finalizado',
   motivoCancelacion: null,
@@ -70,7 +70,7 @@ describe('workshops de la base', () => {
     expect(tallerDesdeBase(FINALIZADO)).toEqual({
       id: '9',
       titulo: 'El huevo en el desayuno',
-      storyboard: { titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
+      storyboard: { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', titulo: 'El huevo', eje: 'alimentacion', slug: 'el-huevo', edicion: 'KIDS', escenas: 4, duracion: 30 },
       organizacion: { id: 1, nombre: 'Fundación Centro' },
       jornada: { id: 1, nombre: 'Semana de la nutrición', ubicacion: 'Sede central', fechaInicio: '2026-10-11', fechaFin: '2026-10-30' },
       fecha: '2026-10-13',
@@ -84,6 +84,7 @@ describe('workshops de la base', () => {
       modalidad: 'presencial',
       estadoWorkshop: 'finalizado',
       motivoCancelacion: null,
+      terminado: true,
       cierre: { calificacion: 4, asistentes: 23, ninas: null, ninos: null, participacion: 'alta', claridad: 'clara', costo: 'Ordenar el recorrido en el primer intento.', faltoMaterial: '', dispositivos: null },
     })
   })
@@ -178,17 +179,54 @@ describe('fechas y estados', () => {
     expect(estadoDe(taller({ fecha: '2026-10-10', estadoWorkshop: 'finalizado' }), HOY)).toBe('por_cerrar')
   })
 
-  it('un cancelado tiene su propio estado, pase lo que pase con la fecha, y no se inicia', () => {
+  it('un cancelado tiene su propio estado, pase lo que pase con la fecha, y no se hace nada con él', () => {
     for (const fecha of ['2026-10-10', '2026-10-14', '2026-10-20']) {
-      expect(estadoDe(taller({ fecha, estadoWorkshop: 'cancelado' }), HOY)).toBe('cancelado')
+      const cancelado = taller({ fecha, estadoWorkshop: 'cancelado' })
+      expect(estadoDe(cancelado, HOY)).toBe('cancelado')
+      expect(accionesDe(cancelado, HOY)).toEqual([])
+      expect(puedeEnsayarse(cancelado)).toBe(false)
+      expect(puedeReportarse(cancelado, HOY)).toBe(false)
     }
-    expect(puedeIniciarse(taller({ estadoWorkshop: 'cancelado' }))).toBe(false)
-    expect(puedeIniciarse(taller({ estadoWorkshop: 'publicado' }))).toBe(true)
-    expect(puedeIniciarse(taller({ estadoWorkshop: 'finalizado' }))).toBe(true)
+  })
+})
+
+describe('ensayar, ejecutar y reportar', () => {
+  it('antes de su día solo se ensaya', () => {
+    const t = taller({ fecha: '2026-10-16' })
+    expect(accionesDe(t, HOY)).toEqual(['ensayar'])
+    expect(puedeEjecutarse(t, HOY)).toBe(false)
+    expect(puedeEnsayarse(t)).toBe(true)
+    expect(puedeReportarse(t, HOY)).toBe(false)
   })
 
-  it('el día por hora, lo que viene después día por día y lo que falta cerrar', () => {
-    const a = agenda([
+  it('el día del taller se ejecuta, y también se puede ensayar', () => {
+    expect(accionesDe(taller({}), HOY)).toEqual(['ejecutar', 'ensayar'])
+    expect(puedeEjecutarse(taller({}), HOY)).toBe(true)
+    expect(puedeReportarse(taller({}), HOY)).toBe(true)
+  })
+
+  it('ejecutado hasta el final, toca reportarlo', () => {
+    expect(accionesDe(taller({ terminado: true }), HOY)).toEqual(['reportar'])
+    expect(puedeEjecutarse(taller({ terminado: true }), HOY)).toBe(false)
+  })
+
+  it('pasado su día sin reporte, se reporta; ya no se ejecuta', () => {
+    for (const t of [taller({ fecha: '2026-10-10' }), taller({ fecha: '2026-10-10', estadoWorkshop: 'finalizado' })]) {
+      expect(accionesDe(t, HOY)).toEqual(['reportar'])
+      expect(puedeEjecutarse(t, HOY)).toBe(false)
+    }
+  })
+
+  it('ya reportado no tiene acciones: el reporte se corrige desde su ficha', () => {
+    const t = taller({ fecha: '2026-10-10', cierre: CIERRE })
+    expect(accionesDe(t, HOY)).toEqual([])
+    expect(puedeReportarse(t, HOY)).toBe(true)
+  })
+})
+
+describe('la portada', () => {
+  it('hoy por hora, lo que falta reportar del más reciente, los próximos día por día y los anteriores', () => {
+    const p = portada([
       taller({ id: 'b', horaInicio: '12:00' }),
       taller({ id: 'a', horaInicio: '08:00' }),
       taller({ id: 'q', fecha: '2026-10-20', horaInicio: '11:00' }),
@@ -196,32 +234,25 @@ describe('fechas y estados', () => {
       taller({ id: 'r', fecha: '2026-10-16' }),
       taller({ id: 'c', fecha: '2026-10-01' }),
       taller({ id: 'd', fecha: '2026-10-05' }),
-    ], '2026-10-14', HOY)
-    expect(a.delDia.map(t => t.id)).toEqual(['a', 'b'])
-    expect(a.despues.map(d => [d.dia, d.talleres.map(t => t.id)])).toEqual([['2026-10-16', ['r']], ['2026-10-20', ['p', 'q']]])
-    expect(a.porCerrar.map(t => t.id)).toEqual(['d', 'c'])
+      taller({ id: 'y', fecha: '2026-10-08', horaInicio: '11:00', cierre: CIERRE }),
+      taller({ id: 'x', fecha: '2026-10-08', horaInicio: '09:00', cierre: CIERRE }),
+      taller({ id: 'w', fecha: '2026-10-03', cierre: CIERRE }),
+    ], HOY)
+    expect(p.hoy.map(t => t.id)).toEqual(['a', 'b'])
+    expect(p.porReportar.map(t => t.id)).toEqual(['d', 'c'])
+    expect(p.proximos.map(d => [d.dia, d.talleres.map(t => t.id)])).toEqual([['2026-10-16', ['r']], ['2026-10-20', ['p', 'q']]])
+    expect(p.anteriores.map(d => [d.dia, d.talleres.map(t => t.id)])).toEqual([['2026-10-08', ['x', 'y']], ['2026-10-03', ['w']]])
   })
 
-  it('en otro día, lo que falta cerrar se sigue contando desde hoy', () => {
-    const a = agenda([
-      taller({ id: 'p', fecha: '2026-10-20', horaInicio: '09:00' }),
-      taller({ id: 'q', fecha: '2026-10-21' }),
-      taller({ id: 'c', fecha: '2026-10-01' }),
-    ], '2026-10-20', HOY)
-    expect(a.delDia.map(t => t.id)).toEqual(['p'])
-    expect(a.despues.map(d => d.dia)).toEqual(['2026-10-21'])
-    expect(a.porCerrar.map(t => t.id)).toEqual(['c'])
-  })
-
-  it('un cancelado sigue en su día y nunca queda por cerrar', () => {
-    const a = agenda([
+  it('un cancelado sigue en su día y nunca falta reportarlo', () => {
+    const p = portada([
       taller({ id: 'x', fecha: '2026-10-01', estadoWorkshop: 'cancelado' }),
       taller({ id: 'y', fecha: '2026-10-20', estadoWorkshop: 'cancelado' }),
       taller({ id: 'c', fecha: '2026-10-01' }),
-      taller({ id: 'z', fecha: '2026-10-02', cierre: CIERRE }),
-    ], '2026-10-14', HOY)
-    expect(a.porCerrar.map(t => t.id)).toEqual(['c'])
-    expect(a.despues.map(d => d.talleres.map(t => t.id))).toEqual([['y']])
+    ], HOY)
+    expect(p.porReportar.map(t => t.id)).toEqual(['c'])
+    expect(p.proximos.map(d => d.talleres.map(t => t.id))).toEqual([['y']])
+    expect(p.anteriores.map(d => d.talleres.map(t => t.id))).toEqual([['x']])
   })
 })
 
@@ -234,6 +265,12 @@ describe('talleres por día', () => {
     ])
     expect(porDia['2026-10-14']!.map(t => t.id)).toEqual(['a', 'b'])
     expect(porDia['2026-10-15']!.map(t => t.id)).toEqual(['c'])
+  })
+
+  it('el día ya dice hoy o próximo; un día pasado no dice nada', () => {
+    expect(obvioDelDia('2026-10-14', '2026-10-14')).toBe('hoy')
+    expect(obvioDelDia('2026-10-15', '2026-10-14')).toBe('proximo')
+    expect(obvioDelDia('2026-10-13', '2026-10-14')).toBeUndefined()
   })
 })
 
@@ -323,10 +360,11 @@ describe('cierre del facilitador', () => {
     expect(cierreCompleto({ ...BASE, claridad: undefined })).toBe(false)
     expect(cierreCompleto({ ...BASE, asistentes: undefined })).toBe(false)
   })
-  it('en una audiencia cerrada, niñas y niños hacen falta y suman los asistentes', () => {
-    expect(cierreCompleto({ ...BASE, ninas: null, ninos: null })).toBe(false)
+  it('en una audiencia cerrada, niñas y niños son opcionales; si van, suman los asistentes', () => {
+    expect(cierreCompleto({ ...BASE, ninas: null, ninos: null })).toBe(true)
     expect(cierreCompleto({ ...BASE, ninas: 12, ninos: 9 })).toBe(false)
     expect(cierreCompleto({ ...BASE, ninas: 20, ninos: 0 })).toBe(true)
+    expect(cierreCompleto({ ...BASE, ninas: 11, ninos: null })).toBe(false)
   })
   it('en una abierta (una feria) basta el total, sin niñas ni niños', () => {
     expect(cierreCompleto({ ...BASE, asistentes: 150, ninas: null, ninos: null }, true)).toBe(true)
@@ -339,11 +377,14 @@ describe('cierre del facilitador', () => {
     expect(cierreCompleto({ ...BASE, dispositivos: -1 })).toBe(false)
     expect(cierreCompleto({ ...BASE, dispositivos: 2.5 })).toBe(false)
   })
-  it('los niños salen de los asistentes menos las niñas', () => {
-    expect(ninosDe(23, 12)).toBe(11)
-    expect(ninosDe(23, 0)).toBe(23)
-    expect(ninosDe(23, undefined)).toBeNull()
-    expect(ninosDe(23, 24)).toBeNull()
+  it('el desglose: sin ninguno, ninguno; con uno, el otro es el resto; con los dos, suman el total', () => {
+    expect(desgloseDe(23, undefined, null)).toBeNull()
+    expect(desgloseDe(23, 12, undefined)).toEqual({ ninas: 12, ninos: 11 })
+    expect(desgloseDe(23, undefined, 11)).toEqual({ ninas: 12, ninos: 11 })
+    expect(desgloseDe(23, 12, 11)).toEqual({ ninas: 12, ninos: 11 })
+    expect(desgloseDe(23, 12, 12)).toBe(false)
+    expect(desgloseDe(23, 24, undefined)).toBe(false)
+    expect(desgloseDe(undefined, 12, undefined)).toBe(false)
   })
 })
 
@@ -364,12 +405,16 @@ describe('guía del taller', () => {
   })
 })
 
-describe('abrir el taller', () => {
-  it('lleva al runner de Player en modo educador', () => {
-    expect(urlDelTaller('http://localhost:3001/', taller({}))).toBe('http://localhost:3001/play/alimentacion/el-huevo?mode=educator&lang=es')
+describe('abrir el runner', () => {
+  it('lleva al runner de Player por la clave del storyboard, en modo educador', () => {
+    expect(urlDelTaller('http://localhost:3001/', taller({}))).toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=educator&lang=es')
   })
 
   it('en el idioma del workshop, no en el de la interfaz', () => {
-    expect(urlDelTaller('http://localhost:3001', taller({ idioma: 'en' }))).toBe('http://localhost:3001/play/alimentacion/el-huevo?mode=educator&lang=en')
+    expect(urlDelTaller('http://localhost:3001', taller({ idioma: 'en' }))).toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=educator&lang=en')
+  })
+
+  it('el ensayo, en modo rehearsal', () => {
+    expect(urlDelTaller('http://localhost:3001', taller({}), true)).toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=rehearsal&lang=es')
   })
 })

@@ -1,13 +1,13 @@
 import { runnerUrl } from '@playhub/ui/app/utils/runner-contract'
 import type { SceneGuide } from '@playhub/ui/app/utils/runner-contract'
 
-// Lógica pura de los talleres del educador (sin Nuxt): fechas, estados, agrupación y el
-// cierre del facilitador. Tiene tests en tests/talleres.test.ts.
+// Lógica pura de los talleres del educador (sin Nuxt): fechas, estados, lo que se hace en cada momento (ensayar,
+// ejecutar, reportar), la portada y el reporte del educador. Tiene tests en tests/talleres.test.ts.
 
 export type Participacion = 'baja' | 'media' | 'alta'
 export type Claridad = 'poco_clara' | 'clara' | 'muy_clara'
 
-/** Cierre estructurado del facilitador (constitución: medición de grupo, nunca de persona). */
+/** El reporte del educador, «Reportar»: cómo fue el taller (constitución: medición de grupo, nunca de persona). */
 export interface Cierre {
   calificacion: number // 1–5: cómo salió la sesión, según el facilitador
   asistentes: number
@@ -19,7 +19,8 @@ export interface Cierre {
   claridad: Claridad
   costo: string
   faltoMaterial: string
-  // Cuántos dispositivos se unieron al taller (tarea 021), si los hubo; lo anota el educador.
+  // Cuántos dispositivos estaban conectados al terminar (tarea 021), si los hubo: lo cuenta la base al terminar
+  // (educador_terminar) y el educador lo puede corregir.
   dispositivos: number | null
 }
 
@@ -39,7 +40,8 @@ export interface Jornada {
 export interface Taller {
   id: string
   titulo: string // el que le puso la organización; si no tiene, el del storyboard
-  storyboard: { titulo: string, eje: string, slug: string, edicion: string, escenas: number, duracion: number | null }
+  // `clave`: su identidad (el `key` de su storyboard.json), la que abre el runner (/play/<clave>)
+  storyboard: { clave: string, titulo: string, eje: string, slug: string, edicion: string, escenas: number, duracion: number | null }
   organizacion: { id: number, nombre: string }
   jornada: Jornada | null
   fecha: string // YYYY-MM-DD
@@ -55,6 +57,8 @@ export interface Taller {
   motivoCancelacion: string | null
   // Cuántos dispositivos se unieron por la conexión del taller (tarea 013); rellena el cierre.
   dispositivosUnidos?: number
+  // Ya se ejecutó hasta el final (el runner dijo «terminado»): toca reportarlo.
+  terminado?: boolean
   cierre?: Cierre
 }
 
@@ -75,7 +79,7 @@ export interface CierreBase {
 export interface WorkshopBase {
   id: string | number
   titulo?: string | null
-  storyboard: { titulo: string | null, eje: string, categoria?: string, slug: string, edicion: string, escenas: number, duracion: number | null }
+  storyboard: { clave: string, titulo: string | null, eje: string, categoria?: string, slug: string, edicion: string, escenas: number, duracion: number | null }
   organizacion: { id: number, nombre: string }
   jornada: { id: number, nombre: string, ubicacion: string, fecha_inicio: string, fecha_fin: string } | null
   fecha: string
@@ -132,7 +136,7 @@ export function tallerDesdeBase(w: WorkshopBase): Taller {
   return {
     id: String(w.id),
     titulo: w.titulo?.trim() || s.titulo || s.slug,
-    storyboard: { titulo: s.titulo || s.slug, eje: s.eje, slug: s.slug, edicion: s.edicion, escenas: s.escenas, duracion: s.duracion ?? null },
+    storyboard: { clave: s.clave, titulo: s.titulo || s.slug, eje: s.eje, slug: s.slug, edicion: s.edicion, escenas: s.escenas, duracion: s.duracion ?? null },
     organizacion: { id: w.organizacion.id, nombre: w.organizacion.nombre },
     jornada: w.jornada
       ? { id: w.jornada.id, nombre: w.jornada.nombre, ubicacion: w.jornada.ubicacion, fechaInicio: w.jornada.fecha_inicio, fechaFin: w.jornada.fecha_fin }
@@ -149,6 +153,7 @@ export function tallerDesdeBase(w: WorkshopBase): Taller {
     estadoWorkshop: elegir(w.estadoWorkshop, ESTADOS_WORKSHOP, 'publicado'),
     motivoCancelacion: w.motivoCancelacion?.trim() || null,
     ...(typeof w.dispositivosUnidos === 'number' ? { dispositivosUnidos: w.dispositivosUnidos } : {}),
+    ...(w.terminadoEn ? { terminado: true } : {}),
     ...(w.cierre ? { cierre: cierreDesdeBase(w.cierre) } : {}),
   }
 }
@@ -180,7 +185,7 @@ export function tallerDesdeFixture(w: WorkshopFixture, hoy = new Date()): Taller
   })
 }
 
-/** Cancelado (lo decidió la organización); si no, cerrado (tiene su feedback), hoy, próximo o por cerrar (ya pasó y falta el feedback). */
+/** Cancelado (lo decidió la organización); si no, cerrado (ya reportado), hoy, próximo o por cerrar (ya pasó y falta reportarlo). */
 export function estadoDe(taller: Taller, hoy = new Date()): EstadoTaller {
   if (taller.estadoWorkshop === 'cancelado') return 'cancelado'
   if (taller.cierre) return 'cerrado'
@@ -189,9 +194,40 @@ export function estadoDe(taller: Taller, hoy = new Date()): EstadoTaller {
   return taller.fecha > dia ? 'proximo' : 'por_cerrar'
 }
 
-/** Un taller cancelado no se inicia ni recibe feedback. */
-export function puedeIniciarse(taller: Taller): boolean {
+/**
+ * Lo que se hace con un taller, con el verbo de su botón: **ensayar** (el runner sin el grupo: no queda anotado, sin
+ * dispositivos ni reporte), **ejecutar** (con el grupo, el día del taller: la base lo anota como empezado, abre la
+ * conexión para los dispositivos y al terminar pide el reporte) y **reportar** (cómo fue: asistentes, participación,
+ * claridad; con eso se arma el reporte de la organización en Admin).
+ */
+export type Accion = 'ejecutar' | 'ensayar' | 'reportar'
+
+/**
+ * Las acciones de un taller en su momento, la principal primero: antes de su día se ensaya; el día del taller se ejecuta
+ * (y se puede ensayar); ya ejecutado hasta el final, o pasado su día, se reporta. Uno cancelado o ya reportado no tiene
+ * ninguna: su reporte se corrige desde su ficha.
+ */
+export function accionesDe(taller: Taller, hoy = new Date()): Accion[] {
+  const estado = estadoDe(taller, hoy)
+  if (estado === 'cancelado' || estado === 'cerrado') return []
+  if (estado === 'proximo') return ['ensayar']
+  if (estado === 'hoy') return taller.terminado ? ['reportar'] : ['ejecutar', 'ensayar']
+  return ['reportar']
+}
+
+/** Se ejecuta con el grupo solo el día del taller y mientras no se haya reportado. */
+export function puedeEjecutarse(taller: Taller, hoy = new Date()): boolean {
+  return accionesDe(taller, hoy).includes('ejecutar')
+}
+
+/** Ensayar no anota nada: cualquier día, salvo un taller cancelado. */
+export function puedeEnsayarse(taller: Taller): boolean {
   return taller.estadoWorkshop !== 'cancelado'
+}
+
+/** Se reporta desde su día (y se corrige después); uno cancelado o que aún no llega, no. */
+export function puedeReportarse(taller: Taller, hoy = new Date()): boolean {
+  return taller.estadoWorkshop !== 'cancelado' && taller.fecha <= isoDia(hoy)
 }
 
 /** «10:00 – 10:30», o solo el inicio si no tiene fin. */
@@ -215,27 +251,41 @@ export interface DiaAgenda {
   talleres: Taller[]
 }
 
-/**
- * La vista Día: los talleres de `dia`, por hora; lo que viene después, día por día; y lo que ya
- * pasó sin cierre (contado desde hoy, mire el día que mire), del más reciente al más antiguo. Un
- * cancelado sigue en su día y nunca queda por cerrar.
- */
-export function agenda(talleres: Taller[], dia: string, hoy = new Date()) {
-  const orden = [...talleres].sort((a, b) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`))
-  const despues: DiaAgenda[] = []
-  for (const t of orden.filter(t => t.fecha > dia)) {
-    const ultimo = despues.at(-1)
+/** Los talleres seguidos del mismo día, juntos y en el orden en que llegan. */
+function porDias(talleres: Taller[]): DiaAgenda[] {
+  const dias: DiaAgenda[] = []
+  for (const t of talleres) {
+    const ultimo = dias.at(-1)
     if (ultimo?.dia === t.fecha) ultimo.talleres.push(t)
-    else despues.push({ dia: t.fecha, talleres: [t] })
+    else dias.push({ dia: t.fecha, talleres: [t] })
   }
+  return dias
+}
+
+/**
+ * La portada, «Mis talleres»: los de hoy por hora; los que falta reportar (ya pasaron sin reporte), del más reciente al
+ * más antiguo; los próximos, día por día; y los anteriores (reportados o cancelados), día por día del más reciente al
+ * más antiguo y, dentro de cada día, por hora. Un cancelado sigue en su día y nunca falta reportarlo.
+ */
+export function portada(talleres: Taller[], hoy = new Date()) {
+  const dia = isoDia(hoy)
+  const orden = [...talleres].sort((a, b) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`))
+  const pasados = orden.filter(t => t.fecha < dia)
   return {
-    delDia: orden.filter(t => t.fecha === dia),
-    despues,
-    porCerrar: orden.filter(t => estadoDe(t, hoy) === 'por_cerrar').reverse(),
+    hoy: orden.filter(t => t.fecha === dia),
+    porReportar: pasados.filter(t => estadoDe(t, hoy) === 'por_cerrar').reverse(),
+    proximos: porDias(orden.filter(t => t.fecha > dia)),
+    anteriores: porDias(pasados.filter(t => estadoDe(t, hoy) !== 'por_cerrar')).reverse(),
   }
 }
 
-/** Talleres por día ('YYYY-MM-DD'), ordenados por hora. */
+/** El estado que ya dice un día de la semana o del mes, para no repetirlo en cada taller: hoy o próximo. */
+export function obvioDelDia(dia: string, hoy: string): EstadoTaller | undefined {
+  if (dia === hoy) return 'hoy'
+  return dia > hoy ? 'proximo' : undefined
+}
+
+/** Talleres por día ('YYYY-MM-DD'), ordenados por hora: las vistas Semana y Mes. */
 export function talleresPorDia(talleres: Taller[]): Record<string, Taller[]> {
   const mapa: Record<string, Taller[]> = {}
   for (const t of [...talleres].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))) (mapa[t.fecha] ??= []).push(t)
@@ -256,23 +306,34 @@ export function correoValido(valor: string): boolean {
 }
 
 /**
- * Un cierre está completo con la calificación, los asistentes reales y las dos observaciones. En una
- * audiencia cerrada, además, cuántas eran niñas y cuántos niños, que suman los asistentes; en una
- * abierta, los dos van vacíos (tarea 021). Los dispositivos son opcionales; si van, un entero desde cero.
+ * Un cierre está completo con la calificación, los asistentes y las dos observaciones. En una audiencia
+ * cerrada, cuántas eran niñas y cuántos niños es opcional (Luis, 2026-11-26: el total es lo principal y
+ * el educador puede no haberse fijado); si van, los dos y sumando los asistentes. En una abierta, los dos
+ * van vacíos (tarea 021). Los dispositivos son opcionales; si van, un entero desde cero.
  */
 export function cierreCompleto(c: Partial<Cierre>, abierto = false): c is Cierre {
   const calificada = typeof c.calificacion === 'number' && c.calificacion >= 1 && c.calificacion <= 5
   const base = calificada && typeof c.asistentes === 'number' && c.asistentes >= 0 && Boolean(c.participacion) && Boolean(c.claridad)
   if (!base || (c.dispositivos != null && !(Number.isInteger(c.dispositivos) && c.dispositivos >= 0))) return false
-  if (abierto) return c.ninas == null && c.ninos == null
+  if (c.ninas == null && c.ninos == null) return true
+  if (abierto) return false
   return typeof c.ninas === 'number' && typeof c.ninos === 'number' && c.ninas >= 0 && c.ninos >= 0
     && c.ninas + c.ninos === c.asistentes
 }
 
-/** Los niños, de los asistentes y las niñas; null si aún no se sabe o no cuadra. */
-export function ninosDe(asistentes: number, ninas: number | undefined | null): number | null {
-  if (typeof ninas !== 'number' || ninas < 0 || ninas > asistentes) return null
-  return asistentes - ninas
+/**
+ * Las niñas y los niños de una audiencia cerrada, de los asistentes (Luis, 2026-11-26: el total es lo principal; el
+ * desglose, casi opcional, por si el educador no se fijó). Sin ninguno, sin desglose (null); con uno, el otro es el
+ * resto; con los dos, tienen que sumar el total. Si no cuadra (más que el total, o no suman), false.
+ */
+export function desgloseDe(total: number | undefined | null, ninas: number | undefined | null, ninos: number | undefined | null): { ninas: number, ninos: number } | null | false {
+  const conNinas = typeof ninas === 'number'
+  const conNinos = typeof ninos === 'number'
+  if (!conNinas && !conNinos) return null
+  if (typeof total !== 'number') return false
+  const a = conNinas ? ninas : total - (ninos as number)
+  const b = conNinos ? ninos : total - (ninas as number)
+  return a >= 0 && b >= 0 && a + b === total ? { ninas: a, ninos: b } : false
 }
 
 /** Una escena de la guía como la da `educador_guia`: los campos del runner más su orden, su título y el material (0015). */
@@ -293,9 +354,12 @@ export function escenasDeLaGuia(guia: GuiaTaller): (EscenaGuia & { carpeta: stri
     .map(({ i: _, ...escena }, n) => ({ ...escena, numero: n + 1 }))
 }
 
-/** URL del runner de Player en modo educador, para incrustarlo (docs/runner.md), en el idioma del workshop. */
-export function urlDelTaller(playerUrl: string, taller: Taller): string {
-  return runnerUrl(playerUrl, { eje: taller.storyboard.eje, slug: taller.storyboard.slug, modo: 'educator', idioma: taller.idioma })
+/**
+ * URL del runner de Player para incrustarlo (docs/runner.md), en el idioma del workshop: en modo `educator` para
+ * ejecutarlo y, con `ensayo`, en modo `rehearsal`: sin dispositivos y sin mezclar su escena con la del taller de verdad.
+ */
+export function urlDelTaller(playerUrl: string, taller: Taller, ensayo = false): string {
+  return runnerUrl(playerUrl, { clave: taller.storyboard.clave, modo: ensayo ? 'rehearsal' : 'educator', idioma: taller.idioma })
 }
 
 /**

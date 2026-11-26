@@ -8,6 +8,14 @@ function aFecha(iso: string): Date {
   return new Date(y!, m! - 1, d!)
 }
 
+/** El día de la semana corto («mar») y el mes corto («oct»), para la ficha de fecha de una fila. */
+export function diaCorto(iso: string, locale: string): string {
+  return aFecha(iso).toLocaleDateString(intl(locale), { weekday: 'short' }).replace('.', '')
+}
+export function mesCorto(iso: string, locale: string): string {
+  return aFecha(iso).toLocaleDateString(intl(locale), { month: 'short' }).replace('.', '')
+}
+
 /** «martes, 14 de octubre». */
 export function fechaLarga(iso: string, locale: string): string {
   return aFecha(iso).toLocaleDateString(intl(locale), { weekday: 'long', day: 'numeric', month: 'long' })
@@ -29,4 +37,18 @@ export function rangoDeDias(inicio: string, fin: string, locale: string): string
     return locale === 'en' ? `${mes} ${ini.getDate()} – ${end.getDate()}` : `${ini.getDate()} – ${end.getDate()} ${mes}`
   }
   return `${diaYMes(ini)} – ${diaYMes(end)}`
+}
+
+/** Un día de una lista: «Hoy · miércoles, 25 de noviembre», «Mañana · …», «Ayer · …»; los demás, solo la fecha. */
+export function nombreDelDia(iso: string, hoy: string, locale: string, palabras: { hoy: string, manana: string, ayer: string }): string {
+  const fecha = fechaLarga(iso, locale)
+  const [y, m, d] = hoy.split('-').map(Number)
+  const junto = (n: number) => {
+    const x = new Date(y!, m! - 1, d! + n)
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+  }
+  if (iso === hoy) return `${palabras.hoy} · ${fecha}`
+  if (iso === junto(1)) return `${palabras.manana} · ${fecha}`
+  if (iso === junto(-1)) return `${palabras.ayer} · ${fecha}`
+  return fecha
 }

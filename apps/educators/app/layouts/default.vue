@@ -1,8 +1,6 @@
 <template>
-  <!-- Se desplaza la página y la cabecera queda fija arriba (sticky). Solo la semana y el mes de
-       «Mis talleres», en tableta y escritorio, miden el alto del dispositivo para ocupar justo el que
-       queda bajo la cabecera: ahí el contenido se desplaza dentro de main. -->
-  <div :class="['flex min-h-dvh flex-col bg-canvas', altoFijo && 'md:h-dvh']">
+  <!-- Se desplaza la página y la cabecera queda fija arriba (sticky). -->
+  <div class="flex min-h-dvh flex-col bg-canvas">
     <!-- Una sola barra, la misma de Admin: mismas piezas, misma altura (60) y en densidad compact,
          aunque el resto de Educators sea touch; sus botones miden 40, el mínimo táctil, y siguen con
          el comportamiento táctil del kit. Las migas son la navegación: «Mis talleres» lleva de vuelta.
@@ -54,7 +52,7 @@
       </div>
     </header>
 
-    <main :class="['app-main mx-auto flex w-full max-w-[1440px] flex-1 flex-col pb-10 pt-5 md:px-8 md:pb-6 md:pt-7', altoFijo && 'md:min-h-0 md:overflow-y-auto']">
+    <main class="app-main mx-auto flex w-full max-w-[1440px] flex-1 flex-col pb-10 pt-5 md:px-8 md:pb-6 md:pt-7">
       <slot />
     </main>
   </div>
@@ -66,15 +64,9 @@ import { nombreCompleto } from '~/utils/sesion'
 const { t } = useT()
 const { educador, salir } = useSesion()
 const { taller } = useTalleres()
-const { vista } = useCalendario()
 const route = useRoute()
 
-// La semana y el mes de «Mis talleres» ocupan justo el alto que queda bajo la cabecera; el resto de
-// las páginas (el día, la ficha, el cierre, el perfil) se desplaza entero, con la barra en la página.
-const altoFijo = computed(() => route.path === '/' && vista.value !== 'dia')
-
-// La página dentro de «Mis talleres»: su perfil o un taller (su preparación y su cierre). En el
-// inicio, ninguna.
+// La página dentro de «Mis talleres»: su perfil o un taller (su ficha y su reporte). En el inicio, ninguna.
 const pagina = computed<string | null>(() => {
   if (route.path === '/cuenta') return t('cuenta.titulo')
   const id = route.params.id
