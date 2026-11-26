@@ -260,8 +260,8 @@ select is((select comunidad_id from lugares where id = current_setting('t.salud'
 update lugares set comunidad_id = null where id = current_setting('t.plaza')::bigint;
 
 -- ── El cierre ─────────────────────────────────────────────────────────────────
-select throws_ok(format($$ select pruebas.dar(pruebas.taller(-1, %s, %s, null), 26, null, null) $$, current_setting('t.e2'), current_setting('t.g1a')),
-  'P0001', null, 'en un grupo cerrado, el cierre lleva niñas y niños');
+select lives_ok(format($$ select pruebas.dar(pruebas.taller(-1, %s, %s, null), 26, null, null) $$, current_setting('t.e2'), current_setting('t.g1a')),
+  'en un grupo cerrado, las niñas y los niños son opcionales: basta el total');
 select lives_ok(format($$ select pruebas.dar(pruebas.taller(-1, %s, %s, null), 90, null, null) $$, current_setting('t.plaza'), current_setting('t.gpub')),
   'en uno abierto basta el total');
 select throws_ok(format($$ select pruebas.dar(pruebas.taller(-1, %s, %s, null), 90, 50, 30) $$, current_setting('t.plaza'), current_setting('t.gpub')),

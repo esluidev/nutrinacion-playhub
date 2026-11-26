@@ -214,7 +214,7 @@ create table workshop_educadores (
   estado            estado_asignacion not null default 'PENDIENTE',
   iniciado_en       timestamptz,          -- el runner dijo «listo» en Educators
   terminado_en      timestamptz,          -- el runner dijo «terminado»
-  dispositivos_unidos int check (dispositivos_unidos >= 0),  -- cuántos se unieron; lo anota el educador en el cierre
+  dispositivos_unidos int check (dispositivos_unidos >= 0),  -- los conectados al terminar (educador_terminar); el educador lo corrige en el cierre
   workshop_id       bigint not null,
   educador_id       bigint not null references educadores (id) on delete cascade,  -- directa: la API la usa para embeber
   educador_grupo_id bigint references educador_grupos (id) on delete set null,
@@ -241,8 +241,8 @@ create table workshop_feedback (
   workshop_educador_id  bigint not null unique references workshop_educadores (id) on delete cascade,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now(),
-  -- Niñas y niños van los dos o ninguno, y suman el total. Cuándo hacen falta (grupo cerrado) lo
-  -- decide el trigger.
+  -- Niñas y niños van los dos o ninguno, y suman el total. Son opcionales: el total es lo principal y
+  -- el educador puede no haberse fijado (Luis, 2026-11-26).
   constraint workshop_feedback_desglose check (
     (asistentes_ninas is null and asistentes_ninos is null) or asistentes_ninas + asistentes_ninos = asistentes_reales)
 );
@@ -275,6 +275,9 @@ create table workshop_conexion_participantes (
   apodo                text check (char_length(apodo) between 1 and 20),  -- sin apodo, el nombre del avatar
   estado               estado_participante not null default 'ESPERANDO',
   pidio_en             timestamptz not null default now(),
+  -- Mientras espera, el dispositivo da señal (participante_estado, cada 15 s): sin señal en 45 s, su solicitud ya no
+  -- cuenta (ni se ve ni la aprueba «Aprobar a todos»). Al irse de la página la retira (participante_retirar).
+  ultima_senal_en      timestamptz not null default now(),
   aprobado_en          timestamptz,
   conectado_desde      timestamptz,                                      -- conectado ahora, desde cuándo
   segundos_conectado   int not null default 0 check (segundos_conectado >= 0),
@@ -875,30 +878,6 @@ create trigger workshop_feedback_completa
 create trigger workshop_feedback_updated_at
   before update on workshop_feedback
   for each row execute function toca_updated_at();
-
--- En un grupo cerrado, el cierre lleva cuántas niñas y cuántos niños; en uno abierto (una feria)
--- basta el total. La suma la comprueba el check de la tabla.
-create function workshop_feedback_valida_desglose()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  if new.asistentes_ninas is null and not coalesce((
-       select g.abierto
-         from workshop_educadores we
-         join workshops w on w.id = we.workshop_id
-         join grupos_audiencia g on g.id = w.grupo_audiencia_id
-        where we.id = new.workshop_educador_id), false) then
-    raise exception 'En un grupo cerrado, el cierre lleva cuántas niñas y cuántos niños';
-  end if;
-  return new;
-end;
-$$;
-
-create trigger workshop_feedback_desglose
-  before insert or update on workshop_feedback
-  for each row execute function workshop_feedback_valida_desglose();
 
 -- Cuando todos sus educadores lo completan, el workshop pasa a FINALIZADO sin esperar a la tarea.
 create function workshop_finaliza_si_completo()

@@ -65,7 +65,7 @@ create table storyboards (
   publicado_hogar     boolean not null default false,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
-  unique (categoria, slug),                                  -- /play/<categoria>/<slug> en el runner
+  unique (categoria, slug),                                  -- su carpeta en Player; las URL van por la clave
   constraint storyboards_hogar_estandar check (not publicado_hogar or organizacion_id is null),
   constraint storyboards_subcategoria check (subcategoria_de_categoria(categoria, subcategoria)),
   constraint storyboards_enfoques check (enfoques_de_categoria(categoria, enfoques_salud)),

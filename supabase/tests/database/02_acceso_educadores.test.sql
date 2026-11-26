@@ -5,7 +5,7 @@
 --   lucia@acc.test con su enlace de acceso pendiente, sin PIN todavía (Acceso Centro)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(75);
+select plan(77);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -157,6 +157,10 @@ select is(
     where t->>'id' = current_setting('t.hoy')),
   'El huevo en el desayuno', 'trae el título que le puso la organización');
 select is(
+  (select t->'storyboard'->>'clave' from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
+    where t->>'id' = current_setting('t.hoy')),
+  'b0000000-0000-4000-8000-000000000001', 'y la clave de su storyboard, con la que se abre el runner');
+select is(
   (select concat_ws(' | ', t->'jornada'->>'ubicacion', t->>'lugar', t->>'grupo', t->>'grupoAbierto')
      from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t where t->>'id' = current_setting('t.hoy')),
   'Acceso Sede central | Aula | Acceso 2.º B | false', 'dentro de una jornada: el lugar de la jornada, el espacio del taller y el grupo (tarea 021)');
@@ -218,10 +222,14 @@ select throws_ok(
   format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
          '{"calificacion": 9, "asistentes": 22, "ninas": 12, "participacion": "alta", "claridad": "clara"}'),
   '23514', null, 'puede corregir el feedback ya finalizado, pero con una calificación de 1 a 5');
-select throws_ok(
-  format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
-         '{"calificacion": 4, "asistentes": 22, "participacion": "alta", "claridad": "clara"}'),
-  'P0001', null, 'en un grupo cerrado, el cierre no se guarda sin niñas y niños');
+select is(
+  educador_guardar_feedback(current_setting('t.token'), current_setting('t.hoy')::bigint,
+    '{"calificacion": 4, "asistentes": 22, "participacion": "alta", "claridad": "clara"}')->>'ninas',
+  null, 'en un grupo cerrado, las niñas y los niños son opcionales: basta el total');
+select is(
+  educador_guardar_feedback(current_setting('t.token'), current_setting('t.hoy')::bigint,
+    '{"calificacion": 4, "asistentes": 22, "ninos": 10, "participacion": "alta", "claridad": "clara"}')->>'ninas',
+  '12', 'y con los niños, las niñas son el resto');
 select throws_ok(
   format('select educador_guardar_feedback(%L, %s, %L)', current_setting('t.token'), current_setting('t.hoy'),
          '{"calificacion": 4, "asistentes": 22, "ninas": 12, "ninos": 9, "participacion": "alta", "claridad": "clara"}'),

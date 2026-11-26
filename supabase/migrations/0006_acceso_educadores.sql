@@ -331,7 +331,7 @@ $$;
 -- Sus workshops de todas sus organizaciones: los publicados, los finalizados y los cancelados que
 -- ya se le habían publicado (no los borradores, los que están en revisión ni los archivados). Con
 -- la forma de `Taller` en Educators (la forma exacta, en la cabecera). El título va en el idioma
--- del contenido; `eje` es la carpeta de la categoría en el runner (/play/<eje>/<slug>); `jornada`
+-- del contenido; `storyboard.clave` abre el runner (/play/<clave>); `eje` es la carpeta de su categoría; `jornada`
 -- dice de qué jornada es parte, si lo es, con su lugar. Dentro de una jornada, `lugar` es el espacio
 -- del workshop («Aula 3A»), o null; suelto, el lugar y su espacio. `grupo` es el nombre del grupo de
 -- audiencia y `grupoAbierto` dice si su cierre puede ir sin niñas y niños (tarea 021).
@@ -347,6 +347,7 @@ begin
              jsonb_build_object(
                'id', w.id::text,
                'storyboard', jsonb_build_object(
+                 'clave', s.clave,
                  'titulo', localizado(s.titulo, w.idioma_contenido, s.idioma_principal),
                  'eje', replace(lower(s.categoria::text), '_', '-'),
                  'categoria', s.categoria,
@@ -488,11 +489,14 @@ declare
   v_asignacion workshop_educadores := educador_asignacion(educadores_de_sesion(p_token), p_workshop_id, 'feedback');
   v_unidos     int;
 begin
-  perform workshop_cierra_conexion(p_workshop_id);
-  select count(*) filter (where p.aprobado_en is not null) into v_unidos
+  -- Los dispositivos conectados al terminar, según la pantalla del educador (Luis, 2026-11-26): no todos los que alguna
+  -- vez se aprobaron, que contaban también al quitado, al que se fue antes y al que salió y volvió a entrar como otro.
+  -- Se cuentan antes de cerrar la conexión, que les cierra el tiempo.
+  select count(*) filter (where p.estado = 'APROBADO' and p.conectado_desde is not null) into v_unidos
     from workshop_conexion_participantes p
    where p.workshop_conexion_id = (select id from workshop_conexiones where workshop_id = p_workshop_id
                                     order by abierta_en desc, id desc limit 1);
+  perform workshop_cierra_conexion(p_workshop_id);
   update workshop_educadores
      set iniciado_en = coalesce(iniciado_en, now()),
          terminado_en = now(),
@@ -503,8 +507,8 @@ $$;
 
 -- El feedback del workshop. Crea o corrige el de su asignación; al crearlo, la asignación queda
 -- completada (y el workshop, finalizado si era el último). Acepta las claves y los valores en
--- minúscula de Educators. `ninas` y `ninos` (tarea 021): si solo llega `ninas`, los niños son el
--- resto; en un grupo cerrado hacen falta (trigger de 0004). `dispositivos` (tarea 021, opcional):
+-- minúscula de Educators. `ninas` y `ninos` (tarea 021) son opcionales: el total es lo principal
+-- (Luis, 2026-11-26); si solo llega uno, el otro es el resto. `dispositivos` (tarea 021, opcional):
 -- cuántos se unieron al taller; se guarda con la asignación.
 create function educador_guardar_feedback(p_token text, p_workshop_id bigint, p_feedback jsonb)
 returns jsonb
@@ -513,15 +517,16 @@ as $$
 declare
   v_asignacion workshop_educadores := educador_asignacion(educadores_de_sesion(p_token), p_workshop_id, 'feedback');
   v_feedback   workshop_feedback;
-  v_ninas      int := (p_feedback->>'ninas')::int;
-  v_ninos      int := coalesce((p_feedback->>'ninos')::int, (p_feedback->>'asistentes')::int - v_ninas);
+  v_total      int := (p_feedback->>'asistentes')::int;
+  v_ninas      int := coalesce((p_feedback->>'ninas')::int, v_total - (p_feedback->>'ninos')::int);
+  v_ninos      int := coalesce((p_feedback->>'ninos')::int, v_total - v_ninas);
 begin
   insert into workshop_feedback (workshop_educador_id, calificacion, asistentes_reales, asistentes_ninas, asistentes_ninos,
                                  participacion_grupo, claridad_contenido, dificultades_grupo, material_faltante)
   values (
     v_asignacion.id,
     (p_feedback->>'calificacion')::int,
-    (p_feedback->>'asistentes')::int,
+    v_total,
     v_ninas,
     v_ninos,
     upper(p_feedback->>'participacion')::participacion_grupo,
@@ -609,7 +614,9 @@ begin
              'segundos', p.segundos_conectado + coalesce(greatest(0, extract(epoch from now() - p.conectado_desde))::int, 0))
              order by p.pidio_en, p.id)
       from workshop_conexion_participantes p
-     where p.workshop_conexion_id = v_conexion.id), '[]'::jsonb);
+     where p.workshop_conexion_id = v_conexion.id
+       -- Una solicitud sin señal en 45 s es de un dispositivo que ya no está esperando: no se muestra.
+       and not (p.estado = 'ESPERANDO' and p.ultima_senal_en < now() - interval '45 seconds')), '[]'::jsonb);
 end;
 $$;
 
@@ -627,7 +634,8 @@ begin
     update workshop_conexion_participantes
        set estado = 'APROBADO', aprobado_en = coalesce(aprobado_en, now())
      where workshop_conexion_id = v_conexion.id and estado <> 'APROBADO'
-       and (case when p_dispositivos is null then estado = 'ESPERANDO' else dispositivo = any (p_dispositivos) end)
+       and (case when p_dispositivos is null then estado = 'ESPERANDO' and ultima_senal_en >= now() - interval '45 seconds'
+                 else dispositivo = any (p_dispositivos) end)
     returning dispositivo
   )
   select coalesce(jsonb_agg(dispositivo), '[]'::jsonb) into v_aprobados from aprobados;
@@ -685,7 +693,7 @@ as $$
            'codigo', c.codigo,
            'titulo', coalesce(nullif(btrim(w.titulo), ''), localizado(s.titulo, w.idioma_contenido, s.idioma_principal)),
            'idioma', w.idioma_contenido,
-           'storyboard', jsonb_build_object('eje', replace(lower(s.categoria::text), '_', '-'), 'slug', s.slug))
+           'storyboard', jsonb_build_object('clave', s.clave))
     from workshop_conexiones c
     join workshops w on w.id = c.workshop_id
     join storyboards s on s.id = w.storyboard_id
@@ -715,7 +723,7 @@ begin
   insert into workshop_conexion_participantes as p (dispositivo, avatar, apodo, workshop_conexion_id, organizacion_id)
   values (p_dispositivo, lower(btrim(p_avatar)), nullif(left(btrim(coalesce(p_apodo, '')), 20), ''), v_conexion.id, v_conexion.organizacion_id)
   on conflict (workshop_conexion_id, dispositivo) do update
-     set avatar = excluded.avatar, apodo = excluded.apodo
+     set avatar = excluded.avatar, apodo = excluded.apodo, ultima_senal_en = now()
    where p.estado = 'ESPERANDO';
 
   select estado into v_estado from workshop_conexion_participantes
@@ -727,12 +735,39 @@ $$;
 -- Dispositivo: en qué estado está (al recargar). Null si la conexión ya no está abierta o no pidió entrar.
 create function participante_estado(p_codigo text, p_dispositivo uuid)
 returns jsonb
-language sql stable security definer set search_path = public
+language plpgsql security definer set search_path = public
 as $$
-  select jsonb_build_object('estado', lower(p.estado::text), 'avatar', p.avatar, 'apodo', p.apodo)
+declare
+  v_fila workshop_conexion_participantes;
+begin
+  -- Preguntar su estado mientras espera es su señal: sigue esperando de verdad.
+  update workshop_conexion_participantes p
+     set ultima_senal_en = now()
+    from workshop_conexiones c
+   where p.workshop_conexion_id = c.id and c.codigo = upper(btrim(coalesce(p_codigo, ''))) and c.cerrada_en is null
+     and p.dispositivo = p_dispositivo and p.estado = 'ESPERANDO';
+  select p.* into v_fila
     from workshop_conexiones c
     join workshop_conexion_participantes p on p.workshop_conexion_id = c.id
-   where c.codigo = upper(btrim(coalesce(p_codigo, ''))) and c.cerrada_en is null and p.dispositivo = p_dispositivo
+   where c.codigo = upper(btrim(coalesce(p_codigo, ''))) and c.cerrada_en is null and p.dispositivo = p_dispositivo;
+  if v_fila.id is null then return null; end if;
+  return jsonb_build_object('estado', lower(v_fila.estado::text), 'avatar', v_fila.avatar, 'apodo', v_fila.apodo);
+end;
+$$;
+
+-- Dispositivo: se va de la página mientras espera (cierra, vuelve atrás): retira su solicitud para que el educador no
+-- la vea. Solo la de quien espera; un aprobado, rechazado o quitado se queda como está.
+create function participante_retirar(p_codigo text, p_dispositivo uuid)
+returns boolean
+language plpgsql security definer set search_path = public
+as $$
+begin
+  delete from workshop_conexion_participantes p
+   using workshop_conexiones c
+   where p.workshop_conexion_id = c.id and c.codigo = upper(btrim(coalesce(p_codigo, ''))) and c.cerrada_en is null
+     and p.dispositivo = p_dispositivo and p.estado = 'ESPERANDO';
+  return found;
+end;
 $$;
 
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -760,7 +795,8 @@ begin
     -- La pantalla del educador y el dispositivo, en la conexión del taller (tarea 013).
     'conexion_participantes(text, text)', 'conexion_aprobar(text, text, uuid[])', 'conexion_rechazar(text, text, uuid)',
     'conexion_presencia(text, text, uuid[], uuid[])',
-    'participante_buscar(text)', 'participante_entrar(text, uuid, text, text)', 'participante_estado(text, uuid)'
+    'participante_buscar(text)', 'participante_entrar(text, uuid, text, text)', 'participante_estado(text, uuid)',
+    'participante_retirar(text, uuid)'
   ] loop
     execute format('revoke all on function %s from public', f);
     execute format('grant execute on function %s to anon, authenticated', f);

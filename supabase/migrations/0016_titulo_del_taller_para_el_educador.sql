@@ -18,6 +18,7 @@ begin
                'id', w.id::text,
                'titulo', nullif(btrim(w.titulo), ''),
                'storyboard', jsonb_build_object(
+                 'clave', s.clave,
                  'titulo', localizado(s.titulo, w.idioma_contenido, s.idioma_principal),
                  'eje', replace(lower(s.categoria::text), '_', '-'),
                  'categoria', s.categoria,

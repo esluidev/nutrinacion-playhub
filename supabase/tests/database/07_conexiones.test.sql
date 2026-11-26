@@ -4,7 +4,7 @@
 -- correos @cx.test) en una transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(38);
+select plan(45);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -82,7 +82,7 @@ select isnt(educador_iniciar(current_setting('t.token'), current_setting('t.w2')
 -- ── El dispositivo se une con el código ───────────────────────────────────────
 select is(participante_buscar(lower(current_setting('t.codigo')))->>'titulo', 'El huevo en el recreo',
   'con el código (también en minúsculas) encuentra el taller');
-select is(participante_buscar(current_setting('t.codigo'))->'storyboard'->>'slug', 'cx-huevo', 'y lo que necesita para abrirlo');
+select is(participante_buscar(current_setting('t.codigo'))->'storyboard'->>'clave', 'c0000000-0000-4000-8000-000000000001', 'y lo que necesita para abrirlo: la clave del storyboard');
 select is(participante_buscar('ZZZZZZ'), null, 'un código que no está en curso no encuentra nada');
 select is(participante_entrar(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000001', 'oso', 'Pedrito')->>'estado',
   'esperando', 'pide entrar con su avatar y su apodo, y espera');
@@ -120,6 +120,28 @@ select is(participante_entrar(current_setting('t.codigo'), 'd0000000-0000-4000-8
 select is(participante_estado(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000001')->>'avatar', 'rana',
   'ni le cambia el avatar');
 
+-- Una solicitud sin señal deja de contar; al irse de la página, se retira.
+select participante_entrar(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000004', 'perro', null);
+reset role;
+update workshop_conexion_participantes set ultima_senal_en = now() - interval '1 minute'
+ where dispositivo = 'd0000000-0000-4000-8000-000000000004';
+select pruebas.como_anon();
+select is((select count(*)::int from jsonb_array_elements(conexion_participantes(current_setting('t.codigo'), current_setting('t.llave'))) p
+            where p->>'dispositivo' = 'd0000000-0000-4000-8000-000000000004'), 0,
+  'una solicitud sin señal en 45 segundos ya no se ve');
+select is(jsonb_array_length(conexion_aprobar(current_setting('t.codigo'), current_setting('t.llave'))), 0,
+  'ni la aprueba «Aprobar a todos»');
+select is(participante_estado(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000004')->>'estado', 'esperando',
+  'si el dispositivo vuelve a dar señal, sigue esperando');
+select is((select count(*)::int from jsonb_array_elements(conexion_participantes(current_setting('t.codigo'), current_setting('t.llave'))) p
+            where p->>'dispositivo' = 'd0000000-0000-4000-8000-000000000004'), 1,
+  'y se vuelve a ver');
+select is(participante_retirar(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000004'), true,
+  'al irse de la página, retira su solicitud');
+select is(participante_estado(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000004'), null, 'y ya no está');
+select is(participante_retirar(current_setting('t.codigo'), 'd0000000-0000-4000-8000-000000000001'), false,
+  'a un aprobado no lo retira');
+
 -- El tiempo conectado: entra, pasa minuto y medio, sale y vuelve.
 select conexion_presencia(current_setting('t.codigo'), current_setting('t.llave'), '{d0000000-0000-4000-8000-000000000001}', null);
 select ok((conexion_participantes(current_setting('t.codigo'), current_setting('t.llave'))->0->>'conectado')::boolean,
@@ -151,8 +173,8 @@ select pruebas.como_anon();
 select educador_terminar(current_setting('t.token'), current_setting('t.w1')::bigint);
 select is(participante_buscar(current_setting('t.codigo')), null, 'al terminar el taller, el código deja de valer');
 select is((select (t->>'dispositivosUnidos')::int from jsonb_array_elements(educador_workshops(current_setting('t.token'))) t
-            where t->>'id' = current_setting('t.w1')), 2,
-  'y quedan para el cierre los dispositivos que se unieron (los aprobados, también el quitado)');
+            where t->>'id' = current_setting('t.w1')), 1,
+  'y quedan para el reporte los dispositivos conectados al terminar (no el quitado ni el rechazado)');
 reset role;
 select is((select conectado_desde from workshop_conexion_participantes where dispositivo = 'd0000000-0000-4000-8000-000000000001'), null,
   'y se cierra el tiempo de quien seguía conectado');

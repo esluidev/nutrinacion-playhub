@@ -488,13 +488,13 @@ isOneToOne: false
                   ]
                 },"workshop_conexion_participantes": {
                   Row: {
-                    "apodo": string | null,"aprobado_en": string | null,"avatar": string,"conectado_desde": string | null,"dispositivo": string,"estado": Database["public"]['Enums']["estado_participante"],"id": number,"organizacion_id": number,"pidio_en": string,"segundos_conectado": number,"ultima_salida_en": string | null,"workshop_conexion_id": number
+                    "apodo": string | null,"aprobado_en": string | null,"avatar": string,"conectado_desde": string | null,"dispositivo": string,"estado": Database["public"]['Enums']["estado_participante"],"id": number,"organizacion_id": number,"pidio_en": string,"segundos_conectado": number,"ultima_salida_en": string | null,"ultima_senal_en": string,"workshop_conexion_id": number
                   }
                   Insert: {
-                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar": string,"conectado_desde"?: string | null,"dispositivo": string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id": number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"workshop_conexion_id": number
+                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar": string,"conectado_desde"?: string | null,"dispositivo": string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id": number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"ultima_senal_en"?: string,"workshop_conexion_id": number
                   }
                   Update: {
-                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar"?: string,"conectado_desde"?: string | null,"dispositivo"?: string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id"?: number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"workshop_conexion_id"?: number
+                    "apodo"?: string | null,"aprobado_en"?: string | null,"avatar"?: string,"conectado_desde"?: string | null,"dispositivo"?: string,"estado"?: Database["public"]['Enums']["estado_participante"],"id"?: never,"organizacion_id"?: number,"pidio_en"?: string,"segundos_conectado"?: number,"ultima_salida_en"?: string | null,"ultima_senal_en"?: string,"workshop_conexion_id"?: number
                   }
                   Relationships: [
                     {
@@ -820,6 +820,9 @@ isOneToOne: false
                            },
 "participante_estado":
 { Args: { "p_codigo": string,"p_dispositivo": string }; Returns: Json
+                           },
+"participante_retirar":
+{ Args: { "p_codigo": string,"p_dispositivo": string }; Returns: boolean
                            },
 "perfiles_editables":
 { Args: Record<PropertyKey, never>; Returns: number[]
