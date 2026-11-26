@@ -5,26 +5,28 @@ Player expone el runner y las apps lo muestran en un iframe ([decisión 004](dec
 ```text
 educator.nutrinacion.com                         player.nutrinacion.com
 ┌─────────────────────────────────┐              ┌──────────────────────────────┐
-│ /workshops/<id>/jugar           │   iframe     │ /play/<eje>/<slug>?mode=…    │
+│ /workshops/<id>/play?mode=live  │   iframe     │ /play/<clave>?mode=…         │
 │ <UiRunner :src :guide           │ ───────────▶ │ runner (sin sesión)          │
 │   @finish @exit>                │              │                              │
 │                                 │ ◀── listo ── │                              │
 │                                 │ ── iniciar ─▶│ (guía)                       │
 │                                 │ ◀── escena ─ │                              │
-│ feedback del taller ◀ finish ───│ ◀ terminado ─│                              │
+│ reporte del taller ◀ finish ────│ ◀ terminado ─│                              │
 └─────────────────────────────────┘              └──────────────────────────────┘
 ```
 
 ## 1. La URL: qué cargar
 
-`<PLAYER>/play/<eje>/<slug>?mode=<modo>&lang=<idioma>&escena=<carpeta>`
+`<PLAYER>/play/<clave>?mode=<modo>&lang=<idioma>&escena=<carpeta>`
+
+**El storyboard va por su clave**, el `key` de su `storyboard.json` (un UUID), la misma en la base (`storyboards.clave`): su identidad, que no cambia si se renombra su carpeta o su categoría. Es la misma en todas las URL de un storyboard: el runner, la gestión de Player (`/storyboards/<clave>`, la guía de una escena en `/storyboards/<clave>/guia/<carpeta>`) y Admin (`/organizacion/storyboards/<clave>`, `/platform/storyboards/<clave>`, una escena en `…/escenas/<carpeta>`). El eje y el slug solo localizan sus archivos dentro de Player; ninguna app los convierte para armar una URL. Una escena va por su carpeta. Un taller, que solo existe en la base, va por su id (`/workshops/<id>`).
 
 | Parámetro | Valores | Si falta o no vale |
 |---|---|---|
-| `mode` | `educator`, `device`, `home` o `preview` | `educator` |
+| `mode` | `educator`, `device`, `home`, `preview` o `rehearsal` | `educator` |
 | `lang` | Un idioma que declare el storyboard | El idioma por defecto del storyboard |
 | `escena` | Carpeta de una escena | La escena que el aparato recuerda (abajo) o, si no recuerda ninguna, la primera |
-| `conexion` | El código de la conexión del taller (6 letras y números) | Solo en `device`: sin él, el dispositivo sigue la sesión de demostración entre pestañas. Lo pone `/unirse` al aprobarse el dispositivo (abajo) |
+| `conexion` | El código de la conexión del taller (6 letras y números) | Solo en `device`: sin él, el dispositivo sigue la sesión de demostración entre pestañas. Lo pone `/workshop/join` al aprobarse el dispositivo (abajo) |
 | `sonidos` | `1` | Sin panel. Con él, un botón por cada sonido del motor para oírlo suelto y el nombre del último que sonó. No es parte del contrato |
 | `medir` | `1` | Sin medidor. Con él, sobre el runner salen los números del motor (cuadros por segundo, cuadros perdidos y lo que tarda un toque en verse) para probar en un dispositivo. No es parte del contrato: la app no lo manda |
 
@@ -34,6 +36,8 @@ La URL no lleva nada sensible ni identificadores de la app: ni taller, ni sesió
 
 `preview` es la vista previa de Admin: solo el escenario (la consigna, el juego y su hoja de feedback), sin las bandas del marco: la escena se encaja en todo el alto y la hoja de feedback sube sobre ella. No lleva la consola del taller (el avance, la escena actual, Ajustes · Reiniciar · Salir, la guía ni Siguiente) ni abre la sesión con los dispositivos, y nunca manda `terminado` ni `salir`. Conduce la app con `ir` y `reiniciar`.
 
+`rehearsal` es el ensayo del educador (Educators, «Ensayar»): la consola del modo `educator` y la guía, sin dispositivos (ni de prueba) ni sesión, y con su propia memoria de la escena, que no se mezcla con la del taller de verdad. Terminar o salir dicen «Es un ensayo: no queda anotado». `listo` lleva `modo: 'rehearsal'`; la app no llama a la base.
+
 ## 2. Los mensajes
 
 Todos los mensajes van por `postMessage` con canal y versión: `{ canal: 'playhub-runner', v: 1, tipo, … }`.
@@ -42,7 +46,7 @@ Todos los mensajes van por `postMessage` con canal y versión: `{ canal: 'playhu
 
 | `tipo` | Campos | Cuándo |
 |---|---|---|
-| `listo` | `storyboard` (`<eje>/<slug>`), `modo`, `idioma`, `escenas` (número) | Cuando lo primero que se va a ver ya está completo en pantalla; siempre antes de la primera `escena` |
+| `listo` | `storyboard` (su clave), `modo`, `idioma`, `escenas` (número) | Cuando lo primero que se va a ver ya está completo en pantalla; siempre antes de la primera `escena` |
 | `escena` | `indice` (desde 0), `carpeta` | Cada vez que cambia la escena, también la primera (educador, casa y vista previa; un dispositivo no la manda) |
 | `terminado` | — | Se confirma «Terminar» en la última escena |
 | `salir` | `indice`, `carpeta` | Se confirma «Salir» a medias |
@@ -81,12 +85,14 @@ En los dos casos el runner avisa a los dispositivos de que el taller se cerró.
 
 Un dispositivo se une al taller sin instalar nada ni tener cuenta:
 
-1. En la pantalla del educador, el panel Dispositivos muestra un **QR** (abre `<PLAYER>/unirse/<código>`), el **código** y la dirección corta (`<PLAYER>/unirse`) para escribirlo. Solo hay QR en un taller real: la conexión la abre Educators al iniciar un taller publicado; abierto directamente o en la vista previa no hay conexión. En desarrollo, si la pantalla está en `localhost`, el QR lleva la IP de este equipo en el Wi‑Fi (`ipEnLaRed`, de `nuxt.config.ts`), porque en un teléfono `localhost` es el propio teléfono; abierta por Tailscale o Funnel, lleva esa dirección.
-2. En `/unirse/<código>` elige un **avatar** y escribe un **apodo** (opcional; sin él, el nombre del avatar: Rufo, Bruno, Lila, Michi, Rita, Leo) y pide entrar (`participante_entrar`). Espera.
-3. El educador lo **aprueba** (a uno, o «Aprobar a Todos» los que esperan) o lo rechaza. «Entrar sin aprobar», un interruptor de su pantalla, aprueba solo a quien llega (una feria).
-4. Aprobado, el dispositivo abre `/play/<eje>/<slug>?mode=device&lang=<idioma>&conexion=<código>` y sigue la escena y la pausa del educador. Al recargar vuelve como el mismo: recuerda su identificador, su avatar y su apodo para ese código.
+1. En la pantalla del educador, el panel Dispositivos muestra un **QR** (abre `<PLAYER>/workshop/join/<código>`), el **código** y la dirección corta (`<PLAYER>/workshop/join`) para escribirlo. Solo hay QR en un taller real: la conexión la abre Educators al iniciar un taller publicado; abierto directamente o en la vista previa no hay conexión. En desarrollo, si la pantalla está en `localhost`, el QR lleva la IP de este equipo en el Wi‑Fi (`ipEnLaRed`, de `nuxt.config.ts`), porque en un teléfono `localhost` es el propio teléfono; abierta por Tailscale o Funnel, lleva esa dirección.
+2. En `/workshop/join/<código>` elige un **avatar** y escribe su **nombre** (opcional; sin él, el del avatar: Rufo, Bruno, Lila, Michi, Rita, Leo) y solicita el acceso (`participante_entrar`). Espera, con su nombre bajo su avatar; puede volver a cambiar su avatar o su nombre («Guardar Cambios») sin dejar de esperar. **Mientras espera da señal**: pregunta su estado cada 15 s (`participante_estado`), y una solicitud sin señal en 45 s ya no se ve ni la aprueba «Aprobar a Todos». Si sale de la página dentro de la app, la retira (`participante_retirar`) y se despide; recargar no la retira. La pantalla del educador vuelve a leer las solicitudes cada 15 s mientras haya alguna.
+3. El educador lo **aprueba** (a uno, o «Aprobar a Todos» los que esperan) o lo rechaza. Cada escena que no es la primera ni la última empieza con los dispositivos en pausa (`pausaDispositivos`; Luis, 2026-11-26): el educador explica y los libera con el botón junto a Dispositivos o con «Liberar a Todos». Ya dentro, puede reiniciar la escena de uno o de todos («Reiniciar a Todos»: la orden `reinicio` a cada uno; el dispositivo lleva aparte los reinicios del educador que ya vio, para que el siguiente estado no lo reinicie otra vez), y pausar o liberar a uno, o a todos con «Pausar a Todos»: solo los dispositivos (va en el estado, `pausaDispositivos`, así que también queda en pausa quien entra después); la pausa de Ajustes (`pausa`) detiene además la pantalla del educador. Si dos se llaman igual, el segundo sale como «Lila 2»; solo cuentan los que están ahora (los que esperan y los aprobados conectados, `estanAhora`), no un quitado, un rechazado ni uno que se fue. «Entrar sin aprobar», un interruptor de su pantalla, aprueba solo a quien llega (una feria).
+4. Aprobado, el dispositivo abre `/play/<clave>?mode=device&lang=<idioma>&conexion=<código>` (la clave se la da `participante_buscar`) y sigue la escena y la pausa del educador.
+5. **Lo recuerda la pestaña, no el teléfono** (`sessionStorage`, por código; Luis, 2026-11-26): recargar, o que el navegador descarte la pestaña y la reabra, lo deja donde estaba, con su identificador, su avatar y su apodo. Cerrar la pestaña y volver a escanear el QR empieza de cero: elige avatar y nombre y el educador lo aprueba otra vez.
+6. **Salir, ser quitado o rechazado, o que el taller termine, cierra la sesión del todo** (Luis, 2026-11-26: «realmente no abandona por completo»): el dispositivo lo olvida y va a la página inicial, `/workshop/join`, sin ventana ni página para volver a entrar. Si escribe el código otra vez, elige avatar y nombre y lo solicita como la primera vez. Al salir se despide; al quitarlo, el educador lo marca primero en la base (`conexion_rechazar`) y después le manda la orden. Al terminar el taller, el educador manda `cierre` y cada dispositivo, en el juego o esperando, cierra igual (antes se quedaba en «El taller terminó»). Si no se enteró (sin red), lo lee en la base al abrir y cada vez que vuelve a escuchar su canal (que ya no está aprobado o que la conexión está cerrada) y cierra igual.
 
-Los mensajes van por **Realtime de Supabase, solo Broadcast**, en dos canales por conexión: `workshop-<código>` (educador → dispositivos: estado, órdenes, aprobado, rechazado, cierre) y `workshop-<código>-educador` (dispositivos → educador: solicitud, presencia cada 10 segundos, hola, adiós), que solo escucha el educador. Lo que manda y queda registrado va por las funciones de la base: el educador con el código y la llave (`conexion_*`), el dispositivo con el código (`participante_*`); ver [backend](backend.md). El código vale mientras el taller está en curso; `educador_terminar` cierra la conexión y deja en el cierre cuántos dispositivos se unieron. Sin conexión (abierto directamente, o una app sin Supabase), la sesión es la de demostración entre pestañas del mismo navegador, con seis dispositivos de prueba. Todo lo que depende del servicio está en `app/runner/conexion/realtime.ts`.
+Los mensajes van por **Realtime de Supabase, solo Broadcast**, en dos canales por conexión: `workshop-<código>` (educador → dispositivos: estado, órdenes, aprobado, rechazado, cierre) y `workshop-<código>-educador` (dispositivos → educador: solicitud, presencia cada 10 segundos, hola, adiós), que solo escucha el educador. A un `hola`, el educador responde con el estado (la escena y la pausa). Suscribirse tarda y lo que llega antes se pierde, así que el dispositivo saluda al abrir, otra vez en cuanto escucha su canal (y cada vez que vuelve a escucharlo tras perder la red) y, mientras no le haya llegado la escena, en cada señal; el educador, al volver a escuchar, manda el estado. Así nadie aprobado se queda en «Esperando al educador» (Luis, 2026-11-26). Lo que manda y queda registrado va por las funciones de la base: el educador con el código y la llave (`conexion_*`), el dispositivo con el código (`participante_*`); ver [backend](backend.md). El código vale mientras el taller está en curso; `educador_terminar` cierra la conexión y deja en el cierre cuántos dispositivos se unieron. Sin conexión (abierto directamente, o una app sin Supabase), la sesión es la de demostración entre pestañas del mismo navegador, con seis dispositivos de prueba. Todo lo que depende del servicio está en `app/runner/conexion/realtime.ts`.
 
 ## 5. Seguridad
 
@@ -110,10 +116,10 @@ Los mensajes van por **Realtime de Supabase, solo Broadcast**, en dos canales po
 
 | App | Cómo | Estado |
 |---|---|---|
-| Educators | `/workshops/<id>/jugar`: pantalla completa con `UiRunner` en modo educador y la guía. `terminado` lleva al feedback del taller; `salir`, a donde estaba | Hecho, con Supabase (`educador_iniciar` con `listo`, `educador_terminar` con `terminado`) |
+| Educators | `/workshops/<id>/play?mode=live` (ejecutar, solo el día del taller): pantalla completa con `UiRunner` en modo `educator` y la guía; `terminado` lleva al reporte del taller (`/workshops/<id>/report`); `salir`, a donde estaba. `/workshops/<id>/play?mode=rehearsal` (ensayar, cualquier día): el runner en modo `rehearsal`, sin `educador_iniciar` ni `educador_terminar`; `terminado` vuelve a la ficha. El mismo patrón que el dispositivo (`/play/…?mode=device`): una ruta y un modo en inglés | Hecho, con Supabase (`educador_iniciar` con `listo`, `educador_terminar` con `terminado`) |
 | Admin | En el detalle de un storyboard de la organización, «Vista previa» con `UiRunner` en modo `preview`: Admin conduce con `ir` y `reiniciar` (anterior, siguiente, la escena de la lista) y lleva la cuenta con `listo` y `escena`. «Probar» de Platform sigue abriendo el modo educador en otra pestaña | Hecho |
 | App del hogar | `UiRunner` en modo casa y, con «Unirme», en modo dispositivo dentro de un taller: escanea el QR o escribe el código y entra con el perfil del niño (diseño en la [tarea 013](../tasks/013-runner-en-el-aula.md)) | Por construir ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
-| Dispositivos de participantes | Se unen con el QR o el código en `/unirse` y abren Player directamente (`?mode=device&conexion=`), sin iframe | Hecho, por Realtime de Supabase (tarea 013; falta la prueba en teléfonos reales) |
+| Dispositivos de participantes | Se unen con el QR o el código en `/workshop/join` y abren Player directamente (`?mode=device&conexion=`), sin iframe | Hecho, por Realtime de Supabase (tarea 013; falta la prueba en teléfonos reales) |
 
 ## 8. Configuración
 

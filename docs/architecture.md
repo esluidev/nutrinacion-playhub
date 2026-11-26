@@ -13,7 +13,7 @@
      Supabase  ◀─────────────┘
      (Auth de Admin y Player, PostgreSQL, RLS, Storage; Educators entra con correo + código por funciones, tarea 006)
 
-Educators /workshops/<id>/jugar ── iframe ──▶ runner de Player
+Educators /workshops/<id>/play ── iframe ──▶ runner de Player
           ◀── listo · escena · terminado · salir ──   ── iniciar (guía) ──▶
 ```
 
@@ -31,7 +31,7 @@ Las apps no comparten estado. El runner se incrusta con el contrato de [runner.m
 
 | De → a | Cómo | Qué viaja |
 |---|---|---|
-| Educators → Player | «Iniciar taller» abre `/workshops/<id>/jugar`, que incrusta `<player_url>/play/<eje>/<slug>?mode=educator&lang=<idioma>` (`configuraciones.player_url`) con `UiRunner` | Por URL, el storyboard y el idioma. Por mensaje (`iniciar`), la guía. Ningún dato personal ni sesión |
+| Educators → Player | «Ejecutar» abre `/workshops/<id>/play?mode=live`, que incrusta `<player_url>/play/<clave>?mode=educator&lang=<idioma>` (el storyboard por su clave) (`configuraciones.player_url`) con `UiRunner`; «Ensayar», `?mode=rehearsal`, con el runner en modo `rehearsal` | Por URL, el storyboard y el idioma. Por mensaje (`iniciar`), la guía. Ningún dato personal ni sesión |
 | Player → Educators | El runner manda `escena`, `terminado` y `salir`. Con `terminado`, Educators pasa al feedback del taller; con `salir`, vuelve a donde estaba. Solo responde a los orígenes de Admin y Educators en la base (`configuraciones`) | Índice y carpeta de la escena. Nunca puntos ni respuestas |
 | Runner educador ↔ dispositivos | Simulado entre pestañas del mismo navegador (`BroadcastChannel`). El educador manda escena, pausa, reinicios y puntos; del dispositivo solo vuelve su presencia. El código para unirse («PH · 4821») es de prueba | Sin servicio de sesión real todavía |
 | App → runner: guía | La app que incrusta el runner se la pasa con `iniciar`. Educators la pide a la base con `educador_guia` (en el modo demo, `app/fixtures/guia-<slug>.json`) | Texto de la guía por escena, saneado al llegar |
