@@ -14,8 +14,12 @@
 export const RUNNER_CHANNEL = 'playhub-runner'
 export const RUNNER_VERSION = 1
 
-/** `preview`: solo el escenario, para mirar un storyboard desde Admin; la app conduce con `ir` y `reiniciar`. */
-export type RunnerMode = 'educator' | 'device' | 'home' | 'preview'
+/**
+ * `preview`: solo el escenario, para mirar un storyboard desde Admin; la app conduce con `ir` y `reiniciar`.
+ * `rehearsal`: el ensayo del educador (Educators, «Ensayar»): la consola del educador y la guía, sin dispositivos ni
+ * sesión, y sin mezclar su escena con la del taller de verdad.
+ */
+export type RunnerMode = 'educator' | 'device' | 'home' | 'preview' | 'rehearsal'
 
 /** Guía del educador para una escena (decisión 002). Solo texto. */
 export interface SceneGuide {
@@ -37,7 +41,7 @@ export type StoryboardGuide = Record<string, SceneGuide>
 
 /** Runner → app. */
 export type RunnerEvent =
-  | { tipo: 'listo', storyboard: string, modo: RunnerMode, idioma: string, escenas: number }
+  | { tipo: 'listo', storyboard: string, modo: RunnerMode, idioma: string, escenas: number } // storyboard: su clave
   | { tipo: 'escena', indice: number, carpeta: string }
   | { tipo: 'terminado' }
   | { tipo: 'salir', indice: number, carpeta: string }
@@ -61,7 +65,7 @@ export function runnerMessage<T extends RunnerEvent | RunnerCommand>(message: T)
   return { ...message, canal: RUNNER_CHANNEL, v: RUNNER_VERSION }
 }
 
-const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview']
+const MODES: RunnerMode[] = ['educator', 'device', 'home', 'preview', 'rehearsal']
 const GUIDE_FIELDS: (keyof SceneGuide)[] = ['verb', 'subtitle', 'description', 'objective', 'mechanic', 'pedagogy', 'questions', 'psychology', 'science', 'notDoing', 'tips']
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -147,9 +151,13 @@ export function runnerOrigins(list: string | undefined): string[] {
   return [...origins]
 }
 
-/** URL del runner en Player para un storyboard. */
-export function runnerUrl(playerUrl: string, options: { eje: string, slug: string, modo: RunnerMode, idioma?: string, escena?: string }): string {
-  const url = new URL(`play/${encodeURIComponent(options.eje)}/${encodeURIComponent(options.slug)}`, `${playerUrl.replace(/\/+$/, '')}/`)
+/**
+ * URL del runner en Player para un storyboard: `/play/<clave>?mode=…`. La clave es el `key` de su storyboard.json (un
+ * UUID), la misma en la base (`storyboards.clave`): su identidad, que no cambia si se renombra la carpeta o la
+ * categoría. Nunca el eje y el slug, que solo localizan sus archivos dentro de Player.
+ */
+export function runnerUrl(playerUrl: string, options: { clave: string, modo: RunnerMode, idioma?: string, escena?: string }): string {
+  const url = new URL(`play/${encodeURIComponent(options.clave)}`, `${playerUrl.replace(/\/+$/, '')}/`)
   url.searchParams.set('mode', options.modo)
   if (options.idioma) url.searchParams.set('lang', options.idioma)
   if (options.escena) url.searchParams.set('escena', options.escena)
