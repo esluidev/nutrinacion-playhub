@@ -1,3 +1,5 @@
+import { pwaDeLaApp } from '@playhub/ui/pwa'
+
 // Compartir en desarrollo por Tailscale: la capa @playhub/ui escucha en todas las interfaces y deja
 // entrar a Vite los nombres *.ts.net, y `urlEnEsteEquipo` cambia localhost (Supabase, Player) por
 // el nombre o la IP con que se abrió la app.
@@ -39,6 +41,14 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  // Se instala como app (pwa.ts del kit): todo su código queda guardado.
+  pwa: pwaDeLaApp({
+    clave: 'admin',
+    nombre: 'Nutrinación Play · Admin',
+    corto: 'Play Admin',
+    descripcion: 'La operación de tu organización en Nutrinación Play: educadores, grupos y talleres.',
+  }),
+
   runtimeConfig: {
     public: {
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
@@ -55,6 +65,8 @@ export default defineNuxtConfig({
         lang: 'es',
       },
       link: [{ rel: 'icon', href: '/ui/nutrinacion-isotipo.png', type: 'image/png' }],
+      // El nombre bajo el icono en iOS; el resto de la cabecera de la app instalada lo pone el kit.
+      meta: [{ name: 'apple-mobile-web-app-title', content: 'Play Admin' }],
     },
   },
 })

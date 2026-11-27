@@ -25,6 +25,11 @@ export const messages: Record<Locale, Record<string, unknown>> = {
         PIE_DIABETICO: 'Pie diabético', INFECCIONES: 'Infecciones', AUTOESTIMA: 'Autoestima',
       },
     },
+    instalar: {
+      menu: 'Instalar App',
+      version: 'Hay una versión nueva de la app.',
+      actualizar: 'Actualizar',
+    },
     common: {
       yes: 'Sí',
       no: 'No',
@@ -1470,6 +1475,11 @@ export const messages: Record<Locale, Record<string, unknown>> = {
         ALERGIAS: 'Allergies', HIPERTENSION: 'Hypertension', CARIES: 'Tooth decay', SEDENTARISMO: 'Sedentary lifestyle', ASMA: 'Asthma',
         PIE_DIABETICO: 'Diabetic foot', INFECCIONES: 'Infections', AUTOESTIMA: 'Self-esteem',
       },
+    },
+    instalar: {
+      menu: 'Install App',
+      version: 'A new version of the app is ready.',
+      actualizar: 'Update',
     },
     common: {
       yes: 'Yes',

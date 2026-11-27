@@ -23,6 +23,9 @@ provideUiLabels(() => ({
   showing: (desde, hasta, total) => t('table.showing', { desde, hasta, total }),
 }))
 
+// La versión nueva de la app instalada: el aviso con «Actualizar».
+useActualizacionApp(() => ({ mensaje: t('instalar.version'), accion: t('instalar.actualizar') }))
+
 onMounted(() => {
   if (isSupabaseConfigured()) {
     const { fetchUser } = useAuth()

@@ -105,15 +105,13 @@
         </RekaPopoverPortal>
       </RekaPopoverRoot>
 
-      <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators -->
+      <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators. «Instalar App» solo donde el
+           navegador la instala con un toque, y la instala al pulsarlo. -->
       <UiUserMenu
         :name="userName"
         :short-name="userNameShort"
         :detail="userEmail"
-        :items="[
-          { key: 'profile', label: t('nav.profile'), icon: 'user' },
-          { key: 'help', label: t('nav.help'), icon: 'help' },
-        ]"
+        :items="menuCuenta"
         :sign-out-label="t('nav.signOut')"
         @select="handleMenuAction"
         @sign-out="handleSignOut"
@@ -222,8 +220,16 @@ const crumbB = computed(() => {
   return seccion ? t(pages[seccion]!.titleKey) : t('app.name')
 })
 
+const { puedeInstalar, instalar } = useInstalarApp()
+const menuCuenta = computed(() => [
+  { key: 'profile', label: t('nav.profile'), icon: 'user' as const },
+  { key: 'help', label: t('nav.help'), icon: 'help' as const },
+  ...(puedeInstalar.value ? [{ key: 'install', label: t('instalar.menu'), icon: 'download' as const }] : []),
+])
+
 function handleMenuAction(action: string) {
   if (action === 'profile') navigateTo('/perfil')
+  if (action === 'install') instalar()
 }
 
 async function handleSignOut() {
