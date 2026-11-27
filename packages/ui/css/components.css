@@ -238,6 +238,9 @@
   .field:-webkit-autofill:focus { box-shadow: inset 0 0 0 1000px var(--color-surface), 0 0 0 3px color-mix(in srgb, var(--tone-fill) 20%, transparent); }
   .field-sm { @apply px-3; height: calc(var(--ph-control-sm) + var(--ph-depth)); font-size: var(--text-caption); }
   .field-lg { @apply px-5; height: calc(var(--ph-control-lg) + var(--ph-depth)); font-size: var(--text-lead); }
+  /* En una pantalla táctil, iOS acerca la página al tocar un campo con la letra por debajo de 16 px y no la devuelve:
+     ahí los campos van a 16 como mínimo. */
+  @media (pointer: coarse) { .field, .field-sm, .search-box input { font-size: max(1rem, var(--text-body)); } }
   textarea.field { @apply py-3 leading-relaxed; height: auto; margin-bottom: 0; min-height: calc(var(--ph-control) * 2.5); resize: vertical; }
   .field-error { @apply mt-1.5 font-bold; font-size: var(--text-caption); color: var(--color-danger); }
   .field-help { @apply mt-1.5 font-semibold text-muted; font-size: var(--text-micro); }
@@ -422,6 +425,12 @@
   .ui-avatar { @apply inline-flex shrink-0 items-center justify-center font-black uppercase leading-none; width: var(--ph-control-sm); height: var(--ph-control-sm); font-size: var(--text-micro); border-radius: var(--radius-control-sm); background: var(--tone-tint-edge); color: var(--tone-strong); }
   .ui-avatar-sm { width: 24px; height: 24px; border-radius: var(--radius-chip); }
   .ui-avatar-lg { width: var(--ph-control-lg); height: var(--ph-control-lg); font-size: var(--text-body); border-radius: var(--radius-control); }
+  /* El nombre en el botón del menú de la cuenta, sin dato debajo: como el texto de un botón. */
+  .ui-user-menu-nombre { font-size: var(--text-action); font-weight: var(--font-weight-title); color: inherit; }
+  .ui-avatar-xl { width: 80px; height: 80px; font-size: var(--text-lead); border-radius: var(--radius-card); }
+  /* Con imagen (el animal del avatar de un niño): la imagen llena su forma, sobre el tinte de su tono. */
+  .ui-avatar:has(> img) { overflow: hidden; background: var(--tone-tint); }
+  .ui-avatar > img { display: block; width: 100%; height: 100%; }
 
   /* ---- Stat (a figure on a panel) -------------------------------------- */
   .ui-stat { @apply flex items-center gap-4 p-5; }

@@ -16,9 +16,8 @@
         <UiIcon :name="ICON[item.variante]" />
       </span>
       <span class="flex-1 leading-snug">{{ item.mensaje }}</span>
-      <button v-if="item.accion" type="button" class="font-black underline underline-offset-4" @click="item.accion.onClick(); remove(item.id)">
-        {{ item.accion.label }}
-      </button>
+      <!-- La acción es un botón, nunca un enlace de texto (Luis, 2026-11-26: «eso no es un botón»). -->
+      <UiButton v-if="item.accion" size="sm" @click="item.accion.onClick(); remove(item.id)">{{ item.accion.label }}</UiButton>
       <button type="button" class="opacity-70 hover:opacity-100" :aria-label="labels.close" @click="remove(item.id)">
         <UiIcon name="close" class="size-4" />
       </button>
@@ -41,8 +40,9 @@ const ICON: Record<ToastVariante, UiIconName> = { success: 'check', error: 'warn
 
 const timers = new Map<number, ReturnType<typeof setTimeout>>()
 
+// Con duración 0 el aviso se queda hasta que se cierra o se elige su acción (la versión nueva de la app).
 function schedule(item: ToastItem) {
-  if (timers.has(item.id)) return
+  if (timers.has(item.id) || item.duracion <= 0) return
   timers.set(item.id, setTimeout(() => { timers.delete(item.id); remove(item.id) }, item.duracion))
 }
 

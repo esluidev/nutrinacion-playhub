@@ -5,6 +5,7 @@
 //   toast.success('Invitación enviada')
 //   toast.error('No se pudo guardar')
 //   toast.info('…', { accion: { label: 'Entrar', onClick: () => navigateTo('/dashboard') } })
+//   toast.info('…', { duracion: 0, accion: … })   // se queda hasta que se cierra o se elige la acción
 
 export type ToastVariante = 'success' | 'error' | 'warning' | 'info'
 

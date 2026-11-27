@@ -46,10 +46,21 @@ export type RunnerEvent =
   | { tipo: 'terminado' }
   | { tipo: 'salir', indice: number, carpeta: string }
   | { tipo: 'error', codigo: 'no-encontrado' }
+  /**
+   * La página para unirse de Player (`/workshop/join/<código>`) dentro de la app del hogar (tarea 025): espera a que el
+   * educador lo apruebe (la app puede ofrecer instalarse) o la sesión se cerró (rechazado, quitado o el taller terminó;
+   * la app vuelve a lo suyo). Aprobado, la misma página pasa al runner en modo dispositivo.
+   */
+  | { tipo: 'unirse', fase: 'esperando' | 'cerrado' }
 
 /** App → runner. */
 export type RunnerCommand =
-  | { tipo: 'iniciar', guia?: StoryboardGuide }
+  /**
+   * Lo que solo tiene la app. El educador: la guía. La app del hogar (tarea 025): el nombre del niño (su apodo, nunca su
+   * nombre real; el perfil y su avatar van en la URL, `runnerUrl`) y si se abrió instalada, que no ofrece pantalla
+   * completa porque no aporta.
+   */
+  | { tipo: 'iniciar', guia?: StoryboardGuide, nombre?: string, instalada?: boolean }
   /** Vista previa: ir a una escena, por su número (desde 0) o por su carpeta. */
   | { tipo: 'ir', indice: number }
   | { tipo: 'ir', escena: string }
@@ -95,6 +106,8 @@ export function parseRunnerEvent(data: unknown): RunnerEvent | null {
       return { tipo: 'terminado' }
     case 'error':
       return m.codigo === 'no-encontrado' ? { tipo: 'error', codigo: 'no-encontrado' } : null
+    case 'unirse':
+      return m.fase === 'esperando' || m.fase === 'cerrado' ? { tipo: 'unirse', fase: m.fase } : null
     default:
       return null
   }
@@ -120,9 +133,14 @@ export function parseRunnerCommand(data: unknown): RunnerCommand | null {
   const m = envelope(data)
   if (!m) return null
   if (m.tipo === 'iniciar') {
-    if (m.guia === undefined) return { tipo: 'iniciar' }
-    const guia = parseGuide(m.guia)
-    return guia ? { tipo: 'iniciar', guia } : null
+    const guia = m.guia === undefined ? undefined : parseGuide(m.guia)
+    if (guia === null) return null
+    const iniciar: Extract<RunnerCommand, { tipo: 'iniciar' }> = { tipo: 'iniciar' }
+    if (guia) iniciar.guia = guia
+    const nombre = typeof m.nombre === 'string' ? m.nombre.replace(/\s+/g, ' ').trim().slice(0, 20).trim() : ''
+    if (nombre) iniciar.nombre = nombre
+    if (m.instalada === true) iniciar.instalada = true
+    return iniciar
   }
   if (m.tipo === 'ir') {
     if (isIndex(m.indice)) return { tipo: 'ir', indice: m.indice }
@@ -156,10 +174,17 @@ export function runnerOrigins(list: string | undefined): string[] {
  * UUID), la misma en la base (`storyboards.clave`): su identidad, que no cambia si se renombra la carpeta o la
  * categoría. Nunca el eje y el slug, que solo localizan sus archivos dentro de Player.
  */
-export function runnerUrl(playerUrl: string, options: { clave: string, modo: RunnerMode, idioma?: string, escena?: string }): string {
+export function runnerUrl(
+  playerUrl: string,
+  options: { clave: string, modo: RunnerMode, idioma?: string, escena?: string, perfil?: string, avatar?: string },
+): string {
   const url = new URL(`play/${encodeURIComponent(options.clave)}`, `${playerUrl.replace(/\/+$/, '')}/`)
   url.searchParams.set('mode', options.modo)
   if (options.idioma) url.searchParams.set('lang', options.idioma)
   if (options.escena) url.searchParams.set('escena', options.escena)
+  // En casa (tarea 025): con qué perfil se juega, para recordar dónde iba (un identificador al azar del dispositivo,
+  // nada que diga quién es) y su avatar, que el marco enseña desde el primer momento. Su nombre va en `iniciar`.
+  if (options.perfil) url.searchParams.set('perfil', options.perfil)
+  if (options.avatar) url.searchParams.set('avatar', options.avatar)
   return url.toString()
 }

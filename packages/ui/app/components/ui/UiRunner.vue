@@ -38,6 +38,9 @@ const props = withDefaults(defineProps<{
   guide?: StoryboardGuide | null
   /** La conexión del taller (tarea 013): el código y la llave para que se unan otros dispositivos. */
   conexion?: { codigo: string, llave: string } | null
+  /** La app del hogar (tarea 025): el nombre del niño y si la app se abrió instalada (sin pantalla completa). */
+  nombre?: string
+  instalada?: boolean
   title?: string
   /** Milisegundos para que el runner diga «listo» antes de mostrar el error. */
   timeout?: number
@@ -83,7 +86,7 @@ function send(command: RunnerCommand) {
 // La guía viaja como datos planos: postMessage no clona los proxies reactivos.
 function start() {
   const guia = props.guide ? JSON.parse(JSON.stringify(props.guide)) as StoryboardGuide : undefined
-  send({ tipo: 'iniciar', guia })
+  send({ tipo: 'iniciar', guia, nombre: props.nombre || undefined, instalada: props.instalada || undefined })
 }
 
 // En la vista previa (`preview`) conduce la app: a qué escena ir y reiniciar la actual.

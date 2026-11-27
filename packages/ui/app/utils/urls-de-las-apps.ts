@@ -3,7 +3,7 @@
 // cualquiera, también sin cuenta (no guarda secretos), y la escribe el superadmin. Vienen con las de desarrollo
 // (localhost); compartida por la red, cada app las pasa por `urlEnEsteEquipo`.
 
-export const CLAVES_URL = { admin: 'admin_url', player: 'player_url', educators: 'educators_url' } as const
+export const CLAVES_URL = { admin: 'admin_url', player: 'player_url', educators: 'educators_url', home: 'home_url' } as const
 export type AppPlayHub = keyof typeof CLAVES_URL
 export type UrlsDeLasApps = Partial<Record<AppPlayHub, string>>
 

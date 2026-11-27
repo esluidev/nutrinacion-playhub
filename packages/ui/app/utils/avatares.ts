@@ -1,16 +1,16 @@
-// Los avatares de quien juega: un animal de la librería (`avatar-<clave>`) en un círculo, con su
-// nombre propio y el tono de fondo que mejor lo separa de su pelaje (entre los tonos del kit para las
-// personas: cielo, uva o rosa). Quien se une a un taller elige uno y puede escribir un apodo; sin
-// apodo, se le llama por el nombre del avatar (tarea 013). El nombre sirve igual en los dos idiomas.
+// Los avatares de quien juega: un animal (`assets/avatares/<clave>.svg`) en un círculo, con su nombre propio y el tono
+// de fondo que mejor lo separa de su pelaje (entre los tonos del kit para las personas: cielo, uva o rosa). Quien se une
+// a un taller elige uno y puede escribir un apodo; sin apodo, se le llama por el nombre del avatar (tarea 013); un perfil
+// de la app del hogar lleva uno (tarea 025). El nombre sirve igual en los dos idiomas. Viven en el kit porque los usan
+// el runner de Player, la página para unirse y la app del hogar; cada dibujo pesa menos de 3 KB y va dentro del código.
 
 export type TonoAvatar = 'sky' | 'grape' | 'rose'
 
-// Solo los dibujos de los avatares (no toda la librería): la página para unirse los usa sin cargar el contenido.
-const DIBUJOS = import.meta.glob<string>('../../content/library/svg/avatar-*.svg', { eager: true, query: '?url', import: 'default' })
+const DIBUJOS = import.meta.glob<string>('../assets/avatares/*.svg', { eager: true, query: '?url', import: 'default' })
 
 /** URL servida del dibujo de un avatar. */
-export function dibujoDe(clave: string): string | undefined {
-  return DIBUJOS[`../../content/library/svg/avatar-${clave}.svg`]
+export function dibujoDe(clave: string | null | undefined): string | undefined {
+  return clave ? DIBUJOS[`../assets/avatares/${clave}.svg`] : undefined
 }
 
 export const AVATARES = [
