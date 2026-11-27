@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 520" width="580" height="520" role="img" aria-label="Salud emocional"><title>Salud emocional</title><svg x="0" y="0" width="580" height="520" viewBox="0 0 580 520" preserveAspectRatio="xMidYMid meet" overflow="visible">
+  
+  <defs>
+    <clipPath id="c0-casa-pared-forma">
+      <path d="M116 264 L290 120 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z"/>
+    </clipPath>
+  </defs>
+
+  <g id="c0-casa">
+    <g id="c0-chimenea">
+      <rect x="370" y="102" width="58" height="118" rx="10" fill="#BD5D4C"/>
+      <path d="M402 102 H418 Q428 102 428 112 V220 H402 Z" fill="#A0493B"/>
+      <rect x="360" y="88" width="78" height="28" rx="12" fill="#CA7C68"/>
+    </g>
+
+    <g id="c0-pared">
+      <path d="M116 264 L290 120 L464 264 V454 Q464 480 438 480 H142 Q116 480 116 454 Z" fill="#F1BC41"/>
+      <g clip-path="url(#c0-casa-pared-forma)" fill="#E19823">
+        <path d="M100 272 L290 118 L480 272 V296 L290 144 L100 296 Z"/>
+        <rect x="444" y="100" width="36" height="400"/>
+      </g>
+    </g>
+
+    <g id="c0-techo" fill="none" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M290 96 L496 262" stroke="#9F4232"/>
+      <path d="M84 262 L290 96" stroke="#C2533D"/>
+      <path d="M108 228 L254 110" stroke="#D38269" stroke-width="9"/>
+    </g>
+
+    <g id="c0-ventana-superior">
+      <circle cx="290" cy="216" r="40" fill="#FFF4DC"/>
+      <circle cx="290" cy="216" r="35" fill="#6BC7F0"/>
+      <path d="M270 219 Q270 198 290 196" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g id="c0-ventana-izquierda">
+      <rect x="134" y="304" width="96" height="96" rx="21" fill="#FFF4DC"/>
+      <rect x="138" y="308" width="88" height="88" rx="18" fill="#6BC7F0"/>
+      <path d="M151 340 V331 Q151 321 161 321 H172" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
+      <path d="M182 308 V396 M138 352 H226" stroke="#FFF4DC" stroke-width="11"/>
+      <rect x="130" y="392" width="104" height="16" rx="8" fill="#FFF4DC"/>
+    </g>
+
+    <g id="c0-ventana-derecha">
+      <rect x="350" y="304" width="96" height="96" rx="21" fill="#FFF4DC"/>
+      <rect x="354" y="308" width="88" height="88" rx="18" fill="#6BC7F0"/>
+      <path d="M367 340 V331 Q367 321 377 321 H388" fill="none" stroke="#C2EBFB" stroke-width="8" stroke-linecap="round"/>
+      <path d="M398 308 V396 M354 352 H442" stroke="#FFF4DC" stroke-width="11"/>
+      <rect x="346" y="392" width="104" height="16" rx="8" fill="#FFF4DC"/>
+    </g>
+
+    <g id="c0-puerta">
+      <path d="M252 480 V366 Q252 330 290 330 Q328 330 328 366 V480 Z" fill="#C8804A"/>
+      <path d="M306 334 Q328 342 328 366 V480 H306 Z" fill="#AE6A3B"/>
+      <circle cx="312" cy="412" r="8" fill="#FFCB57"/>
+    </g>
+  </g>
+</svg></svg>

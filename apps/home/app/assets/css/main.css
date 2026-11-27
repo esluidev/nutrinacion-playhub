@@ -1,0 +1,105 @@
+/* La app del hogar · única raíz de CSS: el UI Kit compartido en densidad táctil (data-density en <html>) y el
+   control táctil de la app, como Educators. */
+@import "@playhub/ui/css/index.css";
+
+@layer base {
+  /* Sin zoom por doble toque (el pellizco sigue para quien lo necesite), sin rebote que recargue la página y sin
+     destello al tocar. */
+  html { touch-action: manipulation; overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
+  body { min-height: 100dvh; }
+}
+
+@layer components {
+  /* Zonas seguras: la app llega a los bordes (viewport-fit=cover) y sus barras se apartan del notch, las esquinas
+     redondeadas y la barra de inicio. */
+  .app-topbar { padding-top: max(env(safe-area-inset-top), 0px); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .app-main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(40px, env(safe-area-inset-bottom)); }
+
+  /* Una fila que se desliza de lado dentro de su card (los recientes y las unidades del inicio): las tarjetas no se
+     aprietan y la fila llega a los bordes del card, sin barra. */
+  .fila-deslizable { @apply flex snap-x gap-4 overflow-x-auto p-6; scrollbar-width: none; scroll-padding-inline: 24px; }
+  .fila-deslizable::-webkit-scrollbar { display: none; }
+  .fila-deslizable > * { @apply shrink-0 snap-start; }
+
+  /* La portada de un storyboard: llena su caja (recortada al centro); sin portada, el dibujo de su tema sobre el tinte de
+     su área. */
+  .portada-juego { @apply relative block size-full overflow-hidden; background: var(--tone-tint); }
+  .portada-juego-imagen { @apply absolute inset-0 block size-full object-cover; }
+  .portada-juego-tema { @apply absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2; width: 58%; max-height: 72%; object-fit: contain; }
+
+  /* Arriba del inicio: el saludo y lo que toca ahora, y a un lado su portada (en el teléfono, la portada arriba). */
+  .hero { @apply grid overflow-hidden md:grid-cols-[1fr_1.15fr]; }
+  .hero-texto { @apply flex flex-col justify-center gap-4 p-6 md:p-8; }
+  .hero-hola { @apply flex items-center gap-4; }
+  .hero-saludo { @apply m-0 font-black text-ink; font-size: var(--text-display); line-height: 1.1; }
+  .hero-juego { @apply m-0 mt-1 font-black text-ink; font-size: var(--text-heading); }
+  .hero-avance { @apply flex items-center gap-3; }
+  .hero-portada { @apply block min-h-48 max-md:order-first md:min-h-72; }
+
+  /* «Explora por tema»: los cuatro temas como tarjetas que se pulsan del kit (`select-card`), en horizontal y neutras:
+     su icono en el color de su área, el nombre, cuántos juegos tiene y la flecha. */
+  .temas { @apply grid grid-cols-2 gap-3 p-4 md:p-6 xl:grid-cols-4; }
+  .tema { @apply flex-row justify-start gap-3 px-4 py-3.5 text-left; }
+  /* En un teléfono no caben el icono, el nombre y la flecha en fila: la tarjeta del kit en su forma propia, el icono
+     arriba y el nombre debajo. */
+  @media (max-width: 639px) { .tema { @apply flex-col items-start gap-2 px-3.5 py-3.5; } .tema > .icon:last-child { display: none; } }
+
+  /* Un storyboard para jugar: la portada grande con su tema arriba, «Terminado» y el botón de jugar (en lima, con su
+     base, como los botones del kit); debajo, el título y sus datos. En una fila mide 252; en una cuadrícula, su columna. */
+  .tarjeta-juego { @apply flex min-w-0 flex-col overflow-hidden border border-line bg-surface; border-radius: var(--radius-card); }
+  .fila-deslizable > .tarjeta-juego { width: 252px; }
+  @media (hover: hover) { .tarjeta-juego:hover { border-color: var(--tone-tint-edge); } }
+  .tarjeta-juego-portada { @apply relative block h-42 shrink-0; }
+  .tarjeta-juego-tema { @apply absolute left-2.5 top-2.5 z-10 bg-surface px-2 py-1 font-black uppercase tracking-[.14em]; font-size: var(--text-micro); border-radius: var(--radius-chip); color: var(--tone-strong); }
+  .tarjeta-juego-hecho { @apply absolute right-2.5 top-2.5 z-10; }
+  .tarjeta-juego-jugar { @apply absolute bottom-3 right-3 z-10 grid size-11 place-items-center; border-radius: var(--radius-control-sm); background: var(--color-lime-400); color: var(--color-lime-900); box-shadow: 0 var(--ph-depth) 0 var(--color-lime-600); }
+  .tarjeta-juego-jugar > .icon { width: 20px; height: 20px; }
+  .tarjeta-juego-cuerpo { @apply flex flex-1 flex-col gap-0.5 px-3.5 pb-3.5 pt-3; }
+  .tarjeta-juego-titulo { @apply font-black text-ink; font-size: var(--text-lead); line-height: 1.25; }
+
+  /* Una unidad de estudio: el collage con las portadas de sus dos primeros juegos, giradas, y sus textos. */
+  .tarjeta-unidad { @apply flex min-w-0 items-center gap-4 border border-line bg-surface p-3.5; border-radius: var(--radius-card); }
+  .fila-deslizable > .tarjeta-unidad { width: 340px; }
+  @media (hover: hover) { .tarjeta-unidad:hover { background: var(--color-canvas); } }
+  .collage { @apply relative block h-24 w-30 shrink-0; }
+  .collage-pieza { @apply absolute block h-16 w-21 overflow-hidden border-3 border-surface; border-radius: var(--radius-control-sm); box-shadow: 0 3px 0 var(--color-depth); }
+  .collage-pieza[data-i='0'] { left: 0; top: 22px; transform: rotate(-6deg); }
+  .collage-pieza[data-i='1'] { left: 30px; top: 6px; transform: rotate(5deg); }
+  .rejilla-unidades { @apply grid gap-4; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+  /* Las secciones del inicio, en su card. En el teléfono, la misma página, solo ajustada de tamaño (Luis, 2026-11-27):
+     las tarjetas de las filas, más angostas. */
+  .seccion { @apply overflow-hidden; }
+  @media (max-width: 767px) {
+    .fila-deslizable { @apply gap-3 p-4; scroll-padding-inline: 16px; }
+    .fila-deslizable > .tarjeta-juego { width: 200px; }
+    .tarjeta-juego-portada { @apply h-34; }
+    .fila-deslizable > .tarjeta-unidad { width: 280px; }
+  }
+
+  /* Las tarjetas en cuadrícula (Explorar, una unidad): tantas columnas como quepan. */
+  .rejilla-juegos { @apply grid gap-4; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+  /* «¿Quién juega?» y «¿Quién se une?»: tres por fila, cada perfil con su avatar y su nombre debajo. */
+  .perfiles { @apply grid grid-cols-3 gap-x-3 gap-y-5; }
+  .perfil-elegir { @apply flex w-full min-w-0 flex-col items-center gap-2 rounded-card p-1 text-center font-extrabold text-ink; font-size: var(--text-body); }
+  @media (hover: hover) { .perfil-elegir:hover .ui-avatar { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 6px var(--tone-fill); } }
+  .perfil-agregar { @apply grid place-items-center border-2 border-dashed border-line text-muted; width: 80px; height: 80px; border-radius: var(--radius-card); }
+
+  /* Elegir el avatar: los seis animales, tres por fila, el elegido con su anillo. */
+  .avatares { @apply grid grid-cols-3 justify-items-center gap-3; }
+  .avatar-opcion { @apply p-1; border-radius: var(--radius-control); }
+  .avatar-opcion[aria-pressed=true] .ui-avatar { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 6px var(--tone-fill); }
+
+  /* Unirse a un taller: la página de Player a pantalla completa y, mientras espera, «Instalar App» abajo, sobre ella. */
+  .unirse-marco { @apply block size-full border-0; }
+  .unirse-instalar { @apply fixed inset-x-0 flex justify-center; bottom: max(24px, env(safe-area-inset-bottom)); }
+  .campo-codigo input { text-transform: uppercase; letter-spacing: .12em; font-weight: 900; text-align: center; }
+
+  /* El juego a pantalla completa. Dentro de un iframe las zonas seguras valen 0: las aparta la app, en el color del
+     player. */
+  .juego-runner {
+    @apply fixed inset-0 bg-canvas;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}

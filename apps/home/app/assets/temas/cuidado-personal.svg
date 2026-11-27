@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="200" height="250" role="img" aria-label="Cuidado personal"><title>Cuidado personal</title><svg x="0" y="0" width="200" height="250" viewBox="0 0 200 250" preserveAspectRatio="xMidYMid meet" overflow="visible">
+  
+  <g id="c0-vaso">
+    <path id="c0-vidrio" d="M16 30 A84 20 0 0 1 184 30 L160 222 A60 14 0 0 1 40 222 Z" fill="#C9E6F8"/>
+    <path id="c0-vidrio-sombra" d="M184 30 L160 222 A60 14 0 0 1 132 233.6 L156 34 Z" fill="#B3D9F3"/>
+    <ellipse id="c0-base" cx="100" cy="222" rx="60" ry="14" fill="#B3D9F3"/>
+    <path id="c0-hueco" d="M24 30 A76 16 0 0 1 176 30 L154 204 A54 11 0 0 1 46 204 Z" fill="#E4F3FD"/>
+    <ellipse id="c0-piso" cx="100" cy="204" rx="54" ry="11" fill="#D6ECFA"/>
+    <ellipse id="c0-boca-borde" cx="100" cy="30" rx="84" ry="20" fill="#D6ECFA"/>
+    <ellipse id="c0-boca" cx="100" cy="30" rx="76" ry="16" fill="#EEF8FE"/>
+  </g>
+</svg><svg x="0" y="0" width="200" height="250" viewBox="0 0 200 250" preserveAspectRatio="xMidYMid meet" overflow="visible">
+  
+  <g id="c1-vaso-frente">
+    <path id="c1-labio" d="M16 30 A84 20 0 0 0 184 30 L176 30 A76 16 0 0 1 24 30 Z" fill="#D6ECFA"/>
+    <path id="c1-brillo" d="M42 58 L55 60 L64 192 L56 192 Z" fill="#F4FBFF"/>
+    <path id="c1-brillo-fino" d="M62 62 L67.5 62.6 L72 132 L68.6 132 Z" fill="#F4FBFF"/>
+  </g>
+</svg></svg>

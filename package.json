@@ -6,6 +6,7 @@
     "apps/admin",
     "apps/player",
     "apps/educators",
+    "apps/home",
     "packages/ui"
   ],
   "scripts": {

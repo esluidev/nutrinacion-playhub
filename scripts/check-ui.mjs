@@ -13,7 +13,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
-const APPS = ['admin', 'player', 'educators']
+const APPS = ['admin', 'player', 'educators', 'home']
 const PALETTE = '(?:lime|sun|sky|coral|grape|rose|night|mint|white|black)'
 const B = '(?<![\\w-])'
 const E = '(?![\\w-])'

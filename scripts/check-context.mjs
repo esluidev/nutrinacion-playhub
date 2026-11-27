@@ -15,6 +15,8 @@ const required = [
   'apps/player/CLAUDE.md',
   'apps/educators/AGENTS.md',
   'apps/educators/CLAUDE.md',
+  'apps/home/AGENTS.md',
+  'apps/home/CLAUDE.md',
 ]
 
 const failures = []
@@ -32,6 +34,7 @@ const expectedLinks = new Map([
   ['apps/admin/CLAUDE.md', 'AGENTS.md'],
   ['apps/player/CLAUDE.md', 'AGENTS.md'],
   ['apps/educators/CLAUDE.md', 'AGENTS.md'],
+  ['apps/home/CLAUDE.md', 'AGENTS.md'],
 ])
 
 for (const [relative, target] of expectedLinks) {
@@ -68,6 +71,7 @@ const markdownRoots = [
   'apps/player/AGENTS.md',
   'apps/player/scripts/README.md',
   'apps/educators/AGENTS.md',
+  'apps/home/AGENTS.md',
 ]
 
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/g

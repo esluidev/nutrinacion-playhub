@@ -1,0 +1,25 @@
+{
+  "name": "playhub-home",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build --dotenv .env.local",
+    "dev": "nuxt dev --dotenv .env.local",
+    "generate": "nuxt generate --dotenv .env.local",
+    "preview": "nuxt preview --dotenv .env.local",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@playhub/ui": "*",
+    "@supabase/supabase-js": "^2.49.1",
+    "nuxt": "^4.4.8",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.1.0"
+  }
+}

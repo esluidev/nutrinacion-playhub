@@ -12,7 +12,7 @@
 # Cobertura:
 #  - contexto: archivos, symlinks y enlaces locales (check-context.mjs).
 #  - UI Kit: las vistas no escriben paleta, hex, sombras, anillos, tamaños sueltos ni SVG (check-ui.mjs).
-#  - admin, player y educators: typecheck + Vitest + build (las tres extienden @playhub/ui,
+#  - admin, player, educators y home: typecheck + Vitest + build (las cuatro extienden @playhub/ui,
 #    así que esto también verifica el UI Kit compartido).
 #  - Supabase local: si está levantado (`supabase start`), las pruebas pgTAP de supabase/tests
 #    (RLS por identidad y acceso de educadores) con `supabase test db`. Si no, se avisa como
@@ -51,6 +51,7 @@ run_app() {
 run_app admin typecheck test build
 run_app player typecheck test build
 run_app educators typecheck test build
+run_app home typecheck test build
 
 echo ""
 echo "═══════════════════════════════════════════════════════"
