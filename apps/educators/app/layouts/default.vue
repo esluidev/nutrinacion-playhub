@@ -38,14 +38,16 @@
             :title="t('nav.talleres')"
             :class="pagina !== null && 'max-sm:hidden'"
           />
-          <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators; bajo el nombre, el correo -->
+          <!-- Menú de la cuenta: el mismo componente en Admin, Player y Educators; bajo el nombre, el correo. «Instalar
+               app» solo donde el navegador la instala con un toque, y la instala al pulsarlo. -->
           <UiUserMenu
             :name="educador ? nombreCompleto(educador) : ''"
             :short-name="educador?.nombre"
             :detail="educador?.correo"
-            :items="[{ key: 'perfil', label: t('menu.perfil'), icon: 'user', to: '/cuenta' }]"
+            :items="menu"
             :sign-out-label="t('menu.salir')"
             :menu-label="t('menu.cuenta')"
+            @select="(clave: string) => { if (clave === 'instalar') instalar() }"
             @sign-out="salir"
           />
         </div>
@@ -65,6 +67,12 @@ const { t } = useT()
 const { educador, salir } = useSesion()
 const { taller } = useTalleres()
 const route = useRoute()
+const { puedeInstalar, instalar } = useInstalarApp()
+
+const menu = computed(() => [
+  { key: 'perfil', label: t('menu.perfil'), icon: 'user' as const, to: '/cuenta' },
+  ...(puedeInstalar.value ? [{ key: 'instalar', label: t('menu.instalar'), icon: 'download' as const }] : []),
+])
 
 // La página dentro de «Mis talleres»: su perfil o un taller (su ficha y su reporte). En el inicio, ninguna.
 const pagina = computed<string | null>(() => {

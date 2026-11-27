@@ -22,5 +22,8 @@ provideUiLabels(() => ({
   runnerFailedText: t('kit.runnerFailedText'),
 }))
 
+// La versión nueva de la app instalada: el aviso con «Actualizar», nunca durante un taller en curso.
+useActualizacionApp(() => ({ mensaje: t('kit.updateReady'), accion: t('kit.update') }), ruta => ruta.endsWith('/play'))
+
 useHead({ htmlAttrs: { lang: locale }, titleTemplate: title => (title ? `${title} · ${t('app.name')}` : `PlayHub ${t('app.name')}`) })
 </script>

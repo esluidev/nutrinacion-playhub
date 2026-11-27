@@ -159,6 +159,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendario.mas': '+{n} más',
     'menu.cuenta': 'Menú de la cuenta',
     'menu.perfil': 'Mi perfil',
+    'menu.instalar': 'Instalar app',
     'menu.salir': 'Cerrar sesión',
     'kit.cancel': 'Cancelar',
     'kit.close': 'Cerrar',
@@ -170,6 +171,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     'kit.runner': 'Taller',
     'kit.runnerFailed': 'No se pudo abrir el taller',
     'kit.runnerFailedText': 'Revisa la conexión e inténtalo de nuevo.',
+    'kit.updateReady': 'Hay una versión nueva de la app.',
+    'kit.update': 'Actualizar',
   },
   en: {
     'app.name': 'Educators',
@@ -328,6 +331,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'calendario.mas': '+{n} more',
     'menu.cuenta': 'Account menu',
     'menu.perfil': 'My profile',
+    'menu.instalar': 'Install app',
     'menu.salir': 'Sign out',
     'kit.cancel': 'Cancel',
     'kit.close': 'Close',
@@ -339,5 +343,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'kit.runner': 'Workshop',
     'kit.runnerFailed': 'The workshop could not be opened',
     'kit.runnerFailedText': 'Check the connection and try again.',
+    'kit.updateReady': 'A new version of the app is ready.',
+    'kit.update': 'Update',
   },
 }
