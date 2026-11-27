@@ -3,7 +3,7 @@
 -- seed: crea sus propios datos (prefijo «Cat», correos @cat.test) en una transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(54);
+select plan(55);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -67,6 +67,7 @@ select set_config('t.meta', '{
   "clave": "c0000000-0000-4000-8000-0000000000aa", "slug": "cat-agua", "version_build": "0.1.0",
   "titulo": {"es": "El agua"}, "categoria": "ALIMENTACION", "subcategoria": "HIDRATACION", "edicion": "KIDS",
   "enfoques_salud": ["OBESIDAD"], "idiomas": ["es"], "idioma_principal": "es", "duracion_min": 25,
+  "portada": "portadas/alimentacion/cat-agua.svg",
   "escenas": [{"orden": 1, "carpeta": "bienvenida", "titulo": {"es": "Bienvenida"}},
               {"orden": 2, "carpeta": "origen", "titulo": {"es": "Origen"}}]}', true);
 
@@ -79,6 +80,7 @@ select pruebas.como('40000000-0000-4000-8000-000000000001');
 select is((sincronizar_storyboard(current_setting('t.meta')::jsonb))->>'nuevo', 'true', 'el superadmin lo registra');
 select is((select estado_publicacion::text || ' ' || paises_disponibles::text from storyboards where slug = 'cat-agua'), 'REGISTRADO {}',
   'nace registrado y sin países');
+select is((select portada from storyboards where slug = 'cat-agua'), 'portadas/alimentacion/cat-agua.svg', 'con su portada');
 select is((select count(*)::int from guia_escenas ge join guias g on g.id = ge.guia_id join storyboards s on s.id = g.storyboard_id
             where s.slug = 'cat-agua'), 2, 'con su guía y las escenas del JSON');
 

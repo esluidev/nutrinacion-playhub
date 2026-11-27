@@ -56,6 +56,7 @@ create table storyboards (
   idioma_principal    idioma not null default 'es',          -- `defaultLanguage`
   duracion_min        int check (duracion_min > 0),          -- `estimatedDuration`
   numero_escenas      int not null default 0,                -- cuántas trae `scenes`
+  portada             text,                                  -- `cover`: su portada en Player (portadas/<eje>/<storyboard>.svg)
   -- lo que decide Player al registrar o publicar (publicar_storyboard, 0007)
   estado_publicacion  estado_publicacion not null default 'REGISTRADO',
   paises_disponibles  text[] not null default '{}',          -- códigos de `paises`; publicar exige al menos uno

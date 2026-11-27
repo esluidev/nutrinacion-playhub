@@ -28,7 +28,7 @@ begin
   end if;
 
   insert into storyboards (clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud,
-                           idiomas, idioma_principal, duracion_min, numero_escenas)
+                           idiomas, idioma_principal, duracion_min, numero_escenas, portada)
   values (
     (p_metadata->>'clave')::uuid,
     p_metadata->>'slug',
@@ -41,7 +41,8 @@ begin
     array(select jsonb_array_elements_text(coalesce(p_metadata->'idiomas', '[]'::jsonb)))::idioma[],
     coalesce(p_metadata->>'idioma_principal', 'es')::idioma,
     (p_metadata->>'duracion_min')::int,
-    jsonb_array_length(v_escenas))
+    jsonb_array_length(v_escenas),
+    nullif(p_metadata->>'portada', ''))
   on conflict (clave) do update
      set slug             = excluded.slug,
          version_build    = excluded.version_build,
@@ -53,6 +54,7 @@ begin
          idiomas          = excluded.idiomas,
          idioma_principal = excluded.idioma_principal,
          duracion_min     = excluded.duracion_min,
+         portada          = excluded.portada,
          numero_escenas   = excluded.numero_escenas
   returning id, (xmax = 0) into v_id, v_nuevo;
 
@@ -185,7 +187,7 @@ as $$
                'clave', clave, 'eje', replace(lower(categoria::text), '_', '-'), 'slug', slug, 'titulo', titulo,
                'categoria', categoria, 'subcategoria', subcategoria, 'edicion', edicion, 'enfoques_salud', enfoques_salud,
                'idiomas', idiomas, 'idioma_principal', idioma_principal, 'duracion_min', duracion_min,
-               'numero_escenas', numero_escenas) order by slug)
+               'numero_escenas', numero_escenas, 'creado', created_at, 'portada', portada) order by slug)
         from del_hogar), '[]'::jsonb),
     'unidades', coalesce((
       select jsonb_agg(jsonb_build_object('id', id, 'titulo', titulo, 'descripcion', descripcion, 'storyboards', storyboards)

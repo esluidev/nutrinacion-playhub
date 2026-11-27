@@ -4,7 +4,7 @@
 -- la base sin seed (`supabase db reset --no-seed`).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(92);
+select plan(93);
 
 -- Actuar como un usuario de Auth (por su uuid) o como anon.
 -- Ayudas en un esquema propio (se deshace con el rollback), utilizables por anon y authenticated.
@@ -294,8 +294,9 @@ select is((select count(*)::int from workshops), 0, 'anon: no ve workshops');
 select is((select count(*)::int from storyboards), 0, 'anon: no ve el catálogo');
 select is((select count(*)::int from perfiles), 0, 'anon: no ve perfiles');
 select is((select count(*)::int from organizaciones), 0, 'anon: no ve organizaciones');
-select is((select count(*)::int from configuraciones where clave in ('admin_url', 'player_url', 'educators_url')), 3,
+select is((select count(*)::int from configuraciones where clave in ('admin_url', 'player_url', 'educators_url', 'home_url')), 4,
   'anon: lee las direcciones de las apps (las necesitan Educators, el runner y la app del hogar)');
+select ok((select count(*)::int from paises) > 0, 'anon: lee los países (la app del hogar pregunta el suyo)');
 select is(pruebas.afectadas($$ update configuraciones set valor = 'https://intruso.test' where clave = 'player_url' $$), 0,
   'anon: no cambia las configuraciones');
 

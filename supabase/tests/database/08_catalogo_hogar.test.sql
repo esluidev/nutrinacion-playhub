@@ -3,7 +3,7 @@
 -- crea sus propios datos (prefijo «hg-», correos @hg.test) en una transacción que se deshace.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(25);
 
 create schema pruebas;
 grant usage on schema pruebas to anon, authenticated;
@@ -37,12 +37,12 @@ select '00000000-0000-0000-0000-000000000000', v.id, 'authenticated', 'authentic
 update perfiles set superadmin = true where email = 's@hg.test';
 
 -- hg-huevo y hg-leche publicados en Guatemala (la leche, también en México); hg-propio, personalizado; hg-nuevo, solo registrado.
-insert into storyboards (clave, slug, titulo, categoria, subcategoria, edicion, idiomas, duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id)
+insert into storyboards (clave, slug, titulo, categoria, subcategoria, edicion, idiomas, duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id, portada)
 values
-  ('d0000000-0000-4000-8000-000000000001', 'hg-huevo', '{"es":"El huevo"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 30, 4, 'PUBLICADO', '{GT}', null),
-  ('d0000000-0000-4000-8000-000000000002', 'hg-leche', '{"es":"La leche"}', 'ALIMENTACION', 'NUTRIENTES', 'PREADOLESCENTES', '{es}', 25, 5, 'PUBLICADO', '{GT,MX}', null),
-  ('d0000000-0000-4000-8000-000000000003', 'hg-propio', '{"es":"El nuestro"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 20, 3, 'PUBLICADO', '{GT}', current_setting('t.org')::bigint),
-  ('d0000000-0000-4000-8000-000000000004', 'hg-nuevo', '{"es":"Lo nuevo"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 20, 3, 'REGISTRADO', '{}', null);
+  ('d0000000-0000-4000-8000-000000000001', 'hg-huevo', '{"es":"El huevo"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 30, 4, 'PUBLICADO', '{GT}', null, 'portadas/alimentacion/hg-huevo.svg'),
+  ('d0000000-0000-4000-8000-000000000002', 'hg-leche', '{"es":"La leche"}', 'ALIMENTACION', 'NUTRIENTES', 'PREADOLESCENTES', '{es}', 25, 5, 'PUBLICADO', '{GT,MX}', null, null),
+  ('d0000000-0000-4000-8000-000000000003', 'hg-propio', '{"es":"El nuestro"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 20, 3, 'PUBLICADO', '{GT}', current_setting('t.org')::bigint, null),
+  ('d0000000-0000-4000-8000-000000000004', 'hg-nuevo', '{"es":"Lo nuevo"}', 'ALIMENTACION', 'NUTRIENTES', 'KIDS', '{es}', 20, 3, 'REGISTRADO', '{}', null, null);
 
 -- ── Publicar en el hogar ──────────────────────────────────────────────────────
 select pruebas.como('80000000-0000-4000-8000-000000000002');
@@ -91,6 +91,7 @@ select is(jsonb_array_length(current_setting('t.gt')::jsonb->'unidades'), 1, 'y 
 select is((current_setting('t.gt')::jsonb->'unidades'->0->'storyboards'), '["d0000000-0000-4000-8000-000000000001", "d0000000-0000-4000-8000-000000000002"]'::jsonb,
   'con sus storyboards en orden, por clave');
 select is((current_setting('t.gt')::jsonb->'storyboards'->0->>'eje'), 'alimentacion', 'con lo que necesita para abrirlos');
+select is((current_setting('t.gt')::jsonb->'storyboards'->0->>'portada'), 'portadas/alimentacion/hg-huevo.svg', 'y su portada');
 select is((select array_agg(e->>'slug') from jsonb_array_elements(hogar_catalogo('MX')->'storyboards') e), '{hg-leche}'::text[],
   'en México, solo lo que está en México');
 select is((hogar_catalogo('MX')->'unidades'->0->'storyboards'), '["d0000000-0000-4000-8000-000000000002"]'::jsonb,

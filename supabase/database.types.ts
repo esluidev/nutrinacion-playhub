@@ -189,6 +189,57 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"hogar_cuentas": {
+                  Row: {
+                    "codigo_enviado_en": string | null,"codigo_expira_en": string | null,"codigo_hash": string | null,"codigos_desde": string | null,"codigos_enviados": number,"correo": string,"created_at": string,"id": number,"pin_bloqueado_hasta": string | null,"pin_hash": string | null,"pin_intentos_fallidos": number
+                  }
+                  Insert: {
+                    "codigo_enviado_en"?: string | null,"codigo_expira_en"?: string | null,"codigo_hash"?: string | null,"codigos_desde"?: string | null,"codigos_enviados"?: number,"correo": string,"created_at"?: string,"id"?: never,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number
+                  }
+                  Update: {
+                    "codigo_enviado_en"?: string | null,"codigo_expira_en"?: string | null,"codigo_hash"?: string | null,"codigos_desde"?: string | null,"codigos_enviados"?: number,"correo"?: string,"created_at"?: string,"id"?: never,"pin_bloqueado_hasta"?: string | null,"pin_hash"?: string | null,"pin_intentos_fallidos"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"hogar_perfiles": {
+                  Row: {
+                    "actualizado": string,"anio": number | null,"avance": Json | null,"avatar": string | null,"creado": string,"cuenta_id": number,"eliminado": boolean,"genero": string | null,"id": string,"mes": number | null,"nombre": string | null,"terminados": (string)[]
+                  }
+                  Insert: {
+                    "actualizado": string,"anio"?: number | null,"avance"?: Json | null,"avatar"?: string | null,"creado"?: string,"cuenta_id": number,"eliminado"?: boolean,"genero"?: string | null,"id": string,"mes"?: number | null,"nombre"?: string | null,"terminados"?: (string)[]
+                  }
+                  Update: {
+                    "actualizado"?: string,"anio"?: number | null,"avance"?: Json | null,"avatar"?: string | null,"creado"?: string,"cuenta_id"?: number,"eliminado"?: boolean,"genero"?: string | null,"id"?: string,"mes"?: number | null,"nombre"?: string | null,"terminados"?: (string)[]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "hogar_perfiles_cuenta_id_fkey"
+      columns: ["cuenta_id"]
+isOneToOne: false
+      referencedRelation: "hogar_cuentas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"hogar_sesiones": {
+                  Row: {
+                    "created_at": string,"cuenta_id": number,"expira_en": string,"token_hash": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"cuenta_id": number,"expira_en": string,"token_hash": string
+                  }
+                  Update: {
+                    "created_at"?: string,"cuenta_id"?: number,"expira_en"?: string,"token_hash"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "hogar_sesiones_cuenta_id_fkey"
+      columns: ["cuenta_id"]
+isOneToOne: false
+      referencedRelation: "hogar_cuentas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"invitaciones": {
                   Row: {
                     "apellido": string | null,"correo_enviado_en": string | null,"correo_error": string | null,"created_at": string,"email": string | null,"estado": Database["public"]['Enums']["estado_invitacion"],"expira_en": string | null,"id": number,"idioma": Database["public"]['Enums']["idioma"],"nombre": string | null,"organizacion_id": number,"role": Database["public"]['Enums']["rol_invitacion"],"titular": boolean,"token": string,"usada_por": number | null
@@ -418,13 +469,13 @@ isOneToOne: false
                   ]
                 },"storyboards": {
                   Row: {
-                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at": string,"duracion_min": number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud": (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion": Database["public"]['Enums']["estado_publicacion"],"id": number,"idioma_principal": Database["public"]['Enums']["idioma"],"idiomas": (Database["public"]['Enums']["idioma"])[],"numero_escenas": number,"organizacion_id": number | null,"paises_disponibles": (string)[],"publicado_hogar": boolean,"slug": string,"subcategoria": Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo": NonNullable<Json>,"updated_at": string,"version_build": string | null
+                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at": string,"duracion_min": number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud": (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion": Database["public"]['Enums']["estado_publicacion"],"id": number,"idioma_principal": Database["public"]['Enums']["idioma"],"idiomas": (Database["public"]['Enums']["idioma"])[],"numero_escenas": number,"organizacion_id": number | null,"paises_disponibles": (string)[],"portada": string | null,"publicado_hogar": boolean,"slug": string,"subcategoria": Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo": NonNullable<Json>,"updated_at": string,"version_build": string | null
                   }
                   Insert: {
-                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at"?: string,"duracion_min"?: number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"publicado_hogar"?: boolean,"slug": string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
+                    "categoria": Database["public"]['Enums']["categoria_storyboard"],"clave": string,"created_at"?: string,"duracion_min"?: number | null,"edicion": Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"portada"?: string | null,"publicado_hogar"?: boolean,"slug": string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
                   }
                   Update: {
-                    "categoria"?: Database["public"]['Enums']["categoria_storyboard"],"clave"?: string,"created_at"?: string,"duracion_min"?: number | null,"edicion"?: Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"publicado_hogar"?: boolean,"slug"?: string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
+                    "categoria"?: Database["public"]['Enums']["categoria_storyboard"],"clave"?: string,"created_at"?: string,"duracion_min"?: number | null,"edicion"?: Database["public"]['Enums']["edicion_storyboard"],"enfoques_salud"?: (Database["public"]['Enums']["enfoque_salud"])[],"estado_publicacion"?: Database["public"]['Enums']["estado_publicacion"],"id"?: never,"idioma_principal"?: Database["public"]['Enums']["idioma"],"idiomas"?: (Database["public"]['Enums']["idioma"])[],"numero_escenas"?: number,"organizacion_id"?: number | null,"paises_disponibles"?: (string)[],"portada"?: string | null,"publicado_hogar"?: boolean,"slug"?: string,"subcategoria"?: Database["public"]['Enums']["subcategoria_storyboard"] | null,"titulo"?: NonNullable<Json>,"updated_at"?: string,"version_build"?: string | null
                   }
                   Relationships: [
                     {
@@ -785,8 +836,41 @@ isOneToOne: false
 "guardar_unidad_estudio":
 { Args: { "p_unidad": Json }; Returns: number
                            },
+"hogar_abrir_sesion":
+{ Args: { "p_cuenta": number }; Returns: Json
+                           },
 "hogar_catalogo":
 { Args: { "p_pais": string }; Returns: Json
+                           },
+"hogar_codigo_nuevo":
+{ Args: { "p_correo": string }; Returns: Json
+                           },
+"hogar_confirmar":
+{ Args: { "p_codigo": string,"p_correo": string,"p_pin": string }; Returns: Json
+                           },
+"hogar_cuenta":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"hogar_cuenta_de_sesion":
+{ Args: { "p_token": string }; Returns: number
+                           },
+"hogar_eliminar_cuenta":
+{ Args: { "p_token": string }; Returns: undefined
+                           },
+"hogar_entrar":
+{ Args: { "p_correo": string,"p_pin": string }; Returns: Json
+                           },
+"hogar_falla":
+{ Args: { "p_correo": string }; Returns: Json
+                           },
+"hogar_guardar_perfiles":
+{ Args: { "p_perfiles": Json,"p_token": string }; Returns: Json
+                           },
+"hogar_perfiles":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"hogar_salir":
+{ Args: { "p_token": string }; Returns: undefined
                            },
 "localizado":
 { Args: { "p_idioma": Database["public"]['Enums']["idioma"],"p_respaldo"?: Database["public"]['Enums']["idioma"],"p_texto": Json }; Returns: string

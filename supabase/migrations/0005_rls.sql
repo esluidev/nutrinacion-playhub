@@ -156,6 +156,9 @@ begin
   end loop;
 end $$;
 
+-- Los países los lee también quien no tiene cuenta: la app del hogar pregunta el país la primera vez (tarea 025).
+create policy paises_anon on paises for select to anon using (true);
+
 -- Las plantillas las lee la Edge Function (service role); en Admin, solo el superadmin.
 create policy plantillas_correo_superadmin on plantillas_correo for all to authenticated
   using ((select es_superadmin())) with check ((select es_superadmin()));

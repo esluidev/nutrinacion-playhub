@@ -4,7 +4,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 
 ## Qué va a producción
 
-**Solo las 17 migraciones de `migrations/`, en orden:**
+**Solo las 18 migraciones de `migrations/`, en orden:**
 
 | Archivo | Qué crea |
 |---|---|
@@ -25,6 +25,7 @@ Qué se ejecuta en producción, qué es solo para local y con qué usuarios se p
 | `0015_guia_con_orden_y_titulo.sql` | La guía que lee el educador trae el orden y el título de cada escena, para mostrarla en la ficha del taller |
 | `0016_titulo_del_taller_para_el_educador.sql` | El educador recibe el título del taller que escribió la organización |
 | `0017_telefonos_del_administrador.sql` | Teléfono móvil y de oficina en el perfil; el titular edita los perfiles de sus administradores; Platform los ve |
+| `0018_cuenta_del_hogar.sql` | La cuenta opcional del adulto en la app del hogar: correo y PIN (el correo se confirma con un código), sus sesiones y los perfiles de sus niños |
 
 Se aplican en un **proyecto nuevo y vacío**:
 
@@ -43,8 +44,9 @@ supabase db push
 
 ### Después de las migraciones
 
-1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion enviar-invitacion enviar-acceso-educador`.
+1. **Edge Functions:** `supabase functions deploy canjear-invitacion enlace-recuperacion enviar-invitacion enviar-acceso-educador enviar-codigo-hogar`.
    - `enviar-acceso-educador` manda el enlace de acceso del educador a Educators (0013); usa los mismos secretos que `enviar-invitacion`.
+   - `enviar-codigo-hogar` manda el código de 6 dígitos de la cuenta del hogar (0018), con los mismos secretos.
    - `enviar-invitacion` manda las invitaciones por correo ([decisión 012](../docs/decisions/012-invitaciones-por-correo.md)) y necesita `supabase secrets set RESEND_API_KEY=<key>`. El remitente es `hello@nutrinacion.com`: verifica `nutrinacion.com` en Resend o fija otro con `supabase secrets set RESEND_FROM=…`.
    - Las otras dos no necesitan secretos.
 2. **Auth:**

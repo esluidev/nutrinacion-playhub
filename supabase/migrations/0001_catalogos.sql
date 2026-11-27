@@ -82,7 +82,9 @@ insert into configuraciones (clave, valor, descripcion) values
   ('admin_url',  'http://localhost:3000',
    'URL de Admin: el enlace del correo de invitación, y Player deja que Admin incruste el runner'),
   ('player_url', 'http://localhost:3001',
-   'URL de Player: Admin y Educators abren el runner con ella y es la del QR para unirse a un taller');
+   'URL de Player: Admin, Educators y la app del hogar abren el runner con ella y es la del QR para unirse a un taller'),
+  ('home_url',   'http://localhost:3003',
+   'URL de la app del hogar (Nutrinación Play): Player deja que la app incruste el runner');
 
 create table paises (
   id        bigint generated always as identity primary key,
