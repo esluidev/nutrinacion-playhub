@@ -22,8 +22,9 @@ Cada app vive en su subdominio y se despliega por separado. Para el navegador, l
 | App | Responsable de | No es responsable de |
 |---|---|---|
 | Admin | Organizaciones (con sus países, licencia, administradores y colaboradores), educadores y sus grupos, jornadas, workshops (su ciclo) y el planificador; ver el catálogo de storyboards y su guía (Platform) | Construir juegos, registrarlos, publicarlos ni escribir su guía ([decisión 013](decisions/013-contenido-solo-desde-player.md)); registrar personas (participantes) |
-| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización) y escribir su guía (solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | Ser la app del hogar, que no se construye ahora ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)) |
+| Player | La app de la administración de Nutrinación para construir, probar, registrar y publicar el contenido (estado, países y organización) y escribir su guía (solo superadmin, con Supabase Auth), y el runner público que incrustan las demás apps ([contrato](runner.md)), sin sesión ni Supabase | Ser la app del hogar (`apps/home`) |
 | Educators | Experiencia del educador: entrar, ver sus talleres (semana y mes), abrir el taller con el runner incrustado (y darle la guía) y dar el feedback al terminar | Implementar juegos |
+| App del hogar | Las familias ([tarea 025](../tasks/025-app-del-hogar.md)): perfiles de los niños en el dispositivo, el catálogo del hogar de su país y su edad con el runner incrustado en modo casa, unirse a un taller con `/code` y la cuenta opcional del adulto (correo y PIN) que guarda los perfiles y lo jugado | Implementar juegos; publicar contenido |
 
 ## Cómo se conectan las apps (hoy)
 
@@ -51,7 +52,7 @@ Los seis pasos funcionan con Supabase local.
 
 ## Pendiente
 
-- **App del hogar**: fuera del alcance actual ([decisión 011](decisions/011-organizacion-como-unidad-de-operacion.md)); cuando toque, se diseña sobre el modelo de organización.
+- **App del hogar**: en marcha ([tarea 025](../tasks/025-app-del-hogar.md)); solo Nutrinación publica para ella.
 
 - **Sesión del educador**: en marcha (decisiones [005](decisions/005-base-nueva-y-acceso-educador.md) y [007](decisions/007-educador-hogar-y-ciclo-del-workshop.md)): correo y PIN que elige con el código de activación de Admin, token de sesión y funciones `educador_*`; ve sus workshops de todas sus organizaciones.
 - **Guía en la base**: Educators la lee con `educador_guia` (ya con las claves del runner, más el orden y el título de cada escena que muestra su ficha) y se la pasa al runner con `iniciar` ([decisión 004](decisions/004-runner-incrustado.md)); Player no necesita leer nada. Los modos dispositivo y casa nunca la reciben.

@@ -67,3 +67,5 @@ Comprueba el contexto y ejecuta typecheck, Vitest y build de Admin, Player y Edu
 ## Despliegue
 
 Cada app se publica por separado; no se crean ramas permanentes por aplicación. Con workspaces, la plataforma instala desde la raíz del monorepo. Una app nueva extiende `@playhub/ui` e incorpora su `AGENTS.md` (con `CLAUDE.md`), `.env.example`, verificación y despliegue propios.
+
+Las tres son SPA y se instalan como apps (PWA, [tarea 024](tasks/024-apps-instalables.md)). Como web estática, cada una se compila con `nuxt generate` (`.output/public`) y el servidor debe: servir todas las rutas con la página (`index.html`), entregar `sw.js` y `manifest.webmanifest` sin caché larga (`Cache-Control: no-cache`) y, en Player, poner la cabecera `frame-ancestors` en `/play/**` ([decisión 004](docs/decisions/004-runner-incrustado.md)), que hoy pone su servidor.
