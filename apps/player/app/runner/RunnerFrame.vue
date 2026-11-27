@@ -1502,7 +1502,8 @@ function enviarPresencia() {
   })
 }
 
-// El código para unirse, su enlace (el del QR) y la dirección corta para escribirlo. La dirección es la de Player en la
+// El código para unirse, su enlace (el del QR), la dirección corta para escribirlo y la misma con su protocolo (la que
+// se copia). La dirección es la de Player en la
 // base (`configuraciones.player_url`). En desarrollo, si es localhost, la IP de este equipo en la red: localhost, en un
 // teléfono, es el propio teléfono.
 const ipEnLaRed = useRuntimeConfig().public.ipEnLaRed as string | undefined
@@ -1513,7 +1514,7 @@ watch(() => props.conexion, async (c) => {
 const conexionVista = computed(() => {
   if (!props.conexion || !import.meta.client) return null
   const base = origenParaUnirse(urlPlayer.value, window.location, ipEnLaRed)
-  return { codigo: props.conexion.codigo, enlace: `${base}/workshop/join/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/workshop/join` }
+  return { codigo: props.conexion.codigo, enlace: `${base}/workshop/join/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/workshop/join`, url: `${base}/workshop/join` }
 })
 
 // Dispositivo con la conexión del taller: si sigue aprobado y el taller abierto (abrirSesion).

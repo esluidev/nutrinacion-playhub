@@ -209,7 +209,7 @@
      derecha, las personas, que se desplazan solas. Si el panel no cabe ancho (un teléfono), una sola columna que se
      desplaza entera. */
   .devices-panel { width: 800px; container-type: inline-size; }
-  .devices-layout { @apply mt-5 grid min-h-0 flex-1 gap-7; grid-template-columns: 252px minmax(0, 1fr); }
+  .devices-layout { @apply mt-5 grid min-h-0 flex-1 gap-7; grid-template-columns: 280px minmax(0, 1fr); }
   .devices-join { @apply flex min-h-0 flex-col gap-4 overflow-y-auto; scrollbar-width: none; }
   .devices-join::-webkit-scrollbar { display: none; }
   .devices-people { @apply min-h-0 pb-2; }
@@ -217,6 +217,15 @@
   .join-box { @apply rounded-control bg-canvas px-4 py-3; }
   .join-code { @apply my-1 whitespace-nowrap font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
   .join-live .runner-qr { @apply mx-auto mb-3 block; }
+  /* La dirección para unirse, en negrita y en una sola línea, y al lado el icono que la copia (18, con su área de toque
+     hacia fuera). Nunca se corta: una dirección más larga que la de la red local baja la letra hasta caber, con cada
+     letra estimada en 0,6 de su tamaño (Nunito en negrita, la más ancha son los números) y 24 para el icono. */
+  .join-url { @apply mt-1 flex items-center gap-1.5; container-type: inline-size; }
+  .join-url > strong { @apply min-w-0 whitespace-nowrap font-bold text-ink; font-size: min(var(--text-caption), (100cqi - 24px) / (var(--largo) * .6)); }
+  .join-copy { @apply -m-1.5 grid shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-1.5 text-muted; }
+  .join-copy .icon { width: 18px; height: 18px; }
+  .join-copy[data-copiada] { color: var(--color-lime-600); }
+  @media (hover: hover) { .join-copy:not([data-copiada]):hover { @apply text-ink; } }
   @container (max-width: 640px) {
     .devices-layout { grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; overflow-y: auto; scrollbar-width: none; }
     .devices-join, .devices-people { min-height: auto; overflow: visible; }
@@ -250,8 +259,6 @@
   .device-card-head .ui-symbol > img { @apply block size-full; }
   .device-card-name { @apply truncate font-black; font-size: var(--text-body); }
   .device-actions { @apply flex flex-wrap gap-2; }
-  .device-hint { @apply mt-auto flex shrink-0 items-start gap-2; }
-  .device-hint .icon { @apply mt-0.5 shrink-0; width: 16px; height: 16px; }
 
   /* ---- Riel de ajustes: cuelga del engranaje (el primer segmento del bloque), 12 bajo su base, con la sombra
      flotante (es temporal) y el radio de las superficies (16). 8 de aire entre los botones (12 menos su base de 4) y los

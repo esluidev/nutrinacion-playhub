@@ -25,7 +25,18 @@
           <RunnerQr :value="conexion.enlace" :label="txt('joinQr')" :size="176" />
           <p class="panel-label">{{ txt('joinCode') }}</p>
           <p class="join-code">{{ codigoLegible(conexion.codigo) }}</p>
-          <p class="ui-caption">{{ txt('joinScan', { url: conexion.direccion }) }}</p>
+          <!-- La dirección sola, en negrita y en una línea, para encontrarla de un vistazo y que nadie la lea cortada, y
+               al lado el icono que la copia, sin caja de botón (Luis, 2026-11-27: la lee gente que no es técnica). Copia
+               lo que se ve, con su protocolo para que se abra al pegarla. -->
+          <div>
+            <p class="ui-caption">{{ txt('joinScan') }}</p>
+            <div class="join-url" :style="{ '--largo': conexion.direccion.length }">
+              <strong>{{ conexion.direccion }}</strong>
+              <button type="button" class="join-copy" :data-copiada="copiada || undefined" :aria-label="txt(copiada ? 'addressCopied' : 'copyAddress')" :title="txt(copiada ? 'addressCopied' : 'copyAddress')" @click="copiarDireccion">
+                <UiIcon :name="copiada ? 'check' : 'copy'" />
+              </button>
+            </div>
+          </div>
         </div>
         <div v-else class="join-box">
           <p class="panel-label">{{ txt('joinCode') }}</p>
@@ -36,7 +47,6 @@
           <UiSwitch :model-value="sinAprobar" :label="txt('openEntry')" @update:model-value="(v: boolean) => emit('sin-aprobar', v)" />
           <p class="ui-caption">{{ txt('openEntryHint') }}</p>
         </div>
-        <p class="device-hint ui-caption"><UiIcon name="info" />{{ txt('privacy') }}</p>
       </section>
 
       <!-- ── Las personas ────────────────────────────────────────────────── -->
@@ -149,7 +159,7 @@ const props = withDefaults(defineProps<{
   selected: string | null
   locale: string
   /** La conexión del taller: el código, el enlace del QR y la dirección corta para escribirlo. */
-  conexion?: { codigo: string, enlace: string, direccion: string } | null
+  conexion?: { codigo: string, enlace: string, direccion: string, url: string } | null
   solicitudes?: { id: string, nombre: string, avatar: Avatar, tono: TonoAvatar }[]
   sinAprobar?: boolean
   /** Todos los dispositivos en pausa, desde este panel: el de cada uno no se puede liberar solo. */
@@ -176,5 +186,15 @@ const emit = defineEmits<{
 
 const txt = useRunnerText(() => props.locale)
 const uid = useId()
+// Copiar la dirección para unirse: el botón muestra el check un momento.
+const copiada = ref(false)
+let soltarCopiada: ReturnType<typeof setTimeout> | undefined
+async function copiarDireccion() {
+  if (!props.conexion || !(await copiarTexto(props.conexion.url))) return
+  copiada.value = true
+  clearTimeout(soltarCopiada)
+  soltarCopiada = setTimeout(() => { copiada.value = false }, 2000)
+}
+onBeforeUnmount(() => clearTimeout(soltarCopiada))
 const current = computed(() => props.devices.find(d => d.id === props.selected) ?? null)
 </script>
