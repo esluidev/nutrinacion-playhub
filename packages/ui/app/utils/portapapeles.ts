@@ -1,5 +1,5 @@
-// Copiar al portapapeles. `navigator.clipboard` solo existe en contextos seguros (HTTPS o
-// localhost): con la app compartida por Tailscale en http no está, y se usa el método antiguo.
+// Copiar al portapapeles (Admin y el runner de Player). `navigator.clipboard` solo existe en contextos seguros (HTTPS
+// o localhost): con la app abierta por la red local o Tailscale en http no está, y se usa el método antiguo.
 export async function copiarTexto(texto: string): Promise<boolean> {
   if (navigator.clipboard && window.isSecureContext) {
     try {
