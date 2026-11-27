@@ -1617,6 +1617,19 @@ function onKey(event: KeyboardEvent) {
 // ── Protección táctil: sin zoom de dedos ni de trackpad, sin menú contextual ni arrastre de imágenes.
 const blockEvent = (event: Event) => event.preventDefault()
 const BLOCKED = ['gesturestart', 'gesturechange', 'gestureend', 'contextmenu', 'dragstart', 'dblclick'] as const
+// Sin selección, ni siquiera de la página entera: en Android, un toque largo sobre una selección la arrastra, y Chrome
+// la pinta como un fantasma de todo el juego, solo con los bordes de las piezas (Luis, 2026-11-27, en Descubrimiento
+// desde una tableta unida por el QR). El CSS ya no deja seleccionar nada; esto no deja que una selección empiece y
+// borra la que hubiera al tocar. Un campo de texto sí se selecciona.
+const enCampo = (target: EventTarget | null) => {
+  const nodo = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
+  return Boolean(nodo?.closest('input, textarea, [contenteditable]'))
+}
+const blockSelect = (event: Event) => { if (!enCampo(event.target)) event.preventDefault() }
+const dropSelection = (event: Event) => {
+  const seleccion = document.getSelection()
+  if (seleccion && !seleccion.isCollapsed && !enCampo(event.target)) seleccion.removeAllRanges()
+}
 const onWheel = (event: WheelEvent) => { if (event.ctrlKey) event.preventDefault() }
 const onVisibility = () => { if (props.mode !== 'device') setPause('hidden', document.hidden) }
 
@@ -1694,6 +1707,8 @@ onMounted(() => {
   // En la captura: se anota el pulso antes de que el botón haga lo suyo, y lo que haga decide qué suena.
   document.addEventListener('click', onPress, true)
   BLOCKED.forEach(type => document.addEventListener(type, blockEvent))
+  document.addEventListener('selectstart', blockSelect)
+  document.addEventListener('pointerdown', dropSelection, true)
   window.addEventListener('wheel', onWheel, { passive: false })
   document.addEventListener('keydown', onKey)
   document.addEventListener('pointerdown', onPointerDown)
@@ -1742,6 +1757,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onWake)
   document.removeEventListener('touchstart', onTouchStart)
   BLOCKED.forEach(type => document.removeEventListener(type, blockEvent))
+  document.removeEventListener('selectstart', blockSelect)
+  document.removeEventListener('pointerdown', dropSelection, true)
   window.removeEventListener('wheel', onWheel)
   document.removeEventListener('keydown', onKey)
   document.removeEventListener('pointerdown', onPointerDown)
