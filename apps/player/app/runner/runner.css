@@ -218,7 +218,7 @@
   .devices-people > .panel-row:first-child { @apply mt-0; }
   .join-box { @apply rounded-control bg-canvas px-4 py-3; }
   .join-code { @apply my-1 whitespace-nowrap font-black tabular-nums tracking-[.08em]; font-size: var(--text-figure); line-height: 1.1; }
-  .join-live .runner-qr { @apply mx-auto mb-3 block; }
+  .join-live .ui-qr { @apply mx-auto mb-3 block; }
   /* La dirección para unirse, en negrita y en una sola línea, y al lado el icono que la copia (18, con su área de toque
      hacia fuera). Nunca se corta: una dirección más larga que la de la red local baja la letra hasta caber, con cada
      letra estimada en 0,6 de su tamaño (Nunito en negrita, la más ancha son los números) y 24 para el icono. */
@@ -232,7 +232,7 @@
     .devices-layout { grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; overflow-y: auto; scrollbar-width: none; }
     .devices-join, .devices-people { min-height: auto; overflow: visible; }
     .join-live { @apply grid items-center gap-x-4; grid-template-columns: auto minmax(0, 1fr); }
-    .join-live .runner-qr { @apply m-0; grid-row: span 3; }
+    .join-live .ui-qr { @apply m-0; grid-row: span 3; }
   }
   /* Quien pide entrar: el avatar del alto de sus botones (rechazar y aprobar, solo con su icono). */
   .request-list { @apply m-0 mt-2 flex list-none flex-col gap-1.5 p-0; }

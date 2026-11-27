@@ -5,13 +5,17 @@
          la base. En dos tercios, sus escenas (plantilla, guía por idioma, escribir su guía y probarla); en un tercio, su
          publicación (para leer; se cambia en su diálogo), su guía y sus datos. Nada técnico a la vista que no se use. -->
     <header class="ui-page-header">
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="ui-heading min-w-0">{{ sb.title }}</h1>
-          <UiBadge v-if="publicacion" :tone="uiPublicationTone(publicacion.estado)" dot>{{ ESTADO_PUBLICACION[publicacion.estado].label }}</UiBadge>
-          <UiBadge v-else-if="estado" :tone="ESTADO_CATALOGO[estado.estado].tone" dot>{{ ESTADO_CATALOGO[estado.estado].label }}</UiBadge>
+      <div class="flex min-w-0 items-center gap-4">
+        <!-- Su portada, la que sale en la app del hogar (tarea 025) -->
+        <span v-if="portada" class="portada-detalle" aria-hidden="true"><img :src="portada" alt=""></span>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="ui-heading min-w-0">{{ sb.title }}</h1>
+            <UiBadge v-if="publicacion" :tone="uiPublicationTone(publicacion.estado)" dot>{{ ESTADO_PUBLICACION[publicacion.estado].label }}</UiBadge>
+            <UiBadge v-else-if="estado" :tone="ESTADO_CATALOGO[estado.estado].tone" dot>{{ ESTADO_CATALOGO[estado.estado].label }}</UiBadge>
+          </div>
+          <p class="ui-text mt-1.5">{{ resumen }}</p>
         </div>
-        <p class="ui-text mt-1.5">{{ resumen }}</p>
       </div>
       <div class="ui-page-header-actions">
         <UiButton variant="outline" icon="play" :to="playUrl()">Probar</UiButton>
@@ -202,7 +206,7 @@
 // (registrarlo o actualizarlo, con qué cambió), sus escenas con su guía, su publicación (estado, países, para quién y
 // el hogar, que se cambian en PublicacionDialog) y sus datos.
 import { uiPublicationTone } from '@playhub/ui/app/utils/ui-tones'
-import { loadStoryboard, storyboardPorClave } from '~/runner/content'
+import { loadStoryboard, portadaDe, storyboardPorClave } from '~/runner/content'
 import { ESTADO_CATALOGO, ESTADO_PUBLICACION, nombreEnfoque, nombreIdioma, nombrePlantilla, nombreSubcategoria, tonoGuia } from '~/utils/catalogoResumen'
 import { construirMetadata } from '~/utils/storyboardMetadata'
 
@@ -219,6 +223,7 @@ const sb = computed(() => {
   return row && row.tipo === category ? row : undefined
 })
 const loaded = loadStoryboard(category, id)
+const portada = portadaDe(category, id)
 
 const { estadoDe, publicacionDe, organizacionDe, sincronizar, paisDe, error: errorCatalogo, cargando, cargar } = useCatalogoBase()
 const { toast } = useToast()

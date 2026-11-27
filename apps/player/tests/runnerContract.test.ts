@@ -61,6 +61,14 @@ describe('órdenes de la app al runner', () => {
     expect(command).toEqual({ tipo: 'iniciar', guia: { bienvenida: { verb: 'Situar' } } })
   })
 
+  it('iniciar desde la app del hogar: el nombre del niño, limpio y hasta 20 letras, y si está instalada', () => {
+    expect(parseRunnerCommand(runnerMessage({ tipo: 'iniciar', nombre: '  Ana   Sofía ', instalada: true })))
+      .toEqual({ tipo: 'iniciar', nombre: 'Ana Sofía', instalada: true })
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'iniciar', nombre: 'x'.repeat(30), instalada: 'sí' }))
+      .toEqual({ tipo: 'iniciar', nombre: 'x'.repeat(20) })
+    expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'iniciar', nombre: 42 })).toEqual({ tipo: 'iniciar' })
+  })
+
   it('rechaza una guía que no es un objeto', () => {
     expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'iniciar', guia: [] })).toBeNull()
     expect(parseRunnerCommand({ canal: RUNNER_CHANNEL, v: 1, tipo: 'cerrar' })).toBeNull()
@@ -85,6 +93,17 @@ describe('URL del runner', () => {
       .toBe('https://player.nutrinacion.com/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=educator&lang=es&escena=origen')
     expect(runnerUrl('http://localhost:3001', { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'home' }))
       .toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=home')
+  })
+
+  it('en casa lleva el perfil y su avatar', () => {
+    expect(runnerUrl('http://localhost:3001', { clave: '6f375f8d-0467-4dd2-958a-91d6d6d1c060', modo: 'home', idioma: 'es', perfil: 'p-7k2', avatar: 'zorro' }))
+      .toBe('http://localhost:3001/play/6f375f8d-0467-4dd2-958a-91d6d6d1c060?mode=home&lang=es&perfil=p-7k2&avatar=zorro')
+  })
+
+  it('la página para unirse cuenta a la app del hogar si espera o si se cerró', () => {
+    expect(parseRunnerEvent(runnerMessage({ tipo: 'unirse', fase: 'esperando' }))).toEqual({ tipo: 'unirse', fase: 'esperando' })
+    expect(parseRunnerEvent(runnerMessage({ tipo: 'unirse', fase: 'cerrado' }))).toEqual({ tipo: 'unirse', fase: 'cerrado' })
+    expect(parseRunnerEvent({ canal: RUNNER_CHANNEL, v: 1, tipo: 'unirse', fase: 'jugando' })).toBeNull()
   })
 
   it('el ensayo del educador es un modo, como el dispositivo: ?mode=rehearsal', () => {

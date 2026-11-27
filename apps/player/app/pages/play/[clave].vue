@@ -10,6 +10,10 @@
     :embedded="host.embedded"
     :conexion="conexion"
     :rehearsal="rehearsal"
+    :perfil="perfil"
+    :avatar="avatar"
+    :nombre="host.nombre.value"
+    :instalada="host.instalada.value"
     @ready="host.send({ tipo: 'listo', storyboard: clave, modo: mode, idioma: locale, escenas: storyboard.scenes.length })"
     @scene="(indice, carpeta) => host.send({ tipo: 'escena', indice, carpeta })"
     @finish="host.send({ tipo: 'terminado' })"
@@ -23,6 +27,7 @@
 <script setup lang="ts">
 import '~/runner/runner.css'
 import type { RunnerMode } from '@playhub/ui/app/utils/runner-contract'
+import { esAvatar } from '@playhub/ui/app/utils/avatares'
 import nunito from '@playhub/ui/fonts/nunito-latin.woff2?url'
 import { loadStoryboard, storyboardPorClave } from '~/runner/content'
 import { codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
@@ -39,6 +44,7 @@ import { origenesPermitidos, urlsDelRunner } from '~/runner/urlsDeLasApps'
 //                               dispositivos ni conexión, y sin recordar la escena del taller de verdad.
 //   ?lang=es                    idioma del contenido, entre los que declara el storyboard.
 //   ?escena=<carpeta>           escena con la que abre.
+//   ?perfil=…&avatar=…          en casa, desde la app del hogar: el perfil (para recordar dónde iba) y su avatar.
 //   ?conexion=<código>          en un dispositivo, la conexión del taller a la que se unió (/workshop/join, tarea 013).
 //   ?medir=1                    el medidor del motor, para probar en un dispositivo (cuadros y toque).
 //   ?sonidos=1                  el panel de sonidos: oír cada uno suelto y ver cuál sonó.
@@ -64,6 +70,9 @@ const storyboard = entrada ? loadStoryboard(category, id, locale) : null
 const txt = useRunnerText(() => locale)
 const start = route.query.escena ? String(route.query.escena) : undefined
 const rehearsal = mode === 'rehearsal'
+// En casa, desde la app del hogar (tarea 025): con qué perfil se juega y su avatar. El nombre llega con `iniciar`.
+const perfil = mode === 'home' && /^[\w-]{1,40}$/.test(String(route.query.perfil ?? '')) ? String(route.query.perfil) : undefined
+const avatar = mode === 'home' && esAvatar(route.query.avatar) ? route.query.avatar : undefined
 
 // Los orígenes permitidos: Admin y Educators con su dirección en la base (`configuraciones`) y, si este equipo se abrió
 // por Tailscale, los mismos con su nombre (equipo-local). Solo hacen falta dentro de un iframe.

@@ -15,11 +15,14 @@
         <p v-if="pageDescription" class="ui-caption hidden sm:block">{{ pageDescription }}</p>
       </div>
     </div>
+    <!-- «Instalar app» solo donde el navegador la instala con un toque, y la instala al pulsarlo. -->
     <UiUserMenu
       v-if="usuario"
       :name="usuario.nombre"
       :detail="usuario.email"
+      :items="puedeInstalar ? [{ key: 'instalar', label: 'Instalar app', icon: 'download' }] : []"
       sign-out-label="Cerrar sesión"
+      @select="(clave: string) => { if (clave === 'instalar') instalar() }"
       @sign-out="salir"
     />
   </header>
@@ -31,6 +34,7 @@ defineEmits<{ toggleSidebar: [] }>()
 const route = useRoute()
 const { isCollapsed, toggleCollapsed } = useSidebar()
 const { usuario, salir } = useSesion()
+const { puedeInstalar, instalar } = useInstalarApp()
 
 const pageTitle = computed(() => (route.path.startsWith('/hogar') ? 'App del hogar' : 'Storyboards'))
 const pageDescription = computed(() => {

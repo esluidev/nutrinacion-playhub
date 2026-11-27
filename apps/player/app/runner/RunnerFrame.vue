@@ -56,7 +56,7 @@
           :title="`${player.apodo} · ${sceneCaption()}`"
         >
           <span class="profile-avatar" :data-tone="AVATAR_TONES[player.avatar]" aria-hidden="true">
-            <img :src="librarySvg(`avatar-${player.avatar}`)" alt="" decoding="sync">
+            <img :src="dibujoDe(player.avatar)" alt="" decoding="sync">
           </span>
           <UiProgress class="scene-card-bar" :value="percent" tone="lime" :label="txt('workshopProgress')" />
         </div>
@@ -434,11 +434,11 @@ import { cueInterface, cueSound, SCALE } from './engine/sound'
 import { useRunnerText } from './i18n'
 import { forgetMemory, memoryKey, openingScene, readMemory, urlWithScene, writeMemory } from './memory'
 import type { MemoryStore } from './memory'
-import { fontsReady, isPreloaded, mark, preloadScene, preloadSvg, within } from './preload'
+import { decodeImage, fontsReady, isPreloaded, mark, preloadScene, within } from './preload'
 import { profileOf } from './profiles'
 import PerfilPieza from './PerfilPieza.vue'
-import { AVATARES, nombreVisible, nombresSinRepetir, tonoDe } from './avatares'
-import type { Avatar, TonoAvatar } from './avatares'
+import { AVATARES, dibujoDe, nombreVisible, nombresSinRepetir, tonoDe } from '@playhub/ui/app/utils/avatares'
+import type { Avatar, TonoAvatar } from '@playhub/ui/app/utils/avatares'
 import { canalDemostracion } from './conexion/demo'
 import { RITMO, leerMensaje } from './conexion/mensajes'
 import type { CanalSesion, MensajeSesion } from './conexion/mensajes'
@@ -470,6 +470,12 @@ const props = defineProps<{
   /** `?mode=rehearsal`, el ensayo del educador (Educators, «Ensayar»): la consola del educador y la guía, sin
    *  dispositivos ni sesión, y con su propia memoria, que no se mezcla con la del taller de verdad. */
   rehearsal?: boolean
+  /** En casa, desde la app del hogar (tarea 025): el perfil con que se juega (un identificador del dispositivo, para
+   *  recordar dónde iba), su avatar y su nombre (llega con `iniciar`), y si la app se abrió instalada. */
+  perfil?: string
+  avatar?: Avatar
+  nombre?: string
+  instalada?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -494,12 +500,17 @@ const leads = props.mode === 'educator' || props.mode === 'home'
 // al abrirse, porque no hay un educador que lo diga. En el taller la dice el educador; «Escuchar» sirve en todos.
 const narrationContext = { category: props.storyboard.category, storyboardId: props.storyboard.json.slug, locale: props.locale }
 const narrates = props.mode === 'home'
-// En casa, el niño: su apodo y su avatar, un animal de la librería (`avatar-<animal>`) en un círculo. Cada animal lleva
+// En casa, el niño: su apodo y su avatar, un animal del kit (`dibujoDe`) en un círculo. Cada animal lleva
 // el tono de fondo que mejor lo separa de su pelaje, entre los tonos del kit para las personas (cielo, uva o rosa).
-// El runner no conoce al niño: mientras la app que lo abre no se los dé, es este de demostración.
-// El tono y el nombre propio de cada animal están en avatares.ts: los mismos al unirse a un taller.
+// El runner no conoce al niño: se lo da la app del hogar (el perfil y su avatar en la URL, su nombre con `iniciar`);
+// abierto directamente, es este de demostración. El tono y el nombre propio de cada animal están en avatares.ts (del
+// kit): los mismos al unirse a un taller.
 const AVATAR_TONES = Object.fromEntries(AVATARES.map(a => [a.clave, a.tono])) as Record<Avatar, TonoAvatar>
-const player: { apodo: string, avatar: Avatar } = { apodo: 'Jeffrey', avatar: 'zorro' }
+const player = reactive<{ apodo: string, avatar: Avatar }>({
+  apodo: props.nombre || (props.avatar ? nombreVisible(null, props.avatar) : 'Jeffrey'),
+  avatar: props.avatar ?? 'zorro',
+})
+watch(() => props.nombre, (nombre) => { if (nombre) player.apodo = nombre })
 
 // ── Estado por escena ──────────────────────────────────────────────────────────
 type FeedbackType = 'success' | 'info' | 'retry'
@@ -536,7 +547,7 @@ function storeFor(mode: RunnerMode): MemoryStore | null {
   return null
 }
 const memoryStore = storeFor(props.mode)
-const memory = memoryKey(props.storyboard.json.key, props.rehearsal ? 'rehearsal' : props.mode, props.mode === 'home' ? `${player.avatar}-${player.apodo}` : undefined)
+const memory = memoryKey(props.storyboard.json.key, props.rehearsal ? 'rehearsal' : props.mode, props.mode === 'home' ? (props.perfil ?? `${player.avatar}-${player.apodo}`) : undefined)
 const remembered = readMemory(memoryStore, memory)
 for (const folder of remembered?.done ?? []) {
   const i = scenes.findIndex(scene => scene.folder === folder)
@@ -1102,6 +1113,8 @@ const doc = () => document as DocumentoConPrefijo
 const elementoEnPantallaCompleta = () => document.fullscreenElement ?? doc().webkitFullscreenElement ?? null
 const appEnPantallaCompleta = () => matchMedia('(display-mode: fullscreen)').matches && !elementoEnPantallaCompleta()
 const canFullscreen = ref(false)
+// La app del hogar instalada ya se abre sin las barras del navegador: ahí la pantalla completa no aporta (Luis, 2026-11-27).
+watch(() => props.instalada, (instalada) => { if (instalada) canFullscreen.value = false })
 const fullscreen = ref(false)
 async function toggleFullscreen() {
   try {
@@ -1338,7 +1351,9 @@ function cerrarDelTodo() {
   if (!props.conexion) return
   olvidarParticipante(props.conexion.codigo)
   if (elementoEnPantallaCompleta()) void (document.exitFullscreen ? document.exitFullscreen() : doc().webkitExitFullscreen?.())?.catch(() => {})
-  void navigateTo('/workshop/join', { replace: true })
+  // Dentro de la app del hogar (tarea 025), ella decide a dónde volver.
+  if (props.embedded) emit('exit', current.value, active.value.folder)
+  else void navigateTo('/workshop/join', { replace: true })
 }
 function rejoin() {
   session.left = false
@@ -1503,18 +1518,25 @@ function enviarPresencia() {
 }
 
 // El código para unirse, su enlace (el del QR), la dirección corta para escribirlo y la misma con su protocolo (la que
-// se copia). La dirección es la de Player en la
-// base (`configuraciones.player_url`). En desarrollo, si es localhost, la IP de este equipo en la red: localhost, en un
-// teléfono, es el propio teléfono.
+// se copia). La dirección es la de la app del hogar en la base (`configuraciones.home_url`) o, sin ella, la de Player.
+// En desarrollo, si es localhost, la IP de este equipo en la red: localhost, en un teléfono, es el propio teléfono.
 const ipEnLaRed = useRuntimeConfig().public.ipEnLaRed as string | undefined
 const urlPlayer = ref<string | null>(null)
+const urlHogar = ref<string | null>(null)
 watch(() => props.conexion, async (c) => {
-  if (c && import.meta.client && !urlPlayer.value) urlPlayer.value = (await urlsDelRunner()).player ?? null
+  if (!c || !import.meta.client || urlPlayer.value) return
+  const urls = await urlsDelRunner()
+  urlPlayer.value = urls.player ?? null
+  urlHogar.value = urls.home ?? null
 }, { immediate: true })
 const conexionVista = computed(() => {
   if (!props.conexion || !import.meta.client) return null
-  const base = origenParaUnirse(urlPlayer.value, window.location, ipEnLaRed)
-  return { codigo: props.conexion.codigo, enlace: `${base}/workshop/join/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}/workshop/join`, url: `${base}/workshop/join` }
+  // Desde el 2026-11-27 el QR lleva a la app del hogar, `/code/<código>` (tarea 025); sin su dirección en la base, a la
+  // página para unirse de Player, como antes.
+  const enHogar = Boolean(urlHogar.value)
+  const base = origenParaUnirse(enHogar ? urlHogar.value : urlPlayer.value, window.location, ipEnLaRed)
+  const ruta = enHogar ? '/code' : '/workshop/join'
+  return { codigo: props.conexion.codigo, enlace: `${base}${ruta}/${props.conexion.codigo}`, direccion: `${base.replace(/^https?:\/\//, '')}${ruta}`, url: `${base}${ruta}` }
 })
 
 // Dispositivo con la conexión del taller: si sigue aprobado y el taller abierto (abrirSesion).
@@ -1667,7 +1689,7 @@ let unmounted = false
 async function start() {
   const first = current.value
   mark('inicio')
-  await within(LOAD_LIMIT, Promise.all([fontsReady(), preloadScene(scenes[first]!), props.mode === 'home' ? preloadSvg(`avatar-${player.avatar}`) : null]))
+  await within(LOAD_LIMIT, Promise.all([fontsReady(), preloadScene(scenes[first]!), props.mode === 'home' ? decodeImage(dibujoDe(player.avatar)) : null]))
   if (unmounted) return
   mark('preparado')
   if (props.mode === 'device') mountScene(first)
@@ -1717,7 +1739,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', onVisibility)
   document.addEventListener('visibilitychange', onWake)
   document.addEventListener('touchstart', onTouchStart, { passive: true })
-  canFullscreen.value = Boolean(document.fullscreenEnabled || doc().webkitFullscreenEnabled) && !appEnPantallaCompleta()
+  canFullscreen.value = Boolean(document.fullscreenEnabled || doc().webkitFullscreenEnabled) && !appEnPantallaCompleta() && !props.instalada
   onFullscreen()
   void keepAwake()
 

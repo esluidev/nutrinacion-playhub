@@ -25,6 +25,8 @@ export interface StoryboardJson {
   languages?: string[]
   defaultLanguage?: string
   estimatedDuration?: number
+  /** Tiene portada: `portada.svg` en su carpeta (la app del hogar la muestra; tarea 025). */
+  cover?: boolean
   scenes: { folder: string, title?: I18nText }[]
 }
 

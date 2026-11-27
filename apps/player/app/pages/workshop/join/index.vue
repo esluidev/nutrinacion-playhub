@@ -1,6 +1,7 @@
 <template>
   <!-- Unirse a un taller escribiendo el código (tarea 013): para quien no puede leer el QR. Sin
-       cuenta ni nada que instalar. Con un código válido, sigue en /workshop/join/<código>. -->
+       cuenta ni nada que instalar. Con un código válido, sigue en /workshop/join/<código>. Desde el 2026-11-27 la
+       entrada es la app del hogar (`/code`, tarea 025): si la base tiene su dirección, esta página lleva ahí. -->
   <main class="unirse" data-density="touch">
     <form class="ui-panel ui-panel-body unirse-caja space-y-6" novalidate @submit.prevent="buscar">
       <header>
@@ -25,6 +26,7 @@
 <script setup lang="ts">
 import { codigoAlEscribir, codigoValido, normalizarCodigo } from '~/runner/conexion/participante'
 import { useRunnerText } from '~/runner/i18n'
+import { hogarParaUnirse } from '~/runner/urlsDeLasApps'
 
 definePageMeta({ layout: false })
 
@@ -47,6 +49,11 @@ function buscar() {
   }
   navigateTo(`/workshop/join/${codigo}`)
 }
+
+onMounted(async () => {
+  const hogar = await hogarParaUnirse()
+  if (hogar) window.location.replace(`${hogar}/code`)
+})
 
 useHead({ title: computed(() => `${txt('joinTitle')} · PlayHub`) })
 </script>

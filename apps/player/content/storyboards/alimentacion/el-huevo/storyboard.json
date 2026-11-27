@@ -10,6 +10,7 @@
   "languages": ["es"],
   "defaultLanguage": "es",
   "estimatedDuration": 30,
+  "cover": true,
   "scenes": [
     { "folder": "bienvenida", "title": { "es": "Bienvenida" } },
     { "folder": "origen", "title": { "es": "Origen" } },

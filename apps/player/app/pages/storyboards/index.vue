@@ -30,8 +30,9 @@
     >
       <template #cell-storyboard="{ row }">
         <div class="flex items-center gap-3">
-          <!-- La portada lleva el tono del área, como en Admin. -->
-          <span class="ui-symbol ui-symbol-md text-body font-black text-(--tone-strong)" :data-area="row.tipo" aria-hidden="true">
+          <!-- Su portada (`portada.svg`, tarea 025); sin ella, la inicial en el tono del área, como en Admin. -->
+          <span v-if="portadaDe(row.tipo, row.id)" class="portada-mini" aria-hidden="true"><img :src="portadaDe(row.tipo, row.id)" alt=""></span>
+          <span v-else class="ui-symbol ui-symbol-md text-body font-black text-(--tone-strong)" :data-area="row.tipo" aria-hidden="true">
             {{ row.title.charAt(0).toUpperCase() }}
           </span>
           <div class="min-w-0">
@@ -150,7 +151,7 @@
 import { uiAreaAttrs, uiAreaOf } from '@playhub/ui/app/utils/ui-tones'
 import type { EstadoBase, FilaBase, Publicacion } from '~/composables/useCatalogoBase'
 import { TIPO_LABELS } from '~/composables/useStoryboards'
-import { tipoDeType } from '~/runner/content'
+import { portadaDe, tipoDeType } from '~/runner/content'
 import { tr } from '~/types/i18n'
 import type { StoryboardBuild, TipoStoryboard } from '~/types/storyboard'
 import { OPCIONES_FILTRO_ESTADO, OPCIONES_FILTRO_HOGAR, nombreIdioma, pasaFiltroEstado, pasaFiltroHogar, tonoGuia } from '~/utils/catalogoResumen'

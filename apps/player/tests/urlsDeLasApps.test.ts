@@ -27,7 +27,7 @@ describe('las direcciones de las apps, de la base', () => {
     const pedir = vi.fn(async () => new Response(JSON.stringify(filas)))
     expect((await leerUrlsDeLasApps('http://127.0.0.1:54331/', 'anon', pedir as typeof fetch)).player).toBe('https://player.nutrinacion.com')
     expect(pedir).toHaveBeenCalledWith(
-      'http://127.0.0.1:54331/rest/v1/configuraciones?select=clave,valor&clave=in.(admin_url,player_url,educators_url)',
+      'http://127.0.0.1:54331/rest/v1/configuraciones?select=clave,valor&clave=in.(admin_url,player_url,educators_url,home_url)',
       { headers: { apikey: 'anon', Authorization: 'Bearer anon' } },
     )
     await expect(leerUrlsDeLasApps('http://127.0.0.1:54331', 'anon', (async () => new Response('', { status: 503 })) as typeof fetch)).rejects.toThrow()

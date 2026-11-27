@@ -6,13 +6,17 @@
        identificador para esta conexión: al recargar vuelve como el mismo; en otra pestaña (cerrar y volver a
        escanear) o tras salir del taller, empieza de cero. Si el educador lo rechaza (o lo quita) o el taller
        termina, la sesión se cierra del todo: el dispositivo lo olvida y vuelve a la página inicial, /workshop/join (Luis,
-       2026-11-26: nada de una página para volver a entrar). -->
+       2026-11-26: nada de una página para volver a entrar).
+       Desde el 2026-11-27 la entrada es la app del hogar (`/code/<código>`, tarea 025): abierta directamente, esta página
+       lleva ahí. Dentro de la app (incrustada) trae el avatar y el nombre del perfil que se une (?avatar=&nombre=) y pide
+       entrar sola; le cuenta a la app si espera (para ofrecer instalarse) o si la sesión se cerró, y la app vuelve a lo
+       suyo. -->
   <main class="unirse" data-density="touch">
     <div v-if="fase === 'cargando'" class="grid place-items-center"><UiSpinner /></div>
 
     <div v-else-if="fase === 'sin-taller'" class="ui-panel ui-panel-body unirse-caja">
       <UiEmptyState icon="search" :title="txt('joinNotFoundTitle')" :text="aviso || txt('joinNotFound')">
-        <UiButton to="/workshop/join" icon="pencil">{{ txt('joinOtherCode') }}</UiButton>
+        <UiButton icon="pencil" @click="otroCodigo">{{ txt('joinOtherCode') }}</UiButton>
       </UiEmptyState>
     </div>
 
@@ -72,13 +76,16 @@
 </template>
 
 <script setup lang="ts">
-import { AVATARES, dibujoDe, limpiarApodo, nombreVisible, tonoDe } from '~/runner/avatares'
-import type { Avatar } from '~/runner/avatares'
+import { AVATARES, dibujoDe, limpiarApodo, nombreVisible, tonoDe } from '@playhub/ui/app/utils/avatares'
+import type { Avatar } from '@playhub/ui/app/utils/avatares'
+import { esAvatar } from '@playhub/ui/app/utils/avatares'
 import { leerMensaje } from '~/runner/conexion/mensajes'
 import type { CanalSesion } from '~/runner/conexion/mensajes'
 import { codigoLegible, codigoValido, dispositivoNuevo, guardarParticipante, normalizarCodigo, olvidarParticipante, participanteGuardado } from '~/runner/conexion/participante'
 import type { TallerDeLaConexion } from '~/runner/conexion/realtime'
 import { useRunnerText } from '~/runner/i18n'
+import { useRunnerHost } from '~/runner/useHost'
+import { hogarParaUnirse, origenesPermitidos, urlsDelRunner } from '~/runner/urlsDeLasApps'
 
 definePageMeta({ layout: false })
 
@@ -103,6 +110,19 @@ let api: Api | null = null
 let canal: CanalSesion | null = null
 let reintento: ReturnType<typeof setInterval> | undefined
 
+// Dentro de la app del hogar (tarea 025): le cuenta si espera o si la sesión se cerró. Solo a los orígenes permitidos.
+const embebida = import.meta.client && window.parent !== window
+const origenes = shallowRef<string[] | null>(null)
+if (embebida) void urlsDelRunner().then((urls) => { origenes.value = origenesPermitidos(urls) })
+const host = useRunnerHost(origenes)
+// El perfil con que se une desde la app: su avatar y su nombre. Sin ellos, se eligen aquí.
+const avatarDelPerfil = embebida && esAvatar(route.query.avatar) ? route.query.avatar : null
+const nombreDelPerfil = embebida ? limpiarApodo(String(route.query.nombre ?? '')) : null
+if (avatarDelPerfil && !guardado) {
+  avatar.value = avatarDelPerfil
+  apodo.value = nombreDelPerfil ?? ''
+}
+
 // Aprobado: al taller, en modo dispositivo, sin dejar esta página en el historial.
 function alTaller() {
   const t = taller.value!
@@ -117,7 +137,14 @@ function cerrar() {
   detener()
   enEspera.value = false
   olvidarParticipante(codigo)
-  navigateTo('/workshop/join', { replace: true })
+  if (embebida) host.send({ tipo: 'unirse', fase: 'cerrado' })
+  else navigateTo('/workshop/join', { replace: true })
+}
+
+// Otro código: en la app del hogar, vuelve a su `/code`; aquí, a la página del código.
+function otroCodigo() {
+  if (embebida) host.send({ tipo: 'unirse', fase: 'cerrado' })
+  else navigateTo('/workshop/join')
 }
 
 function detener() {
@@ -144,6 +171,7 @@ function retirarse() {
 async function esperar() {
   fase.value = 'esperando'
   enEspera.value = true
+  if (embebida) host.send({ tipo: 'unirse', fase: 'esperando' })
   const { abrirCanal } = await import('~/runner/conexion/realtime')
   canal ??= abrirCanal(codigo, 'dispositivo')
   canal.onmessage = ({ data }) => {
@@ -190,6 +218,14 @@ async function pedirEntrar() {
 }
 
 onMounted(async () => {
+  // Abierta directamente (un enlace o un QR viejo): la entrada es la app del hogar, si la base la tiene.
+  if (!embebida) {
+    const hogar = await hogarParaUnirse()
+    if (hogar) {
+      window.location.replace(`${hogar}/code/${codigo}`)
+      return
+    }
+  }
   if (!codigoValido(codigo)) {
     fase.value = 'sin-taller'
     return
@@ -213,6 +249,8 @@ onMounted(async () => {
       apodo.value = ''
       fase.value = 'eligiendo'
     }
+    // Desde la app, con el perfil: pide entrar sin pasar por elegir.
+    else if (avatarDelPerfil) await pedirEntrar()
     else fase.value = 'eligiendo'
   }
   catch {

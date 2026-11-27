@@ -87,6 +87,7 @@ interface FilaLeida {
   idiomas: string[]
   idioma_principal: string
   duracion_min: number | null
+  portada: string | null
   numero_escenas: number
   estado_publicacion: EstadoPublicacion
   paises_disponibles: string[]
@@ -117,7 +118,7 @@ export function useCatalogoBase() {
       supabase
         .from('storyboards')
         .select(`id, clave, slug, version_build, titulo, categoria, subcategoria, edicion, enfoques_salud, idiomas,
-                 idioma_principal, duracion_min, numero_escenas, estado_publicacion, paises_disponibles, organizacion_id,
+                 idioma_principal, duracion_min, numero_escenas, portada, estado_publicacion, paises_disponibles, organizacion_id,
                  publicado_hogar, updated_at, guias ( id, version, descripcion, objetivo, publico, adaptado_a,
                  guia_escenas ( id, orden, carpeta, titulo, ${SECCIONES_GUIA.join(', ')} ) )`)
         .order('slug'),

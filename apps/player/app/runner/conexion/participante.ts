@@ -6,34 +6,11 @@
 // escanear entraba directo, con el mismo avatar y nombre).
 
 import { esLocal, urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
-import { esAvatar, limpiarApodo } from '../avatares'
-import type { Avatar } from '../avatares'
+import { esAvatar, limpiarApodo } from '@playhub/ui/app/utils/avatares'
+import type { Avatar } from '@playhub/ui/app/utils/avatares'
 
-/** El alfabeto del código: sin 0/O ni 1/I/L (el check de workshop_conexiones). */
-const CODIGO = /^[A-HJKMNP-Z2-9]{6}$/
-
-/** El código como se escribió («k7m 2qx», «K7M·2QX») en su forma: mayúsculas y sin separadores. */
-export function normalizarCodigo(texto: string): string {
-  return texto.toUpperCase().replace(/[^A-Z0-9]/g, '')
-}
-
-export function codigoValido(codigo: string): boolean {
-  return CODIGO.test(codigo)
-}
-
-/**
- * El código para leerlo en voz alta o en la pantalla: «K7M-2QX». Con guion y no con espacio (Luis, 2026-11-26): un
- * espacio hace dudar si hay que escribirlo. Al escribirlo da igual: `normalizarCodigo` quita guiones y espacios.
- */
-export function codigoLegible(codigo: string): string {
-  return codigo.length === 6 ? `${codigo.slice(0, 3)}-${codigo.slice(3)}` : codigo
-}
-
-/** Lo que se ve mientras se escribe el código: en mayúsculas, solo letras y números, y el guion tras los tres primeros. */
-export function codigoAlEscribir(texto: string): string {
-  const codigo = normalizarCodigo(texto).slice(0, 6)
-  return codigo.length > 3 ? `${codigo.slice(0, 3)}-${codigo.slice(3)}` : codigo
-}
+// El código del taller vive en el kit (lo usa también la app del hogar); se reexporta para el runner.
+export { codigoAlEscribir, codigoLegible, codigoValido, normalizarCodigo } from '@playhub/ui/app/utils/codigo-taller'
 
 /** La dirección de Player para el QR: la de la base (`configuraciones.player_url`) o, si todavía no se leyó, la de la
  *  página. Compartida por la red, con el nombre de este equipo; y si se queda en localhost (desarrollo), con la IP de

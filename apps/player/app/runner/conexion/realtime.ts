@@ -11,7 +11,7 @@
 import { createClient, type REALTIME_SUBSCRIBE_STATES, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js'
 import { urlEnEsteEquipo } from '@playhub/ui/app/utils/equipo-local'
 import type { Database } from '../../../../../supabase/database.types'
-import type { Avatar } from '../avatares'
+import type { Avatar } from '@playhub/ui/app/utils/avatares'
 import type { CanalSesion, MensajeSesion } from './mensajes'
 
 const EVENTO = 'taller'

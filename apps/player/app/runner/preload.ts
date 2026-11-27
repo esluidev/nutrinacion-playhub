@@ -15,7 +15,7 @@ const images = new Map<string, Promise<void>>()
 // Las imágenes ya decodificadas se conservan: mientras alguien las tiene, el navegador no las suelta.
 const kept: HTMLImageElement[] = []
 
-function decodeImage(url: string | undefined): Promise<void> {
+export function decodeImage(url: string | undefined): Promise<void> {
   if (!url || typeof Image === 'undefined') return Promise.resolve()
   let ready = images.get(url)
   if (!ready) {
@@ -33,7 +33,6 @@ function decodeImage(url: string | undefined): Promise<void> {
 }
 
 /** Deja listo un dibujo de la librería que usa el marco y no una escena (el avatar del niño). */
-export const preloadSvg = (name: string) => decodeImage(librarySvg(name))
 
 let runtime: Promise<void> | null = null
 /** El motor de Rive con su wasm ya compilado: lo más pesado de la primera carga. */

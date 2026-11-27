@@ -16,6 +16,9 @@ const customScenes = import.meta.glob<Component>('../../content/storyboards/*/*/
 const svgModules = import.meta.glob<string>('../../content/library/svg/*.svg', { eager: true, query: '?url', import: 'default' })
 const riveModules = import.meta.glob<string>('../../content/library/rive/*.riv', { eager: true, query: '?url', import: 'default' })
 const sfxModules = import.meta.glob<string>('../../content/library/sfx/**/*.{mp3,m4a,ogg,wav}', { eager: true, query: '?url', import: 'default' })
+// La portada de cada storyboard (`portada.svg` de su carpeta, con `cover` en su JSON): la gestión la enseña; la app del
+// hogar la pide servida en /portadas/<eje>/<storyboard>.svg (nuxt.config).
+const portadaModules = import.meta.glob<string>('../../content/storyboards/*/*/portada.svg', { eager: true, query: '?url', import: 'default' })
 
 const byName = (modules: Record<string, string>) => new Map(
   Object.entries(modules).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, path.lastIndexOf('.')), url]),
@@ -38,6 +41,11 @@ export function libraryRive(name: string | undefined): string | undefined {
 /** URL servida de una grabación de sonido de la librería, por su nombre sin extensión. */
 export function librarySfx(name: string | undefined): string | undefined {
   return name ? SFX.get(name) : undefined
+}
+
+/** La portada de un storyboard por su eje y su slug, o undefined si no tiene. */
+export function portadaDe(tipo: string, slug: string): string | undefined {
+  return portadaModules[`${ROOT}${tipo}/${slug}/portada.svg`]
 }
 
 /** Las grabaciones de sonido que hay en la librería, por nombre. */

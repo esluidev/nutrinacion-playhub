@@ -40,6 +40,12 @@ describe('construirMetadata — caso feliz', () => {
     expect(meta.idiomas).toEqual(['es', 'en'])
     expect(meta.idioma_principal).toBe('es')
     expect(meta.duracion_min).toBe(30)
+    expect(meta.portada).toBeNull()
+  })
+
+  it('con `cover`, la portada que sirve Player, por su eje y su storyboard', () => {
+    expect(construirMetadata({ ...def(), cover: true }).portada).toBe('portadas/alimentacion/los-frijoles.svg')
+    expect(construirMetadata({ ...def(), type: 'ACTIVIDAD_FISICA', cover: true }).portada).toBe('portadas/actividad-fisica/los-frijoles.svg')
   })
 
   it('numera las escenas desde 1 y en el orden del build', () => {
@@ -234,7 +240,7 @@ describe('validarMetadata', () => {
   const base = {
     clave: 'k', slug: 'el-agua', version_build: '0.1.0', titulo: { es: 'El agua' }, categoria: 'ALIMENTACION',
     subcategoria: 'HIDRATACION', edicion: 'KIDS', enfoques_salud: ['OBESIDAD'], idiomas: ['es', 'en'],
-    idioma_principal: 'es', duracion_min: 25, escenas: [],
+    idioma_principal: 'es', duracion_min: 25, portada: null, escenas: [],
   }
 
   it('acepta los códigos de las listas cerradas de la base', () => {

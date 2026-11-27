@@ -31,6 +31,7 @@ export interface StoryboardMetadata {
   idiomas: string[]               // `languages`
   idioma_principal: string        // `defaultLanguage`
   duracion_min: number | null     // `estimatedDuration`
+  portada: string | null          // `cover`: portadas/<eje>/<storyboard>.svg, servida por Player
   escenas: EscenaMetadata[]       // `scenes`
 }
 
@@ -76,6 +77,9 @@ export function construirMetadata(def: StoryboardJson): StoryboardMetadata {
     idiomas,
     idioma_principal: porDefecto,
     duracion_min: def.estimatedDuration ?? null,
+    // Con `cover`, su `portada.svg`, que Player sirve en /portadas/<eje>/<storyboard>.svg (nuxt.config); el eje es la
+    // categoría en minúsculas y con guiones, como su carpeta.
+    portada: def.cover ? `portadas/${aCodigo(def.type).toLowerCase().replace(/_/g, '-')}/${def.slug}.svg` : null,
     escenas: def.scenes.map((escena, i) => ({
       orden: i + 1,
       carpeta: escena.folder,
@@ -158,6 +162,7 @@ export function diferenciasConBase(meta: StoryboardMetadata, base: FilaCatalogo 
   campo('idiomas', !mismoConjunto(meta.idiomas, base.idiomas), textoLista(base.idiomas), textoLista(meta.idiomas))
   campo('idioma principal', meta.idioma_principal !== base.idioma_principal, base.idioma_principal, meta.idioma_principal)
   campo('duración', (meta.duracion_min ?? null) !== (base.duracion_min ?? null), textoPlano(base.duracion_min, ' min'), textoPlano(meta.duracion_min, ' min'))
+  campo('portada', (meta.portada ?? null) !== (base.portada ?? null), base.portada ? 'Con portada' : 'Sin portada', meta.portada ? 'Con portada' : 'Sin portada')
   const escenas = (lista: EscenaMetadata[]) => [...lista].sort((a, b) => a.orden - b.orden).map(e => [e.orden, e.carpeta, e.titulo])
   campo('escenas', !mismo(escenas(meta.escenas), escenas(base.escenas)),
     `${base.escenas.length} escenas`, `${meta.escenas.length} escenas`, detalleEscenas(meta.escenas, base.escenas))

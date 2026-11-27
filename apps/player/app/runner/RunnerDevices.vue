@@ -22,7 +22,7 @@
       <!-- ── Cómo unirse ─────────────────────────────────────────────────── -->
       <section class="devices-join" :aria-label="txt('joinCode')">
         <div v-if="conexion" class="join-box join-live">
-          <RunnerQr :value="conexion.enlace" :label="txt('joinQr')" :size="176" />
+          <UiQr :value="conexion.enlace" :label="txt('joinQr')" :size="176" />
           <p class="panel-label">{{ txt('joinCode') }}</p>
           <p class="join-code">{{ codigoLegible(conexion.codigo) }}</p>
           <!-- La dirección sola, en negrita y en una línea, para encontrarla de un vistazo y que nadie la lea cortada, y
@@ -82,7 +82,7 @@
             >
               <span class="device-tile-avatar">
                 <span class="ui-symbol" :data-tone="device.tono">
-                  <img v-if="device.avatar" :src="librarySvg(`avatar-${device.avatar}`)" alt="" decoding="sync">
+                  <img v-if="device.avatar" :src="dibujoDe(device.avatar)" alt="" decoding="sync">
                   <UiIcon v-else name="user" />
                 </span>
                 <!-- En pausa, el candado cerrado: el mismo de la barra y de los botones (Luis, 2026-11-26) -->
@@ -105,7 +105,7 @@
       <template v-if="current">
         <div class="device-card-head">
           <span class="ui-symbol" :data-tone="current.tono">
-            <img v-if="current.avatar" :src="librarySvg(`avatar-${current.avatar}`)" alt="" decoding="sync">
+            <img v-if="current.avatar" :src="dibujoDe(current.avatar)" alt="" decoding="sync">
             <UiIcon v-else name="user" />
           </span>
           <div class="min-w-0">
@@ -137,18 +137,16 @@
 </template>
 
 <script setup lang="ts">
-import { dibujoDe } from './avatares'
-import type { Avatar, TonoAvatar } from './avatares'
+import { dibujoDe } from '@playhub/ui/app/utils/avatares'
+import type { Avatar, TonoAvatar } from '@playhub/ui/app/utils/avatares'
 import { codigoLegible } from './conexion/participante'
-import { librarySvg } from './content'
 import { useRunnerText } from './i18n'
-import RunnerQr from './RunnerQr.vue'
 
 export interface DeviceView {
   id: string
   nombre: string
   tono: 'coral' | 'grape' | 'sun' | 'sky' | 'lime' | 'rose'
-  /** El animal de su avatar (`avatar-<animal>`); sin él, el icono de persona. */
+  /** El animal de su avatar (`dibujoDe`); sin él, el icono de persona. */
   avatar?: string
   pausado: boolean
   status: string

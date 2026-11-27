@@ -5,7 +5,7 @@ import type { RunnerEvent, StoryboardGuide } from '@playhub/ui/app/utils/runner-
 // El runner dentro de otra app (decisión 004, docs/runner.md). Si la página está en un iframe,
 // habla con la app que la contiene: le cuenta lo que pasa y recibe de ella la guía y, en la vista
 // previa, a qué escena ir y cuándo reiniciar (`conducir`); en el taller, la conexión para que se
-// unan otros dispositivos (`conexion`, tarea 013). Solo escucha y responde a los orígenes permitidos,
+// unan otros dispositivos (`conexion`, tarea 013); en casa, el nombre del niño y si la app está instalada (tarea 025). Solo escucha y responde a los orígenes permitidos,
 // los de Admin y Educators en la base (`urlsDeLasApps.ts`); mientras se leen, lo que cuenta espera
 // (la app no manda nada antes de «listo»). Abierta directamente, no hace nada.
 export function useRunnerHost(
@@ -15,6 +15,9 @@ export function useRunnerHost(
   const embedded = import.meta.client && window.parent !== window
   const guide = shallowRef<StoryboardGuide | null>(null)
   const conexion = shallowRef<{ codigo: string, llave: string } | null>(null)
+  // La app del hogar: el nombre del niño y si se abrió instalada (tarea 025).
+  const nombre = ref<string | undefined>()
+  const instalada = ref(false)
   let host: string | null = null
   const pendientes: RunnerEvent[] = []
 
@@ -42,7 +45,11 @@ export function useRunnerHost(
     const command = parseRunnerCommand(event.data)
     if (!command) return
     host = event.origin
-    if (command.tipo === 'iniciar') guide.value = command.guia ?? null
+    if (command.tipo === 'iniciar') {
+      guide.value = command.guia ?? null
+      if (command.nombre) nombre.value = command.nombre
+      instalada.value = command.instalada === true
+    }
     else if (command.tipo === 'ir') conducir?.ir('indice' in command ? command.indice : command.escena)
     else if (command.tipo === 'reiniciar') conducir?.reiniciar()
     else if (command.tipo === 'conexion') conexion.value = { codigo: command.codigo, llave: command.llave }
@@ -53,5 +60,5 @@ export function useRunnerHost(
     onScopeDispose(() => window.removeEventListener('message', onMessage))
   }
 
-  return { embedded, guide, conexion, send }
+  return { embedded, guide, conexion, nombre, instalada, send }
 }

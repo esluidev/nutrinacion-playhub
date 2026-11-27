@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { limpiarApodo, nombreVisible, nombresSinRepetir, tonoDe } from '../app/runner/avatares'
+import { limpiarApodo, nombreVisible, nombresSinRepetir, tonoDe } from '@playhub/ui/app/utils/avatares'
 import { leerMensaje } from '../app/runner/conexion/mensajes'
 import { codigoAlEscribir, codigoLegible, codigoValido, dispositivoNuevo, estanAhora, guardarParticipante, normalizarCodigo, olvidarParticipante, origenParaUnirse, participanteGuardado } from '../app/runner/conexion/participante'
 

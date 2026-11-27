@@ -5,7 +5,7 @@
        varios dispositivos en el taller, dice quién es. Un apodo largo se corta y se lee entero al pasar el cursor. -->
   <div class="hud-piece profile-piece" :title="nombre">
     <span class="profile-avatar" :data-tone="tono" aria-hidden="true">
-      <img v-if="avatar" :src="librarySvg(`avatar-${avatar}`)" alt="" decoding="sync">
+      <img v-if="avatar" :src="dibujoDe(avatar)" alt="" decoding="sync">
       <UiIcon v-else name="user" />
     </span>
     <span class="profile-name">{{ nombre }}</span>
@@ -14,10 +14,10 @@
 
 <script setup lang="ts">
 import type { UiTone } from '@playhub/ui/app/utils/ui-tones'
-import { librarySvg } from './content'
+import { dibujoDe } from '@playhub/ui/app/utils/avatares'
 
 defineProps<{
-  /** El animal del avatar (`avatar-<animal>` en la librería). Sin él, el icono de persona. */
+  /** El animal del avatar (`dibujoDe`, del kit). Sin él, el icono de persona. */
   avatar?: string | null
   nombre: string
   tono: UiTone

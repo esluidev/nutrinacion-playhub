@@ -3,8 +3,8 @@
 // mismo navegador. Del dispositivo solo vuelve su presencia: nunca respuestas, intentos ni si terminó.
 // Todo lo que llega se lee con `leerMensaje`: lo puede mandar cualquiera que tenga el código.
 
-import { esAvatar } from '../avatares'
-import type { TonoAvatar } from '../avatares'
+import { esAvatar } from '@playhub/ui/app/utils/avatares'
+import type { TonoAvatar } from '@playhub/ui/app/utils/avatares'
 
 export type OrdenDispositivo = 'pausa' | 'libera' | 'reinicio' | 'quitar'
 

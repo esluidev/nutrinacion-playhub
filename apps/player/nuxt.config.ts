@@ -1,4 +1,7 @@
+import { copyFile, mkdir, readdir } from 'node:fs/promises'
 import { networkInterfaces } from 'node:os'
+import { join } from 'node:path'
+import { pwaDeLaApp } from '@playhub/ui/pwa'
 import { fileURLToPath } from 'node:url'
 
 // Las apps que pueden incrustar el runner (docs/runner.md), Admin y Educators, salen de la base (`configuraciones`): el
@@ -53,10 +56,42 @@ export default defineNuxtConfig({
     }],
   },
 
+  // Se instala como app (pwa.ts del kit). Pesa varios MB (los wasm y los personajes de Rive): de entrada solo se guarda
+  // el esqueleto, y el código se guarda la primera vez que se usa; así el runner abre al instante desde la segunda vez,
+  // también en el dispositivo de un niño. El runner y la página para unirse se piden siempre a la red: su respuesta
+  // trae la cabecera que dice quién puede incrustarlo (server/middleware/marco-del-runner.ts).
+  pwa: pwaDeLaApp({
+    clave: 'player',
+    nombre: 'Nutrinación Play · Player',
+    corto: 'Player',
+    descripcion: 'Construye, prueba y publica los juegos de Nutrinación Play.',
+    guardar: 'esqueleto',
+    siempreDeLaRed: [/^\/play\//, /^\/workshop\//],
+  }),
+
+  // Las portadas de los storyboards, para la app del hogar (tarea 025): al compilar, cada `portada.svg` se copia a
+  // `/portadas/<eje>/<storyboard>.svg`; en desarrollo las sirve server/routes/portadas.
+  hooks: {
+    async 'nitro:build:public-assets'(nitro) {
+      const origen = fileURLToPath(new URL('./content/storyboards', import.meta.url))
+      for (const eje of await readdir(origen, { withFileTypes: true })) {
+        if (!eje.isDirectory()) continue
+        for (const storyboard of await readdir(join(origen, eje.name), { withFileTypes: true })) {
+          if (!storyboard.isDirectory()) continue
+          const destino = join(nitro.options.output.publicDir, 'portadas', eje.name)
+          await mkdir(destino, { recursive: true })
+          await copyFile(join(origen, eje.name, storyboard.name, 'portada.svg'), join(destino, `${storyboard.name}.svg`)).catch(() => {})
+        }
+      }
+    },
+  },
+
   // Supabase para la gestión (superadmin, decisión 005), las direcciones de las apps (`configuraciones`) y la conexión
   // del taller. `ancestrosDev` solo lo usa el servidor.
   runtimeConfig: {
     ancestrosDev,
+    // Solo el servidor de desarrollo: de dónde leer las portadas (server/routes/portadas).
+    contenidoStoryboards: fileURLToPath(new URL('./content/storyboards', import.meta.url)),
     public: {
       ipEnLaRed,
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
@@ -79,6 +114,8 @@ export default defineNuxtConfig({
       charset: 'utf-8',
       htmlAttrs: { lang: 'es' },
       link: [{ rel: 'icon', href: '/ui/nutrinacion-isotipo.png', type: 'image/png' }],
+      // El nombre bajo el icono en iOS; el resto de la cabecera de la app instalada lo pone el kit.
+      meta: [{ name: 'apple-mobile-web-app-title', content: 'Player' }],
     },
   },
 })
