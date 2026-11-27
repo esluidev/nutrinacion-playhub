@@ -38,7 +38,7 @@ La barra y el pie abrazan sus controles con una sola regla en todos los modos: l
 
 **Modo compacto:** en pantallas táctiles, y con ratón cuando la escena perdería más de una décima parte de su espacio, los controles se acercan a los bordes. En teléfonos el pie guarda 20 en vez de 28.
 
-**Protección táctil:** el player es una superficie de juego, no un documento. No se selecciona texto, un toque largo no abre menús ni la lupa, no hay destello al tocar, las imágenes no se arrastran y no se hace zoom con los dedos ni con el trackpad. La guía sigue desplazándose y el tablero recibe todos sus toques. El zoom del navegador con el teclado sí se permite: el player vuelve a ajustarse.
+**Protección táctil:** el player es una superficie de juego, no un documento. No se selecciona texto, ni la página entera (tampoco su raíz: una selección no puede empezar y la que hubiera se borra al tocar; en Android, un toque largo la arrastraba como un fantasma de todo el juego, solo con los bordes de las piezas; Luis, 2026-11-27), un toque largo no abre menús ni la lupa, no hay destello al tocar, las imágenes no se arrastran y no se hace zoom con los dedos ni con el trackpad. La guía sigue desplazándose y el tablero recibe todos sus toques. El zoom del navegador con el teclado sí se permite: el player vuelve a ajustarse.
 
 ## Modos y ediciones
 
