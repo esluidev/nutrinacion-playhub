@@ -134,6 +134,14 @@ El kit tiene dos densidades (ver `TOKENS.md`): `compact` para las apps de gesti�
 
 La lámina organiza familias en dos columnas en pantallas amplias, pasa a una columna por debajo de 1280 px y oculta la navegación lateral por debajo de 1024 px. Los filtros y el buscador permanecen disponibles en móvil. Los componentes mantienen su área de interacción y permiten ajustar el texto.
 
+## Instalar la app
+
+Las tres apps se instalan como apps (PWA, [tarea 024](../../tasks/024-apps-instalables.md)): la capa carga `@vite-pwa/nuxt` y cada app pide su configuración con `pwaDeLaApp` (`pwa.ts`). Los iconos son el isotipo, iguales en las tres (`public/ui/app/`).
+
+- **Instalar es un toque, o nada.** «Instalar app» va en el menú de la cuenta solo donde el navegador la instala con su ventana (Android, Chrome y Edge; `useInstalarApp`) y mientras no esté instalada, y al pulsarlo instala. Sin tarjetas de invitación ni diálogos con instrucciones: un botón «Instalar» que abría los pasos no instalaba nada (Luis, 2026-11-27). Donde no hay ventana (iPhone y iPad), no se ofrece. El aviso que el navegador pondría por su cuenta nunca sale.
+- **Actualizar sin cortar.** La versión nueva se descarga sola y espera: un aviso (`useActualizacionApp`) con «Actualizar», que se queda hasta que se elige; nunca durante un taller en curso ni en el runner. La acción de un aviso es un botón, no un enlace.
+- **En una pantalla táctil, los campos van a 16 px** como mínimo: con menos, iOS acerca la página al escribir.
+
 ## Para la siguiente revisión
 
 Validar con Luis la intensidad del relieve, la paleta, el tamaño de los controles y el nivel de decoración. Esta lámina es un prototipo de diseño y comportamiento; no declara completada una auditoría de accesibilidad ni una biblioteca lista para integrar sin adaptación.
